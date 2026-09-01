@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getBillboardBySlug } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
+import { withApiLog } from "@/lib/api-log";
 
 // Known scraper/bot UA substrings — respond empty (not 403), same as the list route.
 const BOT_UA_PATTERNS = [
@@ -21,7 +22,7 @@ const slugSchema = z.string().min(1).max(120).regex(/^[a-z0-9-]+$/);
 // The detail page (app/billboard/[slug]/page.tsx) reads through the same
 // getBillboardBySlug() data layer as a Server Component; this endpoint exposes
 // the same resource over REST for API clients and tests.
-export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+async function getHandler(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const ip = getClientIp(req);
   const ua = req.headers.get("user-agent") ?? "";
 
@@ -56,3 +57,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     return serverError("GET /api/billboards/[slug]", err, { slug });
   }
 }
+
+export const GET = withApiLog("billboards/[slug]", getHandler);

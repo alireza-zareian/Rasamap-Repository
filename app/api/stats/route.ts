@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { prisma } from "@/lib/db/client";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
+import { withApiLog } from "@/lib/api-log";
 
 export const revalidate = 3600; // cache 1 hour
 
-export async function GET(req: NextRequest) {
+async function getHandler(req: NextRequest) {
   const rl = publicApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
   const [total, typeCounts, cityCounts, trafficRows] = await Promise.all([
@@ -41,3 +42,5 @@ export async function GET(req: NextRequest) {
     { headers: { "Cache-Control": "public, max-age=120, stale-while-revalidate=600" } },
   );
 }
+
+export const GET = withApiLog("stats", getHandler);

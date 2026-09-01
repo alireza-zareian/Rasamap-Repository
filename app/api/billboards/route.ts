@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getFilteredBillboards } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
+import { withApiLog } from "@/lib/api-log";
 
 // Known scraper/bot UA substrings — block silently (return empty, not 403)
 const BOT_UA_PATTERNS = [
@@ -33,7 +34,7 @@ const querySchema = z.object({
   limit:    z.coerce.number().int().min(1).max(100).optional(),
 });
 
-export async function GET(req: NextRequest) {
+async function getHandler(req: NextRequest) {
   const ip = getClientIp(req);
   const ua = req.headers.get("user-agent") ?? "";
 
@@ -80,3 +81,5 @@ export async function GET(req: NextRequest) {
     return serverError("GET /api/billboards", err);
   }
 }
+
+export const GET = withApiLog("billboards", getHandler);

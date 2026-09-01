@@ -3,6 +3,7 @@ import { getClientIp } from "@/lib/auth/client-ip";
 import { prisma } from "@/lib/db/client";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
+import { withApiLog } from "@/lib/api-log";
 
 // Slim billboard data for map markers — all geocoded, non-pending billboards.
 // Revalidated every 5 minutes; payload is ~400KB uncompressed, ~60KB gzipped.
@@ -15,7 +16,7 @@ const BOT_UA_PATTERNS = [
   /playwright/i, /puppeteer/i,
 ];
 
-export async function GET(req: NextRequest) {
+async function getHandler(req: NextRequest) {
   const ip = getClientIp(req);
   const ua = req.headers.get("user-agent") ?? "";
 
@@ -88,3 +89,5 @@ export async function GET(req: NextRequest) {
     return serverError("GET /api/billboards/pins", err);
   }
 }
+
+export const GET = withApiLog("billboards/pins", getHandler);
