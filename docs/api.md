@@ -24,6 +24,16 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 - Rate limits are per-IP, in-memory sliding window (`lib/auth/rate-limit.ts`).
 - Auth failures use generic messages (no user enumeration).
 
+**Idempotency-Key** (optional header on `POST /api/reservations` and `POST /api/listings`)
+
+- Value: 8–128 chars of `[A-Za-z0-9_-]`. Absent → the request runs normally.
+- First time a key is seen (same user + endpoint): the request runs and the
+  response is stored.
+- Repeat of the same key: the stored response is replayed — no second row.
+- A key reused by a different user or on a different endpoint → `409`.
+- Only successful (2xx) responses are stored, so a failed attempt can be retried.
+- Table: `idempotency_keys`.
+
 ---
 
 ## Public — billboards & catalogue
@@ -41,7 +51,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
 | GET | `/api/reservations?billboardId=<id>` | public | Booked, non-cancelled date ranges for a billboard (for the date picker). `no-store`. |
-| POST | `/api/reservations` | user | Body (Zod): `billboardId` (int>0), `startDate`, `endDate` (ISO datetime or `YYYY-MM-DD`), `note?` (≤500). Rejects end ≤ start (400), past start (400), inactive billboard (409), **overlapping range (409)** — the overlap check + insert run in one `prisma.$transaction`. 201 on success. Rate limit 60/min. |
+| POST | `/api/reservations` | user | Body (Zod): `billboardId` (int>0), `startDate`, `endDate` (ISO datetime or `YYYY-MM-DD`), `note?` (≤500). Rejects end ≤ start (400), past start (400), inactive billboard (409), **overlapping range (409)** — overlap check + insert in one `prisma.$transaction`, backed by a DB unique on `(billboardId,userId,startDate,endDate)`. 201 on success. Rate limit 60/min. Optional `Idempotency-Key` header (see below). |
 | GET | `/api/reservations/my` | user | Current user's reservations (latest 50), each joined with its billboard. Scoped by `session.userId` — a user cannot see another user's rows. `no-store`. |
 | GET | `/api/reviews?billboardId=<id>` | public | Reviews for a billboard. |
 | POST | `/api/reviews` | user | Body (Zod): `billboardId`, `rating` (1–5), `comment`. **403 unless the user has a `confirmed` reservation for that billboard.** One review per user per billboard (DB unique constraint). 201 on success. |
@@ -50,7 +60,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| POST | `/api/listings` | user | Owner submits a billboard for review — created with `status: "pending"`. |
+| POST | `/api/listings` | user | Owner submits a billboard for review — created with `status: "pending"`. Optional `Idempotency-Key` header (see below). |
 | POST | `/api/auth/register` | public | Body (Zod): `name` (2–100), `phone` (`^09[0-9]{9}$`), `password` (6–128). 409 if the phone exists. Sets the session cookie. Rate limit: 5 / hour / IP. |
 | POST | `/api/auth/login` | public | Body (Zod): `phone`, `password`. Always runs bcrypt (dummy hash when the user is missing) — timing-safe, no user enumeration. 401 on bad credentials, identical body for "wrong password" and "unknown user". Rate limit: 10 / 15 min / IP → 429 + lockout. |
 | POST | `/api/auth/logout` | public | Clears the session cookie. |

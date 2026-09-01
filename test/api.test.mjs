@@ -196,6 +196,31 @@ test("10 identical reservation requests fired together create exactly one row (r
   assert.equal(rejected, 9);
 });
 
+test("reservations: a repeated Idempotency-Key replays the first response (no second row)", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const key = "idem-" + Math.random().toString(36).slice(2);
+  const payload = { billboardId: 2, startDate: futureDate(300), endDate: futureDate(310) };
+
+  const first = await api("/api/reservations", { method: "POST", token, body: payload, headers: { "idempotency-key": key } });
+  assert.equal(first.status, 201, JSON.stringify(first.json));
+
+  const replay = await api("/api/reservations", { method: "POST", token, body: payload, headers: { "idempotency-key": key } });
+  assert.equal(replay.status, 201);
+  assert.equal(replay.json.reservation.id, first.json.reservation.id);
+});
+
+test("reservations: an Idempotency-Key reused by a different user is rejected with 409", async () => {
+  const tokenA = await mintSession({ userId: "1", role: "user" });
+  const tokenB = await mintSession({ userId: "2", role: "user" });
+  const key = "idem-cross-" + Math.random().toString(36).slice(2);
+  const payload = { billboardId: 1, startDate: futureDate(320), endDate: futureDate(330) };
+
+  const a = await api("/api/reservations", { method: "POST", token: tokenA, body: payload, headers: { "idempotency-key": key } });
+  assert.equal(a.status, 201);
+  const b = await api("/api/reservations", { method: "POST", token: tokenB, body: payload, headers: { "idempotency-key": key } });
+  assert.equal(b.status, 409);
+});
+
 // ── Object-level authorisation ───────────────────────────────────────
 
 test("a user cannot see another user's reservations via /api/reservations/my", async () => {

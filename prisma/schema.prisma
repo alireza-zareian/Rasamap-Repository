@@ -146,7 +146,25 @@ model Reservation {
   updatedAt DateTime @updatedAt
 
   @@index([billboardId, startDate, endDate])
+  // DB-level floor against exact-duplicate submits (double click, retry): the
+  // same user cannot hold two rows for the same billboard and identical range.
+  // The overlap check in POST /api/reservations still guards partial overlaps.
+  @@unique([billboardId, userId, startDate, endDate])
   @@map("reservations")
+}
+
+// One row per Idempotency-Key seen on a non-idempotent POST. A repeated key
+// returns the stored response instead of creating a second record.
+model IdempotencyKey {
+  key        String   @id
+  userId     Int
+  endpoint   String
+  statusCode Int
+  response   Json
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@map("idempotency_keys")
 }
 
 // ── Review ─────────────────────────────────────────────────────

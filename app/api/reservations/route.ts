@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
+import { idempotency } from "@/lib/idempotency";
 
 const ReservationSchema = z.object({
   billboardId: z.number().int().positive(),
@@ -69,6 +70,14 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = parseInt(session.userId, 10);
+
+  // Opt-in Idempotency-Key: replay a stored response for a repeated key.
+  const idem = await idempotency(req, userId, "reservations");
+  if ("error" in idem) return NextResponse.json({ error: idem.error }, { status: 409 });
+  if (idem.replay) {
+    return NextResponse.json(idem.replay.body, { status: idem.replay.status, headers: { "Cache-Control": "no-store" } });
+  }
+
   // Wrap overlap check + create in a single transaction to prevent TOCTOU race
   let reservation: Awaited<ReturnType<typeof prisma.reservation.create>> & { billboard: { name: string; city: string } };
   try {
@@ -91,22 +100,27 @@ export async function POST(req: NextRequest) {
     if ((e as Error).message === "OVERLAP") {
       return NextResponse.json({ error: "این بازه زمانی قبلاً رزرو شده است. لطفاً تاریخ دیگری انتخاب کنید." }, { status: 409 });
     }
+    // DB-level unique (billboardId,userId,startDate,endDate) — an exact duplicate
+    // that slipped past the overlap count under concurrency.
+    if ((e as { code?: string }).code === "P2002") {
+      return NextResponse.json({ error: "این رزرو قبلاً ثبت شده است." }, { status: 409 });
+    }
     return serverError("POST /api/reservations", e, { userId: session.userId, billboardId });
   }
 
-  return NextResponse.json(
-    {
-      reservation: {
-        id:         reservation.id,
-        billboardId: reservation.billboardId,
-        billboardName: reservation.billboard.name,
-        billboardCity: reservation.billboard.city,
-        startDate:  reservation.startDate,
-        endDate:    reservation.endDate,
-        status:     reservation.status,
-        note,
-      },
+  const responseBody = {
+    reservation: {
+      id:         reservation.id,
+      billboardId: reservation.billboardId,
+      billboardName: reservation.billboard.name,
+      billboardCity: reservation.billboard.city,
+      startDate:  reservation.startDate,
+      endDate:    reservation.endDate,
+      status:     reservation.status,
+      note,
     },
-    { status: 201, headers: { "Cache-Control": "no-store" } }
-  );
+  };
+  await idem.save?.(201, responseBody);
+
+  return NextResponse.json(responseBody, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
