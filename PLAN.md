@@ -126,6 +126,14 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
 - 2026-09-01 — Added `test/` — dependency-free API test suite (`npm test`, 19 tests
   passing) on an isolated `prisma/test.db`, plus `npm run bench`. No application code
   changed. Covers T1.5 (automated) and most of T2.6. Race guard verified.
+- 2026-09-01 — Architecture: confirmed the app is already API-driven for every client
+  interaction (mapped all 8 pages); the only direct-DB path is the `/billboard/[slug]`
+  Server Component, which is the idiomatic Next.js pattern. Added `GET /api/billboards/[slug]`
+  so every resource also has a REST endpoint (+3 tests, +2 smoke tests → 24/24). Wrote
+  `docs/architecture.md` (two data paths, kitchen analogy, perf comparison, DRF contrast)
+  and `docs/api.md` (~23-endpoint reference). Rewrote the stale README architecture section
+  (it still claimed "no real DB" and "pages import lib/data.ts"). Added a standing rule to
+  CLAUDE.md + AGENTS.md: reviewer-facing reports must carry the architecture explanation.
 - 2026-09-01 — F15 fix: split `lib/data.ts` → new `lib/types.ts` (types +
   `typeLabels`/`typeIcons`, zero data). Repointed 20 import sites to `@/lib/types`.
   `lib/data.ts` (static/scraped arrays + 4 MB JSON) is now imported only by

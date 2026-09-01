@@ -32,6 +32,34 @@ test("GET /api/billboards rejects an unknown type", async () => {
   assert.equal(status, 400);
 });
 
+test("GET /api/billboards/[slug] returns a single billboard", async () => {
+  const { status, json } = await api("/api/billboards/valiasr-tower");
+  assert.equal(status, 200);
+  assert.equal(json.billboard.slug, "valiasr-tower");
+});
+
+test("GET /api/billboards/[slug] is 404 for an unknown slug", async () => {
+  const { status } = await api("/api/billboards/no-such-billboard");
+  assert.equal(status, 404);
+});
+
+test("GET /api/billboards/[slug] is 400 for a malformed slug", async () => {
+  const { status } = await api("/api/billboards/Bad_Slug!");
+  assert.equal(status, 400);
+});
+
+test("GET /api/billboards/pins returns an array", async () => {
+  const { status, json } = await api("/api/billboards/pins");
+  assert.equal(status, 200);
+  const arr = Array.isArray(json) ? json : json.items ?? json.pins;
+  assert.ok(Array.isArray(arr));
+});
+
+test("GET /api/stats returns 200", async () => {
+  const { status } = await api("/api/stats");
+  assert.equal(status, 200);
+});
+
 // ── Registration & login ──────────────────────────────────────────────
 
 test("register rejects a short password", async () => {

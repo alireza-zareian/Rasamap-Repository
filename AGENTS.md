@@ -87,3 +87,13 @@ After finishing any task — bug fix, feature, refactor — open `docs/roadmap.h
 - Footer date: update to today in Jalali calendar
 
 Skipping this means the roadmap drifts from reality and the next agent starts with wrong context.
+
+---
+
+**8. Reviewer-facing reports must carry the architecture explanation**
+
+Any HTML report / slide / summary you produce for the thesis reviewers must include the
+"two data paths" explanation and the restaurant/kitchen analogy from `docs/architecture.md`
+(adapted to the report's tone). "Why doesn't every page call the API?" is the first
+question a Next.js app draws in a defense. Never present the Server-Component-reads-the-DB
+path as a shortcut or a gap — it is the framework's recommended pattern and the faster choice.

@@ -100,8 +100,18 @@ Triage and status live in `PLAN.md`; 13-layer assessment in `docs/AUDIT.md`.
   result sizes, no unbounded record loops, background/queued work for slow tasks, bulk
   insert/update over row-at-a-time.
 
+## Architecture explanation is mandatory in reviewer-facing reports
+
+Any HTML report / slide / summary produced for the thesis reviewers **must** include
+the "two data paths" explanation and the restaurant/kitchen analogy from
+`docs/architecture.md` (adapted to tone). "Why doesn't every page call the API?" is the
+first question a Next.js app draws. Never frame the Server-Component-reads-the-DB path
+as a shortcut or a gap — it is the framework's recommended pattern and the faster choice.
+
 ## Read When Relevant (not always)
 
+- `docs/architecture.md` — the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API
+- `docs/api.md` — full HTTP API reference (~23 endpoints, method / auth / params)
 - `docs/project-reference.md` — file map, data flow, schema, auth, types, phase roadmap, stubs, known issues
 - `docs/api-patterns.md` — exact API route pattern + admin pattern template
 - `PLAN.md` · `docs/AUDIT.md` · `PRE_DEPLOY_CHECKLIST.md` · `RUNBOOK.md` — production-readiness triage and ops
