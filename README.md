@@ -208,6 +208,7 @@ npm run db:studio           # Prisma Studio
 
 | فایل | محتوا |
 |---|---|
+| [`docs/presentation-summary.md`](./docs/presentation-summary.md) | خلاصه‌ی دفاع: چه حل شد، چه کنار گذاشته شد و چرا، محدودیت‌ها |
 | [`docs/architecture.md`](./docs/architecture.md) | دو مسیرِ داده، تشبیهِ آشپزخانه، جدولِ کارایی |
 | [`docs/engineering-decisions.md`](./docs/engineering-decisions.md) | هر سیستمِ پروژه: چیست، چه ساختاری می‌سازد، چرا، کجا |
 | [`docs/api.md`](./docs/api.md) | مرجعِ کاملِ مسیرهای API (در اپ هم: `/api-docs`) |
