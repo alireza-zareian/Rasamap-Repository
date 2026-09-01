@@ -171,10 +171,10 @@ flowchart TB
 ## اجرا
 
 ```bash
-npm install
-cp .env.example .env.local     # مقادیر را پر کن
+npm install                    # postinstall هم Prisma Client را می‌سازد
+cp .env.example .env           # مقادیر را پر کن (اسکریپت‌های مستقل `.env` را می‌خوانند، نه `.env.local`)
 npx prisma migrate deploy      # ساختِ پایگاه داده و جدول‌ها
-npm run db:seed                # داده‌ی اولیه (~۳۵۰۰ رسانه)
+npm run db:seed                # داده‌ی اولیه (~۳۵۰۰ رسانه — `scraper/data/billboards.json` در ریپو هست)
 npm run dev                    # http://localhost:3000
 ```
 

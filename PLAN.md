@@ -230,8 +230,18 @@ migration or touches product behaviour.
 - [~] Responsive — added `html,body { overflow-x: clip }` safety net; the `@media 640`
       block already collapses every multi-col grid; narrowed CompareModal's fixed column.
       **Still needs a real-browser pass at 360/390/768/1280** — could not verify headless.
-- [ ] README clean-machine `npm ci` walkthrough + screenshots (T2.7 remainder) — README
-      prose is done; the `npm ci`-from-scratch run and screenshots are not. ~45 min.
+- [x] Clean-machine walkthrough — actually ran `git clone` → `npm ci` → `prisma migrate
+      deploy` → `npm run db:seed` → `npm run build` in a temp dir. **Found and fixed two
+      real breakers:** (1) `prisma.config.ts`'s `env("DATABASE_URL")` threw during
+      `postinstall: prisma generate` before any `.env` exists → switched to a
+      `process.env.DATABASE_URL ?? "file:./dev.db"` fallback; (2) the migration history
+      built a `billboards` table missing `hasImages` / `ownerId` / most indexes (added to
+      `dev.db` earlier via `db push`, never migrated) → `db:seed` failed with P2022. Added
+      migration `20260901123000_reconcile_billboards_schema` (from `prisma migrate diff`),
+      marked applied on `dev.db`, verified a fresh DB now migrates + seeds 3545 rows.
+      `prisma migrate status` → "up to date". `prisma/seed.ts` also got `import
+      "dotenv/config"` + a URL fallback. README setup now says `cp .env.example .env`.
+      Screenshots still pending (can't capture headless).
 
 ### N3 — post-presentation polish (architectural shape is already fine)
 > Assessed 2026-09-01: PPR, streaming and `useOptimistic` are a poor fit for the

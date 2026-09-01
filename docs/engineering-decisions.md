@@ -387,6 +387,14 @@ string, run migrations — **no query rewrites**. That is the payoff for using a
 ORM. Real production (many concurrent writers, multiple app servers, managed
 backups) → Postgres, as a planned "later", not a gap.
 
+**Migration hygiene.** Earlier iterations used `prisma db push` (mutates the DB
+without a migration file), so `dev.db` drifted ahead of
+`prisma/migrations/`. Migration `20260901123000_reconcile_billboards_schema`
+(generated with `prisma migrate diff`) closes that gap: a clean
+`git clone → npm ci → prisma migrate deploy → npm run db:seed` now builds the
+correct schema and seeds 3545 rows. `prisma migrate status` reports "up to
+date". From here, schema changes go through `prisma migrate`, not `db push`.
+
 **Verified.** `npm test` runs the full suite against a real (isolated) SQLite
 DB; `npm run db:backup` + a recorded restore prove the recovery story.
 

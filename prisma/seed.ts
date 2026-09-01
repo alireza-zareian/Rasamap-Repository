@@ -13,12 +13,13 @@
 //   npx prisma db seed                      (runs this script)
 // ============================================================
 
+import "dotenv/config";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { everyBillboard, type Billboard as StaticBillboard } from "../lib/data";
 
 const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL!,
+  url: process.env.DATABASE_URL ?? "file:./dev.db",
 });
 
 const prisma = new PrismaClient({ adapter });
