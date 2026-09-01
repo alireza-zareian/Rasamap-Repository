@@ -21,8 +21,8 @@ Run through this every time before deploying or before a live demo. Tick each li
 ## 3. Database
 - [ ] `npx prisma migrate deploy` (or `prisma db push`) applied — schema matches
       `prisma/schema.prisma`, including composite indexes.
-- [ ] A fresh backup exists from **today** (`npm run db:backup` once it is added) and a
-      test restore has been done at least once (see `RUNBOOK.md`).
+- [ ] A fresh backup exists from **today** (`npm run db:backup`) and a test restore
+      has been done at least once (see `RUNBOOK.md` — done 2026-09-01).
 - [ ] Demo/seed data is the intended dataset — no stray test reservations in the tables
       you will show.
 

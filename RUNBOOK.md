@@ -64,9 +64,12 @@ starting the app.
 
 **Backup** (safe to run while the app is up — SQLite online backup):
 ```bash
-sqlite3 dev.db ".backup 'backups/dev-$(date +%Y%m%d-%H%M%S).db'"
+npm run db:backup                    # -> ./backups/dev-<timestamp>.db, keeps the last 10
+BACKUP_DIR=/mnt/backups npm run db:backup   # custom destination
 ```
-(Once `scripts/backup-db.sh` + `npm run db:backup` are added, use those.)
+Under the hood: `sqlite3 dev.db ".backup '<dest>'"` (WAL-safe). Script:
+`scripts/backup-db.sh`. Schedule it with cron for an automated dump, e.g.
+`0 3 * * * cd /path/to/rasamap && BACKUP_DIR=/mnt/backups npm run db:backup`.
 
 **Restore:**
 ```bash
@@ -76,9 +79,15 @@ rm -f dev.db-shm dev.db-wal      # drop stale WAL side-files
 npm start
 ```
 
-**Test restore (do once, before relying on it):** copy a backup to `dev-restore-test.db`,
-point a throwaway `DATABASE_URL` at it, run `npm run db:studio`, confirm row counts match
-the source. Record the date you did this in `PLAN.md`.
+**Test restore — verified 2026-09-01.** Procedure: copy a backup to a throwaway
+file, drop its stale `-shm`/`-wal`, then check it:
+```bash
+cp backups/dev-<timestamp>.db /tmp/restore-test.db
+rm -f /tmp/restore-test.db-shm /tmp/restore-test.db-wal
+sqlite3 /tmp/restore-test.db "PRAGMA integrity_check; SELECT count(*) FROM billboards;"
+```
+Last run: row counts matched the source (3545 billboards / 1 user / 7 reservations),
+`integrity_check` returned `ok`.
 
 ## Contacts / where things live
 

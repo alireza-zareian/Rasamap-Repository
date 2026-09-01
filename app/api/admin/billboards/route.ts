@@ -4,6 +4,7 @@ import { getAllBillboards, createBillboard } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
+import { serverError } from "@/lib/api-error";
 import { z } from "zod";
 
 const ALLOWED_SORT_KEYS = new Set(["id", "price", "name", "city"]);
@@ -144,7 +145,7 @@ export async function POST(req: NextRequest) {
   try {
     const billboard = await createBillboard({ type, ...rest });
     return NextResponse.json({ billboard }, { status: 201, headers: { "Cache-Control": "no-store" } });
-  } catch {
-    return NextResponse.json({ error: "خطا در ایجاد بیلبورد" }, { status: 500 });
+  } catch (err) {
+    return serverError("POST /api/admin/billboards", err, { adminId: session.userId });
   }
 }

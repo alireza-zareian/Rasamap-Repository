@@ -68,6 +68,33 @@ export default function ListMediaPage() {
     }
   }
 
+  // Required-field check for the current step — blocks "بعدی" until it passes,
+  // so the user never reaches the final submit with empty fields and a cryptic
+  // server error.
+  function validateStep(current: number): string | null {
+    if (current === 0) {
+      if (form.name.trim().length < 2) return "نام رسانه را وارد کنید (حداقل ۲ حرف).";
+      if (!/^09\d{9}$/.test(form.phone.trim())) return "شماره تماس معتبر وارد کنید (۰۹xxxxxxxxx).";
+    }
+    if (current === 1) {
+      if (form.region.trim().length < 1) return "منطقه / محله را وارد کنید.";
+      if (form.location.trim().length < 3) return "آدرس دقیق را وارد کنید (حداقل ۳ حرف).";
+    }
+    if (current === 2) {
+      if (!form.width || parseInt(form.width) < 1) return "عرض رسانه را وارد کنید.";
+      if (!form.height || parseInt(form.height) < 1) return "ارتفاع رسانه را وارد کنید.";
+      if (!form.price || parseInt(form.price) < 1) return "قیمت پایه ماهانه را وارد کنید.";
+    }
+    return null;
+  }
+
+  function goNext() {
+    const err = validateStep(step);
+    if (err) { setError(err); return; }
+    setError("");
+    setStep(s => s + 1);
+  }
+
   const inp=(label:string,key:keyof typeof form,ph:string,type="text")=>(
     <div style={{marginBottom:14}}>
       <label style={{fontSize:"0.78rem",color:"var(--text-muted)",display:"block",marginBottom:5}}>{label}</label>
@@ -196,7 +223,7 @@ export default function ListMediaPage() {
               <div style={{display:"flex",gap:8}}>
                 {step>0 && <button onClick={()=>{setError("");setStep(s=>s-1);}} style={{border:"1px solid var(--border)",background:"none",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.82rem",padding:"9px 18px",borderRadius:8,cursor:"pointer",flex:1}}>← قبلی</button>}
                 <button
-                  onClick={step===3 ? handleSubmit : ()=>setStep(s=>s+1)}
+                  onClick={step===3 ? handleSubmit : goNext}
                   disabled={submitting}
                   style={{background:submitting?"var(--border)":"var(--accent)",border:"none",color:"#fff",fontFamily:"inherit",fontSize:"0.85rem",fontWeight:700,padding:"9px 24px",borderRadius:8,cursor:submitting?"not-allowed":"pointer",flex:2,opacity:submitting?0.7:1}}>
                   {submitting ? "در حال ثبت..." : step===3 ? "ثبت نهایی ✅" : "بعدی ←"}

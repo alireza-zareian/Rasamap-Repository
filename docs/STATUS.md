@@ -9,7 +9,7 @@
 
 - **پروژه:** پلتفرم رزرو آنلاین رسانه‌های تبلیغاتی محیطی (بیلبورد) — thesis دانشگاهی
 - **Stack:** Next.js 16.2.9 App Router · React 19 · TypeScript 5 strict · SQLite + Prisma 7 · JWT HttpOnly · Leaflet · Inline CSS (بدون Tailwind class در JSX)
-- **DB:** 2808 بیلبورد (2638 billboard, 145 bridge, 19 station, 6 digital)
+- **DB:** 3545 بیلبورد (2660 billboard, 793 bridge, 79 station, 13 digital) · 2015 با تصویر · 3032 geocoded
 - **ارزیابی کد:** A− برای thesis — security غیرمعمول قوی
 
 ---
@@ -39,7 +39,7 @@
 
 ### ✅ فازهای اصلی — کامل
 
-- [x] **Phase 3** — DB Schema + Migration (Prisma, seed, 2808 رکورد)
+- [x] **Phase 3** — DB Schema + Migration (Prisma, seed, 3545 رکورد)
 - [x] **Phase 4** — Public API + Explore/Landing از DB می‌خوانند
 - [x] **Phase 5** — ⏸ Scraper Pipeline (deferred — در loop geocoding افتاد)
 - [x] **Phase 6** — Admin CRUD: PUT/DELETE بیلبورد از DB
@@ -50,12 +50,12 @@
 
 ### ✅ بهبودهای معماری — کامل
 
-- [x] **A1** — Server-side filtering/pagination (نه کل 2808 رکورد به client)
+- [x] **A1** — Server-side filtering/pagination (نه کل 3545 رکورد به client)
 - [x] **A2** — list-media: POST /api/listings واقعی (status "pending")
 - [x] **A3** — ImageManager: PUT /api/admin/billboards/[id]/images واقعی
 - [x] **A4** — BookingModal: فیلدهای اضافی حذف، اطلاعات از JWT session
 - [x] **A5** — Admin reservation management panel
-- [x] **A6** — SEO: sitemap.xml (2808 billboard + 4 صفحه اصلی)
+- [x] **A6** — SEO: sitemap.xml (3545 billboard + 4 صفحه اصلی)
 
 ### ✅ بهبودهای پرفورمنس — کامل (۲۰۲۶ standards)
 
@@ -104,7 +104,7 @@
 
 - [x] **UX0** — Visual Audit: پالت قدیمی (نارنجی) جایگزین با آبی (#3B7BF5) + warm amber
 - [x] **U1** — Landing: hero parallax + gallery sliding + CTA + footer + stats از DB
-- [x] **U2** — Explore: server-side filter + map pins (2001+ geocoded) + Topbar + URL params
+- [x] **U2** — Explore: server-side filter + map pins (3032 geocoded) + Topbar + URL params
 - [x] **U3** — Billboard detail: gallery lightbox + ShareButton + breadcrumb + TrafficMeter
 - [x] **U4** — Polish: BillboardCard یکپارچه + ticker زنده + about/contact/terms + footer سراسری + hero compact یک‌خطی
 - [x] **U4b** — BackgroundPattern: خطوط vine از صفر شروع می‌کنند و با اسکرول با ease-in-out و cascade تدریجی رشد می‌کنند (vine1 از scroll=0, vine2 از scroll=5%, vine3 از scroll=12%)
@@ -286,7 +286,7 @@ npm run dev          # localhost:3000
 npm run build        # باید بدون خطا پاس شود
 npm run lint
 npm run db:migrate
-npm run db:seed      # 2808 رکورد
+npm run db:seed      # 3545 رکورد
 npm run db:studio    # Prisma Studio
 ```
 

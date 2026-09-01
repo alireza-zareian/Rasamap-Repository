@@ -71,5 +71,5 @@ export async function GET(req: NextRequest) {
       { label: "بالای ۳۰۰M",   count: bracketOver300  },
     ],
     coverage: { withImage, geocoded },
-  }, { headers: { "Cache-Control": "no-store" } });
+  }, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
 }

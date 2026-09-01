@@ -11,6 +11,7 @@
     "test:seed": "node test/seed.mjs",
     "test:reset": "node test/reset-db.mjs",
     "bench": "node test/bench.mjs",
+    "db:backup": "sh scripts/backup-db.sh",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",

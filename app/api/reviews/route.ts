@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10
     : null;
 
-  return NextResponse.json({ reviews, avg, total: reviews.length }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ reviews, avg, total: reviews.length }, { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=120" } });
 }
 
 // POST /api/reviews — user auth required; must have a confirmed reservation

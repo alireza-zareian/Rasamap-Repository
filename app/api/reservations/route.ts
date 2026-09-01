@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
+import { serverError } from "@/lib/api-error";
 
 function getIP(req: NextRequest): string {
   return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
     if ((e as Error).message === "OVERLAP") {
       return NextResponse.json({ error: "این بازه زمانی قبلاً رزرو شده است. لطفاً تاریخ دیگری انتخاب کنید." }, { status: 409 });
     }
-    throw e;
+    return serverError("POST /api/reservations", e, { userId: session.userId, billboardId });
   }
 
   return NextResponse.json(

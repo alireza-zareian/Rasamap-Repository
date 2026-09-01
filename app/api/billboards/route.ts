@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getFilteredBillboards } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
+import { serverError } from "@/lib/api-error";
 
 // Known scraper/bot UA substrings — block silently (return empty, not 403)
 const BOT_UA_PATTERNS = [
@@ -75,7 +76,6 @@ export async function GET(req: NextRequest) {
       { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } },
     );
   } catch (err) {
-    if (process.env.NODE_ENV !== "production") console.error("GET /api/billboards failed:", err);
-    return NextResponse.json({ error: "خطا در بارگذاری رسانه‌ها" }, { status: 500 });
+    return serverError("GET /api/billboards", err);
   }
 }

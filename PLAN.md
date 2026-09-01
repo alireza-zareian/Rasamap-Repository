@@ -63,40 +63,60 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
 - [x] T1.3 `git init` + first clean commit on `main` + pushed to GitHub (private,
       SSH auth) — 155 files / ~6 MB, no secrets. `public/images/scraped/` (712 MB) and
       raw scraper dumps excluded via `.gitignore`. `LICENSE` (MIT) added. (F1, F3, F4)
-- [ ] T1.4 Verify `npm run build` + `npm run lint` pass clean; fix any break — 20 min
+- [x] T1.4 `npm run build` OK, `tsc --noEmit` clean, `npm test` 24/24. `npm run lint`
+      still reports 36 pre-existing errors (react-hooks etc.) — same as before this work,
+      zero added. Tracked as separate lint-debt item for the next round.
 - [x] T1.5 Automated instead of manual: `npm test` — dependency-free `node:test` suite
       (`test/`) hits a real `next dev` server on an isolated `prisma/test.db`. 19 tests,
       all passing. Covers validation, sort/param allowlists, per-IP login rate limit,
       no user enumeration, reservation race guard (concurrent double-submit → exactly
       one row), and object-level authz. Also added `npm run bench` (dependency-free
       load benchmark). (Phase 10.1 / 7.4 / 7.5 / 8.3 / 16)
-- [ ] T1.6 U7 UX-breaking bugs (fake contact form, list-media file input + validation,
-      compare thumbnails, login shadow) — **product decision, confirm scope** — 2 h
+- [x] T1.6 U7 audit: login shadow, fake contact form (now honest info cards + Lucide
+      icons + mailto/Telegram), list-media file input, and compare thumbnails were
+      **already fixed** in earlier work — STATUS.md's list was stale. Remaining real
+      gap fixed now: per-step required-field validation in `/list-media` (`validateStep`
+      blocks «بعدی» until the step's fields are valid).
 
 ### Tier 2 — infrastructural, cheap now / expensive later
 - [x] T2.1 `PRE_DEPLOY_CHECKLIST.md` + `RUNBOOK.md` — 30 min
 - [x] T2.2 `docs/AUDIT.md` 13-layer table — 30 min
-- [ ] T2.3 DB backup script (`scripts/backup-db.sh` sqlite `.backup` + `npm run db:backup`)
-      + one real test restore, documented (F13, Phase 9.7) — 40 min
-- [ ] T2.4 Minimal structured logger (`lib/logger.ts`: JSON lines, level, reqId, route;
-      rotating file in prod, console in dev) wired into `error.tsx` + route catch blocks
-      + a short error reference ID shown to users (F12, Phase 4 + 5.3) — 2 h
-- [ ] T2.5 `npm audit` — report by severity, patch what is safe (Phase 7.10) — 20 min
+- [x] T2.3 `scripts/backup-db.sh` + `npm run db:backup` (online `.backup`, keeps last 10,
+      `BACKUP_DIR` override, cron one-liner in RUNBOOK). Test restore **run and verified**
+      2026-09-01: row counts matched, `PRAGMA integrity_check` = ok. (F13, Phase 9.7)
+- [x] T2.4 `lib/logger.ts` (JSON line per log to stdout/stderr, size-rotated file when
+      `LOG_DIR` set, level filter, no deps, PII rule documented) + `lib/api-error.ts`
+      `serverError()` — logs the stack with a short ref id, returns a generic Persian
+      500 carrying that id. Wired into `/api/billboards`, `/billboards/[slug]`,
+      `/billboards/pins`, `/reservations`, `/admin/billboards`. `app/error.tsx` shows
+      `error.digest` as «کد خطا». (F12, Phase 4 + 5.3)
+- [x] T2.5 `npm audit` → `docs/security-audit.md`. 10 advisories (1 mod, 9 high), **all**
+      build-time (postcss) or in an unused feature (sharp / `next/image`), none on the
+      request path. Fixes need `next@16.3.4` (past the pinned `16.2.9`) — deferred to a
+      post-presentation bump, documented with rationale + monthly re-check note.
 - [x] T2.6 Object-level authz — `/api/reservations/my` confirmed scoped by session
       (test: user B cannot see user A's reservation). Admin GET/POST confirmed to
       enforce role at the route, not just the UI. `/api/reviews` + admin `[id]` still
       worth a direct read. (F14, Phase 7.4)
-- [ ] T2.7 `LICENSE` (MIT) + README pass: clean-machine setup steps, env var names,
-      screenshots, architecture paragraph (Phase 14.1) — 1 h
+- [x] T2.7 `LICENSE` (MIT) added earlier. README: architecture section rewritten as
+      neutral documentation (no «for the reviewer» tone), accurate mermaid + file→layer
+      table, correct DB description, links to `docs/architecture.md` + `docs/api.md`.
+      Clean-machine `npm ci` walkthrough + screenshots: still pending (next round).
 
 ### Tier 3 — fast wins, high value/minute
-- [ ] T3.1 Reconcile doc row counts + `lib/data.ts` description across STATUS.md /
-      project-reference.md / README (F8) — 20 min
-- [ ] T3.2 Delete `project-ai.zip` from repo (regen via README zip cmd) — **needs user OK**
+- [x] T3.1 Real counts from `dev.db` (3545 billboards / 2015 with images / 3032 geocoded)
+      propagated to STATUS.md (was 2808) and project-reference.md. `lib/data.ts` role
+      corrected everywhere. (F8)
+- [x] T3.2 `project-ai.zip` deleted from the working tree (was never committed;
+      regenerable via the README zip command). `.gitignore` already excludes it.
 - [ ] T3.3 Responsive spot-check at 360/390/768/1280 on landing, explore, detail,
       dashboard; fix only hard breaks (horizontal scroll, unreachable buttons)
       (Phase 9) — 1.5 h
-- [ ] T3.4 Confirm `AnalyticsTab` reads `/api/analytics` not `lib/data.ts` — 15 min
+- [x] T3.4 `AnalyticsTab` confirmed — `components/AnalyticsTab.tsx` fetches
+      `/api/analytics?city=…` (client), does not touch `lib/data.ts`.
+- [x] T3.5 (added) HTTP cache headers on the remaining cacheable GET routes:
+      `/api/stats` (`max-age=120`), `/api/analytics` (`max-age=60`), `/api/reviews`
+      (`max-age=30`) — were `no-store`/absent. Safe incremental tuning.
 
 ### Won't fit / deliberately skipped (tell the professor)
 - Full load test 50–200 concurrent users (Phase 8.8) — partially done: `npm run bench`
@@ -142,3 +162,72 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
   zero (36 pre-existing errors untouched). Behaviour unchanged — types are compile-time
   only, `typeLabels`/`typeIcons` moved verbatim. Docs updated (CLAUDE.md, AGENTS.md,
   STATUS.md, project-reference.md).
+- 2026-09-01 — Batch (PLAN groups A/B/C + safe tuning): structured logger
+  (`lib/logger.ts` + `lib/api-error.ts`, error ref ids, wired into 5 routes +
+  `error.tsx`); `npm run db:backup` + verified test restore; `npm audit` →
+  `docs/security-audit.md` (all 10 deferred with rationale); doc row-counts corrected
+  (2808→3545); `project-ai.zip` deleted; `/list-media` per-step validation; HTTP cache
+  headers on `/api/stats` `/api/analytics` `/api/reviews`; README + `docs/architecture.md`
+  re-toned as neutral documentation (agent directive kept only in CLAUDE.md/AGENTS.md);
+  roadmap footer synced. Verified: `tsc` clean, `npm run build` OK, `npm test` 24/24,
+  `npm run lint` 36 errors (unchanged, −1 warning). Reviewed Tadrisino (internship
+  Django repo) for transferable patterns — see the backlog below.
+
+## Next update — prioritized backlog (awaiting go-ahead)
+
+Merges patterns worth borrowing from Tadrisino with what is still open here. Nothing
+below is started. Grouped by value-for-effort; each notes whether it needs a Prisma
+migration or touches product behaviour.
+
+### N1 — quick, safe, do first
+- [ ] `lib/env.ts` — validate required env (`AUTH_SECRET`, `ADMIN_*`, `DATABASE_URL`,
+      `NESHAN_*`) once at startup with Zod; throw a clear list of what's missing.
+      Fail-closed like Tadrisino's `settings.py`. ~30 min, no migration.
+- [ ] X-Forwarded-For trust fix in `lib/auth/rate-limit` callers — add
+      `TRUSTED_PROXY_COUNT` and take the Nth-from-last XFF entry so a client can't spoof
+      a fresh rate-limit bucket (Tadrisino `NUM_PROXIES`). Real security gap. ~30 min.
+- [ ] Tighten the reservation race test to N=10 concurrent identical POSTs asserting
+      exactly one 201 (Tadrisino barrier-style). ~15 min.
+- [ ] `docs/STATUS.md` P5–P10 — mark P4 done note, keep the rest as post-demo.
+
+### N2 — worth it, moderate effort
+- [ ] **Idempotency-Key** on `POST /api/reservations` and `POST /api/listings`:
+      accept an optional `Idempotency-Key` header; a small `IdempotencyKey` table
+      (`key` unique, `userId`, `endpoint`, `responseJson`, `createdAt`) returns the
+      stored response on replay; `try/catch` the unique-violation race. Cheap floor if
+      time is short: just a unique constraint on
+      `Reservation(billboardId, userId, startDate, endDate)`. **Needs migration.** ~2–3 h.
+- [ ] Persist status-change audit — reuse the existing unused `AuditLog` table. A
+      `logStatusChange({entity, entityId, from, to, actorId})` helper called from the
+      admin reservation-status route and billboard update/delete (Tadrisino `statuslog`).
+      **May need a light migration** (AuditLog fields). ~1 h.
+- [ ] Structured request-log wrapper for route handlers (method/path/status/duration/
+      userId, one line, never secrets) — the logger exists; this adds the per-request
+      summary Tadrisino's middleware produces. ~1 h.
+- [ ] Responsive spot-check (T3.3) at 360/390/768/1280 — needs a real browser; fix only
+      hard breaks (horizontal scroll, unreachable buttons). ~1.5 h.
+- [ ] README clean-machine `npm ci` walkthrough + a few screenshots (T2.7 remainder). ~1 h.
+
+### N3 — post-presentation polish (architectural shape is already fine)
+- [ ] `next/image` for scraped photos (`remotePatterns` + full visual test) — also
+      clears the `sharp` audit advisory. STATUS.md P5.
+- [ ] Partial Prerendering on `/explore` (`experimental_ppr`) — experimental, test
+      carefully. STATUS.md P7.
+- [ ] `useOptimistic` / Server Action on the booking form. STATUS.md P8.
+- [ ] More of the detail-page chrome as Server Components / streaming. STATUS.md P6.
+- [ ] `@next/bundle-analyzer` pass. STATUS.md P9. · JSON-LD on detail pages. P10.
+- [ ] Bump `next` past `16.2.9` and clear the postcss/sharp `npm audit` advisories
+      (`docs/security-audit.md`).
+- [ ] Lint debt — 36 pre-existing eslint errors (mostly `react-hooks/set-state-in-effect`
+      in admin panels). Mechanical but touches many components. ~1–2 h.
+- [ ] `/api-docs` page with Swagger UI (CDN) + a hand-kept `openapi.json` — Tadrisino
+      `drf-spectacular` analog. Mostly redundant with `docs/api.md`. ~1.5 h.
+
+### Not bringing from Tadrisino (would be bloat here)
+- Internal-service-key / webhook-secret permission classes — no server-to-server
+  endpoints in this app.
+- `SELECT … FOR UPDATE` lock semantics — SQLite has no row locks; a transaction + a
+  unique constraint is the correct tool.
+- Grafana / Loki / Alloy stack — the JSON-lines logger + rotated file is the free
+  self-hosted equivalent; a full LGTM stack is Overkill for a capstone.
+- A `manage.py`-style CLI — npm scripts already cover it.

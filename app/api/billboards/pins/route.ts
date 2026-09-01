@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
+import { serverError } from "@/lib/api-error";
 
 // Slim billboard data for map markers — all geocoded, non-pending billboards.
 // Revalidated every 5 minutes; payload is ~400KB uncompressed, ~60KB gzipped.
@@ -83,7 +84,6 @@ export async function GET(req: NextRequest) {
       { headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=600" } },
     );
   } catch (err) {
-    if (process.env.NODE_ENV !== "production") console.error("GET /api/billboards/pins failed:", err);
-    return NextResponse.json({ error: "خطا در بارگذاری موقعیت‌ها" }, { status: 500 });
+    return serverError("GET /api/billboards/pins", err);
   }
 }

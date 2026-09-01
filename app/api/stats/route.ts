@@ -34,10 +34,13 @@ export async function GET(req: NextRequest) {
 
   const totalDailyReach = Number(trafficRows[0]?.total ?? 0);
 
-  return NextResponse.json({
-    total,
-    cityCount: cityCounts.length,
-    byType,
-    totalDailyReach,
-  });
+  return NextResponse.json(
+    {
+      total,
+      cityCount: cityCounts.length,
+      byType,
+      totalDailyReach,
+    },
+    { headers: { "Cache-Control": "public, max-age=120, stale-while-revalidate=600" } },
+  );
 }

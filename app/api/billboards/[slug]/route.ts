@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getBillboardBySlug } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
+import { serverError } from "@/lib/api-error";
 
 // Known scraper/bot UA substrings — respond empty (not 403), same as the list route.
 const BOT_UA_PATTERNS = [
@@ -51,7 +52,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } },
     );
   } catch (err) {
-    if (process.env.NODE_ENV !== "production") console.error("GET /api/billboards/[slug] failed:", err);
-    return NextResponse.json({ error: "خطا در بارگذاری رسانه" }, { status: 500 });
+    return serverError("GET /api/billboards/[slug]", err, { slug });
   }
 }

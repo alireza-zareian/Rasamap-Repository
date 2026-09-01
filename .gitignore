@@ -55,6 +55,9 @@ project-ai.zip
 /logs
 *.log
 
+# database backups
+/backups
+
 # vercel
 .vercel
 
