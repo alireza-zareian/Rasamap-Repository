@@ -32,7 +32,11 @@ const securityHeaders = [
 // a non-localhost origin (e.g. a phone on the same Wi-Fi at http://<lan-ip>:3000).
 // Dev-only — has no effect on `next build` / `next start`. Add your machine's
 // LAN IP here, or set DEV_ORIGINS="192.168.1.35,10.0.0.4" in .env.local.
-const devOrigins = (process.env.DEV_ORIGINS ?? "192.168.1.35,192.168.*,10.*,172.16.*")
+const devOrigins = (
+  process.env.DEV_ORIGINS ??
+  // LAN ranges + common free tunnels (localhost.run, cloudflare, serveo).
+  "192.168.1.35,192.168.*,10.*,172.16.*,*.lhr.life,*.trycloudflare.com,*.serveo.net"
+)
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
