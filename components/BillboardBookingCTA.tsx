@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Billboard } from "@/lib/data";
+import { Billboard } from "@/lib/types";
 import BookingModal from "./BookingModal";
 
 interface Props {

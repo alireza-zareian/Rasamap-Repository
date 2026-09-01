@@ -1,58 +1,17 @@
 // ============================================================
-// RASAMAP — Core Data Types & Billboard Database
+// RASAMAP — Static / scraped billboard dataset
+//
+// Domain types and small display maps now live in lib/types.ts. This file
+// keeps the hand-written + scraped billboard arrays and is imported ONLY by
+// prisma/seed.ts at build time — never by client code, so the scraper JSON
+// below never reaches the browser bundle.
 // ============================================================
 
-export type BillboardType = "billboard" | "digital" | "bridge" | "station" | "vehicle";
-export type BillboardStatus = "available" | "busy" | "reserved" | "inactive";
-export type SortOption = "price_asc" | "price_desc" | "traffic_desc" | "area_desc";
+import type { Billboard, TrafficData } from "./types";
 
-export interface TrafficData {
-  daily: number;          // vehicles/day
-  peakHour: string;
-  congestionLevel: number; // 1-10
-  pedestrian: number;     // walkers/day
-  estimatedViews: number; // unique ad exposures/day
-  viewabilityScore: number; // 0-100
-}
-
-export interface Billboard {
-  id: number;
-  name: string;
-  slug: string;
-  location: string;
-  region: string;
-  city: string;
-  type: BillboardType;
-  status: BillboardStatus;
-  width: number;
-  height: number;
-  faces: number;
-  age: number;
-  price: number;         // million toman/month
-  priceWeekly: number;
-  priceQuarterly: number;
-  priceYearly: number;
-  traffic: TrafficData;
-  mapX: number;          // % position on map
-  mapY: number;
-  lat?: number;          // real coordinates — present for scraped listings that have them
-  lng?: number;
-  icon: string;
-  images: string[];
-  allImages?: string[];  // all images across all faces — populated by DetailModal from images[]
-  agency: string;
-  phone: string;
-  description: string;
-  features: string[];
-  nearbyLandmarks: string[];
-  rating: number;
-  reviewCount: number;
-  // Scraper-specific fields (optional — not present on static records)
-  url?: string;
-  source?: string;
-  structureCode?: string;
-  scrapedAt?: string;
-}
+// Re-exported for backward compatibility with existing `@/lib/data` imports.
+export type { Billboard, BillboardType, BillboardStatus, SortOption, TrafficData } from "./types";
+export { typeLabels, typeIcons } from "./types";
 
 // Traffic calculation helper
 function calcTraffic(dailyVehicles: number, congestion: number, pedestrian: number): TrafficData {
@@ -330,22 +289,6 @@ export const billboards: Billboard[] = [
     rating: 4.3, reviewCount: 14,
   },
 ];
-
-export const typeLabels: Record<BillboardType, string> = {
-  billboard: "بیلبورد",
-  digital: "دیجیتال",
-  bridge: "عرشه پل",
-  station: "ایستگاه",
-  vehicle: "وسیله نقلیه",
-};
-
-export const typeIcons: Record<BillboardType, string> = {
-  billboard: "🏙️",
-  digital: "📺",
-  bridge: "🌉",
-  station: "🚇",
-  vehicle: "🚌",
-};
 
 export const regionStats = [
   { name: "صدر - همت", occupancy: 92, avgPrice: 300, count: 28 },

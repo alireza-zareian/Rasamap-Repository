@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import type { Billboard } from "@/lib/data";
+import type { Billboard } from "@/lib/types";
 import { C, TYPE_LABEL, STATUS_LABEL } from "./constants";
 
 function parseGoogleMapsUrl(url: string): { lat: string; lng: string } | null {

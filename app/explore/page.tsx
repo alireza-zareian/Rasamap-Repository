@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, LayoutGrid, List, MapPin, Map, SlidersHorizontal, Scale, ExternalLink, RotateCcw, Megaphone, Monitor, Milestone, Train } from "lucide-react";
 import { useTheme } from "@/lib/theme";
-import type { Billboard, BillboardType } from "@/lib/data";
+import type { Billboard, BillboardType } from "@/lib/types";
 import { provinces, getProvince } from "@/lib/iranLocations";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";

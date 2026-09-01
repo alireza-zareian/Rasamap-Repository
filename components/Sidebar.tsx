@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Billboard, BillboardType, typeLabels } from "@/lib/data";
+import { Billboard, BillboardType } from "@/lib/types";
 import { provinces, getProvince } from "@/lib/iranLocations";
 import BillboardCard from "./BillboardCard";
 import AnalyticsTab from "./AnalyticsTab";

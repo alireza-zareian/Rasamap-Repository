@@ -1,5 +1,5 @@
 "use client";
-import { Billboard } from "@/lib/data";
+import { Billboard } from "@/lib/types";
 import { Scale, X } from "lucide-react";
 
 interface Props {

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import type { Billboard, BillboardType } from "@/lib/data";
+import type { Billboard, BillboardType } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Calendar, Monitor, Milestone, Train, Sun, Moon, User, Map, MapPin } from "lucide-react";

@@ -53,6 +53,7 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
 | F12 | No structured logging / rotating log file — only `console.error` guarded by `NODE_ENV`. Professors often ask. | Med |
 | F13 | No DB backup script or documented restore. | Med |
 | F14 | Object-level authz on `/api/reservations/my` and admin routes: verify a user cannot read another user's reservation by ID. | Med — needs check |
+| F15 | **`lib/data.ts` mixed pure types + `typeLabels` + a 4 MB `billboards.json` import in one module.** Every page rendering a billboard card imported `typeLabels`, so the bundler pulled the whole module → a **6.7 MB client chunk** of scraped billboard JSON shipped to every visitor (verified in `.next/static/chunks`). Fixed: split into `lib/types.ts` (data-free). Client chunks 7.7 MB → 1.0 MB. | High → **fixed 2026-09-01** |
 
 ## (d) Priority ranking
 
@@ -125,3 +126,11 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
 - 2026-09-01 — Added `test/` — dependency-free API test suite (`npm test`, 19 tests
   passing) on an isolated `prisma/test.db`, plus `npm run bench`. No application code
   changed. Covers T1.5 (automated) and most of T2.6. Race guard verified.
+- 2026-09-01 — F15 fix: split `lib/data.ts` → new `lib/types.ts` (types +
+  `typeLabels`/`typeIcons`, zero data). Repointed 20 import sites to `@/lib/types`.
+  `lib/data.ts` (static/scraped arrays + 4 MB JSON) is now imported only by
+  `prisma/seed.ts`. Result: client chunks **7.7 MB → 1.0 MB**, the 6.7 MB scraped-JSON
+  chunk gone. Verified: `tsc` clean, `npm run build` OK, `npm test` 19/19, lint delta
+  zero (36 pre-existing errors untouched). Behaviour unchanged — types are compile-time
+  only, `typeLabels`/`typeIcons` moved verbatim. Docs updated (CLAUDE.md, AGENTS.md,
+  STATUS.md, project-reference.md).

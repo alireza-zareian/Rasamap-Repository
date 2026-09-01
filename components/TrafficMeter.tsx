@@ -1,6 +1,6 @@
 "use client";
 import { BarChart2, Car, Footprints, Clock, Info } from "lucide-react";
-import { TrafficData } from "@/lib/data";
+import { TrafficData } from "@/lib/types";
 
 interface TrafficMeterProps {
   traffic: TrafficData;

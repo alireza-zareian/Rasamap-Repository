@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import type { Billboard } from "@/lib/data";
+import type { Billboard } from "@/lib/types";
 import { C, TYPE_LABEL } from "./constants";
 
 const EMPTY = { name: "", location: "", city: "", type: "billboard", price: "", agency: "", phone: "", description: "", width: "12", height: "4", faces: "1", lat: "", lng: "" };

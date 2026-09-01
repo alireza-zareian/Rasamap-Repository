@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Billboard } from "@/lib/data";
+import type { Billboard } from "@/lib/types";
 import { getAllBillboards, createBillboard } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";

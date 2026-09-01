@@ -16,10 +16,11 @@ Six hard rules. Follow them without exception on every task, every file, every P
 
 ```
 ✅  import { getAllBillboards, getFilteredBillboards } from "@/lib/db/billboards";
+✅  import type { Billboard } from "@/lib/types";   // types + typeLabels/typeIcons, data-free
 ❌  import { everyBillboard, allBillboards, scrapedBillboards } from "@/lib/data";
 ```
 
-`lib/data.ts` is a TypeScript constant file — it cannot receive DB writes and always serves stale data. Any API route or server function that reads from it instead of Prisma is silently serving old records.
+`lib/data.ts` is a TypeScript constant file (static + scraped arrays + a 4 MB JSON import). It cannot receive DB writes and always serves stale data. Any API route or server function that reads from it instead of Prisma is silently serving old records — and any client/page import of it ships the entire dataset into the browser bundle. It is imported **only** by `prisma/seed.ts`. Everything else takes types from `lib/types.ts`.
 
 ---
 

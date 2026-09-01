@@ -1,5 +1,5 @@
 "use client";
-import { Billboard, typeLabels } from "@/lib/data";
+import { Billboard, typeLabels } from "@/lib/types";
 
 interface Props {
   items: Billboard[];

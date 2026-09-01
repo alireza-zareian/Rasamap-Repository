@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Billboard, typeLabels } from "@/lib/data";
+import { Billboard, typeLabels } from "@/lib/types";
 import TrafficMeter from "./TrafficMeter";
 
 interface Props {

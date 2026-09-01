@@ -1,4 +1,4 @@
-import type { Billboard } from "@/lib/data";
+import type { Billboard } from "@/lib/types";
 import { C } from "./constants";
 import { Badge } from "./Badge";
 

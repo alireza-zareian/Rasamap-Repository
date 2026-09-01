@@ -31,7 +31,7 @@
 - Scraper/geocoding: deferred — بعد از ارائه
 - SQLite: کافی است — تغییر DB ممنوع
 - Guest checkout نه — reservation نیاز به login دارد
-- `lib/data.ts`: دست نزن — فقط type definitions از آن import می‌شود
+- Types و `typeLabels`/`typeIcons` از `lib/types.ts` (بدون دیتا). `lib/data.ts` فقط دیتاست استاتیک/scraped + JSON ۴MB است و **فقط** `prisma/seed.ts` آن را import می‌کند — import آن از کد کلاینت/صفحه کل دیتاست را وارد باندل مرورگر می‌کند
 
 ---
 

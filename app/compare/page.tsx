@@ -4,7 +4,7 @@ import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import CompareModal from "@/components/CompareModal";
 import Link from "next/link";
-import type { Billboard } from "@/lib/data";
+import type { Billboard } from "@/lib/types";
 import { Scale, X, ArrowLeft } from "lucide-react";
 
 export default function ComparePage() {

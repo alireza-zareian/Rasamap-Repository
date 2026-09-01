@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Billboard, typeLabels } from "@/lib/data";
+import { Billboard, typeLabels } from "@/lib/types";
 import { Scale, Megaphone, Monitor, Milestone, Train, Bus } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 

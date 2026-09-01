@@ -1,6 +1,6 @@
 import type { Billboard as Row, Prisma } from "@prisma/client";
 import { prisma } from "./client";
-import type { Billboard, TrafficData } from "../data";
+import type { Billboard, TrafficData } from "../types";
 
 function fromRow(row: Row): Billboard {
   return {

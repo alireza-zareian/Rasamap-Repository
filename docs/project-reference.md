@@ -34,7 +34,8 @@ app/
     admin/audit/route.ts          GET: in-memory audit log (admin+ only)
 
 lib/
-  data.ts                         Types only (Billboard, BillboardStatus, etc.) + static dataset NOT used by API
+  types.ts                        Domain types (Billboard, BillboardStatus, ...) + typeLabels/typeIcons — data-free, import anywhere
+  data.ts                         Static + scraped billboard arrays + billboards.json (4 MB). Imported ONLY by prisma/seed.ts
   db/client.ts                    Prisma singleton (dev hot-reload safe)
   db/billboards.ts                getAllBillboards(), getById(), getBySlug(), createBillboard(), updateBillboard(), deleteBillboard(), hasActiveReservations()
   auth/session.ts                 JWT create/verify, cookie helpers: getSession(), getSessionFromRequest(), buildSessionCookieHeader(), buildLogoutCookieHeader()
@@ -75,7 +76,7 @@ Python scraper → scraper/data/billboards.json → prisma/seed.ts → SQLite de
 
 **Never import `everyBillboard`/`allBillboards`/`scrapedBillboards` from `lib/data.ts` in API routes. Use `getAllBillboards()` from `lib/db/billboards.ts`.**
 
-`lib/data.ts` holds only TypeScript type definitions. The static billboard data inside it is not used by any API.
+Domain types + `typeLabels`/`typeIcons` live in `lib/types.ts` (data-free — safe to import anywhere). `lib/data.ts` holds the hand-written + scraped billboard arrays and a 4 MB `billboards.json` import; it is imported **only** by `prisma/seed.ts` at build time. Importing `lib/data.ts` from a client/page module ships the entire dataset into the browser bundle (this was a real ~6.7 MB regression, fixed 2026-09-01 by the `lib/types.ts` split).
 
 ---
 

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { Billboard } from "@/lib/data";
+import type { Billboard } from "@/lib/types";
 import type { AdminStats } from "@/lib/admin/types";
 import type { UserRole } from "@/lib/auth/session";
 import { C, TYPE_LABEL, TYPE_ICON, STATUS_LABEL, ROLE_LABEL, ROLE_COLOR } from "@/components/admin/constants";
