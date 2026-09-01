@@ -42,6 +42,10 @@
 /* ── Base ───────────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 
+/* Safety net: a single stray wide element must never scroll the whole page
+   sideways on a phone. `clip` (not `hidden`) keeps position: sticky working. */
+html, body { overflow-x: clip; max-width: 100%; }
+
 body {
   font-family: 'Vazirmatn', sans-serif;
   background: var(--bg-deep);

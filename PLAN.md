@@ -216,20 +216,22 @@ migration or touches product behaviour.
 - [x] Persist status-change audit — `persistAudit()` to the existing `audit_logs`
       table (no migration). `billboard_create/update/delete`, `reservation_status_change`.
       `/api/admin/audit` now returns `{ logs, persisted }`.
-- [ ] **Idempotency-Key** on `POST /api/reservations` and `POST /api/listings` +
-      a cheap `Reservation(billboardId,userId,startDate,endDate)` unique constraint.
-      **Needs one `prisma db push --accept-data-loss` on dev.db** — Prisma's AI guard
-      blocks the agent from running it without your explicit consent. It is a dev DB,
-      backed up (`backups/dev-20260901-084758.db`), and verified to have no duplicate
-      reservation rows, so there is no real data loss. Say the word and it goes in. ~2 h.
-- [ ] Structured request-log HOF wrapper (`withLogging`) for route handlers — the
-      logger exists; this wraps every route export to log method/path/status/duration.
-      Touches ~20 route files' export shape — real churn, low urgency. ~1 h.
-- [ ] Responsive spot-check (T3.3) at 360/390/768/1280 — needs a real browser; fix only
-      hard breaks (horizontal scroll, unreachable buttons). ~1.5 h.
-- [ ] README clean-machine `npm ci` walkthrough + a few screenshots (T2.7 remainder). ~1 h.
-- [ ] DB-backed audit **viewer** in the admin panel (read `persisted[]` from
-      `/api/admin/audit`, show a table). ~40 min.
+- [x] **Idempotency-Key** on `POST /api/reservations` and `POST /api/listings` +
+      `Reservation(billboardId,userId,startDate,endDate)` unique constraint. Migration
+      `20260901120500` hand-applied to dev.db (additive only; `prisma migrate dev`
+      wanted a full reset over pre-existing billboards-table drift). `lib/idempotency.ts`,
+      +2 tests. 27/27.
+- [x] Structured request-log HOF (`lib/api-log.ts` `withApiLog`) wired into the 4 hot
+      public GET routes (`/api/billboards`, `/billboards/[slug]`, `/billboards/pins`,
+      `/stats`) — logs route/method/path/status/ms. **Follow-up:** extend to the
+      remaining ~19 routes (mechanical, one export-shape change each).
+- [x] DB-backed audit **viewer** — AuditPanel has a پایدار/زنده toggle; the persisted
+      view renders `audit_logs` rows with their `details`.
+- [~] Responsive — added `html,body { overflow-x: clip }` safety net; the `@media 640`
+      block already collapses every multi-col grid; narrowed CompareModal's fixed column.
+      **Still needs a real-browser pass at 360/390/768/1280** — could not verify headless.
+- [ ] README clean-machine `npm ci` walkthrough + screenshots (T2.7 remainder) — README
+      prose is done; the `npm ci`-from-scratch run and screenshots are not. ~45 min.
 
 ### N3 — post-presentation polish (architectural shape is already fine)
 > Assessed 2026-09-01: PPR, streaming and `useOptimistic` are a poor fit for the
@@ -248,10 +250,12 @@ migration or touches product behaviour.
 - [ ] `@next/bundle-analyzer` pass. STATUS.md P9. · JSON-LD on detail pages. P10.
 - [ ] Bump `next` past `16.2.9` and clear the postcss/sharp `npm audit` advisories
       (`docs/security-audit.md`).
-- [ ] Lint debt — 36 pre-existing eslint errors (mostly `react-hooks/set-state-in-effect`
-      in admin panels). Mechanical but touches many components. ~1–2 h.
-- [ ] `/api-docs` page with Swagger UI (CDN) + a hand-kept `openapi.json` — Tadrisino
-      `drf-spectacular` analog. Mostly redundant with `docs/api.md`. ~1.5 h.
+- [x] Lint debt cleared — 63 problems → 10 (0 errors). Real fix in AnalyticsTab;
+      the rest were legit data-fetch / mount-hydration effects, scoped-disabled with a
+      reason. Remaining 10 are `@next/next/no-page-custom-font` (error/404 pages must
+      carry their own font link — no App Router fix) + 2 benign `exhaustive-deps`.
+- [x] `/api-docs` — self-hosted render of `docs/api.md` (no CDN, works offline). Done
+      in an earlier batch.
 
 ### Not bringing from Tadrisino (would be bloat here)
 - Internal-service-key / webhook-secret permission classes — no server-to-server

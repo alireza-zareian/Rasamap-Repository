@@ -49,7 +49,7 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
         </div>
 
         {/* Header row */}
-        <div style={{display:"grid",gridTemplateColumns:"180px 1fr 1fr",gap:0,padding:"14px 22px",borderBottom:"1px solid var(--border)"}}>
+        <div style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",gap:0,padding:"14px 22px",borderBottom:"1px solid var(--border)"}}>
           <div/>
           {[a,b].map(board=>(
             <div key={board.id} style={{textAlign:"center",padding:"0 8px"}}>
@@ -63,7 +63,7 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
         {/* Rows */}
         <div style={{padding:"8px 22px"}}>
           {rows.map(row=>(
-            <div key={row[0]} style={{display:"grid",gridTemplateColumns:"180px 1fr 1fr",borderBottom:"1px solid var(--border)",padding:"8px 0",alignItems:"center"}}>
+            <div key={row[0]} style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",borderBottom:"1px solid var(--border)",padding:"8px 0",alignItems:"center"}}>
               <div style={{fontSize:"0.75rem",color:"var(--text-muted)"}}>{row[0]}</div>
               {[a,b].map(board=>{
                 const isBetter = row[2] && better(row, board);
@@ -82,7 +82,7 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
         </div>
 
         {/* Footer */}
-        <div style={{display:"grid",gridTemplateColumns:"180px 1fr 1fr",gap:8,padding:"14px 22px",borderTop:"1px solid var(--border)"}}>
+        <div style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",gap:8,padding:"14px 22px",borderTop:"1px solid var(--border)"}}>
           <div/>
           {[a,b].map(board=>(
             <button key={board.id} onClick={()=>{onBook(board);onClose();}} disabled={board.status!=="available"} style={{background:board.status==="available"?"var(--accent)":"var(--border)",border:"none",color:board.status==="available"?"#fff":"var(--text-muted)",fontFamily:"inherit",fontSize:"0.8rem",fontWeight:700,padding:"9px 0",borderRadius:8,cursor:board.status==="available"?"pointer":"not-allowed"}}>
