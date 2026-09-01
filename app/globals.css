@@ -2,6 +2,10 @@
 
 /* ── Design Tokens ──────────────────────────────────────────────── */
 :root {
+  /* The app owns its theme via [data-theme]. Declaring color-scheme stops the
+     browser / OS "force dark" filter from re-colouring the page on top. */
+  color-scheme: dark;
+
   /* Backgrounds — slight transparency lets ambient glow bleed through */
   --bg-deep:    #080E1A;
   --bg-card:    rgba(13,22,40,0.88);
@@ -190,6 +194,7 @@ input[type=range] { accent-color: var(--accent); }
 
 /* ── Light theme ────────────────────────────────────────────────── */
 [data-theme="light"] {
+  color-scheme: light;
   --bg-deep:    #E8EDF8;
   --bg-card:    rgba(255,255,255,0.82);
   --bg-surface: rgba(240,245,255,0.90);
@@ -275,6 +280,21 @@ button, a, input, select, label,
   .dash-sidebar.sidebar-open { display: block; width: 100% !important; }
   /* Show hamburger button on tablet/mobile */
   .dash-hamburger { display: inline-flex !important; }
+
+  /* Topbar: too much content for a phone row — drop the nav tabs, the logo
+     sub-line and the "list media" CTA; tighten padding; icon-only logout. */
+  .topbar { padding: 0 12px !important; gap: 8px; }
+  .topbar-tabs { display: none !important; }
+  .topbar-sub { display: none !important; }
+  .topbar-list-cta { display: none !important; }
+  .topbar-logout-label { display: none !important; }
+
+  /* Explore hero: stack instead of side-by-side. Search on top, the auto-
+     rotating showcase drops below it (and off the wide left rail that a phone
+     can't see). Cap its height so it isn't a full-width square. */
+  .explore-hero { grid-template-columns: 1fr !important; }
+  .explore-hero > :first-child { border-left: none !important; }
+  .explore-hero-showcase { aspect-ratio: auto !important; height: 190px !important; border-top: 1px solid var(--border); }
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────── */

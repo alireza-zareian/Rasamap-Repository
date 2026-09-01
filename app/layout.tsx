@@ -6,11 +6,12 @@ import BackgroundPattern from "@/components/BackgroundPattern";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // The app ships its own light/dark themes (data-theme on <html>). Declaring
-  // color-scheme tells mobile browsers (Samsung Internet, Chrome) NOT to apply
-  // their own "force dark" filter on top — which was making the dark UI nearly
-  // unreadable on phones.
-  colorScheme: "dark light",
+  // The app ships its own light/dark themes (data-theme on <html>, plus
+  // color-scheme in globals.css). A single fixed value here tells mobile
+  // browsers (Samsung Internet, Chrome auto-dark) NOT to apply their own
+  // "force dark" filter — that was re-colouring the UI and making it
+  // unreadable when the phone's dark mode was on.
+  colorScheme: "dark",
 };
 
 export const metadata: Metadata = {

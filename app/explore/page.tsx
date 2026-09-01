@@ -235,7 +235,7 @@ export default function ExplorePage() {
       <main style={{ paddingTop: 62, flex: 1, display: "flex", flexDirection: "column" }}>
 
         {/* ── Hero: search (right) + live showcase (left) ──────── */}
-        <div style={{
+        <div className="explore-hero" style={{
           display: "grid",
           gridTemplateColumns: "1fr minmax(320px, 360px)",
           borderBottom: "1px solid var(--border)",
@@ -380,8 +380,8 @@ export default function ExplorePage() {
             )}
           </div>
 
-          {/* ── Left: live billboard showcase ───────────────────── */}
-          <div style={{ position: "relative", overflow: "hidden", aspectRatio: "1 / 1", alignSelf: "start", background: "var(--bg-card)" }}>
+          {/* ── Left: live billboard showcase (drops below search on mobile) ── */}
+          <div className="explore-hero-showcase" style={{ position: "relative", overflow: "hidden", aspectRatio: "1 / 1", alignSelf: "start", background: "var(--bg-card)" }}>
             {showcase.length > 0 ? (
               <>
                 {/* Image — key triggers fadeIn on each slide change */}

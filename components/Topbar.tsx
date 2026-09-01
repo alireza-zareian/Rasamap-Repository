@@ -28,18 +28,18 @@ export default function Topbar({ }: Props) {
   );
 
   return (
-    <header style={{ position: "fixed", top: 0, right: 0, left: 0, zIndex: 100, backdropFilter: "blur(16px)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 62, backgroundColor: dark ? "rgba(10,14,26,0.95)" : "rgba(240,242,248,0.97)" }}>
+    <header className="topbar" style={{ position: "fixed", top: 0, right: 0, left: 0, zIndex: 100, backdropFilter: "blur(16px)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 62, backgroundColor: dark ? "rgba(10,14,26,0.95)" : "rgba(240,242,248,0.97)" }}>
       {/* Logo */}
       <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--text-main)" }}>
         <div style={{ width: 36, height: 36, background: "var(--accent)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1.1rem", boxShadow: "0 0 12px rgba(59,123,245,0.4)" }}>R</div>
         <div>
           <div className="logo-shimmer" style={{ fontSize: "1.1rem", fontWeight: 800 }}>رسامپ</div>
-          <div style={{ fontSize: "0.6rem", color: "var(--text-muted)" }}>Rasamap.ir</div>
+          <div className="topbar-sub" style={{ fontSize: "0.6rem", color: "var(--text-muted)" }}>Rasamap.ir</div>
         </div>
       </Link>
 
       {/* Nav tabs */}
-      <nav style={{ display: "flex", gap: 4 }}>
+      <nav className="topbar-tabs" style={{ display: "flex", gap: 4 }}>
         {tabs.map(t => (
           <Link key={t.id} href={t.href} style={{
             fontFamily: "inherit", cursor: "pointer",
@@ -64,7 +64,7 @@ export default function Topbar({ }: Props) {
           display: "flex", alignItems: "center",
         }, toggle, dark ? <Sun size={16} /> : <Moon size={16} />)}
 
-        <Link href="/list-media" style={{ border: "1px solid var(--border)", background: "none", color: "var(--text-main)", fontSize: "0.8rem", padding: "7px 14px", borderRadius: 8, textDecoration: "none" }}>ثبت رسانه</Link>
+        <Link href="/list-media" className="topbar-list-cta" style={{ border: "1px solid var(--border)", background: "none", color: "var(--text-main)", fontSize: "0.8rem", padding: "7px 14px", borderRadius: 8, textDecoration: "none" }}>ثبت رسانه</Link>
 
         {user ? (
           <>
@@ -81,7 +81,7 @@ export default function Topbar({ }: Props) {
               border: "1px solid var(--border)", background: "none",
               color: "var(--text-muted)", fontSize: "0.78rem", padding: "6px 12px", borderRadius: 8,
               display: "flex", alignItems: "center", gap: 5,
-            }, logout, <><LogOut size={13} /> خروج</>)}
+            }, logout, <><LogOut size={13} /> <span className="topbar-logout-label">خروج</span></>)}
           </>
         ) : user === null ? (
           <Link href="/login" style={{ background: "var(--accent)", color: "#fff", fontSize: "0.8rem", fontWeight: 700, padding: "7px 16px", borderRadius: 8, textDecoration: "none", boxShadow: "0 2px 10px rgba(59,123,245,0.25)" }}>
