@@ -10,11 +10,11 @@ Read this file only when you need details on architecture, schema, auth, or phas
 app/
   page.tsx                        Landing page — "use client"
   explore/page.tsx                Browse/filter — "use client", fetches /api/billboards
-  explore/map/page.tsx            Leaflet map view
+  explore/map/page.tsx            redirect → /explore (map deferred; RealMap removed in cleanup)
   billboard/[slug]/page.tsx       Individual billboard detail — Server Component, generateMetadata
   dashboard/page.tsx              User dashboard — real data from /api/reservations/my
   login/page.tsx                  User login
-  list-media/page.tsx             Owner listing form — STUB (no API)
+  list-media/page.tsx             Owner listing wizard — POSTs to /api/listings (status "pending")
   admin/page.tsx                  Admin dashboard — "use client", uses /api/admin/*
   admin/login/page.tsx            Admin login
   api/
@@ -31,7 +31,7 @@ app/
     admin/billboards/route.ts     GET: admin billboard list (auth + rate-limit + Zod + DB)
     admin/billboards/[id]/route.ts PUT: update billboard (editor+) | DELETE: delete (admin+, checks active reservations)
     admin/billboards/stats/route.ts GET: aggregate stats
-    admin/audit/route.ts          GET: in-memory audit log (admin+ only)
+    admin/audit/route.ts          GET: { logs (in-memory), persisted (audit_logs table) } — admin+
 
 lib/
   types.ts                        Domain types (Billboard, BillboardStatus, ...) + typeLabels — data-free, import anywhere
@@ -39,7 +39,7 @@ lib/
   db/client.ts                    Prisma singleton (dev hot-reload safe)
   db/billboards.ts                getAllBillboards(), getById(), getBySlug(), createBillboard(), updateBillboard(), deleteBillboard(), hasActiveReservations()
   auth/session.ts                 JWT create/verify, cookie helpers: getSession(), getSessionFromRequest(), buildSessionCookieHeader(), buildLogoutCookieHeader()
-  auth/users.ts                   Admin user store (env vars) + hasPermission() RBAC
+  auth/users.ts                   Admin auth against the admins table + hasPermission() RBAC
   auth/audit.ts                   In-memory ring buffer 500 entries, auditLog()
   auth/rate-limit.ts              userLoginRateLimit, userApiRateLimit, adminApiRateLimit
   auth/useCurrentUser.ts          Client hook: { user, logout }
@@ -48,8 +48,7 @@ lib/
 
 components/
   BillboardCard.tsx Grid + list card modes, Link to /billboard/[slug]
-  DetailModal.tsx   Full details + image lightbox + BookingModal trigger
-  BookingModal.tsx  Multi-step booking wizard — STUB (no API call)
+  BookingModal.tsx  Multi-step booking wizard — POSTs to /api/reservations
   CompareBar/CompareModal  Side-by-side comparison
   TrafficMeter.tsx  Circular traffic score gauge
   Topbar.tsx        Fixed header with user auth state
@@ -84,7 +83,7 @@ Models: `Owner`, `User`, `Billboard`, `Reservation`, `Admin`, `AuditLog`
 Key decisions:
 - `Billboard.id`: `Int @id @default(autoincrement())` — explicit IDs can be inserted during seed
 - Arrays (`images`, `features`, `nearbyLandmarks`) and `TrafficData`: stored as `Json` — Prisma returns pre-parsed (no `JSON.parse` needed)
-- `Admin` and `AuditLog` tables exist but not yet used — Phase 8 will migrate in-memory stores
+- `Admin` table backs admin login; `AuditLog` (`audit_logs`) stores durable admin-action records (see persistAudit)
 
 Prisma 7 adapter pattern:
 ```ts
@@ -153,18 +152,17 @@ Never mix them.
 
 ---
 
-## What's Stubbed (UI exists, no API)
+## Stubs / deferred
 
-- **User list-media:** `app/list-media/page.tsx` — multi-step form, no POST call
-- **Booking flow:** `BookingModal.tsx` — wizard UI, no POST call
+- **Map:** `app/explore/map` redirects to `/explore`; the Leaflet component was removed in cleanup (restore from git if MAP-* work resumes).
 
 ---
 
 ## Known Issues
 
-- `dev.db` committed to repo — may contain real data
+- `dev.db` is git-ignored; demo data is `[DEMO]`-tagged and separate from real data
 - Rate limiter is in-memory: useless after restart or multi-instance
-- Admin user store is env-var based (single user until Phase 8)
+- Rate limiter + in-memory audit buffer reset on restart (durable audit rows persist)
 - No CSRF beyond `SameSite=Strict`
 - `script-src 'unsafe-inline' 'unsafe-eval'` in CSP (required by Leaflet CDN)
 - Scraper commits data directly to main branch — no image eviction policy

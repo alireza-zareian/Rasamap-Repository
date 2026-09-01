@@ -352,7 +352,44 @@ replaces error-prone manual checking. No Jest/Vitest, no foreign services.
 
 ---
 
-## 14. Demo dataset & self-hosted API reference
+## 14. Database engine — SQLite now, Postgres later, no rewrite
+
+**Decision.** SQLite via Prisma for the whole project; the migration path to
+Postgres is a config change, not a code change.
+
+**Context.** The data started as hardcoded arrays in `lib/data.ts` — fine for
+prototyping, wrong the moment the data became mutable (scraper, admin edits,
+reservations). A real store was needed. SQLite is a full ACID SQL engine that
+runs as a library on one file rather than as a separate server.
+
+**Structure it produces.** One file (`dev.db`), zero database ops, WAL mode for
+concurrent readers. Prisma owns the schema (`prisma/schema.prisma`), generates
+a type-safe client, and versions changes under `prisma/migrations/`. The entire
+app talks to the DB through `lib/db/billboards.ts` — no route calls `prisma`
+directly, no string-built SQL anywhere.
+
+**Why here.** The workload is read-heavy (a ~3.5k-row catalogue, filtered and
+paginated constantly), has one transactional write path (reservations, rare,
+serialised in a transaction), and runs as a single instance for a thesis demo.
+For that shape SQLite is the *correct* tool, not a compromise: fastest reads,
+nothing to install, a backup is a file copy. Consciously given up: truly
+concurrent writes (one writer at a time), multi-machine access, built-in
+replication — none of which this scale needs. First hard limit under write load
+is the single-writer lock on `POST /api/reservations`, named in
+`architecture.md`.
+
+**Migration path.** Because everything goes through Prisma + one `lib/db/`
+module, moving to Postgres is: change the `datasource` provider + connection
+string, run migrations — **no query rewrites**. That is the payoff for using an
+ORM. Real production (many concurrent writers, multiple app servers, managed
+backups) → Postgres, as a planned "later", not a gap.
+
+**Verified.** `npm test` runs the full suite against a real (isolated) SQLite
+DB; `npm run db:backup` + a recorded restore prove the recovery story.
+
+---
+
+## 15. Demo dataset & self-hosted API reference
 
 **Decision.** `npm run db:seed:demo:full` builds a broad, idempotent demo
 dataset; `/api-docs` renders the API reference in-app with no external
