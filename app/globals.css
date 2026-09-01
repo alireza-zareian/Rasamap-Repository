@@ -133,12 +133,17 @@ input[type=range] { accent-color: var(--accent); }
   animation: text-shimmer 5s linear infinite;
 }
 [data-theme="light"] .shimmer-heading {
-  /* Solid, not gradient-clipped: a phone browser's "force dark" filter can't
-     invert background-clip:text reliably and leaves it unreadable. */
-  background: none;
-  -webkit-text-fill-color: currentColor;
-  color: #101E3C;
-  animation: none;
+  background: linear-gradient(90deg,
+    rgba(16,30,60,1)   0%,
+    rgba(16,30,60,1)   35%,
+    rgba(74,144,255,1) 50%,
+    rgba(16,30,60,1)   65%,
+    rgba(16,30,60,1)   100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .logo-shimmer {
@@ -157,10 +162,17 @@ input[type=range] { accent-color: var(--accent); }
   animation: text-shimmer 6s linear infinite;
 }
 [data-theme="light"] .logo-shimmer {
-  background: none;
-  -webkit-text-fill-color: currentColor;
-  color: #101E3C;
-  animation: none;
+  background: linear-gradient(90deg,
+    rgba(16,30,60,1)   0%,
+    rgba(16,30,60,1)   30%,
+    rgba(74,144,255,1) 50%,
+    rgba(16,30,60,1)   70%,
+    rgba(16,30,60,1)   100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Fix text-shimmer keyframe to match skeleton pattern */
@@ -287,9 +299,16 @@ button, a, input, select, label,
   .explore-hero > :first-child { border-left: none !important; }
   .explore-hero-showcase { aspect-ratio: 4 / 3 !important; max-height: 260px; border-top: 1px solid var(--border); }
 
-  /* Billboard detail: the "1fr 440px" main grid can't fit a phone — stack it,
-     and stack the traffic meter above its stat chips. */
-  .detail-grid { grid-template-columns: 1fr !important; }
+  /* Billboard detail: the "1fr 440px" grid can't fit a phone. Stack it, and
+     reorder so it reads: header+gallery -> booking + map -> description ->
+     reviews. `display: contents` lets .detail-head / .detail-body reorder
+     against .detail-side even though they're nested inside .detail-main. */
+  .detail-grid { display: flex !important; flex-direction: column !important; }
+  .detail-main { display: contents; }
+  .detail-head { order: 1; }
+  .detail-side { order: 2; }
+  .detail-body { order: 3; }
+  .detail-sticky { position: static !important; }
   .detail-traffic { flex-direction: column !important; }
   .detail-traffic-meter { flex: none !important; width: 100% !important; }
 

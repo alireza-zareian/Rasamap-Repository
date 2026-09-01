@@ -27,9 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // data-theme is the SSR default; the ThemeProvider effect switches it to
     // "light" after mount if the user chose that. suppressHydrationWarning
     // covers that one intentional <html> attribute change.
-    <html lang="fa" dir="rtl" data-theme="dark" suppressHydrationWarning>
+    <html lang="fa" dir="rtl" data-theme="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="dark" />
+        <meta name="supported-color-schemes" content="dark" />
       </head>
       <body>
         <ThemeProvider>

@@ -65,7 +65,9 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
         <div className="detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 440px", gap: 24, alignItems: "start" }}>
 
           {/* Left column */}
-          <div>
+          <div className="detail-main">
+           {/* Head block — on mobile this stays first, above the booking card */}
+           <div className="detail-head">
             {/* Title row: name right (first in DOM = right in RTL), badges left (second = left) */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
               <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, lineHeight: 1.3, textAlign: "right" }}>{b.name}</h1>
@@ -96,6 +98,10 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               ))}
             </div>
 
+           </div>{/* end detail-head */}
+
+           {/* Body block — on mobile this drops below the booking card */}
+           <div className="detail-body">
             {/* Traffic */}
             {b.traffic && (
               <div style={{ marginTop: 20 }}>
@@ -165,12 +171,13 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
 
             {/* Reviews */}
             <ReviewsSection billboardId={b.id} />
+           </div>{/* end detail-body */}
           </div>
 
           {/* Right sidebar */}
-          <div>
+          <div className="detail-side">
             {/* Sticky pricing card — compact so map fits below on first load */}
-            <div style={{ position: "sticky", top: 24 }}>
+            <div className="detail-sticky" style={{ position: "sticky", top: 24 }}>
               <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "18px 20px" }}>
                 {/* Price + label on one line */}
                 <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 12, flexWrap: "wrap" }}>
