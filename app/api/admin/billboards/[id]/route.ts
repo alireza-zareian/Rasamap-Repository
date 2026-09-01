@@ -3,7 +3,13 @@ import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
+import { persistAudit } from "@/lib/auth/audit";
 import { getBillboardById, updateBillboard, deleteBillboard, hasActiveReservations } from "@/lib/db/billboards";
+
+function adminIdOf(session: Awaited<ReturnType<typeof getSession>>): number | null {
+  const n = Number.parseInt(session?.userId ?? "", 10);
+  return Number.isNaN(n) ? null : n;
+}
 
 const ALLOWED_TYPES    = new Set(["billboard", "digital", "bridge", "station", "vehicle"]);
 const ALLOWED_STATUSES = new Set(["available", "busy", "reserved", "inactive"]);
@@ -69,6 +75,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const updated = await updateBillboard(id, data);
   if (!updated) return NextResponse.json({ error: "خطا در بروزرسانی" }, { status: 500 });
 
+  await persistAudit({
+    action: "billboard_update",
+    adminId: adminIdOf(session),
+    userEmail: session!.email,
+    ip: getClientIp(req),
+    userAgent: req.headers.get("user-agent"),
+    details: { billboardId: id, changed: Object.keys(data) },
+  });
+
   return NextResponse.json({ billboard: updated }, { headers: { "Cache-Control": "no-store" } });
 }
 
@@ -96,6 +111,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const ok = await deleteBillboard(id);
   if (!ok) return NextResponse.json({ error: "خطا در حذف" }, { status: 500 });
+
+  await persistAudit({
+    action: "billboard_delete",
+    severity: "warn",
+    adminId: adminIdOf(session),
+    userEmail: session!.email,
+    ip: getClientIp(req),
+    userAgent: req.headers.get("user-agent"),
+    details: { billboardId: id, slug: existing.slug, name: existing.name },
+  });
 
   return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
 }

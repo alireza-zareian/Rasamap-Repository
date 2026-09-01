@@ -5,6 +5,7 @@ import { getAllBillboards, createBillboard } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
+import { persistAudit } from "@/lib/auth/audit";
 import { serverError } from "@/lib/api-error";
 import { z } from "zod";
 
@@ -141,6 +142,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const billboard = await createBillboard({ type, ...rest });
+    const adminId = Number.parseInt(session.userId, 10);
+    await persistAudit({
+      action: "billboard_create",
+      adminId: Number.isNaN(adminId) ? null : adminId,
+      userEmail: session.email,
+      ip: getClientIp(req),
+      userAgent: req.headers.get("user-agent"),
+      details: { billboardId: billboard.id, name: billboard.name, type: billboard.type },
+    });
     return NextResponse.json({ billboard }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     return serverError("POST /api/admin/billboards", err, { adminId: session.userId });

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
+import { persistAudit } from "@/lib/auth/audit";
 import { prisma } from "@/lib/db/client";
 
 const PatchSchema = z.object({
@@ -48,6 +49,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       billboard: { select: { name: true } },
       user:      { select: { name: true } },
     },
+  });
+
+  const adminId = Number.parseInt(session.userId, 10);
+  await persistAudit({
+    action: "reservation_status_change",
+    adminId: Number.isNaN(adminId) ? null : adminId,
+    userEmail: session.email,
+    ip: getClientIp(req),
+    userAgent: req.headers.get("user-agent"),
+    details: { reservationId: id, from: existing.status, to: parsed.data.status },
   });
 
   return NextResponse.json({ reservation: updated }, { headers: { "Cache-Control": "no-store" } });

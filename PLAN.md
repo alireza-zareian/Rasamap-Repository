@@ -173,6 +173,23 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
   `npm run lint` 36 errors (unchanged, −1 warning). Reviewed Tadrisino (internship
   Django repo) for transferable patterns — see the backlog below.
 
+- 2026-09-01 — Batch (backlog N1 + part of N2): `lib/env.ts` + `instrumentation.ts`
+  fail-closed env validation at startup; `lib/auth/client-ip.ts` `getClientIp()` with
+  `TRUSTED_PROXY_COUNT` (fixes X-Forwarded-For spoofing of rate-limit buckets) applied
+  across all 20 API routes; race-guard test widened to 10 concurrent → exactly one 201;
+  durable audit — `persistAudit()` writes `billboard_create/update/delete` and
+  `reservation_status_change` to the `audit_logs` table (already in the DB, no
+  migration), `/api/admin/audit` now returns `{ logs, persisted }`. Verified: tsc clean,
+  build OK, `npm test` 25/25, lint 63 (unchanged, 0 added). **Deferred, needs your OK:**
+  Idempotency-Key + `Reservation` slot unique constraint (needs one
+  `prisma db push --accept-data-loss` on dev.db — Prisma's AI guard blocks it without
+  explicit consent; dev DB, backed up, verified no duplicate rows so no real data loss).
+  **Assessed and skipped (not Iran — fit/risk):** PPR, streaming, `useOptimistic`,
+  `next/image`, request-log HOF wrapper — the app is client-component-heavy so PPR/
+  streaming barely apply; the booking flow correctly waits on server validation so
+  `useOptimistic` would add complexity for negative value; `next/image` is high blast
+  radius for marginal gain. The real wins (bundle split 7.7→1.0 MB, cache headers) are done.
+
 ## Next update — prioritized backlog (awaiting go-ahead)
 
 Merges patterns worth borrowing from Tadrisino with what is still open here. Nothing
@@ -180,40 +197,43 @@ below is started. Grouped by value-for-effort; each notes whether it needs a Pri
 migration or touches product behaviour.
 
 ### N1 — quick, safe, do first
-- [ ] `lib/env.ts` — validate required env (`AUTH_SECRET`, `ADMIN_*`, `DATABASE_URL`,
-      `NESHAN_*`) once at startup with Zod; throw a clear list of what's missing.
-      Fail-closed like Tadrisino's `settings.py`. ~30 min, no migration.
-- [ ] X-Forwarded-For trust fix in `lib/auth/rate-limit` callers — add
-      `TRUSTED_PROXY_COUNT` and take the Nth-from-last XFF entry so a client can't spoof
-      a fresh rate-limit bucket (Tadrisino `NUM_PROXIES`). Real security gap. ~30 min.
-- [ ] Tighten the reservation race test to N=10 concurrent identical POSTs asserting
-      exactly one 201 (Tadrisino barrier-style). ~15 min.
-- [ ] `docs/STATUS.md` P5–P10 — mark P4 done note, keep the rest as post-demo.
+- [x] `lib/env.ts` + `instrumentation.ts` — fail-closed env validation at startup.
+- [x] X-Forwarded-For trust fix — `lib/auth/client-ip.ts` `getClientIp()` +
+      `TRUSTED_PROXY_COUNT`, applied to all 20 API routes.
+- [x] Race test widened to 10 concurrent identical POSTs → exactly one 201.
 
 ### N2 — worth it, moderate effort
-- [ ] **Idempotency-Key** on `POST /api/reservations` and `POST /api/listings`:
-      accept an optional `Idempotency-Key` header; a small `IdempotencyKey` table
-      (`key` unique, `userId`, `endpoint`, `responseJson`, `createdAt`) returns the
-      stored response on replay; `try/catch` the unique-violation race. Cheap floor if
-      time is short: just a unique constraint on
-      `Reservation(billboardId, userId, startDate, endDate)`. **Needs migration.** ~2–3 h.
-- [ ] Persist status-change audit — reuse the existing unused `AuditLog` table. A
-      `logStatusChange({entity, entityId, from, to, actorId})` helper called from the
-      admin reservation-status route and billboard update/delete (Tadrisino `statuslog`).
-      **May need a light migration** (AuditLog fields). ~1 h.
-- [ ] Structured request-log wrapper for route handlers (method/path/status/duration/
-      userId, one line, never secrets) — the logger exists; this adds the per-request
-      summary Tadrisino's middleware produces. ~1 h.
+- [x] Persist status-change audit — `persistAudit()` to the existing `audit_logs`
+      table (no migration). `billboard_create/update/delete`, `reservation_status_change`.
+      `/api/admin/audit` now returns `{ logs, persisted }`.
+- [ ] **Idempotency-Key** on `POST /api/reservations` and `POST /api/listings` +
+      a cheap `Reservation(billboardId,userId,startDate,endDate)` unique constraint.
+      **Needs one `prisma db push --accept-data-loss` on dev.db** — Prisma's AI guard
+      blocks the agent from running it without your explicit consent. It is a dev DB,
+      backed up (`backups/dev-20260901-084758.db`), and verified to have no duplicate
+      reservation rows, so there is no real data loss. Say the word and it goes in. ~2 h.
+- [ ] Structured request-log HOF wrapper (`withLogging`) for route handlers — the
+      logger exists; this wraps every route export to log method/path/status/duration.
+      Touches ~20 route files' export shape — real churn, low urgency. ~1 h.
 - [ ] Responsive spot-check (T3.3) at 360/390/768/1280 — needs a real browser; fix only
       hard breaks (horizontal scroll, unreachable buttons). ~1.5 h.
 - [ ] README clean-machine `npm ci` walkthrough + a few screenshots (T2.7 remainder). ~1 h.
+- [ ] DB-backed audit **viewer** in the admin panel (read `persisted[]` from
+      `/api/admin/audit`, show a table). ~40 min.
 
 ### N3 — post-presentation polish (architectural shape is already fine)
+> Assessed 2026-09-01: PPR, streaming and `useOptimistic` are a poor fit for the
+> current codebase (landing / explore / dashboard are all `"use client"`, and the
+> booking flow must wait on server-side overlap validation — optimistic UI there would
+> add rollback complexity for no gain). `next/image` touches every card image for a
+> marginal payoff. Left here as deliberate, low-priority polish, not recommended before
+> the presentation.
 - [ ] `next/image` for scraped photos (`remotePatterns` + full visual test) — also
       clears the `sharp` audit advisory. STATUS.md P5.
-- [ ] Partial Prerendering on `/explore` (`experimental_ppr`) — experimental, test
-      carefully. STATUS.md P7.
-- [ ] `useOptimistic` / Server Action on the booking form. STATUS.md P8.
+- [ ] Partial Prerendering on `/explore` (`experimental_ppr`) — only worthwhile after a
+      Server-Component refactor of the page. STATUS.md P7.
+- [ ] `useOptimistic` / Server Action on the booking form — only if the flow is
+      reworked so the client can safely predict the outcome. STATUS.md P8.
 - [ ] More of the detail-page chrome as Server Components / streaming. STATUS.md P6.
 - [ ] `@next/bundle-analyzer` pass. STATUS.md P9. · JSON-LD on detail pages. P10.
 - [ ] Bump `next` past `16.2.9` and clear the postcss/sharp `npm audit` advisories

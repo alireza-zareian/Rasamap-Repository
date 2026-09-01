@@ -6,12 +6,17 @@
  * Production: pipe to a persistent store (DB table, CloudWatch, Datadog, etc.)
  */
 
+import { prisma } from "@/lib/db/client";
+import { logger } from "@/lib/logger";
+
 export type AuditAction =
   | "login_success"
   | "login_failure"
   | "logout"
+  | "billboard_create"
   | "billboard_update"
   | "billboard_delete"
+  | "reservation_status_change"
   | "scraper_trigger"
   | "geocode_trigger"
   | "admin_access"
@@ -62,4 +67,53 @@ export function auditLog(
 
 export function getRecentAuditLogs(limit = 100): AuditEntry[] {
   return [...LOG_BUFFER].reverse().slice(0, limit);
+}
+
+/**
+ * Persist a sensitive mutation to the `audit_logs` table so there is a durable
+ * "who did what, and when" record that survives a restart (the ring buffer
+ * above does not). Best-effort: a write failure is logged and swallowed — an
+ * audit-write must never break the operation it is recording.
+ */
+export async function persistAudit(entry: {
+  action: AuditAction;
+  severity?: AuditEntry["severity"];
+  adminId?: number | null;
+  userEmail?: string | null;
+  ip?: string | null;
+  userAgent?: string | null;
+  details?: Record<string, unknown>;
+}): Promise<void> {
+  // Mirror to the in-memory buffer + structured console line too.
+  auditLog(entry.action, entry.severity ?? "info", {
+    userId: entry.adminId != null ? String(entry.adminId) : undefined,
+    userEmail: entry.userEmail ?? undefined,
+    ip: entry.ip ?? undefined,
+    userAgent: entry.userAgent ?? undefined,
+    details: entry.details,
+  });
+
+  try {
+    // `adminId` is NOT written to the FK column: the admin identity comes from a
+    // JWT (env-based admin) and usually has no `admins` row, which would trip the
+    // foreign key. The numeric id is folded into `details.actorId` instead;
+    // `userEmail` carries "who".
+    const { adminId, ...restDetails } = { adminId: entry.adminId ?? null, ...(entry.details ?? {}) };
+    await prisma.auditLog.create({
+      data: {
+        action: entry.action,
+        severity: entry.severity ?? "info",
+        adminId: null,
+        userEmail: entry.userEmail ?? null,
+        ip: entry.ip ?? null,
+        userAgent: entry.userAgent ?? null,
+        details: { actorId: adminId, ...restDetails } as object,
+      },
+    });
+  } catch (err) {
+    logger.warn("persistAudit failed", {
+      action: entry.action,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }

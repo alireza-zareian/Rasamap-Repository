@@ -177,20 +177,23 @@ test("POST /api/reservations blocks an overlapping range with 409", async () => 
   assert.equal(overlapping.status, 409);
 });
 
-test("two identical reservation requests fired together create at most one row (race guard)", async () => {
+test("10 identical reservation requests fired together create exactly one row (race guard)", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
   // billboard 1 is active and has no reservation in this date window yet
   const payload = { billboardId: 1, startDate: futureDate(200), endDate: futureDate(210) };
 
-  const [a, b] = await Promise.all([
-    api("/api/reservations", { method: "POST", token, body: payload }),
-    api("/api/reservations", { method: "POST", token, body: payload }),
-  ]);
+  const results = await Promise.all(
+    Array.from({ length: 10 }, () =>
+      api("/api/reservations", { method: "POST", token, body: payload }),
+    ),
+  );
 
-  const created = [a, b].filter((r) => r.status === 201).length;
-  const rejected = [a, b].filter((r) => r.status === 409).length;
-  assert.equal(created, 1, `expected exactly one 201, got statuses ${a.status}/${b.status}`);
-  assert.equal(rejected, 1);
+  const created = results.filter((r) => r.status === 201).length;
+  const rejected = results.filter((r) => r.status === 409).length;
+  const other = results.filter((r) => r.status !== 201 && r.status !== 409);
+  assert.equal(created, 1, `expected exactly one 201, got ${results.map((r) => r.status).join(",")}`);
+  assert.equal(other.length, 0, `unexpected statuses: ${other.map((r) => r.status).join(",")}`);
+  assert.equal(rejected, 9);
 });
 
 // ── Object-level authorisation ───────────────────────────────────────
@@ -246,4 +249,23 @@ test("POST /api/admin/billboards with role 'viewer' is 403 (insufficient permiss
     body: { name: "Should Fail", location: "nowhere road", city: "تهران", type: "billboard", price: 1 },
   });
   assert.equal(status, 403);
+});
+
+test("an admin billboard create is written to the durable audit log", async () => {
+  const token = await mintSession({ role: "admin", userId: "1" });
+
+  const created = await api("/api/admin/billboards", {
+    method: "POST",
+    token,
+    body: { name: "Audit Fixture Board", location: "audit test road", city: "تهران", type: "billboard", price: 100 },
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.json));
+
+  const audit = await api("/api/admin/audit", { token });
+  assert.equal(audit.status, 200);
+  assert.ok(Array.isArray(audit.json.persisted), "response should carry a persisted[] array");
+  assert.ok(
+    audit.json.persisted.some((row) => row.action === "billboard_create"),
+    "a billboard_create row should be persisted",
+  );
 });

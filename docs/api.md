@@ -73,8 +73,8 @@ maintained by hand — update it when a route changes.
 | PUT | `/api/admin/billboards/[id]/images` | editor+ | Replace the image list for a billboard. |
 | GET | `/api/admin/billboards/stats` | admin | Aggregate counts by type / status / city for the admin dashboard. |
 | GET | `/api/admin/reservations` | admin | All reservations for the management panel. |
-| PATCH | `/api/admin/reservations/[id]` | admin | Update a reservation `status` (`confirmed` / `cancelled`). |
-| GET | `/api/admin/audit` | admin+ | In-memory audit log (last 500 entries). |
+| PATCH | `/api/admin/reservations/[id]` | admin | Update a reservation `status` (`confirmed` / `cancelled`). Writes a `reservation_status_change` row to the durable audit log. |
+| GET | `/api/admin/audit` | admin+ | Returns `{ logs, persisted }` — `logs` is the in-memory ring buffer (last 500), `persisted` is the durable `audit_logs` table (last 200, survives restart). Persisted actions: `billboard_create` / `billboard_update` / `billboard_delete` / `reservation_status_change`, each with actor email + IP + a `details` object. |
 
 ---
 
