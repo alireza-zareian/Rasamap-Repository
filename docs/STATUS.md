@@ -285,7 +285,7 @@ prisma/schema.prisma
 npm run dev              # localhost:3000
 npm run build            # باید بدون خطا پاس شود
 npm run lint
-npm test                 # سوییت API (node:test) — ۲۵ تست
+npm test                 # سوییت API (node:test) — ۳۷ تست
 npm run bench            # بنچمارک بار (سرور dev باید بالا باشد)
 npm run db:migrate
 npm run db:seed          # 3545 رکورد

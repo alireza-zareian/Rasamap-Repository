@@ -294,3 +294,119 @@ test("an admin billboard create is written to the durable audit log", async () =
     "a billboard_create row should be persisted",
   );
 });
+
+// ── Reviews ─────────────────────────────────────────────────────────
+
+test("GET /api/reviews returns reviews for a billboard", async () => {
+  const { status, json } = await api("/api/reviews?billboardId=3");
+  assert.equal(status, 200);
+  const arr = Array.isArray(json) ? json : json.reviews;
+  assert.ok(Array.isArray(arr));
+});
+
+test("POST /api/reviews without a session is 401", async () => {
+  const { status } = await api("/api/reviews", {
+    method: "POST",
+    body: { billboardId: 3, rating: 5, comment: "خوب بود" },
+  });
+  assert.equal(status, 401);
+});
+
+test("POST /api/reviews is 403 without a confirmed reservation for that billboard", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status } = await api("/api/reviews", {
+    method: "POST",
+    token,
+    body: { billboardId: 1, rating: 4, comment: "نظری ندارم واقعاً" },
+  });
+  assert.equal(status, 403);
+});
+
+test("POST /api/reviews succeeds when the user has a confirmed reservation", async () => {
+  // seed: user 1 has a confirmed reservation on billboard 3
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status, json } = await api("/api/reviews", {
+    method: "POST",
+    token,
+    body: { billboardId: 3, rating: 5, comment: "موقعیت عالی و پرتردد بود" },
+  });
+  assert.equal(status, 201, JSON.stringify(json));
+});
+
+// ── Analytics ───────────────────────────────────────────────────────
+
+test("GET /api/analytics returns a shape with topCities", async () => {
+  const { status, json } = await api("/api/analytics");
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(json.topCities));
+});
+
+test("GET /api/analytics?city=... is 200", async () => {
+  const { status } = await api("/api/analytics?city=" + encodeURIComponent("تهران"));
+  assert.equal(status, 200);
+});
+
+// ── Admin billboard mutations ───────────────────────────────────────
+
+test("PUT /api/admin/billboards/[id] with role 'viewer' is 403", async () => {
+  const token = await mintSession({ role: "viewer" });
+  const { status } = await api("/api/admin/billboards/2", {
+    method: "PUT",
+    token,
+    body: { price: 99999 },
+  });
+  assert.equal(status, 403);
+});
+
+test("PUT /api/admin/billboards/[id] with role 'admin' updates the row", async () => {
+  const token = await mintSession({ role: "admin" });
+  const { status, json } = await api("/api/admin/billboards/2", {
+    method: "PUT",
+    token,
+    body: { price: 13500 },
+  });
+  assert.equal(status, 200, JSON.stringify(json));
+  assert.equal(json.billboard?.price, 13500);
+});
+
+test("DELETE /api/admin/billboards/[id] with role 'editor' is 403 (needs admin+)", async () => {
+  const token = await mintSession({ role: "editor" });
+  const { status } = await api("/api/admin/billboards/2", { method: "DELETE", token });
+  assert.equal(status, 403);
+});
+
+// ── Admin reservation status + audit ────────────────────────────────
+
+test("PATCH /api/admin/reservations/[id]: confirm then cancel, then 409 on a cancelled row", async () => {
+  const userToken = await mintSession({ userId: "2", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  const booked = await api("/api/reservations", {
+    method: "POST",
+    token: userToken,
+    body: { billboardId: 2, startDate: futureDate(500), endDate: futureDate(510) },
+  });
+  assert.equal(booked.status, 201, JSON.stringify(booked.json));
+  const id = booked.json.reservation.id;
+
+  const confirm = await api(`/api/admin/reservations/${id}`, {
+    method: "PATCH", token: adminToken, body: { status: "confirmed" },
+  });
+  assert.equal(confirm.status, 200);
+
+  const cancel = await api(`/api/admin/reservations/${id}`, {
+    method: "PATCH", token: adminToken, body: { status: "cancelled" },
+  });
+  assert.equal(cancel.status, 200);
+
+  const again = await api(`/api/admin/reservations/${id}`, {
+    method: "PATCH", token: adminToken, body: { status: "confirmed" },
+  });
+  assert.equal(again.status, 409);
+
+  const audit = await api("/api/admin/audit", { token: adminToken });
+  assert.ok(
+    audit.json.persisted.some((r) => r.action === "reservation_status_change"),
+    "a reservation_status_change row should be persisted",
+  );
+});

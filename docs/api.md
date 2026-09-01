@@ -96,4 +96,6 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 `test/api.test.mjs` (`npm test`) exercises the public billboards routes,
 register/login (validation, rate limit, no enumeration), reservations
 (validation + overlap + concurrent-double-submit race guard), object-level
-authorisation on `/api/reservations/my`, and the admin route's RBAC. 22 tests.
+authorisation on `/api/reservations/my`, admin RBAC (billboard + reservation
+mutations), reviews (the confirmed-reservation gate), analytics, the
+Idempotency-Key path and the durable audit. 37 tests.

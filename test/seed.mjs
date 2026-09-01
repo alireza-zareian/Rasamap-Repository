@@ -76,7 +76,17 @@ async function main() {
   await prisma.user.create({ data: { id: 1, name: "Ali Tester", phone: "09120000000", passwordHash } });
   await prisma.user.create({ data: { id: 2, name: "Sara Tester", phone: "09120000002", passwordHash } });
 
-  console.log("seeded: 3 billboards, 2 users (password 'secret123')");
+  // A past, confirmed reservation for user 1 on billboard 3 — lets the review
+  // tests exercise the "must have a confirmed reservation" gate. Past dates so
+  // it never collides with the future ranges the reservation tests create.
+  await prisma.reservation.create({
+    data: {
+      id: 1, userId: 1, billboardId: 3, status: "confirmed",
+      startDate: new Date("2020-01-01"), endDate: new Date("2020-02-01"),
+    },
+  });
+
+  console.log("seeded: 3 billboards, 2 users (password 'secret123'), 1 confirmed reservation");
   await prisma.$disconnect();
 }
 

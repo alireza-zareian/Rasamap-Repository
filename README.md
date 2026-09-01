@@ -192,7 +192,7 @@ npm run dev                    # http://localhost:3000
 npm run dev                 # سرورِ توسعه
 npm run build               # باید بدونِ خطا پاس شود
 npm run lint
-npm test                    # سوییتِ آزمونِ API — ۲۵ آزمون
+npm test                    # سوییتِ آزمونِ API — ۳۷ آزمون
 npm run bench               # سنجشِ بار (سرورِ توسعه باید بالا باشد)
 
 npx prisma migrate deploy   # اعمالِ مهاجرت‌ها
