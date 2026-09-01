@@ -56,6 +56,8 @@ export function ReservationsPanel({ userRole }: Props) {
     setLoading(false);
   }, [filter, page]);
 
+  // Data-fetch effect: load() sets loading/error state, which is expected here.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   async function updateStatus(id: number, status: "confirmed" | "cancelled") {

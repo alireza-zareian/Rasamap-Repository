@@ -13,11 +13,15 @@ export default function ComparePage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    // Mount-only hydration from localStorage — a browser-only source that
+    // cannot be read during SSR render, so a setState-in-effect is correct here.
+    /* eslint-disable react-hooks/set-state-in-effect */
     try {
       const saved = localStorage.getItem("rasamap_compare");
       if (saved) setCompareList(JSON.parse(saved));
     } catch {}
     setLoaded(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const remove = (id: number) => {

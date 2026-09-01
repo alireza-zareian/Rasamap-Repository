@@ -47,12 +47,16 @@ export default function AnalyticsTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    // No synchronous setLoading(true) here: `loading` starts true for the first
+    // fetch, and on a city change the previous data stays visible until the new
+    // response arrives (no flash to a spinner).
+    let active = true;
     const url = city ? `/api/analytics?city=${encodeURIComponent(city)}` : "/api/analytics";
     fetch(url)
       .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then(d => { if (active) { setData(d); setLoading(false); } })
+      .catch(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [city]);
 
   if (loading || !data) {

@@ -71,6 +71,8 @@ export default function AdminDashboard() {
     setLoading(false);
   }, [user, search, filterType, filterStatus, page, sort]);
 
+  // Data-fetch effect: loadBillboards() sets loading/list state, as expected.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (tab === "billboards") loadBillboards(); }, [tab, loadBillboards]);
 
   useEffect(() => {

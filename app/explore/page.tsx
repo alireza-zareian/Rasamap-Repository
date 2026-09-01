@@ -7,7 +7,6 @@ import { provinces, getProvince } from "@/lib/iranLocations";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import BillboardCard from "@/components/BillboardCard";
-import DetailModal from "@/components/DetailModal";
 import BookingModal from "@/components/BookingModal";
 import CompareModal from "@/components/CompareModal";
 import CompareBar from "@/components/CompareBar";
@@ -89,7 +88,6 @@ export default function ExplorePage() {
   const [page, setPage] = useState(1);
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState(false);
-  const [selectedBillboard, setSelectedBillboard] = useState<Billboard | null>(null);
   const [bookingTarget, setBookingTarget] = useState<Billboard | null>(null);
   const [compareList, setCompareList] = useState<Billboard[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
@@ -145,9 +143,13 @@ export default function ExplorePage() {
       }
     }
 
+    // Mount-only hydration from the URL query + saved filters (browser-only
+    // sources, not available during SSR render).
+    /* eslint-disable react-hooks/set-state-in-effect */
     setFilters(merged);
     setFiltersLoaded(true);
     setMounted(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   // Persist compareList to localStorage so /compare page can read it
@@ -172,11 +174,12 @@ export default function ExplorePage() {
     }
   }, []);
 
-  // Fetch when filtersLoaded (initial) or page changes
+  // Fetch when filtersLoaded (initial) or page changes. fetchBillboards sets
+  // loading/error state — expected for a data-fetch effect.
   useEffect(() => {
     if (!filtersLoaded) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     fetchBillboards(filters, page);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersLoaded, page]);
 
   // Save filters + debounced fetch when filters change
@@ -221,14 +224,7 @@ export default function ExplorePage() {
   }, [showToast]);
 
   const handleBook = useCallback((b: Billboard) => {
-    setSelectedBillboard(null);
     setBookingTarget(b);
-  }, []);
-
-  const handleViewOnMap = useCallback((b: Billboard) => {
-    if (b.lat && b.lng) {
-      window.open(`https://www.google.com/maps?q=${b.lat},${b.lng}`, "_blank", "noopener");
-    }
   }, []);
 
   return (
@@ -525,12 +521,7 @@ export default function ExplorePage() {
                   billboard={b}
                   isSelected={false}
                   isCompared={compareList.some(x => x.id === b.id)}
-                  onSelect={() => {}}
                   onCompare={() => handleCompare(b)}
-                  onBook={() => handleBook(b)}
-                  onOpenDetails={() => setSelectedBillboard(b)}
-                  onViewMap={() => handleViewOnMap(b)}
-                  hasCoords={!!(b.lat && b.lng)}
                   listMode={viewMode === "list"}
                 />
               ))}
@@ -563,15 +554,6 @@ export default function ExplorePage() {
       </main>
 
       {/* Modals */}
-      {selectedBillboard && (
-        <DetailModal
-          billboard={selectedBillboard}
-          onClose={() => setSelectedBillboard(null)}
-          onBook={() => { if (selectedBillboard) handleBook(selectedBillboard); }}
-          onCompare={() => handleCompare(selectedBillboard)}
-          isCompared={compareList.some(b => b.id === selectedBillboard.id)}
-        />
-      )}
       {bookingTarget && (
         <BookingModal
           billboard={bookingTarget}
