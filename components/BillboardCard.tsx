@@ -55,19 +55,20 @@ interface BillboardCardProps {
   billboard: Billboard;
   isSelected: boolean;
   isCompared: boolean;
-  onSelect: () => void;
   onCompare: () => void;
-  onBook: () => void;
-  onOpenDetails: () => void;
+  listMode?: boolean;
+  // The card navigates via <Link href="/billboard/[slug]">. These callbacks are
+  // still accepted for call-site compatibility but the card no longer uses them;
+  // see PLAN.md ("explore DetailModal / BillboardCard callbacks").
+  onSelect?: () => void;
+  onBook?: () => void;
+  onOpenDetails?: () => void;
   onViewMap?: () => void;
   hasCoords?: boolean;
-  listMode?: boolean;
 }
 
 export default function BillboardCard({
-  billboard: b, isSelected, isCompared,
-  onSelect, onCompare, onBook, onOpenDetails,
-  onViewMap, hasCoords = false, listMode = false,
+  billboard: b, isSelected, isCompared, onCompare, listMode = false,
 }: BillboardCardProps) {
   const { theme } = useTheme();
   const dark = theme === "dark";

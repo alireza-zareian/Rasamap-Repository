@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Billboard } from "@/lib/types";
 import type { AdminStats } from "@/lib/admin/types";
@@ -130,7 +131,7 @@ export default function AdminDashboard() {
       {/* Topbar */}
       <div style={{ background: C.card, borderBottom: `1px solid ${C.border}`, padding: "0 28px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <a href="/" style={{ textDecoration: "none", color: C.text, fontSize: "1.1rem", fontWeight: 800 }}>رسا<span style={{ color: C.accent }}>مپ</span></a>
+          <Link href="/" style={{ textDecoration: "none", color: C.text, fontSize: "1.1rem", fontWeight: 800 }}>رسا<span style={{ color: C.accent }}>مپ</span></Link>
           <div style={{ width: 1, height: 24, background: C.border }} />
           <span style={{ fontSize: "0.8rem", color: C.muted, fontWeight: 600 }}>پنل مدیریت</span>
         </div>
@@ -153,7 +154,7 @@ export default function AdminDashboard() {
               </button>
             ))}
             <div style={{ margin: "10px 8px 4px", borderTop: `1px solid ${C.border}`, paddingTop: 10 }}>
-              <a href="/explore" style={{ display: "block", textAlign: "right", padding: "8px 6px", fontSize: "0.78rem", color: C.muted, textDecoration: "none" }}>← بازگشت</a>
+              <Link href="/explore" style={{ display: "block", textAlign: "right", padding: "8px 6px", fontSize: "0.78rem", color: C.muted, textDecoration: "none" }}>← بازگشت</Link>
             </div>
           </div>
         </div>

@@ -19,7 +19,7 @@ Next.js 16.2.9 App Router · React 19 · TypeScript 5 strict · SQLite via Prism
 ## Non-Negotiable Rules
 
 1. Zod: always `.safeParse()`, never `.parse()`
-2. API routes: use `getAllBillboards()` from `lib/db/billboards.ts` — never import `everyBillboard`/`allBillboards`/`scrapedBillboards` from `lib/data.ts`. Import domain **types** and `typeLabels`/`typeIcons` from `lib/types.ts` (data-free). `lib/data.ts` holds the static/scraped dataset + 4 MB JSON and is imported **only** by `prisma/seed.ts` at build time — importing it from client/page code ships the whole dataset to the browser.
+2. API routes: use `getAllBillboards()` from `lib/db/billboards.ts` — never import `everyBillboard`/`allBillboards`/`scrapedBillboards` from `lib/data.ts`. Import domain **types** and `typeLabels` from `lib/types.ts` (data-free). `lib/data.ts` holds the static/scraped dataset + 4 MB JSON and is imported **only** by `prisma/seed.ts` at build time — importing it from client/page code ships the whole dataset to the browser.
 3. Prisma 7: explicit driver adapter required — see `lib/db/client.ts`
 4. No `JSON.parse(userInput)` — Zod handles parsing
 5. Sort/filter values: always check against allowlists before use in queries

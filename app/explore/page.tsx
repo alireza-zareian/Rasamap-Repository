@@ -1,7 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Search, X, LayoutGrid, List, MapPin, Map, SlidersHorizontal, Scale, ExternalLink, RotateCcw, Megaphone, Monitor, Milestone, Train } from "lucide-react";
+import { Search, X, LayoutGrid, List, MapPin, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import type { Billboard, BillboardType } from "@/lib/types";
 import { provinces, getProvince } from "@/lib/iranLocations";
@@ -78,7 +77,6 @@ function buildApiUrl(filters: Filters, page: number): string {
 
 // ── Main page ────────────────────────────────────────────────────
 export default function ExplorePage() {
-  const router = useRouter();
   const { theme } = useTheme();
   const dark = theme === "dark";
 
@@ -150,7 +148,7 @@ export default function ExplorePage() {
     setFilters(merged);
     setFiltersLoaded(true);
     setMounted(true);
-  }, []);// eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist compareList to localStorage so /compare page can read it
   useEffect(() => {

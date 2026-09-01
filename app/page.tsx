@@ -332,7 +332,7 @@ export default function LandingPage() {
               { name: "حسین موسوی", company: "شرکت داروسازی پارسیان", color: "#9B72F5", letter: "ح", text: "قیمت‌گذاری شفاف رسامپ باورنکردنیه. می‌دونیم دقیقاً چقدر باید بپردازیم — بدون مذاکره، بدون سورپرایز." },
             ].map(t => (
               <div key={t.name} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
-                <div style={{ fontSize: "1.8rem", color: `${t.color}60`, marginBottom: 14, lineHeight: 1 }}>"</div>
+                <div style={{ fontSize: "1.8rem", color: `${t.color}60`, marginBottom: 14, lineHeight: 1 }}>&ldquo;</div>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.9, marginBottom: 20, fontWeight: 300 }}>{t.text}</p>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${t.color}20`, border: `2px solid ${t.color}50`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1rem", color: t.color, flexShrink: 0 }}>{t.letter}</div>

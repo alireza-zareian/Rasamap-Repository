@@ -31,7 +31,7 @@
 - Scraper/geocoding: deferred — بعد از ارائه
 - SQLite: کافی است — تغییر DB ممنوع
 - Guest checkout نه — reservation نیاز به login دارد
-- Types و `typeLabels`/`typeIcons` از `lib/types.ts` (بدون دیتا). `lib/data.ts` فقط دیتاست استاتیک/scraped + JSON ۴MB است و **فقط** `prisma/seed.ts` آن را import می‌کند — import آن از کد کلاینت/صفحه کل دیتاست را وارد باندل مرورگر می‌کند
+- Types و `typeLabels` از `lib/types.ts` (بدون دیتا). `lib/data.ts` فقط دیتاست استاتیک/scraped + JSON ۴MB است و **فقط** `prisma/seed.ts` آن را import می‌کند — import آن از کد کلاینت/صفحه کل دیتاست را وارد باندل مرورگر می‌کند
 
 ---
 
@@ -203,7 +203,7 @@
 - [ ] **MAP-C** — لینک Google Maps در detail page — بررسی URL generation (lat/lng vs text query)
 - [ ] **MAP-D** — مقایسه provider‌ها برای ایران: CARTO (فعلی) vs Neshan vs OSM Nominatim
 
-**فایل‌های مرتبط:** `app/explore/map/page.tsx`, `components/RealMap.tsx`, `NESHAN_API_KEY` در env
+**فایل‌های مرتبط:** `app/explore/map/page.tsx` (فعلاً فقط redirect به `/explore`)، `NESHAN_API_KEY` در env. کامپوننت `RealMap.tsx`/`MapView.tsx` در پاکسازی حذف شد — در تاریخچه‌ی git است اگر کار نقشه از سر گرفته شود.
 
 ---
 

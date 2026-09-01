@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -160,7 +161,7 @@ function LoginForm() {
         </div>
 
         <div style={{ textAlign: "center", marginTop: 16 }}>
-          <a href="/" style={{ color: C.muted, fontSize: "0.78rem", textDecoration: "none" }}>← بازگشت به سایت</a>
+          <Link href="/" style={{ color: C.muted, fontSize: "0.78rem", textDecoration: "none" }}>← بازگشت به سایت</Link>
         </div>
       </div>
     </div>

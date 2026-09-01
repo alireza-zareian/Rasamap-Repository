@@ -16,7 +16,7 @@ Six hard rules. Follow them without exception on every task, every file, every P
 
 ```
 ✅  import { getAllBillboards, getFilteredBillboards } from "@/lib/db/billboards";
-✅  import type { Billboard } from "@/lib/types";   // types + typeLabels/typeIcons, data-free
+✅  import type { Billboard } from "@/lib/types";   // types + typeLabels, data-free
 ❌  import { everyBillboard, allBillboards, scrapedBillboards } from "@/lib/data";
 ```
 

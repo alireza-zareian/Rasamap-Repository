@@ -34,7 +34,7 @@ app/
     admin/audit/route.ts          GET: in-memory audit log (admin+ only)
 
 lib/
-  types.ts                        Domain types (Billboard, BillboardStatus, ...) + typeLabels/typeIcons — data-free, import anywhere
+  types.ts                        Domain types (Billboard, BillboardStatus, ...) + typeLabels — data-free, import anywhere
   data.ts                         Static + scraped billboard arrays + billboards.json (4 MB). Imported ONLY by prisma/seed.ts
   db/client.ts                    Prisma singleton (dev hot-reload safe)
   db/billboards.ts                getAllBillboards(), getById(), getBySlug(), createBillboard(), updateBillboard(), deleteBillboard(), hasActiveReservations()
@@ -47,9 +47,6 @@ lib/
   theme.tsx                       ThemeProvider + useTheme()
 
 components/
-  RealMap.tsx       Leaflet (CDN tiles, marker clustering)
-  MapView.tsx       Schematic pseudo-map (CSS grid pins, no Leaflet)
-  Sidebar.tsx       Filter panel (province→city cascade)
   BillboardCard.tsx Grid + list card modes, Link to /billboard/[slug]
   DetailModal.tsx   Full details + image lightbox + BookingModal trigger
   BookingModal.tsx  Multi-step booking wizard — STUB (no API call)
@@ -76,7 +73,7 @@ Python scraper → scraper/data/billboards.json → prisma/seed.ts → SQLite de
 
 **Never import `everyBillboard`/`allBillboards`/`scrapedBillboards` from `lib/data.ts` in API routes. Use `getAllBillboards()` from `lib/db/billboards.ts`.**
 
-Domain types + `typeLabels`/`typeIcons` live in `lib/types.ts` (data-free — safe to import anywhere). `lib/data.ts` holds the hand-written + scraped billboard arrays and a 4 MB `billboards.json` import; it is imported **only** by `prisma/seed.ts` at build time. Importing `lib/data.ts` from a client/page module ships the entire dataset into the browser bundle (this was a real ~6.7 MB regression, fixed 2026-09-01 by the `lib/types.ts` split).
+Domain types + `typeLabels` live in `lib/types.ts` (data-free — safe to import anywhere). `lib/data.ts` holds the hand-written + scraped billboard arrays and a 4 MB `billboards.json` import; it is imported **only** by `prisma/seed.ts` at build time. Importing `lib/data.ts` from a client/page module ships the entire dataset into the browser bundle (this was a real ~6.7 MB regression, fixed 2026-09-01 by the `lib/types.ts` split).
 
 ---
 
@@ -138,8 +135,8 @@ interface TrafficData {
 
 ## Coordinate Systems
 
-- `mapX` / `mapY`: percentage-based positions for schematic `MapView.tsx`
-- `lat` / `lng`: WGS-84 for Leaflet `RealMap.tsx` — optional, populated by Neshan geocoding
+- `mapX` / `mapY`: percentage-based positions (legacy — the schematic map component was removed)
+- `lat` / `lng`: WGS-84 — optional, populated by Neshan geocoding (the Leaflet map component was removed in cleanup; restore from git if map work resumes)
 
 Never mix them.
 

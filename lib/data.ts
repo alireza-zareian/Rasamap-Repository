@@ -11,7 +11,7 @@ import type { Billboard, TrafficData } from "./types";
 
 // Re-exported for backward compatibility with existing `@/lib/data` imports.
 export type { Billboard, BillboardType, BillboardStatus, SortOption, TrafficData } from "./types";
-export { typeLabels, typeIcons } from "./types";
+export { typeLabels } from "./types";
 
 // Traffic calculation helper
 function calcTraffic(dailyVehicles: number, congestion: number, pedestrian: number): TrafficData {
@@ -289,24 +289,6 @@ export const billboards: Billboard[] = [
     rating: 4.3, reviewCount: 14,
   },
 ];
-
-export const regionStats = [
-  { name: "صدر - همت", occupancy: 92, avgPrice: 300, count: 28 },
-  { name: "ولیعصر", occupancy: 87, avgPrice: 250, count: 22 },
-  { name: "شریعتی", occupancy: 78, avgPrice: 180, count: 18 },
-  { name: "آزادی", occupancy: 71, avgPrice: 155, count: 15 },
-  { name: "رسالت", occupancy: 65, avgPrice: 120, count: 20 },
-  { name: "چمران", occupancy: 88, avgPrice: 280, count: 12 },
-];
-
-export const marketKPIs = {
-  totalBoards: 387,
-  occupancyRate: 64,
-  dailyReach: "۱۲M",
-  avgPrice: 85,
-  monthlyGrowth: 8.4,
-  topCity: "تهران",
-};
 
 // ── Extra cities ────────────────────────────────────────────────
 export const extraBillboards: Billboard[] = [

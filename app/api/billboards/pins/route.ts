@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     const pins = rows.map(r => {
       let estimatedViews = 0;
       try {
-        const t = r.traffic as any;
+        const t = r.traffic as { estimatedViews?: number } | null;
         if (t && typeof t === "object") estimatedViews = t.estimatedViews ?? 0;
         else if (typeof r.traffic === "string") estimatedViews = JSON.parse(r.traffic)?.estimatedViews ?? 0;
       } catch { /* ignore malformed traffic JSON */ }

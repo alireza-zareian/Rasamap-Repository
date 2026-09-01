@@ -68,10 +68,3 @@ export const typeLabels: Record<BillboardType, string> = {
   vehicle: "وسیله نقلیه",
 };
 
-export const typeIcons: Record<BillboardType, string> = {
-  billboard: "🏙️",
-  digital: "📺",
-  bridge: "🌉",
-  station: "🚇",
-  vehicle: "🚌",
-};

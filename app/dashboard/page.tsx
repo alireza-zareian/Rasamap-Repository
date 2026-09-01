@@ -48,7 +48,6 @@ export default function Dashboard() {
   const [user, setUser] = useState<{ name: string; phone: string } | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loggingOut, setLoggingOut] = useState(false);
 
   // Profile edit state
   const [editName, setEditName]               = useState("");
@@ -73,12 +72,6 @@ export default function Dashboard() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [user]);
-
-  const handleLogout = async () => {
-    setLoggingOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
-  };
 
   const handleProfileSave = async () => {
     setProfileError(""); setProfileSuccess(""); setProfileSaving(true);
