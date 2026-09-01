@@ -190,6 +190,16 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
   `useOptimistic` would add complexity for negative value; `next/image` is high blast
   radius for marginal gain. The real wins (bundle split 7.7→1.0 MB, cache headers) are done.
 
+- 2026-09-01 — Batch: `docs/engineering-decisions.md` — the standing record of
+  which systems the project runs, what structure each produces, why, and where it
+  applies (the spine for later visual reports). `npm run db:seed:demo:full` —
+  idempotent demo dataset: 8 users (one per state), 4 admins (one per role), 3
+  owners + 4 pending listings, 13 reservations across all statuses, 3 reviews;
+  account sheet in `docs/demo-accounts.md`. `/api-docs` — self-hosted, no-CDN
+  in-app render of `docs/api.md` (traced into the prod build via `next.config.ts`).
+  Verified: tsc clean, build OK, `npm test` 25/25, lint 63 (unchanged), seed
+  idempotent, `/api-docs` 200 under `next start`.
+
 ## Next update — prioritized backlog (awaiting go-ahead)
 
 Merges patterns worth borrowing from Tadrisino with what is still open here. Nothing

@@ -17,6 +17,7 @@
     "db:seed": "prisma db seed",
     "db:seed:scraper": "tsx prisma/seed-scraper.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:seed:demo:full": "tsx prisma/seed-demo-full.ts",
     "db:dedupe": "tsx prisma/dedupe-billboards.ts",
     "db:reset-coords": "tsx prisma/reset-coordinates.ts",
     "db:export-unresolved": "tsx prisma/export-unresolved.ts",

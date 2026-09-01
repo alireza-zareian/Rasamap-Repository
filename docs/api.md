@@ -4,6 +4,9 @@ All routes are Next.js Route Handlers under `app/api/`. Inputs are validated wit
 Zod `.safeParse()`. User-facing error messages are in Persian. This document is
 maintained by hand — update it when a route changes.
 
+This file is also rendered in-app at **`/api-docs`** (self-hosted, no external
+CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accounts.md).
+
 **Auth levels**
 
 | Level | Meaning |

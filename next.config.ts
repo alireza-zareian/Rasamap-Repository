@@ -33,6 +33,11 @@ const nextConfig: NextConfig = {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
   productionBrowserSourceMaps: false,
+  // /api-docs renders docs/api.md at runtime — make sure the standalone/prod
+  // build ships that file (it lives outside app/ and public/).
+  outputFileTracingIncludes: {
+    "/api-docs": ["./docs/api.md"],
+  },
 };
 
 export default nextConfig;
