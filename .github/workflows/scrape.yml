@@ -1,0 +1,39 @@
+name: Auto-scrape billboards
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # every night at 1:00 UTC (04:30 Tehran time)
+  workflow_dispatch:        # lets you click "Run workflow" manually on GitHub too
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"          # cache pip downloads — saves ~20s on repeated runs
+
+      - name: Install scraper dependencies
+        # Playwright removed: it was imported but never called anywhere in the
+        # scraper code. Removing it saves ~3 min of 'playwright install' CI time
+        # on every nightly run with zero impact on scraping output.
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Run scraper
+        env:
+          NESHAN_API_KEY: ${{ secrets.NESHAN_API_KEY }}
+        run: |
+          cd scraper
+          # Pass 'a' twice (all sources, all media types) for non-interactive CI run
+          echo -e "a\na" | python scraper.py
+
+      - name: Commit new data + images if anything changed
+        run: |
+          git config user.name "rasamap-bot"
+          git config user.email "bot@rasamap.ir"
+          git add scraper/data public/images/scraped
+          git diff --cached --quiet || git commit -m "chore: nightly auto-scrape $(date +%Y-%m-%d)"
+          git push

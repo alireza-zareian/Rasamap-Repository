@@ -1,0 +1,190 @@
+// RASAMAP — Prisma Schema
+//
+// Notes on deliberate choices:
+// - Billboard.id: explicit Int PK so seeded numeric ids are preserved —
+//   RealMap.tsx, CompareBar, and detail routes depend on stable ids.
+// - Arrays (images, allImages, features, nearbyLandmarks) and TrafficData
+//   are stored as Json — SQLite has no native array type.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ── Owner ──────────────────────────────────────────────────────
+model Owner {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?
+  company   String?
+  createdAt DateTime @default(now())
+
+  billboards Billboard[]
+
+  @@map("owners")
+}
+
+// ── User ───────────────────────────────────────────────────────
+// Reservation requires a User — no guest checkout.
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  phone        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  reservations Reservation[]
+  reviews      Review[]
+
+  @@map("users")
+}
+
+// ── Admin ──────────────────────────────────────────────────────
+model Admin {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("viewer") // viewer | editor | admin | super_admin
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  auditLogs AuditLog[]
+
+  @@map("admins")
+}
+
+// ── Billboard ──────────────────────────────────────────────────
+// Field-for-field mirror of the Billboard interface in lib/data.ts.
+model Billboard {
+  id      Int     @id @default(autoincrement())
+  name    String
+  slug    String  @unique
+  location String
+  region   String
+  city     String
+  type     String // BillboardType: billboard | digital | bridge | station | vehicle
+  status   String // BillboardStatus: available | busy | reserved
+
+  width  Int
+  height Int
+  faces  Int
+  age    Int
+
+  price          Int
+  priceWeekly    Int
+  priceQuarterly Int
+  priceYearly    Int
+
+  // TrafficData object ({ daily, peakHour, congestionLevel, pedestrian, estimatedViews, viewabilityScore })
+  traffic Json
+
+  mapX Float
+  mapY Float
+  lat  Float?
+  lng  Float?
+
+  icon        String
+  hasImages   Boolean @default(false)
+  images      Json // string[]
+  allImages   Json? // string[] | null
+  agency      String
+  phone       String
+  description String
+  features         Json // string[]
+  nearbyLandmarks  Json // string[]
+  rating      Float
+  reviewCount Int
+
+  // Scraper-specific (optional — absent on static/legacy records)
+  url           String?
+  source        String?
+  structureCode String?
+  scrapedAt     String?
+
+  ownerId Int?
+  owner   Owner? @relation(fields: [ownerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+  reviews      Review[]
+
+  @@index([city])
+  @@index([type])
+  @@index([status])
+  @@index([price])
+  @@index([ownerId])
+  @@index([hasImages])
+  @@index([hasImages, price])
+  @@index([city, status])
+  @@index([city, type])
+  @@index([type, price])
+  @@map("billboards")
+}
+
+// ── Reservation ────────────────────────────────────────────────
+// Multiple reservations per billboard allowed — overlap prevented by
+// start/end date check in POST /api/reservations.
+model Reservation {
+  id          Int      @id @default(autoincrement())
+  billboardId Int
+  billboard   Billboard @relation(fields: [billboardId], references: [id])
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("pending") // pending | confirmed | cancelled
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([billboardId, startDate, endDate])
+  @@map("reservations")
+}
+
+// ── Review ─────────────────────────────────────────────────────
+// Only users with a confirmed reservation for this billboard may post.
+// One review per user per billboard (unique constraint).
+model Review {
+  id          Int       @id @default(autoincrement())
+  billboardId Int
+  billboard   Billboard @relation(fields: [billboardId], references: [id])
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+
+  rating  Int    // 1–5
+  comment String
+
+  createdAt DateTime @default(now())
+
+  @@unique([billboardId, userId])
+  @@index([billboardId])
+  @@map("reviews")
+}
+
+// ── AuditLog ───────────────────────────────────────────────────
+// In-memory ring buffer in lib/auth/audit.ts; DB table reserved for
+// future persistence.
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  action    String // AuditAction, e.g. login_success | billboard_update | ...
+  severity  String // info | warn | critical
+
+  adminId   Int?
+  admin     Admin?  @relation(fields: [adminId], references: [id])
+  userEmail String?
+  ip        String?
+  userAgent String?
+  details   Json?
+
+  @@index([adminId])
+  @@map("audit_logs")
+}

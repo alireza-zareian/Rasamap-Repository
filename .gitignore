@@ -1,0 +1,65 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# local database (never commit — may hold real data, large binary)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# project export archives
+project-ai.zip
+*.zip
+
+# scraped assets & raw dumps — large, third-party content, not part of the app source
+# (scraper/data/billboards.json is kept: lib/data.ts imports it and the build needs it)
+/public/images/scraped/
+/scraper/data/raw_latest.json
+/scraper/data/*.raw.json
+
+# logs
+/logs
+*.log
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+__pycache__/
+*.pyc

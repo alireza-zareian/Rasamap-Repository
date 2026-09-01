@@ -1,0 +1,493 @@
+<title>Rasamap Demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap">
+<style>
+:root {
+  --bg:      #0d1117;
+  --card:    #161b22;
+  --surface: #21262d;
+  --border:  #30363d;
+  --accent:  #ff4d00;
+  --green:   #22c55e;
+  --yellow:  #f59e0b;
+  --blue:    #38bdf8;
+  --purple:  #a78bfa;
+  --text:    #e6edf3;
+  --muted:   #8b949e;
+  --font:    'Vazirmatn', sans-serif;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:      #f6f8fa;
+    --card:    #ffffff;
+    --surface: #f0f3f6;
+    --border:  #d0d7de;
+    --text:    #1f2328;
+    --muted:   #656d76;
+  }
+}
+:root[data-theme="light"] {
+  --bg:      #f6f8fa;
+  --card:    #ffffff;
+  --surface: #f0f3f6;
+  --border:  #d0d7de;
+  --text:    #1f2328;
+  --muted:   #656d76;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  direction: rtl;
+  line-height: 1.6;
+  font-size: 14px;
+  padding: 0;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--card);
+  border-bottom: 2px solid var(--accent);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.logo { font-size: 1.25rem; font-weight: 800; }
+.logo span { color: var(--accent); }
+.header-meta { display: flex; gap: 16px; align-items: center; }
+.chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.chip-orange  { background: rgba(255,77,0,.15);   color: var(--accent); }
+.chip-green   { background: rgba(34,197,94,.12);  color: var(--green);  }
+.chip-blue    { background: rgba(56,189,248,.12); color: var(--blue);   }
+.chip-yellow  { background: rgba(245,158,11,.12); color: var(--yellow); }
+.chip-purple  { background: rgba(167,139,250,.12);color: var(--purple); }
+
+/* ── Layout ── */
+.main { max-width: 1200px; margin: 0 auto; padding: 20px 20px 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.card-full { grid-column: 1 / -1; }
+.card-head {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-body { padding: 16px 18px; }
+
+/* ── Credentials box ── */
+.creds {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  display: grid;
+  gap: 6px;
+}
+.cred-row { display: flex; justify-content: space-between; align-items: center; }
+.cred-label { color: var(--muted); }
+.cred-val { color: var(--green); font-weight: 700; letter-spacing: 0.02em; }
+
+/* ── Flow steps ── */
+.flow { display: flex; flex-direction: column; gap: 0; }
+.step {
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  cursor: pointer;
+  user-select: none;
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255,77,0,.12);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+.step.done .step-num { background: rgba(34,197,94,.15); color: var(--green); }
+.step-content { flex: 1; min-width: 0; }
+.step-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 3px; }
+.step-sub { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+.step-badge { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 5px; }
+
+/* ── Q&A ── */
+.qa { display: flex; flex-direction: column; gap: 12px; }
+.q-item { border-left: 3px solid transparent; padding-right: 0; }
+.q-item.arch  { border-color: var(--blue); }
+.q-item.sec   { border-color: var(--accent); }
+.q-item.tech  { border-color: var(--purple); }
+.q-item.biz   { border-color: var(--green); }
+.q-text { font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.a-text { font-size: 0.8rem; line-height: 1.65; }
+.a-text strong { color: var(--accent); }
+
+/* ── Phase table ── */
+.phase-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.phase-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.72rem;
+}
+.phase-card.done  { border-color: rgba(34,197,94,.4);  }
+.phase-card.next  { border-color: rgba(245,158,11,.4); }
+.phase-card.stub  { border-color: rgba(148,163,184,.3); }
+.phase-num { font-size: 0.65rem; color: var(--muted); margin-bottom: 4px; }
+.phase-name { font-weight: 700; font-size: 0.75rem; margin-bottom: 4px; }
+.phase-status { font-size: 0.65rem; font-weight: 700; }
+.phase-card.done  .phase-status { color: var(--green);  }
+.phase-card.next  .phase-status { color: var(--yellow); }
+.phase-card.stub  .phase-status { color: var(--muted);  }
+
+/* ── Stack table ── */
+.stack-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.stack-table th { color: var(--muted); font-weight: 600; text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 0.68rem; }
+.stack-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.stack-table tr:last-child td { border-bottom: none; }
+.layer { color: var(--muted); font-size: 0.7rem; }
+.tech-name { font-weight: 700; }
+.why { color: var(--muted); font-size: 0.72rem; line-height: 1.5; }
+
+/* ── Timer ── */
+.countdown {
+  background: rgba(255,77,0,.08);
+  border: 1px solid rgba(255,77,0,.25);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>
+
+<!-- Header -->
+<div class="header">
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="logo">رسا<span>مپ</span></div>
+    <div style="font-size:0.75rem;color:var(--muted);font-weight:600">راهنمای دمو — دفاع پایان‌نامه</div>
+  </div>
+  <div class="header-meta">
+    <div class="chip chip-green">۲۸۰۸ بیلبورد</div>
+    <div class="chip chip-blue">۸۷ شهر</div>
+    <div class="chip chip-orange">Next.js 16 · Prisma 7 · SQLite</div>
+    <div id="countdown" class="countdown">⏱ محاسبه...</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Demo flow -->
+  <div class="card">
+    <div class="card-head">🎬 مسیر دمو (کلیک = تیک)</div>
+    <div class="card-body">
+      <div class="flow" id="flow">
+
+        <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="1">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">صفحه اول — اولین نگاه</div>
+            <div class="step-sub">آمار واقعی: ۲۸۰۸ رسانه · ۸۷ شهر · چرخشی تایپ‌رایتر در هدر</div>
+            <div class="step-badge"><span class="chip chip-blue">localhost:3000/</span></div>
+          </div>
+        </div>
+
+        <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="2">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">جستجو و فیلتر — Explore</div>
+            <div class="step-sub">فیلتر شهر → نوع → بازه قیمت. مرتب‌سازی. نمای کارت/لیست. مقایسه دو بیلبورد</div>
+            <div class="step-badge"><span class="chip chip-blue">/explore</span><span class="chip chip-orange">مقایسه ← کلیک روی ⊕</span></div>
+          </div>
+        </div>
+
+        <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="3">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">نقشه واقعی — Leaflet</div>
+            <div class="step-sub">۲۰۰۱ پین با مختصات واقعی. Marker clustering. کلیک روی پین = دیتیل</div>
+            <div class="step-badge"><span class="chip chip-blue">/explore/map</span><span class="chip chip-green">زوم روی تهران</span></div>
+          </div>
+        </div>
+
+        <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="4">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">ثبت‌نام کاربر</div>
+            <div class="step-sub">نام · موبایل ۰۹xxx · پسورد. bcrypt cost=12. JWT در HttpOnly cookie</div>
+            <div class="step-badge"><span class="chip chip-blue">/login ← تب ثبت‌نام</span><span class="chip chip-yellow">یا کاربر دمو آماده ↓</span></div>
+          </div>
+        </div>
+
+        <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="5">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-title">رزرو بیلبورد</div>
+            <div class="step-sub">انتخاب بیلبورد ← دکمه «رزرو» ← انتخاب تاریخ + مدت ← ثبت. overlap check در سرور</div>
+            <div class="step-badge"><span class="chip chip-orange">POST /api/reservations</span><span class="chip chip-green">Zod validation</span></div>
+          </div>
+        </div>
+
+        <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="6">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <div class="step-title">داشبورد کاربر</div>
+            <div class="step-sub">رزروهای من با badge وضعیت (تأیید/انتظار/لغو). تب تنظیمات. خروج</div>
+            <div class="step-badge"><span class="chip chip-blue">/dashboard</span><span class="chip chip-green">GET /api/reservations/my</span></div>
+          </div>
+        </div>
+
+        <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="7">
+          <div class="step-num">7</div>
+          <div class="step-content">
+            <div class="step-title">پنل ادمین — ورود</div>
+            <div class="step-sub">bcrypt hash از env var. rate-limit: ۵ تلاش/۱۵دقیقه. JWT + cookie</div>
+            <div class="step-badge"><span class="chip chip-blue">/admin/login</span><span class="chip chip-orange">email از ADMIN_EMAIL</span></div>
+          </div>
+        </div>
+
+        <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="8">
+          <div class="step-num">8</div>
+          <div class="step-content">
+            <div class="step-title">پنل ادمین — آمار و مدیریت</div>
+            <div class="step-sub">نمای کلی: ۲۸۰۸ ردیف. ویرایش PUT + حذف DELETE. کنترل کیفیت. لاگ امنیتی</div>
+            <div class="step-badge"><span class="chip chip-blue">/admin</span><span class="chip chip-purple">RBAC: editor/admin/super_admin</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Q&A + credentials -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+
+    <!-- Credentials -->
+    <div class="card">
+      <div class="card-head">🔑 دسترسی‌های دمو</div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:0.7rem;color:var(--muted);font-weight:700;margin-bottom:2px">👤 کاربر عادی (پیش‌سید)</div>
+        <div class="creds">
+          <div class="cred-row"><span class="cred-label">موبایل</span><span class="cred-val">09123456789</span></div>
+          <div class="cred-row"><span class="cred-label">رمز عبور</span><span class="cred-val">demo1234</span></div>
+          <div class="cred-row"><span class="cred-label">رزروها</span><span class="cred-val" style="color:var(--blue)">۶ رزرو (تأیید/انتظار/لغو)</span></div>
+        </div>
+        <div style="font-size:0.7rem;color:var(--muted);font-weight:700;margin-top:4px;margin-bottom:2px">🛡 ادمین سیستم</div>
+        <div class="creds">
+          <div class="cred-row"><span class="cred-label">ایمیل</span><span class="cred-val">از .env.local</span></div>
+          <div class="cred-row"><span class="cred-label">آدرس</span><span class="cred-val">/admin/login</span></div>
+          <div class="cred-row"><span class="cred-label">نقش</span><span class="cred-val" style="color:var(--accent)">super_admin</span></div>
+        </div>
+        <div style="font-size:0.68rem;color:var(--muted);line-height:1.6;margin-top:4px">
+          ریست دمو: <code style="background:var(--surface);padding:2px 6px;border-radius:4px;font-size:11px">npm run db:seed:demo</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q&A -->
+    <div class="card" style="flex:1">
+      <div class="card-head">❓ سؤال‌های هیئت داوران</div>
+      <div class="card-body">
+        <div class="qa">
+
+          <div class="q-item arch">
+            <div class="q-text">چرا SQLite به‌جای PostgreSQL؟</div>
+            <div class="a-text">پروژه single-instance + thesis demo. SQLite با <strong>Prisma 7 driver adapter</strong> zero-latency query داره. پله‌بعدی: تغییر <code style="font-size:11px;background:var(--surface);padding:1px 5px;border-radius:3px">DATABASE_URL</code> کافیه.</div>
+          </div>
+
+          <div class="q-item sec">
+            <div class="q-text">امنیت چطوره؟ XSS؟ CSRF؟</div>
+            <div class="a-text"><strong>JWT در HttpOnly cookie</strong> — JS دسترسی نداره. <strong>SameSite=Strict</strong> جلوی CSRF رو می‌گیره. Zod روی همه ورودی‌ها. Rate-limit sliding-window. Generic error message در auth — no user enumeration.</div>
+          </div>
+
+          <div class="q-item tech">
+            <div class="q-text">چرا Next.js 16 / App Router؟</div>
+            <div class="a-text">Server Components + API Routes در یک repo. <strong>Proxy</strong> (middleware جدید) احراز هویت رو مرکزی می‌کنه. ISR برای صفحه‌های استاتیک.</div>
+          </div>
+
+          <div class="q-item arch">
+            <div class="q-text">داده‌ها از کجا میان؟</div>
+            <div class="a-text">Python scraper (bs4 + lxml) → <code style="font-size:11px;background:var(--surface);padding:1px 5px;border-radius:3px">billboards.json</code> → <strong>Prisma seed</strong> → SQLite. GitHub Actions شبانه اجرا می‌شه. Neshan API برای geocoding.</div>
+          </div>
+
+          <div class="q-item biz">
+            <div class="q-text">user auth چرا phone-based؟</div>
+            <div class="a-text">بازار ایران. موبایل unique identifier شناخته‌شده‌تر از email. OTP آینده: تنها فیلد schema تغییر می‌کنه.</div>
+          </div>
+
+          <div class="q-item sec">
+            <div class="q-text">overlap check چطور جلوی double-booking رو می‌گیره؟</div>
+            <div class="a-text"><strong>startDate &lt; other.endDate AND endDate &gt; other.startDate</strong> — overlap کامل interval. در DB با index روی <code style="font-size:11px;background:var(--surface);padding:1px 5px;border-radius:3px">[billboardId, startDate, endDate]</code>.</div>
+          </div>
+
+          <div class="q-item tech">
+            <div class="q-text">مقیاس‌پذیری؟</div>
+            <div class="a-text">Rate limiter و audit log الان in-memory — <strong>Phase 8</strong> migrate به DB. برای multi-instance: Redis. اما ۲۸۰۰+ billboard روی SQLite با sub-10ms query جواب می‌ده.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Phase roadmap -->
+  <div class="card card-full">
+    <div class="card-head">🗺 فازهای پروژه</div>
+    <div class="card-body">
+      <div class="phase-grid">
+        <div class="phase-card done">
+          <div class="phase-num">فاز ۱–۲</div>
+          <div class="phase-name">طراحی + ERD</div>
+          <div class="phase-status">✓ تکمیل</div>
+        </div>
+        <div class="phase-card done">
+          <div class="phase-num">فاز ۳</div>
+          <div class="phase-name">DB Schema · Prisma</div>
+          <div class="phase-status">✓ تکمیل</div>
+        </div>
+        <div class="phase-card done">
+          <div class="phase-num">فاز ۴</div>
+          <div class="phase-name">API عمومی + Scraper</div>
+          <div class="phase-status">✓ تکمیل</div>
+        </div>
+        <div class="phase-card done">
+          <div class="phase-num">فاز ۵</div>
+          <div class="phase-name">پنل ادمین + Auth</div>
+          <div class="phase-status">✓ تکمیل</div>
+        </div>
+        <div class="phase-card done">
+          <div class="phase-num">فاز ۶</div>
+          <div class="phase-name">Admin CRUD (PUT/DELETE)</div>
+          <div class="phase-status">✓ تکمیل</div>
+        </div>
+        <div class="phase-card done">
+          <div class="phase-num">فاز ۷a</div>
+          <div class="phase-name">User Auth · Register/Login</div>
+          <div class="phase-status">✓ تکمیل</div>
+        </div>
+        <div class="phase-card done">
+          <div class="phase-num">فاز ۷b</div>
+          <div class="phase-name">Reservation API + Dashboard</div>
+          <div class="phase-status">✓ تکمیل</div>
+        </div>
+        <div class="phase-card done">
+          <div class="phase-num">فاز ۸</div>
+          <div class="phase-name">QA · error.tsx · کامپوننت‌سازی</div>
+          <div class="phase-status">✓ تکمیل</div>
+        </div>
+        <div class="phase-card next">
+          <div class="phase-num">فاز ۹</div>
+          <div class="phase-name">Demo Prep · دمو سید</div>
+          <div class="phase-status">⟳ جاری</div>
+        </div>
+        <div class="phase-card stub">
+          <div class="phase-num">فاز ۱۰</div>
+          <div class="phase-name">Owner Accounts · OTP</div>
+          <div class="phase-status">آینده</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stack table -->
+  <div class="card card-full">
+    <div class="card-head">🛠 تکنولوژی‌ها — چرا این انتخاب؟</div>
+    <div class="card-body">
+      <div style="overflow-x:auto">
+        <table class="stack-table">
+          <thead>
+            <tr><th>لایه</th><th>انتخاب</th><th>دلیل انتخاب — آنچه در دفاع مهم است</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="layer">Framework</td>
+              <td class="tech-name">Next.js 16 · React 19 · App Router</td>
+              <td class="why">SSR + CSR + API routes یکجا. Server Components بار JS client رو کم می‌کنه. Proxy (middleware) احراز هویت مرکزی.</td>
+            </tr>
+            <tr>
+              <td class="layer">Database</td>
+              <td class="tech-name">SQLite · Prisma 7 · better-sqlite3</td>
+              <td class="why">Zero-latency برای single-server. Schema migration با Prisma. Driver adapter جدید Prisma 7 برای sync driver.</td>
+            </tr>
+            <tr>
+              <td class="layer">Auth</td>
+              <td class="tech-name">JWT · jose · bcrypt cost=12</td>
+              <td class="why">Stateless sessions. HttpOnly+SameSite=Strict ← XSS/CSRF safe. RBAC چهارسطحی. Timing-safe dummy hash.</td>
+            </tr>
+            <tr>
+              <td class="layer">Maps</td>
+              <td class="tech-name">Leaflet 1.9 · Neshan geocoding</td>
+              <td class="why">Open-source · CDN tiles · Marker clustering. Neshan API ایرانی برای geocode آدرس فارسی به lat/lng.</td>
+            </tr>
+            <tr>
+              <td class="layer">Validation</td>
+              <td class="tech-name">Zod · .safeParse()</td>
+              <td class="why">Type-safe schema validation روی همه API inputs. هرگز parse() نمی‌زنیم — کرش نمی‌کنه.</td>
+            </tr>
+            <tr>
+              <td class="layer">Scraper</td>
+              <td class="tech-name">Python 3 · bs4 · lxml · GitHub Actions</td>
+              <td class="why">جدا از Next.js process. ۴ worker concurrent. Nightly cron → commit JSON → seed → SQLite.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Countdown to presentation (2026-09-04)
+(function() {
+  const target = new Date("2026-09-04T09:00:00");
+  function update() {
+    const diff = target - Date.now();
+    if (diff <= 0) { document.getElementById("countdown").textContent = "🎓 روز دفاع!"; return; }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById("countdown").textContent =
+      `⏱ ${d} روز  ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  }
+  update();
+  setInterval(update, 1000);
+})();
+</script>

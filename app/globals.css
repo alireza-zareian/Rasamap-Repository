@@ -1,0 +1,279 @@
+@import "tailwindcss";
+
+/* ── Design Tokens ──────────────────────────────────────────────── */
+:root {
+  /* Backgrounds — slight transparency lets ambient glow bleed through */
+  --bg-deep:    #080E1A;
+  --bg-card:    rgba(13,22,40,0.88);
+  --bg-surface: rgba(21,32,53,0.86);
+  --bg-surf2:   rgba(26,39,64,0.84);
+
+  /* Accent — blue */
+  --accent:      #3B7BF5;
+  --accent-d:    #2A64D8;
+  --accent-warm: #F5A623;
+  --accent-glow: rgba(59,123,245,0.16);
+
+  /* Green */
+  --green-accent: #00D17A;
+  --green:  #22C55E;
+  --red:    #EF4444;
+  --purple: #9B72F5;
+
+  /* Text */
+  --text-main:  #D8E4F8;
+  --text-muted: #7A90B0;
+
+  /* Borders */
+  --border:    #1E2E48;
+  --border-hi: #2A3F60;
+
+  /* Shadows */
+  --shadow-sm:     0 2px 8px rgba(0,0,0,0.28);
+  --shadow-card:   0 4px 24px rgba(0,0,0,0.38);
+  --shadow-accent: 0 4px 20px rgba(59,123,245,0.30);
+
+  /* Background orbs (theme-aware) */
+  --orb-blue:  rgba(59,123,245,0.08);
+  --orb-green: rgba(0,209,122,0.055);
+  --scan-line: rgba(0,209,122,0.22);
+}
+
+/* ── Base ───────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Vazirmatn', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-main);
+  direction: rtl;
+  /* Subtle dot grid — visible in open areas */
+  background-image: radial-gradient(circle, rgba(59,123,245,0.065) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideUp  { from { transform:translateY(100%); } to { transform:translateY(0); } }
+@keyframes shimmer  { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Accent glow (now blue) */
+@keyframes pulse-glow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(59,123,245,0.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(59,123,245,0); }
+}
+
+/* Background orb drift */
+@keyframes orb-drift-1 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(70px,-50px) scale(1.06); }
+  66%     { transform: translate(-40px,60px) scale(0.96); }
+}
+@keyframes orb-drift-2 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  40%     { transform: translate(-90px,40px) scale(1.09); }
+  70%     { transform: translate(55px,-70px) scale(0.94); }
+}
+@keyframes orb-drift-3 {
+  0%,100% { transform: translate(0,0); }
+  50%     { transform: translate(60px,50px); }
+}
+
+@keyframes scan-drift {
+  0%   { transform: translateY(-5vh); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateY(105vh); opacity: 0; }
+}
+
+.fade-in   { animation: fadeIn  0.3s ease forwards; }
+.slide-up  { animation: slideUp 0.3s ease forwards; }
+.pulse-glow { animation: pulse-glow 2s infinite; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-surface) 25%, #1e2d44 50%, var(--bg-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+input[type=range] { accent-color: var(--accent); }
+
+/* ── Text shimmer — same proven pattern as .skeleton ────────────── */
+/* Dark mode base: #D8E4F8 (muted) → #fff (bright peak) → #D8E4F8   */
+/* Light mode base: #14223A (dark) → #4A90FF (blue peak) → #14223A  */
+
+.shimmer-heading {
+  display: inline;
+  background: linear-gradient(90deg,
+    rgba(170,192,235,1) 0%,
+    rgba(170,192,235,1) 35%,
+    rgba(255,255,255,1) 50%,
+    rgba(170,192,235,1) 65%,
+    rgba(170,192,235,1) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: text-shimmer 5s linear infinite;
+}
+[data-theme="light"] .shimmer-heading {
+  background: linear-gradient(90deg,
+    rgba(16,30,60,1)   0%,
+    rgba(16,30,60,1)   35%,
+    rgba(74,144,255,1) 50%,
+    rgba(16,30,60,1)   65%,
+    rgba(16,30,60,1)   100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo-shimmer {
+  display: inline-block;
+  background: linear-gradient(90deg,
+    rgba(170,192,235,1) 0%,
+    rgba(170,192,235,1) 30%,
+    rgba(255,255,255,1) 50%,
+    rgba(170,192,235,1) 70%,
+    rgba(170,192,235,1) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: text-shimmer 6s linear infinite;
+}
+[data-theme="light"] .logo-shimmer {
+  background: linear-gradient(90deg,
+    rgba(16,30,60,1)   0%,
+    rgba(16,30,60,1)   30%,
+    rgba(74,144,255,1) 50%,
+    rgba(16,30,60,1)   70%,
+    rgba(16,30,60,1)   100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Fix text-shimmer keyframe to match skeleton pattern */
+@keyframes text-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ── Background orbs — theme-aware via class ───────────────────── */
+.bg-orb-1 { background: radial-gradient(circle, rgba(59,123,245,0.24) 0%, transparent 62%); }
+.bg-orb-2 { background: radial-gradient(circle, rgba(0,209,122,0.18) 0%, transparent 62%); }
+.bg-orb-3 { background: radial-gradient(circle, rgba(59,123,245,0.13) 0%, transparent 62%); }
+.bg-orb-4 { background: radial-gradient(circle, rgba(220,80,180,0.16) 0%, transparent 62%); }
+
+[data-theme="light"] .bg-orb-1 { background: radial-gradient(circle, rgba(80,120,255,0.30) 0%, transparent 55%); }
+[data-theme="light"] .bg-orb-2 { background: radial-gradient(circle, rgba(0,180,100,0.22) 0%, transparent 55%); }
+[data-theme="light"] .bg-orb-3 { background: radial-gradient(circle, rgba(130,80,255,0.18) 0%, transparent 55%); }
+[data-theme="light"] .bg-orb-4 { background: radial-gradient(circle, rgba(220,80,180,0.22) 0%, transparent 55%); }
+
+/* ── Light theme ────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-deep:    #E8EDF8;
+  --bg-card:    rgba(255,255,255,0.82);
+  --bg-surface: rgba(240,245,255,0.90);
+  --bg-surf2:   rgba(232,240,255,0.88);
+
+  --accent-glow: rgba(59,123,245,0.12);
+
+  --text-main:  #14223A;
+  --text-muted: #5C7298;
+
+  --border:    #B0C4E4;
+  --border-hi: #8AACDC;
+
+  --shadow-sm:     0 2px 10px rgba(30,60,140,0.10);
+  --shadow-card:   0 4px 28px rgba(30,60,140,0.12);
+  --shadow-accent: 0 4px 18px rgba(59,123,245,0.25);
+
+  --orb-blue:  rgba(59,123,245,0.06);
+  --orb-green: rgba(0,209,122,0.05);
+  --scan-line: rgba(0,209,122,0.14);
+}
+
+/* Light mode body — colored gradient blobs baked into background */
+[data-theme="light"] body {
+  background-color: #E8EDF8;
+  background-image:
+    radial-gradient(ellipse 70% 55% at 12% 12%,  rgba(99,130,255,0.18)  0%, transparent 100%),
+    radial-gradient(ellipse 55% 45% at 88% 88%,  rgba(0,195,115,0.12)   0%, transparent 100%),
+    radial-gradient(ellipse 45% 50% at 65% 38%,  rgba(160,100,255,0.08) 0%, transparent 100%),
+    radial-gradient(circle, rgba(59,123,245,0.07) 1px, transparent 1px);
+  background-size: auto, auto, auto, 28px 28px;
+}
+
+/* Light mode cards — subtle blue-tinted shadow for depth */
+[data-theme="light"] [style*="var(--bg-card)"],
+[data-theme="light"] [style*="--bg-card"] {
+  box-shadow: 0 2px 16px rgba(30,70,180,0.08), 0 1px 4px rgba(30,70,180,0.06);
+}
+[data-theme="light"] .leaflet-container { background: #e8eef8 !important; }
+
+/* ── Smooth theme transition — targeted only, never on * (kills scroll perf) ── */
+button, a, input, select, label,
+[role="button"], [role="tab"],
+.chip, .phase-card, .day {
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+              color 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
+}
+
+/* ── Responsive helpers ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .landing-nav { display: none !important; }
+  .landing-cta-label { display: none; }
+
+  /* Footer: single column on mobile */
+  .footer-grid { grid-template-columns: 1fr !important; gap: 28px !important; }
+
+  /* About stats: single column */
+  .about-stats-grid { grid-template-columns: 1fr !important; }
+
+  /* Landing stats: 2 columns on mobile */
+  .stats-bar-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
+
+  /* Landing testimonials: single column */
+  .testimonials-grid { grid-template-columns: 1fr !important; }
+
+  /* Landing types grid: single column */
+  .types-grid { grid-template-columns: 1fr !important; }
+
+  /* How-it-works: single column */
+  .how-grid { grid-template-columns: 1fr !important; }
+
+  /* BillboardCard action buttons: taller tap target */
+  .card-action-btn { min-height: 44px !important; }
+
+  /* Dashboard sidebar: hidden by default, shown via .sidebar-open */
+  .dash-sidebar { display: none !important; }
+  .dash-sidebar.sidebar-open { display: block !important; }
+}
+
+@media (max-width: 768px) {
+  /* Dashboard sidebar hidden below tablet */
+  .dash-sidebar { display: none; }
+  .dash-sidebar.sidebar-open { display: block; width: 100% !important; }
+  /* Show hamburger button on tablet/mobile */
+  .dash-hamburger { display: inline-flex !important; }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .bg-orb, .bg-scan { animation: none !important; }
+}

@@ -1,0 +1,51 @@
+import type { Billboard } from "@/lib/data";
+import { C } from "./constants";
+import { Badge } from "./Badge";
+
+export function QualityPanel({ billboards }: { billboards: Billboard[] }) {
+  const warnings: { id: number | string; name: string; issues: string[]; sev: "high" | "medium" | "low" }[] = [];
+  for (const b of billboards) {
+    const issues: string[] = [];
+    if (!b.lat || !b.lng) issues.push("مختصات ندارد");
+    if (!b.images || b.images.length === 0) issues.push("تصویر ندارد");
+    if (!b.location || b.location.length < 5) issues.push("آدرس ناقص");
+    if (b.price < 1) issues.push("قیمت نامعتبر");
+    if (b.lat && (b.lat < 24 || b.lat > 40)) issues.push("مختصات خارج ایران");
+    if (b.lng && (b.lng < 44 || b.lng > 64)) issues.push("طول خارج ایران");
+    if (issues.length > 0) warnings.push({ id: b.id, name: b.name, issues, sev: issues.length >= 3 ? "high" : issues.length >= 2 ? "medium" : "low" });
+  }
+  const sevC: Record<string, string>  = { high: "#ef4444", medium: "#f59e0b", low: C.muted };
+  const sevBg: Record<string, string> = { high: "rgba(239,68,68,0.1)", medium: "rgba(245,158,11,0.1)", low: C.surface };
+  const sorted = [...warnings].sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.sev] - { high: 0, medium: 1, low: 2 }[b.sev]));
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ fontSize: "0.9rem", fontWeight: 700 }}>🔍 کنترل کیفیت</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {warnings.filter(w => w.sev === "high").length > 0 && <Badge text={`${warnings.filter(w => w.sev === "high").length} بحرانی`} color="#ef4444" bg="rgba(239,68,68,0.1)" />}
+          <Badge text={`${warnings.length} مورد`} color={warnings.length > 0 ? "#f59e0b" : C.green} bg={warnings.length > 0 ? "rgba(245,158,11,0.1)" : "rgba(34,197,94,0.1)"} />
+        </div>
+      </div>
+      {warnings.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "40px 0", color: C.muted }}>✅ هیچ مشکلی یافت نشد</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {sorted.slice(0, 100).map(w => (
+            <div key={w.id} style={{ background: sevBg[w.sev], border: `1px solid ${sevC[w.sev]}30`, borderRadius: 10, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 6 }}>{w.name.slice(0, 70)}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{w.issues.map(issue => <Badge key={issue} text={issue} color={sevC[w.sev]} bg={sevBg[w.sev]} />)}</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                <div style={{ fontSize: "0.7rem", color: C.muted }}>#{w.id}</div>
+                <Badge text={w.sev === "high" ? "بحرانی" : w.sev === "medium" ? "متوسط" : "کم"} color={sevC[w.sev]} bg={sevBg[w.sev]} />
+              </div>
+            </div>
+          ))}
+          {warnings.length > 100 && <div style={{ textAlign: "center", color: C.muted, fontSize: "0.78rem", padding: 10 }}>و {warnings.length - 100} مورد دیگر...</div>}
+        </div>
+      )}
+    </div>
+  );
+}

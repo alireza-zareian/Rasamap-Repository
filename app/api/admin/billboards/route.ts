@@ -1,0 +1,150 @@
+import { NextRequest, NextResponse } from "next/server";
+import type { Billboard } from "@/lib/data";
+import { getAllBillboards, createBillboard } from "@/lib/db/billboards";
+import { getSession } from "@/lib/auth/session";
+import { adminApiRateLimit } from "@/lib/auth/rate-limit";
+import { hasPermission } from "@/lib/auth/users";
+import { z } from "zod";
+
+const ALLOWED_SORT_KEYS = new Set(["id", "price", "name", "city"]);
+const ALLOWED_SORT_DIRS = new Set(["asc", "desc"]);
+const ALLOWED_TYPES     = new Set(["billboard", "digital", "bridge", "station", "vehicle", ""]);
+const ALLOWED_STATUSES  = new Set(["available", "busy", "reserved", "inactive", ""]);
+
+const QuerySchema = z.object({
+  q:      z.string().max(200).optional().default(""),
+  city:   z.string().max(100).optional().default(""),
+  type:   z.string().max(50).optional().default(""),
+  status: z.string().max(50).optional().default(""),
+  page:   z.coerce.number().int().min(1).max(10000).optional().default(1),
+  limit:  z.coerce.number().int().min(1).max(100).optional().default(20),
+  sort:   z.string().max(30).optional().default("id_asc"),
+});
+
+function getIP(req: NextRequest): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+}
+
+// GET /api/admin/billboards
+export async function GET(req: NextRequest) {
+  // ── Auth guard ──
+  const session = await getSession();
+  if (!session || session.role === "user") {
+    return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
+  }
+
+  // ── Rate limit ──
+  const rl = adminApiRateLimit(getIP(req));
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  }
+
+  // ── Validate & sanitize query params ──
+  const sp = req.nextUrl.searchParams;
+  const rawParams = {
+    q:      sp.get("q")      ?? "",
+    city:   sp.get("city")   ?? "",
+    type:   sp.get("type")   ?? "",
+    status: sp.get("status") ?? "",
+    page:   sp.get("page")   ?? "1",
+    limit:  sp.get("limit")  ?? "20",
+    sort:   sp.get("sort")   ?? "id_asc",
+  };
+
+  const parsed = QuerySchema.safeParse(rawParams);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid query parameters" }, { status: 400 });
+  }
+
+  const { q, city, type, status, page, limit, sort } = parsed.data;
+
+  // Validate sort components against allowlist
+  const [sortKey, sortDir] = sort.split("_");
+  if (!ALLOWED_SORT_KEYS.has(sortKey) || !ALLOWED_SORT_DIRS.has(sortDir)) {
+    return NextResponse.json({ error: "Invalid sort parameter" }, { status: 400 });
+  }
+  if (type && !ALLOWED_TYPES.has(type)) {
+    return NextResponse.json({ error: "Invalid type parameter" }, { status: 400 });
+  }
+  if (status && !ALLOWED_STATUSES.has(status)) {
+    return NextResponse.json({ error: "Invalid status parameter" }, { status: 400 });
+  }
+
+  // ── Filter ──
+  const qLower = q.toLowerCase();
+  let items: Billboard[] = await getAllBillboards();
+  if (q)      items = items.filter(b => b.name.toLowerCase().includes(qLower) || (b.location ?? "").toLowerCase().includes(qLower));
+  if (city)   items = items.filter(b => b.city === city);
+  if (type)   items = items.filter(b => b.type === type);
+  if (status) items = items.filter(b => b.status === status);
+
+  // ── Sort ──
+  items.sort((a, b) => {
+    let av: number | string = 0;
+    let bv: number | string = 0;
+    if (sortKey === "id")    { av = a.id;    bv = b.id; }
+    if (sortKey === "price") { av = a.price; bv = b.price; }
+    if (sortKey === "name")  { av = a.name;  bv = b.name; }
+    if (sortKey === "city")  { av = a.city;  bv = b.city; }
+    const dir = sortDir === "desc" ? -1 : 1;
+    return av < bv ? -dir : av > bv ? dir : 0;
+  });
+
+  const total = items.length;
+  const pages = Math.ceil(total / limit);
+  const slice = items.slice((page - 1) * limit, page * limit);
+
+  return NextResponse.json(
+    { items: slice, total, pages, page },
+    {
+      headers: {
+        "X-RateLimit-Remaining": rl.remaining.toString(),
+        "Cache-Control": "no-store",
+      },
+    }
+  );
+}
+
+const ALLOWED_CREATE_TYPES = new Set(["billboard", "digital", "bridge", "station", "vehicle"]);
+
+const CreateSchema = z.object({
+  name:        z.string().min(2).max(200),
+  location:    z.string().min(3).max(300),
+  city:        z.string().min(1).max(100),
+  type:        z.string(),
+  price:       z.number().int().min(0),
+  agency:      z.string().max(200).optional().default(""),
+  phone:       z.string().max(20).optional().default(""),
+  description: z.string().max(2000).optional().default(""),
+  width:       z.number().int().min(1).max(100).optional().default(12),
+  height:      z.number().int().min(1).max(100).optional().default(4),
+  faces:       z.number().int().min(1).max(10).optional().default(1),
+  lat:         z.number().min(24).max(40).optional().nullable(),
+  lng:         z.number().min(44).max(64).optional().nullable(),
+});
+
+// POST /api/admin/billboards — create a new billboard (editor+ required)
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
+  if (!hasPermission(session.role, "editor")) return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
+
+  const rl = adminApiRateLimit(getIP(req));
+  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+
+  let body: unknown;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }
+
+  const parsed = CreateSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "اطلاعات نامعتبر", details: parsed.error.flatten() }, { status: 400 });
+
+  const { type, ...rest } = parsed.data;
+  if (!ALLOWED_CREATE_TYPES.has(type)) return NextResponse.json({ error: "نوع رسانه نامعتبر است" }, { status: 400 });
+
+  try {
+    const billboard = await createBillboard({ type, ...rest });
+    return NextResponse.json({ billboard }, { status: 201, headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return NextResponse.json({ error: "خطا در ایجاد بیلبورد" }, { status: 500 });
+  }
+}

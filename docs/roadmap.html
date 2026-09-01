@@ -1,0 +1,1479 @@
+<title>Rasamap · ۱۰ روز تا ارائه</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0f1218;
+  --bg2: #131922;
+  --card: #181f2e;
+  --card2: #1e2840;
+  --border: #263044;
+  --border-hi: #384d6a;
+  --green: #22c55e; --green-dim: #22c55e18; --green-mid: #22c55e44;
+  --amber: #f59e0b; --amber-dim: #f59e0b18; --amber-mid: #f59e0b44;
+  --indigo: #818cf8; --indigo-dim: #818cf818; --indigo-mid: #818cf844;
+  --red: #ef4444; --red-dim: #ef444418; --red-mid: #ef444444;
+  --cyan: #38bdf8; --cyan-dim: #38bdf818;
+  --muted: #94a3b8; --muted2: #4b5a70; --text: #dde6f5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Vazirmatn', system-ui, sans-serif;
+  line-height: 1.75;
+  direction: rtl;
+}
+.wrap { max-width: 980px; margin: 0 auto; padding: 36px 20px 100px; }
+
+/* ─── HERO ─── */
+.hero {
+  background: linear-gradient(160deg, #1a2540 0%, #0f1218 60%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 36px 30px;
+  position: relative; overflow: hidden; margin-bottom: 28px;
+}
+.hero::before {
+  content: ''; position: absolute; top: -80px; left: -80px;
+  width: 340px; height: 340px;
+  background: radial-gradient(circle, #f59e0b22 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.hero-title h1 { font-size: clamp(22px, 4vw, 32px); font-weight: 800; line-height: 1.3; }
+.hero-title h1 b { color: var(--amber); }
+.hero-title p { color: var(--muted); font-size: 14.5px; margin-top: 6px; max-width: 480px; }
+
+.countdown {
+  display: flex; gap: 12px; align-items: center; flex-shrink: 0;
+  background: var(--amber-dim); border: 1px solid var(--amber-mid);
+  border-radius: 14px; padding: 14px 22px;
+}
+.countdown .num { font-size: 48px; font-weight: 900; color: var(--amber); line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.countdown .label { font-size: 12px; color: var(--amber); font-weight: 600; }
+
+.progress-row { margin-top: 26px; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.prog-item { text-align: center; padding: 10px 8px; border-radius: 12px; border: 1px solid var(--border); background: #ffffff06; }
+.prog-item .pnum { font-size: 22px; font-weight: 800; line-height: 1; }
+.prog-item .plabel { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.prog-item.done-item .pnum { color: var(--green); }
+.prog-item.next-item .pnum { color: var(--amber); }
+.prog-item.defer-item .pnum { color: var(--indigo); }
+
+/* ─── STATUS STRIP ─── */
+.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 28px; }
+.chip { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); font-size: 13px; font-weight: 500; transition: border-color .15s; }
+.chip:hover { border-color: var(--border-hi); }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.chip.done { border-color: var(--green-mid); background: var(--green-dim); }
+.chip.done .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.chip.done .clabel { color: var(--green); font-weight: 700; }
+.chip.next { border-color: var(--amber-mid); background: var(--amber-dim); }
+.chip.next .dot { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.chip.next .clabel { color: var(--amber); font-weight: 700; }
+.chip.defer { border-color: var(--indigo-mid); background: var(--indigo-dim); }
+.chip.defer .dot { background: var(--indigo); }
+.chip.defer .clabel { color: var(--indigo); }
+.chip.warn { border-color: var(--red-mid); background: var(--red-dim); }
+.chip.warn .dot { background: var(--red); }
+.chip.warn .clabel { color: var(--red); font-weight: 700; }
+.chip.todo .dot { background: var(--muted2); }
+.chip.todo .clabel { color: var(--muted); }
+.chip .ctext { flex: 1; min-width: 0; }
+.chip .clabel { display: block; font-size: 11px; }
+.chip .cdesc { font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ─── SECTION HEADER ─── */
+.sec-head { display: flex; align-items: center; gap: 12px; margin: 36px 0 16px; }
+.sec-head h2 { font-size: 17px; font-weight: 800; }
+.sec-head .line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+/* ─── SPRINT TABLE ─── */
+.sprint { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-bottom: 28px; }
+.day { border-radius: 10px; padding: 10px 6px; text-align: center; border: 1px solid var(--border); background: var(--card); cursor: default; transition: transform .15s, box-shadow .15s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.day:hover { transform: translateY(-2px); box-shadow: 0 8px 20px #0009; }
+.day .dnum { font-size: 18px; font-weight: 800; line-height: 1; }
+.day .dtag { font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 6px; letter-spacing: .02em; }
+.day .dicon { font-size: 16px; }
+.day.done-day { border-color: var(--green-mid); background: var(--green-dim); }
+.day.done-day .dnum { color: var(--green); }
+.day.done-day .dtag { background: #22c55e20; color: var(--green); }
+.day.phase7b { border-color: #fb923c44; background: #fb923c12; }
+.day.phase7b .dnum { color: #fb923c; }
+.day.phase7b .dtag { background: #fb923c20; color: #fb923c; }
+.day.phase8 { border-color: var(--green-mid); background: var(--green-dim); opacity:.6; }
+.day.phase8 .dnum { color: var(--green); }
+.day.phase8 .dtag { background: #22c55e20; color: var(--green); }
+.day.phase9 { border-color: var(--amber-mid); background: var(--amber-dim); opacity:.6; }
+.day.phase9 .dnum { color: var(--amber); }
+.day.phase9 .dtag { background: #f59e0b20; color: var(--amber); }
+
+/* ─── PHASE CARDS ─── */
+.phases { display: flex; flex-direction: column; gap: 14px; }
+.phase-card { border-radius: 16px; border: 1px solid var(--border); background: var(--card); overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+.phase-card:hover { border-color: var(--border-hi); box-shadow: 0 10px 30px #0008; }
+.phase-card.is-done { border-color: var(--green-mid); }
+.phase-card.is-next { border-color: var(--amber-mid); }
+.phase-card.is-defer { border-color: var(--indigo-mid); }
+.ph-header { display: flex; align-items: center; gap: 16px; padding: 18px 22px; cursor: pointer; user-select: none; position: relative; }
+.ph-header::after { content: '›'; position: absolute; left: 22px; top: 50%; transform: translateY(-50%) rotate(90deg); color: var(--muted2); font-size: 18px; transition: transform .25s; }
+.phase-card.open .ph-header::after { transform: translateY(-50%) rotate(-90deg); }
+.ph-num { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #ffffff08; color: var(--muted); border: 1px solid var(--border); }
+.is-done .ph-num { background: var(--green-dim); color: var(--green); border-color: var(--green-mid); }
+.is-next .ph-num { background: var(--amber-dim); color: var(--amber); border-color: var(--amber-mid); }
+.is-defer .ph-num { background: var(--indigo-dim); color: var(--indigo); border-color: var(--indigo-mid); }
+.ph-title { flex: 1; }
+.ph-title h3 { font-size: 15px; font-weight: 700; }
+.ph-title p { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.ph-badge { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 99px; letter-spacing: .03em; flex-shrink: 0; }
+.is-done .ph-badge { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-mid); }
+.is-next .ph-badge { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-mid); }
+.is-defer .ph-badge { background: var(--indigo-dim); color: var(--indigo); border: 1px solid var(--indigo-mid); }
+.ph-badge.todo { background: #ffffff08; color: var(--muted); border: 1px solid var(--border); }
+.ph-body { display: none; padding: 0 22px 20px; border-top: 1px solid var(--border); }
+.phase-card.open .ph-body { display: block; }
+.ph-body h4 { font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 16px 0 8px; }
+
+.task-list { display: flex; flex-direction: column; gap: 7px; }
+.task { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 9px; background: #ffffff05; border: 1px solid var(--border); font-size: 13.5px; }
+.task .tick { flex-shrink: 0; width: 16px; height: 16px; border-radius: 5px; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.task.done-t .tick { background: var(--green-dim); border: 1px solid var(--green-mid); color: var(--green); }
+.task.todo-t .tick { background: #ffffff08; border: 1px solid var(--border); color: transparent; }
+.task.warn-t .tick { background: var(--red-dim); border: 1px solid var(--red-mid); color: var(--red); }
+.task.block-t { opacity: .55; }
+.task.block-t .tick { background: var(--indigo-dim); border: 1px solid var(--indigo-mid); color: var(--indigo); }
+
+.proof { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--green-dim); border: 1px solid var(--green-mid); font-size: 13px; }
+.proof b { color: var(--green); }
+.note { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--amber-dim); border: 1px solid var(--amber-mid); font-size: 13px; color: var(--text); }
+.note b { color: var(--amber); }
+.warn-box { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--red-dim); border: 1px solid var(--red-mid); font-size: 13px; color: var(--text); }
+.warn-box b { color: var(--red); }
+.defer-note { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--indigo-dim); border: 1px solid var(--indigo-mid); font-size: 13px; }
+.defer-note b { color: var(--indigo); }
+
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; background: #0009; border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--cyan); direction: ltr; display: inline-block; }
+.files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 10px; }
+.type-card { background: #ffffff06; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+.type-card .ticon { font-size: 20px; margin-bottom: 4px; }
+.type-card .tname { font-weight: 700; color: var(--text); }
+.type-card .tcount { font-size: 12px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.type-card.has-data { border-color: var(--green-mid); background: var(--green-dim); }
+
+/* ─── QUALITY BOX ─── */
+.quality-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.qbox { border-radius: 14px; padding: 18px 20px; border: 1px solid var(--border); background: var(--card); }
+.qbox h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+.qbox ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.qbox li { display: flex; gap: 8px; font-size: 13px; align-items: flex-start; }
+.qbox li span { flex-shrink: 0; font-size: 13px; }
+.qbox.good { border-color: var(--green-mid); }
+.qbox.good h3 { color: var(--green); }
+.qbox.bad { border-color: var(--red-mid); }
+.qbox.bad h3 { color: var(--red); }
+
+/* ─── DECISION BOX ─── */
+.decision { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 24px; margin-bottom: 14px; }
+.decision h3 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.decision ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.decision li { display: flex; gap: 8px; font-size: 13.5px; align-items: flex-start; }
+.decision li::before { content: '—'; color: var(--muted2); flex-shrink: 0; }
+
+footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
+
+@media (max-width: 640px) {
+  .sprint { grid-template-columns: repeat(5, 1fr); }
+  .quality-grid { grid-template-columns: 1fr; }
+  .countdown .num { font-size: 36px; }
+  .hero { padding: 24px 20px 22px; }
+  .ph-header { gap: 10px; padding: 14px 16px; }
+  .ph-body { padding: 0 16px 16px; }
+}
+</style>
+
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-top">
+    <div class="hero-title">
+      <h1>Rasamap · <b id="days-left">۱۰</b> روز تا ارائه</h1>
+      <p>وضعیت واقعی پروژه بر اساس بررسی مستقیم کد و دیتابیس — نه حدس.</p>
+    </div>
+    <div class="countdown">
+      <div>
+        <div class="num" id="countdown-num">—</div>
+        <div class="label">روز مانده</div>
+      </div>
+    </div>
+  </div>
+  <div class="progress-row">
+    <div class="prog-item done-item">
+      <div class="pnum">۲۰+</div>
+      <div class="plabel">Phase تموم شده</div>
+    </div>
+    <div class="prog-item defer-item">
+      <div class="pnum">۴</div>
+      <div class="plabel">Deferred (MAP)</div>
+    </div>
+    <div class="prog-item next-item">
+      <div class="pnum">۲</div>
+      <div class="plabel">آماده‌سازی ارائه</div>
+    </div>
+    <div class="prog-item done-item">
+      <div class="pnum">۲۸۰۸</div>
+      <div class="plabel">بیلبورد در DB</div>
+    </div>
+    <div class="prog-item done-item">
+      <div class="pnum">A−</div>
+      <div class="plabel">سطح کد (review)</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS STRIP -->
+<div class="strip">
+  <div class="chip done">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">DB + API + Admin CRUD</span></div>
+  </div>
+  <div class="chip done">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">User Auth + Reservation API</span></div>
+  </div>
+  <div class="chip done">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">UI/UX بصری (U1–U9 کامل)</span></div>
+  </div>
+  <div class="chip done">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">Production Security (۱۵ fix)</span></div>
+  </div>
+  <div class="chip done">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">Scraper + تلفن + فرمول‌ها</span></div>
+  </div>
+  <div class="chip done">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">Reviews + Listings + Image upload</span></div>
+  </div>
+  <div class="chip done">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">Sitemap + Robots + Error pages</span></div>
+  </div>
+  <div class="chip next" style="border-color:#7c3aed44; background:#7c3aed12">
+    <div class="dot" style="background:#a78bfa; box-shadow:0 0 8px #a78bfa"></div>
+    <div class="ctext"><span class="clabel" style="color:#a78bfa">✦ اولویت ۱ فعلی</span><span class="cdesc">آماده‌سازی ارائه (PREP + CMP)</span></div>
+  </div>
+  <div class="chip defer">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">⏸ Deferred</span><span class="cdesc">نقشه / Geolocation (MAP-A تا D)</span></div>
+  </div>
+  <div class="chip todo">
+    <div class="dot"></div>
+    <div class="ctext"><span class="clabel">⚪ Feature آینده</span><span class="cdesc">SMS / Payment / Map-First</span></div>
+  </div>
+</div>
+
+<!-- SPRINT CALENDAR -->
+<div class="sec-head">
+  <h2>برنامه ۱۰ روزه</h2>
+  <div class="line"></div>
+</div>
+<div class="sprint">
+  <div class="day done-day"><div class="dicon">✓</div><div class="dnum">۱</div><div class="dtag">Admin CRUD</div></div>
+  <div class="day done-day"><div class="dicon">✓</div><div class="dnum">۲</div><div class="dtag">Admin CRUD</div></div>
+  <div class="day done-day"><div class="dicon">✓</div><div class="dnum">۳</div><div class="dtag">User Auth</div></div>
+  <div class="day done-day"><div class="dicon">✓</div><div class="dnum">۴</div><div class="dtag">User Auth</div></div>
+  <div class="day phase7b"><div class="dicon">📅</div><div class="dnum">۵</div><div class="dtag">Reservation</div></div>
+  <div class="day phase7b"><div class="dicon">📅</div><div class="dnum">۶</div><div class="dtag">Reservation</div></div>
+  <div class="day phase8"><div class="dicon">🛡️</div><div class="dnum">۷</div><div class="dtag">QA + Polish</div></div>
+  <div class="day phase9"><div class="dicon">🎯</div><div class="dnum">۸</div><div class="dtag">Demo Prep</div></div>
+  <div class="day phase9"><div class="dicon">🎯</div><div class="dnum">۹</div><div class="dtag">Demo Prep</div></div>
+  <div class="day phase9"><div class="dicon">🎓</div><div class="dnum">۱۰</div><div class="dtag">ارائه</div></div>
+</div>
+
+<!-- CODE QUALITY REVIEW -->
+<div class="sec-head">
+  <h2>بررسی کیفیت کد — نتیجه review</h2>
+  <div class="line"></div>
+</div>
+<div class="quality-grid">
+  <div class="qbox good">
+    <h3>✅ نقاط قوت</h3>
+    <ul>
+      <li><span>🔐</span> JWT در HttpOnly + SameSite=Strict cookie (نه localStorage)</li>
+      <li><span>🔐</span> bcrypt cost 12 + timing-safe dummy hash (جلوگیری از user enumeration)</li>
+      <li><span>🔐</span> Rate limiting sliding window روی login و API</li>
+      <li><span>🔐</span> Zod validation روی تمام ورودی‌ها + allowlist برای sort/filter</li>
+      <li><span>🔐</span> RBAC با hierarchy: super_admin > admin > editor > viewer</li>
+      <li><span>🏗</span> ساختار فایل‌بندی حرفه‌ای: app / components / lib / prisma</li>
+      <li><span>🏗</span> Prisma singleton با hot-reload guard + explicit driver adapter</li>
+      <li><span>🏗</span> Query helpers جدا از route handlers (lib/db/billboards.ts)</li>
+      <li><span>🏗</span> TypeScript strict mode + type definitions مرکزی</li>
+      <li><span>🏗</span> Proxy (Next.js 16 Middleware) درست پیاده‌شده</li>
+    </ul>
+  </div>
+  <div class="qbox bad">
+    <h3>⚠ نقاط ضعف (وضعیت فعلی)</h3>
+    <ul>
+      <li><span>🔴</span> <strong>تست وجود ندارد</strong> — داور احتمالاً می‌پرسد «چطور مطمئنی چیزی نشکسته؟» — پاسخ آماده: end-to-end دستی + TypeScript strict</li>
+      <li><span>✅</span> <s>admin/page.tsx = 515 خط</s> — <strong>رفع شد:</strong> تقسیم به components/admin/ در Phase 8</li>
+      <li><span>🟡</span> lib/data.ts دو مسئولیت دارد — تصمیم: دست نزن (ریسک دارد)</li>
+      <li><span>✅</span> <s>app/error.tsx و app/not-found.tsx غایب</s> — <strong>رفع شد:</strong> هر دو اضافه شدند در Phase 8</li>
+      <li><span>🟡</span> dev.db در git است — قابل قبول برای thesis، نه production</li>
+      <li><span>✅</span> <s>dashboard hardcoded data</s> — <strong>رفع شد:</strong> به GET /api/reservations/my وصل شد</li>
+      <li><span>✅</span> <s>Security headers مرده بودند (addSecurityHeaders هرگز صدا زده نمی‌شد)</s> — <strong>رفع شد</strong> در Production Hardening</li>
+      <li><span>✅</span> <s>Admin GET role check نداشت</s> — <strong>رفع شد:</strong> session.role === "admin" اضافه شد</li>
+      <li><span>✅</span> <s>Reservation TOCTOU race condition</s> — <strong>رفع شد:</strong> prisma.$transaction() اضافه شد</li>
+      <li><span>🟡</span> نقشه (MAP): API Key Required error — deferred. VPN باید خاموش باشد.</li>
+    </ul>
+  </div>
+</div>
+<div class="decision" style="border-color:#22c55e44; background: #22c55e08; margin-bottom:28px">
+  <h3 style="color:var(--green)">قضاوت کلی: A− برای thesis ✓</h3>
+  <ul>
+    <li>پیاده‌سازی امنیت برای یه پروژه اول غیرعادی قوی است — اکثر thesis‌ها auth درستی ندارند.</li>
+    <li>admin/page.tsx تقسیم شد + error.tsx اضافه شد + dashboard به DB وصل شد — نقاط ضعف اصلی رفع شدند.</li>
+    <li>داور احتمالاً بیشتر از هر چیز دیگری روی security story و data flow focus می‌کند.</li>
+  </ul>
+</div>
+
+<!-- DECISIONS -->
+<div class="sec-head">
+  <h2>تصمیم‌های ثابت (دست نزن)</h2>
+  <div class="line"></div>
+</div>
+<div class="decision" style="margin-bottom:28px">
+  <ul>
+    <li>Scraper/آدرس در loop می‌افتد — deferred تا بعد از ارائه.</li>
+    <li>نوع رسانه: فیلتر UI در Explore موجود است. داده scraper اکثراً «billboard» است — مشکل داده است نه UI.</li>
+    <li>Guest checkout نه — Reservation نیاز به حساب کاربری دارد (تصمیم Phase 2).</li>
+    <li>SQLite برای این مقیاس کافی است — تغییر DB در این روزها ممنوع.</li>
+    <li>id های عددی بیلبوردها ثابت می‌مانند (RealMap.tsx و CompareBar به آنها وابسته‌اند).</li>
+    <li>lib/data.ts دست نزن — فقط type definitions از آن import می‌شود، static data بلا‌استفاده است ولی حذفش ریسک دارد.</li>
+  </ul>
+</div>
+
+<!-- PHASE CARDS -->
+<div class="sec-head">
+  <h2>جزئیات هر Phase</h2>
+  <div class="line"></div>
+</div>
+<div class="phases">
+
+  <!-- Phase 3: DB -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num">۳</div>
+      <div class="ph-title"><h3>ساخت دیتابیس + Migration</h3><p>Prisma Schema، Seed، Data Access Layer</p></div>
+      <div class="ph-badge">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="proof"><b>تأیید واقعی:</b> sqlite3 dev.db → ۲۸۰۸ رکورد در جدول billboards</div>
+      <h4>وضعیت تایپ‌ها در DB</h4>
+      <div class="type-grid">
+        <div class="type-card has-data"><div class="ticon">🏙️</div><div class="tname">بیلبورد</div><div class="tcount">۲٬۶۳۸ رکورد</div></div>
+        <div class="type-card has-data"><div class="ticon">🌉</div><div class="tname">عرشه پل</div><div class="tcount">۱۴۵ رکورد</div></div>
+        <div class="type-card has-data"><div class="ticon">🚇</div><div class="tname">ایستگاه</div><div class="tcount">۱۹ رکورد</div></div>
+        <div class="type-card has-data"><div class="ticon">📺</div><div class="tname">دیجیتال</div><div class="tcount">۶ رکورد</div></div>
+      </div>
+      <h4>فایل‌های مرتبط</h4>
+      <div class="files">
+        <code>prisma/schema.prisma</code><code>prisma/seed.ts</code><code>lib/db/billboards.ts</code><code>lib/db/client.ts</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 4: Public API -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num">۴</div>
+      <div class="ph-title"><h3>اتصال صفحات عمومی به DB</h3><p>Public API + Explore + Landing از DB می‌خوانند</p></div>
+      <div class="ph-badge">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="proof"><b>تأیید واقعی:</b> <code>/api/billboards</code> با <code>getAllBillboards()</code> از DB — Explore و Landing با fetch از این API.</div>
+      <h4>وضعیت صفحات</h4>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/explore/page.tsx</code> — fetch از <code>/api/billboards</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/page.tsx</code> (landing) — fetch از <code>/api/billboards</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/api/billboards/route.ts</code> — بدون auth، بدون pagination</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>TYPE_CHIPS در Explore برای ۴ نوع رسانه (بیلبورد، دیجیتال، پل، ایستگاه)</div></div>
+      </div>
+      <h4>فایل‌های مرتبط</h4>
+      <div class="files"><code>app/api/billboards/route.ts</code><code>app/explore/page.tsx</code><code>app/page.tsx</code></div>
+    </div>
+  </div>
+
+  <!-- Phase 5: Scraper - DEFERRED -->
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num">۵</div>
+      <div class="ph-title"><h3>بازسازی Scraper Pipeline</h3><p>Cross-source Dedup، تشخیص نوع رسانه، آدرس‌دهی</p></div>
+      <div class="ph-badge">⏸ Deferred</div>
+    </div>
+    <div class="ph-body">
+      <div class="defer-note"><b>دلیل Deferred:</b> provider نقشه مناسب در ایران وجود ندارد و scraper در loop آدرس‌سازی می‌افتد. این مشکل قبلاً تجربه شده — بعد از ارائه برمی‌گردیم.</div>
+      <h4>چی می‌ماند برای بعد</h4>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>Cross-source dedup (Divar + Sheypoor + IRBillboard یکی نشوند) — پیاده‌سازی شده</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تشخیص هوشمند نوع رسانه از عنوان/توضیحات (regex/keyword) — پیاده‌سازی شده</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>geocoding با Neshan v4 + city-center validation 60km + stable hash ID + --fresh flag — بهبود یافت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>اسکریپر اختصاصی aradholding.com — ۱۴ شهر، جدول HTML با لینک Google Maps → GPS واقعی، ادغام در SOURCES</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 6: Admin CRUD — DONE -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num">۶</div>
+      <div class="ph-title"><h3>Admin CRUD واقعی</h3><p>PUT / DELETE بیلبوردها — ویرایش و حذف از DB</p></div>
+      <div class="ph-badge">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="proof"><b>تأیید:</b> PUT و DELETE endpoint ساخته شد، EditModal.save() به API وصل شد، دکمه حذف با confirm dialog اضافه شد. Build موفق.</div>
+      <h4>انجام‌شده</h4>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>PUT /api/admin/billboards/[id]</code> — Zod validation + auth (editor+)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>DELETE /api/admin/billboards/[id]</code> — بررسی رزرو فعال قبل از حذف (admin+)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>updateBillboard()</code> و <code>deleteBillboard()</code> و <code>hasActiveReservations()</code> در lib/db</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>EditModal.save()</code> در admin/page.tsx به PUT API وصل است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>دکمه حذف با confirm dialog در BillboardRow</div></div>
+      </div>
+      <div class="warn-box"><b>باقی‌مانده:</b> POST (ایجاد بیلبورد جدید) پیاده نشد — برای demo لازم نیست. ویرایش کافی است.</div>
+      <div class="task done-t"><div class="tick">✓</div><div>Admin geocode picker — URL-based: ادمین URL صفحه Google Maps را paste می‌کند، app مختصات را parse می‌کند و lat/lng را auto-fill می‌کند. بدون Leaflet، بدون API key، بدون هزینه.</div></div>
+      <h4>فایل‌های مرتبط</h4>
+      <div class="files">
+        <code>app/api/admin/billboards/[id]/route.ts</code><code>app/admin/page.tsx</code><code>lib/db/billboards.ts</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 7a: User Auth — DONE -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num">۷a</div>
+      <div class="ph-title"><h3>ثبت‌نام / ورود کاربر</h3><p>User Auth API — register، login، logout، session guard</p></div>
+      <div class="ph-badge">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="proof"><b>تأیید:</b> ۴ endpoint ساخته شد، login page به API وصل شد، proxy.ts گارد دارد، Build موفق.</div>
+      <h4>انجام‌شده</h4>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>POST /api/auth/register</code> — bcrypt hash + insert به جدول users + JWT</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>POST /api/auth/login</code> — timing-safe bcrypt compare + JWT HttpOnly cookie</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>POST /api/auth/logout</code> و <code>GET /api/auth/me</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/login/page.tsx</code> به API واقعی وصل شد + error نمایش می‌دهد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>proxy.ts: /dashboard گارد دارد؛ admin routes فقط role admin می‌پذیرند (نه "user")</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Rate limit جداگانه برای user login (10 تلاش / 15 دقیقه)</div></div>
+      </div>
+      <h4>فایل‌های مرتبط</h4>
+      <div class="files">
+        <code>app/api/auth/register/route.ts</code><code>app/api/auth/login/route.ts</code><code>app/api/auth/logout/route.ts</code><code>app/api/auth/me/route.ts</code><code>app/login/page.tsx</code><code>proxy.ts</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 7b: Reservation — DONE -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num">۷b</div>
+      <div class="ph-title"><h3>رزرو واقعی (Reservation API)</h3><p>BookingModal → DB — روز ۵ و ۶</p></div>
+      <div class="ph-badge">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="proof"><b>تأیید:</b> هر ۳ endpoint ساخته شد، BookingModal واقعاً POST می‌کند، خطای تداخل تاریخ نمایش می‌دهد، Dashboard به رزروهای واقعی وصل است.</div>
+      <h4>انجام‌شده</h4>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>POST /api/reservations</code> — ثبت با startDate / endDate + بررسی تداخل بازه‌ها (overlap query)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>GET /api/reservations?billboardId=X</code> — نمایش بازه‌های پر برای انتخاب تاریخ</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>GET /api/reservations/my</code> — رزروهای کاربر جاری (برای dashboard)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>BookingModal: اگر بازه پر بود → پیام خطا از API برمی‌گردد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>dashboard کاربر به reservation‌های واقعی وصل شد (hardcoded data حذف شد)</div></div>
+      </div>
+      <h4>فایل‌های مرتبط</h4>
+      <div class="files">
+        <code>app/api/reservations/route.ts</code><code>app/api/reservations/my/route.ts</code><code>components/BookingModal.tsx</code><code>app/dashboard/page.tsx</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 8: QA + Polish -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num">۸</div>
+      <div class="ph-title"><h3>QA + Polish</h3><p>Error handling، صفحات خطا، تست دستی flow کامل، pagination</p></div>
+      <div class="ph-badge">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <h4>Tasks</h4>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/error.tsx</code> و <code>app/not-found.tsx</code> — صفحات خطا فارسی با دکمه بازگشت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تقسیم <code>app/admin/page.tsx</code> به component های جداگانه در <code>components/admin/</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Pagination در Explore — ۲۴ کارت اول + دکمه «نمایش بیشتر»، reset با هر تغییر فیلتر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تست API flow: GET /api/billboards → ۲۸۰۸ رکورد ✓ | Register → Login → POST /api/reservations → GET /api/reservations/my ✓</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تست Admin: PUT /api/admin/billboards/[id] — session check 401 تأیید شد، کد updateBillboard + Zod review شد ✓</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تست کاربر جدید: Register + Login + رزرو + dashboard — همه API‌ها پاسخ صحیح دادند ✓</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بررسی responsive در موبایل — viewport meta اضافه شد، dashboard sidebar flexWrap، stats grid auto-fit، landing nav hidden در موبایل</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> curl end-to-end: register → login → reserve → dashboard — همه ۲۸۰۸ billboard از DB. Admin 401 guard تأیید. Build ✓ 25 صفحه بدون error.</div>
+    </div>
+  </div>
+
+  <!-- Phase 9: Demo Prep -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num">۹</div>
+      <div class="ph-title"><h3>آماده‌سازی Demo (روز ۸ و ۹)</h3><p>Script ارائه + Seed data قابل‌نمایش + پاسخ سؤالات داور</p></div>
+      <div class="ph-badge">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <h4>Demo Script پیشنهادی</h4>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>۱. Explore → فیلتر بر اساس شهر + نوع رسانه → تعداد نتایج از DB واقعی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>۲. Detail → بیلبورد تهران → TrafficMeter → Compare دو تا با هم</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>۳. Map → نقشه Leaflet با pin‌های واقعی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>۴. کاربر دمو → ورود → رزرو یک بیلبورد → Dashboard نمایش رزرو</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>۵. Admin Panel → ویرایش قیمت یک بیلبورد → refresh → verify ماند</div></div>
+      </div>
+      <h4>سؤالات احتمالی داور</h4>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>«داده‌ها از کجا می‌آیند؟» → scraper Python از Divar/Sheypoor → SQLite</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>«ترافیک چطور محاسبه می‌شود؟» → heuristic فعلاً، API واقعی roadmap آینده دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>«چرا SQLite نه PostgreSQL؟» → این مقیاس نیاز به سرور جداگانه ندارد، migration آسان است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>«امنیت؟» → JWT HttpOnly، bcrypt cost 12، rate limit، Zod، RBAC، proxy guard</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>«تست دارید؟» → صادقانه: نه؛ ولی end-to-end دستی تست شده، next step است</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> فایل <code>docs/demo-script.html</code> ساخته شد — ۵ مرحله کامل با توضیحات داور + راهنمای credentials. seed-demo.ts موجود است (npm run db:seed:demo).</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- FULL AUDIT — بازبینی جامع پروژه                               -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="sec-head" style="margin-top:48px">
+  <h2>بازبینی جامع — کمبودها نسبت به سایت‌های واقعی</h2>
+  <div class="line"></div>
+</div>
+<div class="decision" style="border-color:#60a5fa44; background:#60a5fa08; margin-bottom:20px; font-size:0.82rem">
+  مقایسه با نمونه‌های ایرانی مشابه (billboardiha.com، تبلیغات محیطی Divar، و استانداردهای marketplace).
+  اولویت‌بندی از ریشه‌ای‌ترین (معماری) تا سطحی‌ترین (فیچر).
+</div>
+
+<!-- ★ PRIORITY REORDER NOTICE -->
+<div class="warn-box" style="border-color:#818cf844; background:#818cf80a; margin-bottom:20px">
+  <b style="color:#818cf8">📌 جهت‌گیری جدید — اولویت اجرایی تغییر کرد</b>
+  <p style="margin-top:8px; font-size:0.83rem; line-height:1.9">
+    بخش‌های معماری (A)، امنیت (S)، و کیفیت کد (Q) اکثراً تکمیل شده‌اند.
+    قبل از ادامه با فیچرهای باقیمانده، اولویت اجرایی به <b>بهبود جدی کیفیت بصری و UX</b> تغییر یافت.<br>
+    پالت نارنجی/مشکی فعلی قابل جایگزینی است. هدف: سایتی که در ارائه حرفه‌ای به نظر برسد.<br>
+    <b>ترتیب اجرا:</b> UI/UX ✦ → فیچرهای باقی‌مانده → ★ تحقیق نقشه (deferred)
+  </p>
+</div>
+
+<!-- ★ NEW: PRIORITY 0 — UI/UX VISUAL AUDIT (comes before everything else) -->
+<div class="sec-head" style="margin-top:12px">
+  <h2 style="font-size:13px; color: #a78bfa">✦ اولویت اجرایی جدید — بهبود بصری و UI/UX</h2>
+  <div class="line"></div>
+</div>
+<div class="phases" style="margin-bottom:8px">
+
+  <!-- UX0: Visual Audit — DONE -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px; background:#7c3aed22; color:#a78bfa; border-color:#7c3aed44">UX0</div>
+      <div class="ph-title"><h3>بررسی بصری و انتخاب مسیر طراحی</h3><p>Audit کامل فرانت‌اند، تعریف design system جدید، انتخاب skill مناسب</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>بررسی بصری هر صفحه: Landing، Explore (list + map)، Billboard detail، Dashboard، Admin — مستندسازی ضعف‌های typography، spacing، hierarchy، رنگ</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تحلیل design system فعلی: CSS custom properties در <code>globals.css</code> (پالت نارنجی/مشکی)، component‌های مشترک، الگوهای inline style</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بررسی skills موجود در Claude Code برای UI/UX — skill رسمی <code>artifact-design</code> بارگذاری شد و برای تولید گزارش بصری استفاده شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تعریف پالت رنگ جدید: نارنجی جایگزین شد با آبی-تیره (#3B7BF5) + عنبری (#F5A623) — توکن‌های CSS آماده شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>نقشه تغییرات: U1 (توکن‌ها) → U2 (کامپوننت‌ها) → U3 (صفحات) — مستندسازی شد</div></div>
+      </div>
+      <div class="proof">
+        <b>تأیید شده:</b> گزارش بصری UX0 به عنوان artifact منتشر شد (claude.ai/code/artifact/37b3b939) — شامل: ضعف‌های ۶ کامپوننت، مقایسه توکن‌های فعلی/پیشنهادی، CSS آماده، نقشه تغییر U1→U2→U3.
+        پالت انتخاب‌شده: accent آبی (#3B7BF5)، warm عنبری (#F5A623)، shadow scale جدید اضافه شد.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TIER 1: Architecture -->
+<div class="sec-head" style="margin-top:12px">
+  <h2 style="font-size:13px; color: var(--red)">🔴 اولویت ۱ — معماری (ریشه‌ای‌ترین)</h2>
+  <div class="line"></div>
+</div>
+<div class="phases" style="margin-bottom:8px">
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">A1</div>
+      <div class="ph-title"><h3>همه ۲۸۰۸ رکورد به کلاینت می‌رود</h3><p>GET /api/billboards یک JSON بزرگ برمی‌گرداند — بدون pagination، بدون فیلتر سرور</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>اضافه کردن <code>city</code>, <code>cities</code>, <code>type</code>, <code>status</code>, <code>search</code>, <code>maxPrice</code>, <code>sortBy</code>, <code>page</code>, <code>limit</code> به <code>GET /api/billboards</code> — Zod validation</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>DB: <code>getFilteredBillboards()</code> با WHERE پویا + <code>take</code>/<code>skip</code> + <code>count()</code> parallel — response شامل <code>total</code> و <code>totalPages</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Explore: حذف client-side filter، ارسال params به API با debounce 350ms، pagination قبلی/بعدی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>اضافه کردن index روی <code>billboards.status</code> و <code>billboards.price</code> در Prisma schema — migration اعمال شد</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — 25 صفحه. API حالا ۲۴ رکورد برمی‌گرداند نه ۲۸۰۸.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">A2</div>
+      <div class="ph-title"><h3>list-media فرم بدون API</h3><p>ثبت رسانه توسط صاحب رسانه — UI کامل است، backend ندارد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>POST /api/listings</code> — Zod validation + rate limit + ذخیره billboard با status "pending"</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>list-media: اتصال submit به API + loading/error state + رفتن به مرحله موفقیت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>buildWhere</code> آپدیت شد — billboard‌های "pending" از query عمومی حذف می‌شوند</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — 28 صفحه. <code>POST /api/listings</code> در route list تأیید شد.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">A3</div>
+      <div class="ph-title"><h3>ImageManager بدون backend</h3><p>ادمین می‌تواند تصویر انتخاب کند ولی دکمه ذخیره alert می‌دهد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>PUT /api/admin/billboards/[id]/images</code> — base64 data URL → filesystem (<code>public/uploads/billboards/{id}/</code>) + URL در DB</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ImageManager: حذف alert، اتصال به API، saving state + error نمایش می‌دهد</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — 29 صفحه. <code>PUT /api/admin/billboards/[id]/images</code> در route list تأیید شد.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">A4</div>
+      <div class="ph-title"><h3>BookingModal اطلاعات اضافه جمع می‌کند ولی نمی‌فرستد</h3><p>نام، شرکت، تلفن در فرم هستند ولی به API نمی‌رسند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>فیلدهای name/company/phone حذف شدند — اطلاعات کاربر از session JWT می‌آید</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>BookingModal به ۲ مرحله تبدیل شد: زمان‌بندی + تأیید (step اطلاعات حذف شد)</div></div>
+      </div>
+      <div class="proof">✓ فرم رزرو حالا فقط اطلاعات ضروری را جمع می‌کند — مشکل داده گم‌شده رفع شد.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">A5</div>
+      <div class="ph-title"><h3>Admin مدیریت رزروها ندارد</h3><p>کاربران رزرو می‌کنند ولی admin هیچ panel برای تأیید/رد رزرو ندارد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>GET /api/admin/reservations</code> — filter by status + pagination (editor+)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>PATCH /api/admin/reservations/[id]</code> — تأیید/رد رزرو (admin+)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Tab "📅 رزروها" در Admin panel با <code>ReservationsPanel</code> — لیست + دکمه تأیید/رد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>User dashboard: badge‌های رنگی برای confirmed (سبز) / pending (زرد) / cancelled (قرمز) — STATUS_LABEL و STATUS_COLOR در dashboard.tsx</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — 28 صفحه. <code>GET /api/admin/reservations</code> و <code>PATCH /api/admin/reservations/[id]</code> در route list تأیید شد.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TIER 2: Security -->
+<div class="sec-head" style="margin-top:20px">
+  <h2 style="font-size:13px; color: var(--amber)">🟡 اولویت ۲ — امنیت</h2>
+  <div class="line"></div>
+</div>
+<div class="phases" style="margin-bottom:8px">
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">S1</div>
+      <div class="ph-title"><h3>Register و Login rate limit key یکسان دارند</h3><p>اسپم registration باعث lock شدن login آدرس IP می‌شود</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>registrationRateLimit(ip)</code> با key <code>register:{ip}</code> اضافه شد — ۵ تلاش / ساعت، lockout ۱ ساعت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>register route از <code>registrationRateLimit</code> استفاده می‌کند — login دیگر تحت تأثیر spam registration نیست</div></div>
+      </div>
+      <div class="proof">✓ Build موفق. rate limit keys حالا مجزا هستند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card" style="border-color: var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">S2</div>
+      <div class="ph-title"><h3>فقط یک Admin از env var — بدون multi-admin</h3><p>Admin DB table وجود دارد ولی استفاده نمی‌شود — password rotation بدون redeploy ممکن نیست</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>Seed: <code>prisma.admin.upsert</code> از env var به جدول <code>admins</code> در DB (idempotent)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>lib/auth/users.ts</code> — <code>findUserByEmail/findUserById</code> حالا <code>prisma.admin.findUnique</code> می‌خوانند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Admin panel: صفحه تغییر رمز admin — deferred (env var → db:seed کافی است)</div></div>
+      </div>
+      <div class="proof">✓ Build موفق. Admin login از DB می‌خواند — password rotation با db:seed بدون redeploy ممکن است.</div>
+    </div>
+  </div>
+
+  <div class="phase-card" style="border-color: var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">S3</div>
+      <div class="ph-title"><h3>Rate limiter in-memory — multi-instance کار نمی‌کند</h3><p>هر process یک store جداگانه دارد — با pm2 cluster یا serverless بی‌اثر می‌شود</p></div>
+      <div class="ph-badge todo">🟡 security</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.8; margin-bottom:12px">
+        <b>مشکل:</b> <code>const store = new Map()</code> در <code>lib/auth/rate-limit.ts</code> — هر worker خودش را count می‌کند. یک attacker با ۱۰ process می‌تواند ۱۰x سریع‌تر بزند.<br>
+        <b>برای thesis مشکلی ندارد</b> (single process). برای production: Redis یا Upstash.<br>
+        <b>کدام کامنت در خود فایل هم هست:</b> <code>"Production note: for multi-instance deployments, replace with Redis-backed rate limiting"</code>
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>در production: جایگزینی Map با <code>@upstash/ratelimit</code> یا Redis</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card" style="border-color: var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">S4</div>
+      <div class="ph-title"><h3>OTP ندارد — ثبت‌نام با شماره تأیید نشده</h3><p>هر کسی می‌تواند با هر شماره‌ای ثبت‌نام کند بدون تأیید SMS</p></div>
+      <div class="ph-badge todo">🟡 security</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.8; margin-bottom:12px">
+        <b>مشکل:</b> سایت‌های ایرانی واقعی (Divar، Snapp، Billboardiha) همه OTP دارند. بدون OTP: هر کسی با شماره دیگران ثبت‌نام می‌کند، شماره‌های جعلی وارد DB می‌شوند.<br>
+        <b>راه‌حل:</b> یک جدول <code>otp_codes</code> + endpoint ارسال SMS + تأیید کد ۶ رقمی (Kavenegar یا Ghasedak API).
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>جدول <code>otp_codes (phone, code, expiresAt, used)</code> در Prisma schema</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>ساخت <code>POST /api/auth/otp/send</code> و <code>POST /api/auth/otp/verify</code></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>تغییر flow ثبت‌نام: شماره → OTP → رمز → ثبت‌نام</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">S5</div>
+      <div class="ph-title"><h3>Session refresh / sliding window ندارد</h3><p>JWT 8 ساعته — منقضی شد، logout اجباری — بدون silent refresh</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>در <code>GET /api/auth/me</code>: اگر <code>exp - now &lt; 2h</code>، token جدید صادر و <code>Set-Cookie</code> در response</div></div>
+      </div>
+      <div class="proof">✓ کاربر فعال دیگر logout اجباری نمی‌شود.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TIER 3: Code Quality -->
+<div class="sec-head" style="margin-top:20px">
+  <h2 style="font-size:13px; color: var(--blue, #60a5fa)">🔵 اولویت ۳ — کیفیت کد</h2>
+  <div class="line"></div>
+</div>
+<div class="phases" style="margin-bottom:8px">
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">Q1</div>
+      <div class="ph-title"><h3>کامنت‌های outdated و فازمحور در کد production</h3><p>lib/db/billboards.ts هنوز می‌گوید "Not wired into any page yet"</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>حذف block comment های فازمحور از <code>lib/db/billboards.ts</code> و <code>api/billboards/route.ts</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>کوتاه کردن کامنت prisma/schema.prisma — نگه‌داشتن فقط WHY‌های غیرواضح، حذف همه Phase X references</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بررسی session.ts و rate-limit.ts — کامنت‌های موجود WHY معتبر دارند، stale نیستند</div></div>
+      </div>
+      <div class="proof">✓ build موفق — هیچ Phase reference stale در هیچ فایل باقی نماند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">Q2</div>
+      <div class="ph-title"><h3>پیام‌های خطا نیمی انگلیسی، نیمی فارسی</h3><p>کاربر فارسی ممکن است "Unauthorized" یا "Invalid JSON" ببیند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>تمام error message های user-facing در routes به فارسی تبدیل شدند — "Unauthorized" → "احراز هویت لازم است"، "Too many requests" → "درخواست‌های زیادی"، "Invalid ID/JSON/Not found/Update/Delete failed" → فارسی</div></div>
+      </div>
+      <div class="proof">✓ grep تأیید کرد — هیچ "Unauthorized"/"Too many requests"/"Invalid ID" در API routes باقی نماند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">Q3</div>
+      <div class="ph-title"><h3>console.log در audit.ts — leak اطلاعات به stdout</h3><p>audit events به stderr/stdout می‌روند — در production log aggregator می‌خواند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>NODE_ENV !== "production"</code> guard اضافه شد — console.error در production خاموش است</div></div>
+      </div>
+      <div class="proof">✓ stack trace/DB path در production به stdout leak نمی‌کند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">Q4</div>
+      <div class="ph-title"><h3>billboard/[slug]/page.tsx — font link inline در component</h3><p>&lt;link rel="stylesheet"&gt; داخل JSX — باید در layout.tsx باشد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>خط <code>&lt;link&gt;</code> اضافه از billboard page حذف شد — font از layout.tsx لود می‌شود</div></div>
+      </div>
+      <div class="proof">✓ HTML تمیزتر، بدون درخواست font اضافه.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TIER 4: Feature Gaps -->
+<div class="sec-head" style="margin-top:20px">
+  <h2 style="font-size:13px; color: var(--muted)">⚪ اولویت ۴ — فیچرهای غایب نسبت به رقبا</h2>
+  <div class="line"></div>
+</div>
+<div class="phases" style="margin-bottom:8px">
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">F1</div>
+      <div class="ph-title"><h3>بازیابی رمز / فراموشی رمز</h3><p>کاربری که رمز فراموش کرده هیچ راهی ندارد</p></div>
+      <div class="ph-badge todo">⚪ feature</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><code>POST /api/auth/otp/send</code> (پیش‌نیاز S4) + reset flow با OTP جدید</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>صفحه "فراموشی رمز" در login page</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">F2</div>
+      <div class="ph-title"><h3>اعلان SMS/ایمیل بعد از رزرو</h3><p>کاربر رزرو می‌کند، هیچ notification نمی‌رسد — باید تماس تلفنی منتظر بماند</p></div>
+      <div class="ph-badge todo">⚪ feature</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>بعد از <code>prisma.reservation.create</code>: ارسال SMS تأیید به کاربر (Kavenegar/Ghasedak)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>بعد از admin تأیید: SMS به کاربر که رزرو confirm شد</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">F3</div>
+      <div class="ph-title"><h3>پروفایل کاربر قابل ویرایش نیست</h3><p>Dashboard فقط read-only — نام و شماره قابل تغییر نیستند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>PATCH /api/auth/me</code> — Zod + bcrypt برای تغییر نام و رمز، JWT جدید صادر می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Tab "⚙️ ویرایش پروفایل" در Dashboard — فرم نام + تغییر رمز با success/error state</div></div>
+      </div>
+      <div class="proof">✓ Build موفق. کاربر می‌تواند نام و رمز خود را از داشبورد تغییر دهد.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">F4</div>
+      <div class="ph-title"><h3>sitemap.xml وجود ندارد</h3><p>فقط robots.ts هست — موتور جستجو صفحات بیلبوردها را index نمی‌کند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>app/sitemap.ts</code> — تولید XML از همه billboard slug ها + صفحات اصلی</div></div>
+      </div>
+      <div class="proof">✓ <code>/sitemap.xml</code> در route list تأیید شد — ۲۸۰۸ billboard + ۴ صفحه اصلی.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">F5</div>
+      <div class="ph-title"><h3>سیستم امتیاز و نظر</h3><p>rating و reviewCount در DB هستند ولی هیچ UI/API برای نوشتن review وجود ندارد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>جدول <code>reviews (billboardId, userId, rating, comment, createdAt)</code> در Prisma schema + migration موفق</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>GET /api/reviews?billboardId=X</code> — public، میانگین امتیاز + لیست نظرات</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>POST /api/reviews</code> — session → rate limit → Zod → بررسی رزرو confirmed → upsert (یک نظر/user/billboard)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>کامپوننت <code>ReviewsSection.tsx</code>: نمایش نظرها با StarRating، فرم ثبت، empty state — در <code>app/billboard/[slug]/page.tsx</code> اضافه شد</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> Build موفق ۳۳ صفحه — <code>/api/reviews</code> در route list تأیید شد. کاربران با رزرو confirmed می‌توانند نظر ثبت کنند؛ بقیه پیام راهنما می‌بینند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">F6</div>
+      <div class="ph-title"><h3>پرداخت آنلاین</h3><p>رزرو "pending" می‌ماند — هیچ flow پرداختی وجود ندارد</p></div>
+      <div class="ph-badge todo">⚪ feature</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:8px">بزرگ‌ترین تفاوت با سایت‌های واقعی. نیاز به درگاه پرداخت (ZarinPal یا Mellat).</p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>اضافه کردن <code>paymentStatus</code> و <code>invoiceAmount</code> به Reservation schema</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>ادغام ZarinPal SDK: <code>POST /api/payments/initiate</code> + callback verify</div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="font-size:13px; color: #a78bfa; margin-top:28px">🎨 اولویت ۱ (فعلی) — طراحی UI/UX ✦</h2>
+  <p style="font-size:0.8rem; color:var(--muted); margin:6px 0 12px">بهبود جدی کیفیت بصری و UX — اولویت اجرایی اصلی.</p>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px; background:#7c3aed22; color:#a78bfa; border-color:#7c3aed44">UX-B</div>
+      <div class="ph-title"><h3>پالت جدید + پس‌زمینه متحرک (ایتریشن ۲)</h3><p>vine پیچک‌مانند با scroll، orb های واضح‌تر، سبز در UI</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>جایگزینی <code>--accent</code> از نارنجی (#FF4D00) به آبی (#3B7BF5) در <code>globals.css</code> — shadow scale و border-hi اضافه شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>اضافه کردن <code>--green-accent: #00D17A</code> به design system</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>کامپوننت <code>BackgroundPattern.tsx</code>: دو orb دریفتنده (آبی + سبز) + scan line سبز ۱px — در تمام صفحات از layout فعال</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>dot grid ظریف روی body (background-image) در هر دو تم تاریک و روشن</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>جایگزینی همه hardcoded rgba(255,77,0,...) در ۸ فایل: page.tsx، Topbar، BillboardCard، Sidebar، DetailModal، CompareBar، BookingModal، SnakeScroll</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بهبود تم روشن: bg آبی-روشن (#EEF2FB)، shadow های ظریف، dot grid با opacity مناسب</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بهینه‌سازی اسکرول — حذف <code>* { transition }</code> wildcard (اسکرول کند در Explore) + RAF throttling در <code>BackgroundPattern.tsx</code> با cache <code>maxScroll</code> و <code>willChange: transform</code></div></div>
+      </div>
+      <div class="proof">✓ Build موفق — پالت، vine پیچک با scroll-draw، orb‌ها، و بهینه‌سازی اسکرول همه فعال. scroll wildcard transition حذف شد؛ BackgroundPattern اکنون با RAF throttled اجرا می‌شود.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U1</div>
+      <div class="ph-title"><h3>بازطراحی صفحه اصلی (Landing Page)</h3><p>hero section ضعیف، CTA مبهم، hierarchy بصری ندارد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>آمار واقعی از <code>GET /api/stats</code> — تعداد رسانه‌ها و شهرها real-time از DB</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>section رسانه‌های ویژه با کارت‌های بصری — top-rated از API با sortBy=traffic_desc</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>CTA با دکمه‌های واضح و searchbar — hero با parallax و type quick-links</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>footer کامل با ۳ ستون لینک (پلتفرم، کاربران، شرکت)</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — 30 صفحه. <code>/api/stats</code> در route list تأیید شد. type counts و city count از DB واقعی.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U2</div>
+      <div class="ph-title"><h3>بهبود صفحه Explore / اتصال صفحات ناقص</h3><p>فیلترها، اتصال لندینگ → explore، صفحه‌های تحلیل و مقایسه</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>نمایش همه پین‌های نقشه (۲۰۰۱+ رسانه geocoded) — endpoint جدید <code>/api/billboards/pins</code> با داده slim، <code>MAP_PIN_MODE</code> برای سوییچ آسان به viewport-based در آینده</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تقسیم hero جستجو به دو ستون — راست: فرم جستجو، چپ: کاروسل زنده از بیلبوردهای پربازدید با عکس واقعی و slide خودکار (3.8s) + blurred-backdrop برای نمایش کامل تصویر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>نصب <code>lucide-react</code> و جایگزینی emoji‌های کیبوردی با آیکون SVG در تمام صفحات: Topbar، landing، explore، BillboardCard، Sidebar، CompareBar، Dashboard</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>رفع کندی اسکرول Explore: <code>transition:"all"</code> inline در BillboardCard به property‌های مشخص محدود شد (border-color، box-shadow، background-color)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Topbar: tabs از button/onTabChange به <code>Link</code> + <code>usePathname</code> تبدیل شد — /analytics و /compare فعال هستند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>اتصال لندینگ → explore: URL params ?type= و ?city= و ?search= در explore خوانده می‌شوند، city→province auto-detect از iranLocations</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>app/analytics/page.tsx</code> — AnalyticsTab با Topbar در layout کامل</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>AnalyticsTab زنده: <code>GET /api/analytics?city=</code> endpoint جدید — aggregate واقعی از DB (groupBy type/status/city، price brackets، coverage). AnalyticsTab rewrite با city dropdown فیلتر زنده.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>app/compare/page.tsx</code> — خواندن compareList از localStorage، نمایش slots انتخابی، باز کردن CompareModal</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>compareList در explore به localStorage sync می‌شود تا /compare بتواند آن را بخواند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>bottom sheet فیلتر برای موبایل</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>highlight کردن marker نقشه هنگام hover روی کارت (و برعکس)</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> Build موفق ۳۲ صفحه — /analytics و /compare در route list تأیید شدند. Topbar tabs به landing/explore و /analytics و /compare لینک می‌کنند. URL params از لندینگ به explore منتقل می‌شوند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U3</div>
+      <div class="ph-title"><h3>صفحه جزئیات بیلبورد</h3><p>gallery تصاویر، specs بهتر، social share</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>gallery تصاویر با lightbox — <code>BillboardGallery.tsx</code>: thumbnail row + کلیک برای zoom + ناوبری با کیبورد و دکمه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ادغام همه allImages و images بدون تکرار — همه تصاویر موجود نمایش داده می‌شوند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>دکمه اشتراک‌گذاری — <code>ShareButton.tsx</code>: Web Share API با fallback به clipboard + feedback بصری</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — 29 صفحه. <code>BillboardGallery</code> و <code>ShareButton</code> در components اضافه شدند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U4</div>
+      <div class="ph-title"><h3>Polish لندینگ / کارت / فوتر — صفحات ناقص</h3><p>ادغام دکمه‌های BillboardCard، تیکر زنده، کاروسل لندینگ، فوتر کامل، صفحات /about /contact /terms</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>BillboardCard: ادغام «مشخصات» (مودال) و «صفحه اختصاصی» (ExternalLink) به یک دکمه Link به <code>/billboard/slug</code> — دکمه سوم «مقایسه» (Scale icon) جایگزین ExternalLink شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>حذف دکمه مقایسه از overlay تصویر — جای آن به footer کارت منتقل شد تا همیشه قابل مشاهده باشد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Explore showcase: زمان auto-cycle از 3800ms به 5500ms افزایش یافت + دکمه «مشاهده رسانه ←» در info bar اضافه شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>لندینگ: تیکر زنده با نام و قیمت رسانه‌ها (CSS animation tickerScroll) زیر search chips</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>لندینگ: بخش «پربازدیدترین رسانه‌ها» به کاروسل واقعی با prev/next + thumbnail grid + dot indicators تبدیل شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>لندینگ footer: همه لینک‌های متنی به <code>&lt;Link&gt;</code> تبدیل شدند — /explore، /explore/map، /compare، /login، /dashboard، /list-media، /about، /contact، /terms</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>app/about/page.tsx</code> — صفحه استاتیک درباره رسامپ با stats grid و لینک‌ها</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>app/contact/page.tsx</code> — صفحه تماس با info cards + فرم نمایشی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>app/terms/page.tsx</code> — ۸ بخش قوانین و مقررات فارسی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>سیستم نظر و امتیاز F5: جدول Review در Prisma، مایگریشن، <code>GET/POST /api/reviews</code>، کامپوننت ReviewsSection، ادغام در صفحه جزئیات بیلبورد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>صفحه جزئیات بیلبورد: جایگزینی text grid ترافیک با کامپوننت <code>TrafficMeter</code> (دایره gauge + bar) — همان المان‌هایی که در مودال قدیمی مشخصات بود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>gate کردن <code>/list-media</code> به login — proxy.ts (USER_PAGE_PATTERN) و USER_API_PATTERN برای <code>/api/listings</code> آپدیت شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>حذف ادعای «اولین پلتفرم» از صفحه about و لندینگ — جایگزینی با توصیف صادقانه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ساخت <code>components/Footer.tsx</code> — سه ستون لینک (پلتفرم / کاربران / شرکت) + لوگو + copyright</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Topbar یکسان روی همه صفحات: explore، analytics، compare، about، contact، terms، billboard detail، dashboard، list-media — دکمه ثبت رسانه به Link تبدیل شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Footer به همه صفحات اضافه شد — explore، analytics، compare، about، contact، terms، billboard detail، dashboard، list-media</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Breadcrumb در صفحه بیلبورد: خانه › جستجو › نام رسانه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Hero لندینگ: بازطراحی به split layout دو ستون — چپ: headline + search + ticker، راست: تصویر واقعی بیلبورد با اطلاعات overlay + dot indicators + floating stat card</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بازطراحی نهایی لندینگ: حذف split layout — hero full-width centered با headline بزرگ + search bar + chips + ticker؛ header ساده (لوگو + auth، بدون nav links)؛ زیر hero: گالری افقی sliding خودکار (۲۸۰px کارت) با prev/next و dot indicator از پربازدیدترین رسانه‌ها</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> Build موفق — TypeScript clean. Hero centered full-width با گالری sliding زیر آن. Header nav links حذف شد.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ★ U5-U10 — UI/UX UPGRADE PHASES                               -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="sec-head" style="margin-top:48px">
+  <h2>★ فازهای UI/UX پیشرفته</h2>
+  <div class="line"></div>
+</div>
+
+<div class="phases">
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U5</div>
+      <div class="ph-title"><h3>تصویر انسانی و اعتمادسازی</h3><p>اضافه کردن حضور انسانی واقعی، testimonials، و badge اعتماد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>لندینگ: section «آن‌ها از رسامپ استفاده کردند» — ۳ کارت testimonial با آواتار رنگی + نام + شرکت + نقل‌قول</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>لندینگ: نوار «همراه برندهایی مثل...» با ۵ نام برند ایرانی (دیجی‌کالا، اسنپ‌فود، آپارات، همراه اول، ایرانسل)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>صفحه درباره ما: بازنویسی کامل — hero + داستان + stats + grid مزایا ۶‌گانه + ارزش‌ها + CTA</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Footer: badge اعتماد — deferred</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — TypeScript clean. لندینگ با testimonials و brands bar. about page کامل بازنویسی شد.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U6</div>
+      <div class="ph-title"><h3>کاهش حس AI / میکرو-انیمیشن</h3><p>گرم‌تر کردن طراحی، hover effects، رفع رنگ سایه لوگو</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>BillboardCard: hover → scale(1.06) روی تصویر (0.4s ease) — state imgHovered</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Login page: سایه لوگو به آبی تأیید شد (<code>rgba(59,123,245,0.45)</code>)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Typography: متن‌های توضیحی با fontWeight: 300 — deferred</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — BillboardCard hover scale فعال. سایه لوگو آبی.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U7</div>
+      <div class="ph-title"><h3>رفع باگ‌های UX-Breaking</h3><p>مشکلاتی که مستقیماً کاربر را از سایت خارج می‌کنند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>Billboard detail CTA: دکمه رزرو به <code>BookingModal</code> واقعی وصل شد — component <code>BillboardBookingCTA.tsx</code> ساخته شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>صفحه تماس: فرم تقلبی حذف شد — جایگزینی با info cards + دکمه‌های مستقیم mailto: و Telegram</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ثبت رسانه step 4: <code>&lt;input type="file"&gt;</code> واقعی + preview grid + دکمه حذف هر تصویر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Compare: thumbnail تصویر در کارت‌ها + برچسب «فقط ۲ رسانه اول مقایسه می‌شوند» برای آیتم‌های اضافه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>جایگزینی emoji تماس با Lucide icons (Mail، Send، Building2، Clock)</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — TypeScript clean. همه مشکلات UX-Breaking برطرف شدند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U8</div>
+      <div class="ph-title"><h3>پالیش داشبورد و پروفایل</h3><p>آواتار کاربر، آیکون‌های درست، empty state بهتر</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>UserAvatar: دایره آبی با حرف اول نام — بالای sidebar داشبورد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>آیکون «در انتظار تأیید»: از Calendar به Clock — آیکون‌های سه stat card متمایز شدند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ردیف رزرو: thumbnail 64px از API + نام کلیک‌پذیر به <code>/billboard/slug</code> + hover color</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Empty state: آیکون Search دایره‌ای + متن دوخطی راهنما + دکمه «جستجوی رسانه»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>API <code>/api/reservations/my</code>: اضافه شدن <code>billboardSlug</code> و <code>billboardImage</code> به response</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — TypeScript clean. داشبورد حالا thumbnail، link و avatar دارد.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U9</div>
+      <div class="ph-title"><h3>ریسپانسیو / موبایل</h3><p>78% کاربران ایرانی موبایل — breakpoints درست</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>Footer: <code>.footer-grid</code> → single column زیر 640px (Footer.tsx + لندینگ inline footer)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Dashboard sidebar: hamburger toggle (Menu/X icon) زیر 768px — <code>.dash-sidebar</code> + <code>.dash-hamburger</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Landing grids: <code>.testimonials-grid</code>، <code>.types-grid</code>، <code>.how-grid</code>، <code>.stats-bar-grid</code> — single/2col زیر 640px</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>About page: <code>.about-stats-grid</code> و <code>.how-grid</code> → single column موبایل</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Landing header nav: قبلاً با <code>.landing-nav</code> در 640px hidden بود — تأیید شد</div></div>
+      </div>
+      <div class="proof">✓ Build موفق — TypeScript clean. CSS media queries در globals.css اضافه شدند.</div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U10</div>
+      <div class="ph-title"><h3>Map-First Explore</h3><p>تجربه AdQuick/Blip-like — نقشه به عنوان default view</p></div>
+      <div class="ph-badge todo">todo</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">⚠ وابسته به حل MAP-A/B/C — بعد از آنها اجرا شود.</p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>Map view به عنوان default tab در explore</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Price pins روی نقشه (مثل Zillow)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>«جستجو با حرکت نقشه» toggle (مثل Airbnb)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Cluster pins هنگام zoom-out</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Filter pills بالای صفحه: بیلبورد | پل | LED | استرابورد</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SEC — Production Security Hardening ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px">SEC</div>
+      <div class="ph-title"><h3>Production Security Hardening</h3><p>۱۵ باگ امنیتی و کیفیتی — API routes، proxy، auth، rate limit</p></div>
+      <div class="ph-badge">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>Security headers فعال در proxy.ts (<code>X-Content-Type-Options</code>، <code>X-Frame-Options</code>، <code>Referrer-Policy</code>)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Admin <code>GET /api/admin/billboards</code> — بررسی <code>session.role === "admin"</code> اضافه شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Register race condition — P2002 try/catch → 409 «این شماره قبلاً ثبت شده»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Reservation TOCTOU — overlap + create در <code>prisma.$transaction()</code> atomic</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Open redirect <code>?next=</code> — فقط مسیرهای شروع به <code>/</code> (نه <code>//</code>) مجاز</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Sort allowlist — <code>area_desc</code> به <code>width:desc</code> اصلاح شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>About page — try/catch + fallback برای query های DB</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>GET /api/auth/me</code> — NaN parseInt guard + P2025 catch → 404</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Rate limit اضافه شد: analytics، stats، reviews endpoints</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>API <code>limit</code> max از 1000 به 100 کاهش یافت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Admin UI — <code>alert()</code> به toast UI تبدیل شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Login — <code>inputMode</code> اشتباه حذف شد، <code>autoComplete="current-password"</code> درست شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Terms page — <code>"use client"</code> غیرضروری حذف شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Explore booking toast — متن گمراه‌کننده اصلاح شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>list-media — وعده SMS حذف شد، متن صادقانه</div></div>
+      </div>
+      <div class="proof">✓ TypeScript clean — <code>npx tsc --noEmit</code> بدون خطا. همه fix ها verified.</div>
+    </div>
+  </div>
+
+  <!-- ─── PERF — Performance Hardening ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px">PERF</div>
+      <div class="ph-title"><h3>Performance Hardening — استانداردهای ۲۰۲۶</h3><p>WAL mode، composite indexes، font preload، cache tune</p></div>
+      <div class="ph-badge">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>WAL mode</strong> — <code>PRAGMA journal_mode=WAL + synchronous=NORMAL + foreign_keys=ON</code> روی SQLite connection (<code>lib/db/client.ts</code>) — concurrent reads بدون SQLITE_BUSY</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>Composite indexes</strong> — <code>(city,status)</code>، <code>(city,type)</code>، <code>(type,price)</code> در schema — کوئری‌های فیلتر ترکیبی از full scan به index scan</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>Font preload</strong> — <code>&lt;link rel="preload" as="style"&gt;</code> برای Vazirmatn در <code>layout.tsx</code> — LCP بهتر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>Cache-Control</strong> — <code>max-age=30→60 / stale-while-revalidate=120→300</code> روی <code>/api/billboards</code></div></div>
+      </div>
+      <div class="warn-box" style="margin-top:12px; padding:10px 14px; font-size:0.78rem">
+        ⚠ <strong>یادآوری:</strong> بعد از pull، یک‌بار <code>npx prisma db push</code> اجرا کن تا composite indexes روی DB اعمال شوند.
+      </div>
+      <div class="proof">✓ TypeScript clean — <code>npx tsc --noEmit</code> بدون خطا. WAL mode در DB file ذخیره می‌شود — دائمی.</div>
+      <div style="margin-top:12px; padding:10px 14px; background:var(--indigo-dim); border:1px solid var(--indigo-mid); border-radius:8px; font-size:0.78rem">
+        <strong style="color:var(--indigo)">📋 پس از ارائه (مستند، پیاده نشده):</strong>
+        <span style="color:var(--muted)"> next/image برای scraped images · Server Components refactor · PPR/Suspense streaming · Server Actions+useOptimistic · Bundle analyzer · JSON-LD SEO</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SCR — Scraper v2 ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px">SCR</div>
+      <div class="ph-title"><h3>Scraper v2 — شماره تلفن + فرمول علمی</h3><p>استخراج تلفن از ۵ منبع + جایگزینی کامل random با فرمول</p></div>
+      <div class="ph-badge">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>تابع <code>extract_phone()</code> — تبدیل ارقام فارسی + regex موبایل (09…) و ثابت (0x…) — ۵ تست pass</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Divar: تلفن از <code>description</code> + fallback به detail API (<code>timeout=8</code>, <code>max_retries=1</code>)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Sheypoor: تلفن از JSON-LD <code>seller.telephone</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>IRBillboard، Billboardiha، Aradholding: <code>extract_phone(soup.get_text())</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>billboard/[slug]: شماره تلفن → کارت سبز کلیک‌پذیر (<code>tel:</code> link)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>همه <code>random.randint</code> → <code>estimate_price_fallback(city, type)</code> + <code>estimate_traffic()</code> 3-arg</div></div>
+      </div>
+      <div class="proof">✓ phone در field DB ذخیره می‌شود — صفحه جزئیات بیلبورد نمایش می‌دهد.</div>
+    </div>
+  </div>
+
+  <!-- ─── SCR3 — Scraper v3: Image Fix + UI ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">SCR3</div>
+      <div class="ph-title"><h3>Scraper v3 — اصلاح عکس‌ها + UI بیلبورد</h3><p>direct URL image extraction + RTL fix + TrafficMeter redesign</p></div>
+      <div class="ph-badge">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>حذف دائمی divar و sheypoor از scraper — داده‌های غیربیلبورد (نقاشی، تابلو خانگی) حذف شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>fresh mode به عنوان پیش‌فرض — <code>--no-fresh</code> برای حالت افزایشی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>باگ <code>existing_files</code> در fresh mode: rebuild بعد از scraping (نه قبل) — عکس‌های دانلودشده دیگر رها نمی‌شوند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تشخیص placeholder با size check (<code>MIN_IMAGE_BYTES=10KB</code>) — جایگزین MD5 که ساعت‌ها طول می‌کشید</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>کشف URL pattern مستقیم: <code>/_container/billboard/{raw_id}/main.jpg</code> — همیشه قابل دسترس (48-50KB)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>scraper_billboardiha: جایگزینی card img_src با direct URL construction — ۱۰۰٪ coverage</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>fix_missing_images.py — اسکریپت تکمیل عکس‌های رکوردهای موجود با direct URL</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>رفع UnboundLocalError در extract_phone (phone مقداردهی اولیه قبل از try)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>seed.ts: حذف رکوردهای stale با raw SQL (دور زدن محدودیت P2029 SQLite)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>RTL layout fix در billboard/[slug]: عنوان راست، badge‌ها چپ (جای DOM swap)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>TrafficMeter: جایگزینی emoji با Lucide icons (BarChart2، Car، Footprints، Clock، Info)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>TrafficMeter + ۶ chip آمار: چیدمان ۶۰/۴۰ کنار هم (flex) به جای زیر هم</div></div>
+      </div>
+        <div class="task done-t"><div class="tick">✓</div><div>dedup billboardiha: name+city در collect_all_cards — همان بیلبورد در چند section با ID های مختلف دیگر تکرار نمی‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>irbillboard placeholder detection: <code>MIN_IMAGE_BYTES=10KB</code> در download_images (scraper.py) — لوگوی 3388B حذف می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>DB dedup: 3871 → 1879 billboardiha، 188 placeholder irbillboard حذف، seed مجدد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>پاکسازی عکس‌های اشتباه sidebar: 1690 رکورد از 4-5 عکس به 1 عکس، 5786 فایل حذف</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>pagination: consecutive_empty=3 — دیگر با اولین صفحه تکراری section رو نمی‌بنده (زنجان و شهرهای کوچک بهتر پوشش داده می‌شوند)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>--bih-only</code> flag: فقط billboardiha اسکرپ می‌شود، منابع دیگر (irbillboard، aradholding) دست‌نخورده، بدون geocoding</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>حذف ۵۷۲ فایل تصویر تکراری (MD5 dedup) + پاک‌سازی <code>images: []</code> در رکوردهای مربوطه — ۴۱۶۵ رکورد با تصویر یونیک باقی ماند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>NoImagePlaceholder</code> در BillboardCard — گرادیان رنگی اختصاصی هر نوع (billboard/digital/bridge/station/vehicle) + الگوی diagonal SVG + آیکون با glow</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>hasImages Boolean</code> در Prisma schema + seed.ts + <code>SORT_MAP</code> — رکوردهای دارای عکس همیشه اول نشان داده می‌شوند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>dedup name+city در billboards.json — 3327 رکورد تکراری حذف (6855 → 3528)، یک رکورد با بیشترین عکس نگه داشته شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>BillboardCard redesign: تصویر مربعی (aspect-ratio 1/1، objectFit cover)، حذف هاله سفید، حذف آدرس + ابعاد + TrafficMeter از کارت، نمایش views+قیمت یک خطی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>NoImagePlaceholder: ایموجی‌های keyboard جایگزین Lucide icon (Megaphone/Monitor/Milestone/Train/Bus) + font بزرگ‌تر برای views text (0.72→0.8rem)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>carousel لندینگ: برگشت به sliding strip چند‌کارته، تصویر مربعی 1:1 (جایگزین 3:4)، objectFit cover</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>showcase صفحه explore: objectFit cover (بدون هاله)، حذف blur backdrop، gradient همیشه تیره — سایز همان minHeight:300 محفوظ</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>scraper حالت پیش‌فرض: incremental (بدون حذف داده‌ها)؛ <code>--fresh</code> برای اسکرپ کامل؛ banner راه‌اندازی با توضیح حالت جاری</div></div>
+      </div>
+      <div class="proof">✓ DB: 3545 رکورد، کارت‌ها با Lucide icon، showcase explore بدون هاله، carousel لندینگ multi-card مربعی، scraper پیش‌فرض incremental.</div>
+    </div>
+  </div>
+
+  <!-- ─── PREP — آماده‌سازی نهایی ─── -->
+  <div class="phase-card is-next open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">PREP</div>
+      <div class="ph-title"><h3>آماده‌سازی نهایی ارائه به استاد</h3><p>چک‌لیست کامل قبل از ارائه — چند روز دیگر</p></div>
+      <div class="ph-badge">→ در جریان</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--amber); margin-bottom:14px">⭐ قبل از ارائه همه این‌ها رو تیک بزن.</p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><strong>اجرای scrapers با VPN خاموش:</strong> <code>cd scraper &amp;&amp; python scraper.py</code> — داده‌های تازه</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>تعداد رکوردها بررسی کن: <code>npm run db:studio</code> → جدول billboards</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Flow کاربر کامل: ثبت‌نام → جستجو (فیلتر شهر/نوع) → جزئیات → رزرو → داشبورد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Flow ادمین: ورود → مشاهده بیلبوردها → ویرایش قیمت → تأیید/رد رزرو</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>صفحه مقایسه: ۲ بیلبورد از explore انتخاب کن → modal باز می‌شود → همه ردیف‌ها پر</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>صفحه تحلیل‌بازار: نمودارها لود می‌شوند؟ فیلتر شهر کار می‌کند؟</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>نقشه: <strong>VPN خاموش</strong> باشد — بررسی کن pin‌ها لود می‌شوند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک حساب demo کاربر بساز — نام و رمز را یادداشت کن برای روز ارائه</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Admin demo: <code>ADMIN_EMAIL</code> در <code>.env</code> بررسی کن — ورود موفق باشد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>npm run build</code> — مطمئن شو بدون خطا build می‌شود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>صفحات ثابت: /about، /terms، /contact — چک کن درست نمایش داده می‌شوند</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── CMP — برتری رقابتی ─── -->
+  <div class="phase-card is-next">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">CMP</div>
+      <div class="ph-title"><h3>برتری رقابتی — پاسخ‌های آماده داور</h3><p>رسامپ vs IRBillboard vs Billboardiha — ۷ بُعد</p></div>
+      <div class="ph-badge">→ مرور کن</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">داور احتمالاً می‌پرسد: <em>«چرا رسامپ از IRBillboard و Billboardiha بهتر است؟»</em> پاسخ آماده:</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>رزرو آنلاین</strong> <em style="color:var(--amber);font-size:0.78rem">(زیرساخت کامل؛ صاحبان رسانه هنوز به‌صورت مستقیم به پلتفرم نپیوسته‌اند — رزرو هماهنگ می‌شود)</em> — رقبا فرم تماس دارند؛ رسامپ DB + overlap check + transaction دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مقایسه جانب‌به‌جانب</strong> — هیچ‌کدام از رقبای ایرانی compare tool ندارند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تخمین ترافیک روزانه</strong> <em style="color:var(--amber);font-size:0.78rem">(heuristic — جمعیت × ضریب موقعیت × ضریب نوع × ضریب مساحت، نه داده واقعی)</em> — رقبا اصلاً عدد نمی‌دهند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>قیمت نمایش داده می‌شود</strong> <em style="color:var(--amber);font-size:0.78rem">(حدسی یا متغیر — از منابع scrape شده، نه تأیید صاحب رسانه)</em> — IRBillboard «تماس بگیرید» دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>داشبورد تحلیلی</strong> — نمودار توزیع شهر/نوع/قیمت از DB واقعی؛ رقبا هیچ analytics ندارند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حجم داده</strong> — ۲۸۰۸+ رکورد از ۵ منبع (Divar، Sheypoor، IRBillboard، Billboardiha، Arad) با dedup</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>امنیت</strong> — JWT HttpOnly، bcrypt cost 12، rate limit، Zod، RBAC، TOCTOU-safe reservation</div></div>
+      </div>
+      <div class="proof" style="background:var(--amber-dim); border-color:var(--amber-mid); color:var(--text)">رسامپ در ساختار فنی و قابلیت‌ها از رقبا پیشتاز است — با این صداقت که برخی داده‌ها heuristic هستند و همه صاحبان رسانه هنوز به پلتفرم متصل نشده‌اند. این محدودیت‌ها ذاتی مرحله MVP است، نه نقص طراحی.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ★ MAP / GEOLOCATION — DEFERRED HIGH-PRIORITY INVESTIGATION     -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="sec-head" style="margin-top:48px">
+  <h2 style="color:#f87171">★ نقشه / Geolocation — تحقیق معوق با اولویت بالا</h2>
+  <div class="line"></div>
+</div>
+<div class="warn-box" style="margin-bottom:16px">
+  <b>این بخش پس از UI/UX و فیچرهای باقی‌مانده بررسی می‌شود.</b> مشکلات نقشه پیچیده و وابسته به provider هستند.
+  قبل از هر تغییر، تحقیق ریشه‌ای لازم است — نه تعویض بی‌هدف provider.
+</div>
+
+<div class="phases">
+
+  <!-- Map Issue A -->
+  <div class="phase-card is-defer open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#f87171; border-color:#ef444444">MAP-A</div>
+      <div class="ph-title"><h3>«API Key Required» روی نقشه</h3><p>نقشه مکرراً این پیام را نشان می‌دهد — قبلاً نشان نمی‌داد</p></div>
+      <div class="ph-badge" style="background:#ef444418; color:#f87171; border:1px solid #ef444444">⏸ تحقیق معوق</div>
+    </div>
+    <div class="ph-body">
+      <div class="defer-note" style="border-color:#ef444444; background:#ef44440a">
+        <b style="color:#f87171">وضعیت فعلی:</b> tile provider فعلی CARTO است (<code>cartocdn.com</code>) — OpenStreetMap-based، بدون API key در URL tile.
+        منشأ پیام «API Key Required» مشخص نیست. ممکن است از جای دیگری بیاید (مثلاً geocoding Neshan، یا تغییر سیاست CARTO).
+      </div>
+      <h4>وظایف تحقیق</h4>
+      <div class="task-list">
+        <div class="task block-t"><div class="tick">⏸</div><div>شناسایی دقیق منشأ پیام «API Key Required» — console log، network tab، error boundary</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>تشخیص اینکه آیا CARTO سیاست استفاده رایگان را تغییر داده یا origin restriction اضافه کرده</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>مقایسه رفتار فعلی با کد/کانفیگ قبلی (git history اگر موجود باشد)</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>بررسی آیا مشکل از tile provider است، clustering CDN (unpkg)، یا geocoding</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>ارزیابی provider های جایگزین که برای ایران قابل اطمینان هستند — بدون شروع حلقه تعویض بی‌هدف</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Issue B -->
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#f87171; border-color:#ef444444">MAP-B</div>
+      <div class="ph-title"><h3>مختصات بیلبوردها نادرست است</h3><p>بیلبوردها در شهرها یا مناطق اشتباه نمایش داده می‌شوند</p></div>
+      <div class="ph-badge" style="background:#ef444418; color:#f87171; border:1px solid #ef444444">⏸ تحقیق معوق</div>
+    </div>
+    <div class="ph-body">
+      <div class="defer-note" style="border-color:#ef444444; background:#ef44440a">
+        <b style="color:#f87171">مشکل:</b> مختصات‌های موجود در DB ممکن است از scraper، geocoding خودکار، یا ورودی دستی باشند.
+        تشخیص «کجای pipeline خطا ایجاد می‌کند» قبل از هر تصحیح لازم است. تصحیح تصادفی مختصات ممنوع است.
+      </div>
+      <h4>وظایف تحقیق</h4>
+      <div class="task-list">
+        <div class="task block-t"><div class="tick">⏸</div><div>ردیابی کامل pipeline مختصات: منبع داده → DB → geocoding → provider → frontend → لینک Google Maps</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>نمونه‌برداری: چند بیلبورد با مختصات اشتباه شناسایی شود، منشأ lat/lng آنها در DB ردیابی شود</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>تعیین اینکه آیا مشکل در داده خام scraper است یا geocoding بعد از scrape</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>مقایسه مختصات DB با موقعیت واقعی چند نمونه — تشخیص الگوی خطا (offset ثابت؟ شهر اشتباه؟ تصادفی؟)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Issue C -->
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#f87171; border-color:#ef444444">MAP-C</div>
+      <div class="ph-title"><h3>لینک «مشاهده در نقشه» / Google Maps نادرست</h3><p>صفحه جزئیات بیلبورد لینک Google Maps باز می‌کند که گاهی شهر اشتباه است</p></div>
+      <div class="ph-badge" style="background:#ef444418; color:#f87171; border:1px solid #ef444444">⏸ تحقیق معوق</div>
+    </div>
+    <div class="ph-body">
+      <div class="defer-note" style="border-color:#ef444444; background:#ef44440a">
+        <b style="color:#f87171">مثال:</b> بیلبورد تهران ممکن است لینک Google Maps به ابهر باز کند. دلیل احتمالی: مختصات اشتباه در DB، یا URL با آدرس/نام به جای lat/lng، یا هر دو.
+        قبل از تصحیح URL باید ریشه مشخص شود.
+      </div>
+      <h4>وظایف تحقیق</h4>
+      <div class="task-list">
+        <div class="task block-t"><div class="tick">⏸</div><div>بررسی دقیق نحوه تولید URL Google Maps در کد (lat/lng مستقیم؟ آدرس متنی؟ query؟)</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>تعیین اینکه آیا مختصات قبل از URL generation اشتباه است (مشکل MAP-B) یا URL generation اشتباه است</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>بررسی آیا Google Maps query-based search به جای coordinates باز می‌کند — اگر بله، تغییر به <code>maps.google.com/?q={lat},{lng}</code></div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>این فیچر مفید است و باید حفظ شود — فقط بعد از رفع مختصات تصحیح شود</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Provider constraint note -->
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#f87171; border-color:#ef444444">MAP-D</div>
+      <div class="ph-title"><h3>محدودیت‌های provider برای ایران</h3><p>Neshan گزینه مهمی است ولی انتخاب provider باید بر اساس تحقیق باشد نه حدس</p></div>
+      <div class="ph-badge" style="background:#ef444418; color:#f87171; border:1px solid #ef444444">⏸ تحقیق معوق</div>
+    </div>
+    <div class="ph-body">
+      <div class="defer-note" style="border-color:#ef444444; background:#ef44440a">
+        <b style="color:#f87171">هشدار:</b> تعویض مکرر provider بدون تحقیق ریشه‌ای منجر به حلقه می‌شود.
+        Neshan API key در env vars موجود است (<code>NESHAN_API_KEY</code>). ولی «چه چیزی» از Neshan استفاده می‌شود باید اول روشن شود.
+      </div>
+      <div class="task-list">
+        <div class="task block-t"><div class="tick">⏸</div><div>بررسی همه جاهایی که <code>NESHAN_API_KEY</code> در کد استفاده می‌شود — geocoding؟ tile؟ search؟</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>مقایسه provider ها برای ایران: CARTO (فعلی tile)، Neshan، OSM Nominatim (geocoding)، Google Maps API</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div>تصمیم provider پس از تحقیق MAP-A، MAP-B، MAP-C — نه قبل از آن</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Rasamap · ۱۰ شهریور ۱۴۰۵ · Production-readiness audit: PLAN.md + AUDIT.md + PRE_DEPLOY_CHECKLIST.md + RUNBOOK.md + .env.example + /prod-audit command
+
+</div>
+
+<script>
+function toggle(header) {
+  const card = header.closest('.phase-card');
+  card.classList.toggle('open');
+}
+
+// Countdown to Sep 4, 2026 (10 days from Aug 25)
+function updateCountdown() {
+  const target = new Date('2026-09-04T08:00:00');
+  const now = new Date();
+  const diff = Math.max(0, target - now);
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  const persianDigits = s => String(s).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+  document.getElementById('countdown-num').textContent = persianDigits(days);
+  document.getElementById('days-left').textContent = persianDigits(days);
+}
+updateCountdown();
+setInterval(updateCountdown, 60000);
+</script>
