@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { getBillboardBySlug } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
@@ -21,7 +22,7 @@ const slugSchema = z.string().min(1).max(120).regex(/^[a-z0-9-]+$/);
 // getBillboardBySlug() data layer as a Server Component; this endpoint exposes
 // the same resource over REST for API clients and tests.
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = getClientIp(req);
   const ua = req.headers.get("user-agent") ?? "";
 
   if (isBotUA(ua)) {

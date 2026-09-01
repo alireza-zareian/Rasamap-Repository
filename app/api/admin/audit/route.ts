@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { getSession } from "@/lib/auth/session";
 import { hasPermission } from "@/lib/auth/users";
 import { getRecentAuditLogs } from "@/lib/auth/audit";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -18,7 +15,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
   }
 
-  const rl = adminApiRateLimit(getIP(req));
+  const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) {
     return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
   }

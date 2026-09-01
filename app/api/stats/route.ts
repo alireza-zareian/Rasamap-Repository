@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { prisma } from "@/lib/db/client";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 
 export const revalidate = 3600; // cache 1 hour
 
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
-
 export async function GET(req: NextRequest) {
-  const rl = publicApiRateLimit(getIP(req));
+  const rl = publicApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
   const [total, typeCounts, cityCounts, trafficRows] = await Promise.all([
     prisma.billboard.count({ where: { status: { not: "pending" } } }),

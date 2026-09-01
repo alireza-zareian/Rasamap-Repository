@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { createListing } from "@/lib/db/billboards";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
-
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
 
 const ListingSchema = z.object({
   name:     z.string().min(3, "نام رسانه باید حداقل ۳ کاراکتر باشد").max(100),
@@ -22,7 +19,7 @@ const ListingSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const rl = userApiRateLimit(getIP(req));
+  const rl = userApiRateLimit(getClientIp(req));
   if (!rl.allowed) {
     return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است. لطفاً بعداً امتحان کنید." }, { status: 429 });
   }

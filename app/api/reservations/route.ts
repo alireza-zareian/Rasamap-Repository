@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
-
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
 
 const ReservationSchema = z.object({
   billboardId: z.number().int().positive(),
@@ -41,7 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "برای رزرو باید وارد حساب کاربری خود شوید" }, { status: 401 });
   }
 
-  const rl = userApiRateLimit(getIP(req));
+  const rl = userApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
   let body: unknown;

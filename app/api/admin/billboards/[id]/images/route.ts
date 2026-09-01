@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
@@ -6,10 +7,6 @@ import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
 import { prisma } from "@/lib/db/client";
-
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
 
 const PutSchema = z.object({
   images: z.array(z.string().min(1)).max(10),
@@ -26,7 +23,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
   }
 
-  const rl = adminApiRateLimit(getIP(req));
+  const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
   const { id: rawId } = await params;

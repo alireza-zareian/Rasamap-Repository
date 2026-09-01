@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
@@ -7,13 +8,9 @@ import { getBillboardById, updateBillboard, deleteBillboard, hasActiveReservatio
 const ALLOWED_TYPES    = new Set(["billboard", "digital", "bridge", "station", "vehicle"]);
 const ALLOWED_STATUSES = new Set(["available", "busy", "reserved", "inactive"]);
 
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
-
 function authGuard(session: Awaited<ReturnType<typeof getSession>>, req: NextRequest) {
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
-  const rl = adminApiRateLimit(getIP(req));
+  const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
   return null;
 }

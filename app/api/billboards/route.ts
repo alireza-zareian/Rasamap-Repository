@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { getFilteredBillboards } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
@@ -33,7 +34,7 @@ const querySchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = getClientIp(req);
   const ua = req.headers.get("user-agent") ?? "";
 
   // Silent empty response for known scraper UAs — don't reveal we detected them

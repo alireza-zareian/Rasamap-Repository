@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getSession, createSession, buildSessionCookieHeader } from "@/lib/auth/session";
@@ -7,12 +8,8 @@ import { userApiRateLimit } from "@/lib/auth/rate-limit";
 
 const TWO_HOURS = 2 * 60 * 60; // seconds
 
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
-
 // GET /api/auth/me — return current user + sliding session refresh
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await getSession();
   if (!session || session.role !== "user") {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
@@ -51,7 +48,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }
 
-  const rl = userApiRateLimit(getIP(req));
+  const rl = userApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
   let body: unknown;

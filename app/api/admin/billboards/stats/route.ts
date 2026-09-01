@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import type { AdminStats } from "@/lib/admin/types";
 import { getAllBillboards } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
 
 export async function GET(req: NextRequest) {
   // ── Auth guard ──
@@ -16,7 +13,7 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Rate limit ──
-  const rl = adminApiRateLimit(getIP(req));
+  const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) {
     return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
   }

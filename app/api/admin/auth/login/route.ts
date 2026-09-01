@@ -4,23 +4,15 @@ import { validateCredentials } from "@/lib/auth/users";
 import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
 import { loginRateLimit, resetLoginAttempts } from "@/lib/auth/rate-limit";
 import { auditLog } from "@/lib/auth/audit";
+import { getClientIp } from "@/lib/auth/client-ip";
 
 const LoginSchema = z.object({
   email:    z.string().email().max(254).toLowerCase().trim(),
   password: z.string().min(8).max(128),
 });
 
-function getIP(req: NextRequest): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown"
-  );
-}
-
-
 export async function POST(req: NextRequest) {
-  const ip = getIP(req);
+  const ip = getClientIp(req);
 
   // ── Rate limiting ──
   const rl = loginRateLimit(ip);

@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
-
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
 
 const ReviewSchema = z.object({
   billboardId: z.number().int().positive(),
@@ -16,7 +13,7 @@ const ReviewSchema = z.object({
 
 // GET /api/reviews?billboardId=X — public
 export async function GET(req: NextRequest) {
-  const rl = userApiRateLimit(getIP(req));
+  const rl = userApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
   const billboardId = parseInt(req.nextUrl.searchParams.get("billboardId") ?? "", 10);
@@ -45,7 +42,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Rate limit
-  const rl = userApiRateLimit(getIP(req));
+  const rl = userApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
   // 3. Zod

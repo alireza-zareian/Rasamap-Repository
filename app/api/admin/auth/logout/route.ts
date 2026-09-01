@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { getSession, buildLogoutCookieHeader } from "@/lib/auth/session";
 import { auditLog } from "@/lib/auth/audit";
 
@@ -9,7 +10,7 @@ export async function POST(req: NextRequest) {
     auditLog("logout", "info", {
       userId:    session.userId,
       userEmail: session.email,
-      ip: req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown",
+      ip: getClientIp(req),
     });
   }
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/client";
@@ -11,12 +12,8 @@ const RegisterSchema = z.object({
   password: z.string().min(6).max(128),
 });
 
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
-
 export async function POST(req: NextRequest) {
-  const ip = getIP(req);
+  const ip = getClientIp(req);
   const rl = registrationRateLimit(ip);
   if (!rl.allowed) {
     return NextResponse.json({ error: "تعداد تلاش‌ها بیش از حد مجاز است. لطفاً بعداً امتحان کنید." }, { status: 429 });

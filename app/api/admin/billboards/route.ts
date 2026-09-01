@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import type { Billboard } from "@/lib/types";
 import { getAllBillboards, createBillboard } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
@@ -22,10 +23,6 @@ const QuerySchema = z.object({
   sort:   z.string().max(30).optional().default("id_asc"),
 });
 
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
-
 // GET /api/admin/billboards
 export async function GET(req: NextRequest) {
   // ── Auth guard ──
@@ -35,7 +32,7 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Rate limit ──
-  const rl = adminApiRateLimit(getIP(req));
+  const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) {
     return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
   }
@@ -130,7 +127,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   if (!hasPermission(session.role, "editor")) return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
 
-  const rl = adminApiRateLimit(getIP(req));
+  const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
   let body: unknown;

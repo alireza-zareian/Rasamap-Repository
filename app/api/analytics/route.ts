@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
-
-function getIP(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-}
 
 const Schema = z.object({
   city: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
-  const rl = publicApiRateLimit(getIP(req));
+  const rl = publicApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
   const parsed = Schema.safeParse(Object.fromEntries(req.nextUrl.searchParams));

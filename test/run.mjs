@@ -15,7 +15,10 @@ const env = {
   DATABASE_URL: "file:./prisma/test.db",
   AUTH_SECRET: "rasamap_test_secret_key_0123456789_abcdef",
   ADMIN_EMAIL: "admin@test.local",
-  ADMIN_PASSWORD_HASH: "$2a$12$0123456789012345678901uME1t1Xw0m0V0m0V0m0V0m0V0m0V0m",
+  // No "$" here on purpose: passed through spawn env it would be run through
+  // @next/env's variable expansion and mangled. The tests never bcrypt-verify
+  // against this value (they mint session JWTs directly).
+  ADMIN_PASSWORD_HASH: "test-admin-hash-not-verified-by-tests",
   ADMIN_NAME: "Test Admin",
   NESHAN_API_KEY: "test-key",
   NEXT_PUBLIC_NESHAN_KEY: "test-key",
