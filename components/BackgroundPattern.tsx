@@ -106,7 +106,7 @@ export default function BackgroundPattern() {
   }, []);
 
   return (
-    <div aria-hidden="true" style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+    <div className="bg-decor" aria-hidden="true" style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
 
       {/* Orb 1 — blue, top-left, most cursor movement */}
       <div ref={orb1Ref} style={{ position: "absolute", top: -180, left: "6%", willChange: "transform" }}>

@@ -185,7 +185,7 @@ export default function ListMediaPage() {
   ];
 
   return (
-    <div style={{minHeight:"100vh",background:"var(--bg-deep)",fontFamily:"Vazirmatn,sans-serif",direction:"rtl",color:"var(--text-main)"}}>
+    <div style={{minHeight:"100vh",background:"var(--bg-deep)",fontFamily:"Vazirmatn Variable, Vazirmatn, sans-serif",direction:"rtl",color:"var(--text-main)"}}>
       <Topbar />
       <div style={{maxWidth:560,margin:"0 auto",padding:"86px 20px 40px"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>

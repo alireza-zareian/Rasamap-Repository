@@ -34,7 +34,7 @@ export default function Footer() {
       background: "var(--bg-card)",
       padding: "48px 28px 28px",
       marginTop: 60,
-      fontFamily: "Vazirmatn, sans-serif",
+      fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif",
       direction: "rtl",
     }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>

@@ -17,7 +17,7 @@ const C = {
   text:   "var(--text-main)",
   muted:  "var(--text-muted)",
   red:    "#ef4444",
-  font:   "Vazirmatn, sans-serif",
+  font:   "Vazirmatn Variable, Vazirmatn, sans-serif",
 };
 
 function LoginForm() {
@@ -85,7 +85,6 @@ function LoginForm() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: C.font, direction: "rtl" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet" />
       <div style={{ width: "100%", maxWidth: 420 }}>
 
         {/* Logo */}

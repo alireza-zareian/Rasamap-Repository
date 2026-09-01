@@ -15,7 +15,7 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn,sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
       <Topbar />
 
       <main style={{ maxWidth: 720, margin: "0 auto", padding: "96px 20px 40px" }}>

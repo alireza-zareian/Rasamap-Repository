@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
 import BackgroundPattern from "@/components/BackgroundPattern";
@@ -15,6 +16,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "Rasamap | رسامپ — پلتفرم جامع رسانه‌های محیطی ایران",
   description: "جستجو، مقایسه و رزرو آنلاین بیلبورد، تلویزیون شهری، عرشه پل و تمام رسانه‌های محیطی ایران.",
   keywords: "بیلبورد، اجاره بیلبورد، رسانه محیطی، تبلیغات محیطی، تلویزیون شهری، rasamap",
@@ -22,26 +24,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fa" dir="rtl">
+    // data-theme is the SSR default; the ThemeProvider effect switches it to
+    // "light" after mount if the user chose that. suppressHydrationWarning
+    // covers that one intentional <html> attribute change.
+    <html lang="fa" dir="rtl" data-theme="dark" suppressHydrationWarning>
       <head>
-        {/* Set the theme before first paint so there's no light/dark flash. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "try{var t=localStorage.getItem('rasamap-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){}",
-          }}
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="preload"
-          href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap"
-          as="style"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
+        <meta name="color-scheme" content="dark" />
       </head>
       <body>
         <ThemeProvider>

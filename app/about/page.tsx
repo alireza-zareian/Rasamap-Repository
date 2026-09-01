@@ -49,7 +49,7 @@ export default async function AboutPage() {
     // DB unavailable — render with fallback values
   }
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn,sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
       <Topbar />
 
       {/* Hero */}

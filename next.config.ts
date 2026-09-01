@@ -15,9 +15,9 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.neshan.org https://fonts.googleapis.com https://unpkg.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
-      "font-src 'self' https://fonts.gstatic.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.neshan.org https://unpkg.com",
+      "style-src 'self' 'unsafe-inline' https://unpkg.com",
+      "font-src 'self'",
       "img-src 'self' data: blob: https://billboardiha.com https://*.tile.openstreetmap.org https://*.neshan.org https://*.basemaps.cartocdn.com https://unpkg.com",
       "connect-src 'self' https://api.neshan.org https://map.ir https://*.basemaps.cartocdn.com https://unpkg.com",
       "frame-src https://maps.google.com https://www.google.com",

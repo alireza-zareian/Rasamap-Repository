@@ -6,7 +6,7 @@ import { BarChart2 } from "lucide-react";
 
 export default function AnalyticsPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn,sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
       <Topbar />
 
       <main style={{ maxWidth: 860, margin: "0 auto", padding: "88px 20px 40px" }}>

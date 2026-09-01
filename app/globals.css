@@ -51,7 +51,7 @@
 html, body { overflow-x: clip; max-width: 100%; }
 
 body {
-  font-family: 'Vazirmatn', sans-serif;
+  font-family: 'Vazirmatn Variable', 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
   background: var(--bg-deep);
   color: var(--text-main);
   direction: rtl;
@@ -133,17 +133,12 @@ input[type=range] { accent-color: var(--accent); }
   animation: text-shimmer 5s linear infinite;
 }
 [data-theme="light"] .shimmer-heading {
-  background: linear-gradient(90deg,
-    rgba(16,30,60,1)   0%,
-    rgba(16,30,60,1)   35%,
-    rgba(74,144,255,1) 50%,
-    rgba(16,30,60,1)   65%,
-    rgba(16,30,60,1)   100%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  /* Solid, not gradient-clipped: a phone browser's "force dark" filter can't
+     invert background-clip:text reliably and leaves it unreadable. */
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: #101E3C;
+  animation: none;
 }
 
 .logo-shimmer {
@@ -162,17 +157,10 @@ input[type=range] { accent-color: var(--accent); }
   animation: text-shimmer 6s linear infinite;
 }
 [data-theme="light"] .logo-shimmer {
-  background: linear-gradient(90deg,
-    rgba(16,30,60,1)   0%,
-    rgba(16,30,60,1)   30%,
-    rgba(74,144,255,1) 50%,
-    rgba(16,30,60,1)   70%,
-    rgba(16,30,60,1)   100%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: #101E3C;
+  animation: none;
 }
 
 /* Fix text-shimmer keyframe to match skeleton pattern */
@@ -283,18 +271,40 @@ button, a, input, select, label,
 
   /* Topbar: too much content for a phone row — drop the nav tabs, the logo
      sub-line and the "list media" CTA; tighten padding; icon-only logout. */
-  .topbar { padding: 0 12px !important; gap: 8px; }
-  .topbar-tabs { display: none !important; }
+  .topbar { padding: 0 12px !important; gap: 6px; }
+  /* Keep the nav (کاوش/تحلیل/مقایسه) but as icon-only buttons so it fits. */
+  .topbar-tabs { gap: 2px !important; }
+  .topbar-tabs a { padding: 7px 9px !important; }
+  .topbar-tab-label { display: none !important; }
   .topbar-sub { display: none !important; }
   .topbar-list-cta { display: none !important; }
   .topbar-logout-label { display: none !important; }
 
   /* Explore hero: stack instead of side-by-side. Search on top, the auto-
      rotating showcase drops below it (and off the wide left rail that a phone
-     can't see). Cap its height so it isn't a full-width square. */
+     can't see). */
   .explore-hero { grid-template-columns: 1fr !important; }
   .explore-hero > :first-child { border-left: none !important; }
-  .explore-hero-showcase { aspect-ratio: auto !important; height: 190px !important; border-top: 1px solid var(--border); }
+  .explore-hero-showcase { aspect-ratio: 4 / 3 !important; max-height: 260px; border-top: 1px solid var(--border); }
+
+  /* Billboard detail: the "1fr 440px" main grid can't fit a phone — stack it,
+     and stack the traffic meter above its stat chips. */
+  .detail-grid { grid-template-columns: 1fr !important; }
+  .detail-traffic { flex-direction: column !important; }
+  .detail-traffic-meter { flex: none !important; width: 100% !important; }
+
+  /* Admin: sidebar becomes a wrapping row of tab buttons above the content;
+     the 3-column overview charts stack. Desktop (>768px) is untouched. */
+  .admin-shell { flex-direction: column !important; }
+  .admin-sidebar { width: 100% !important; }
+  .admin-sidebar > div { position: static !important; }
+  .admin-sidebar button { display: inline-block !important; width: auto !important; }
+  .admin-3col { grid-template-columns: 1fr !important; }
+
+  /* Decorative animated-orb background: pure eye-candy and a real GPU cost on
+     phones (4 big blurred layers + a scroll-parallax transform). Drop it on
+     mobile — the body keeps its dot-grid texture. */
+  .bg-decor { display: none !important; }
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────── */

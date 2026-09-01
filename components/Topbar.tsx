@@ -51,7 +51,7 @@ export default function Topbar({ }: Props) {
             textDecoration: "none", border: "none",
           }}>
             <t.Icon size={14} />
-            {t.label}
+            <span className="topbar-tab-label">{t.label}</span>
           </Link>
         ))}
       </nav>

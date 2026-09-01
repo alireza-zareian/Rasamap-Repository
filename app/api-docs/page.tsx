@@ -101,7 +101,7 @@ export default async function ApiDocsPage() {
   }
 
   return (
-    <div style={{ direction: "rtl", fontFamily: "Vazirmatn, sans-serif", background: "var(--bg-deep, #0b0f17)", color: "var(--text-main, #e6e9ef)", minHeight: "100vh" }}>
+    <div style={{ direction: "rtl", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", background: "var(--bg-deep, #0b0f17)", color: "var(--text-main, #e6e9ef)", minHeight: "100vh" }}>
       <style>{`
         .apidoc { max-width: 980px; margin: 0 auto; padding: 48px 20px 80px; line-height: 1.85; }
         .apidoc h1 { font-size: 1.7rem; font-weight: 800; margin: 0 0 4px; }

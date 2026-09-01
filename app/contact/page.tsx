@@ -35,7 +35,7 @@ const contacts = [
 
 export default function ContactPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn,sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
       <Topbar />
 
       <main style={{ maxWidth: 680, margin: "0 auto", padding: "96px 20px 40px" }}>
@@ -71,12 +71,12 @@ export default function ContactPage() {
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <a href="mailto:info@rasamap.ir"
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--accent)", color: "#fff", fontFamily: "Vazirmatn,sans-serif", fontWeight: 700, fontSize: "0.85rem", padding: "10px 20px", borderRadius: 9, textDecoration: "none" }}>
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--accent)", color: "#fff", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", fontWeight: 700, fontSize: "0.85rem", padding: "10px 20px", borderRadius: 9, textDecoration: "none" }}>
               <Mail size={15} />
               ارسال ایمیل
             </a>
             <a href="https://t.me/rasamap" target="_blank" rel="noopener noreferrer"
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--bg-surface)", color: "var(--text-main)", border: "1px solid var(--border)", fontFamily: "Vazirmatn,sans-serif", fontWeight: 600, fontSize: "0.85rem", padding: "10px 20px", borderRadius: 9, textDecoration: "none" }}>
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--bg-surface)", color: "var(--text-main)", border: "1px solid var(--border)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", fontWeight: 600, fontSize: "0.85rem", padding: "10px 20px", borderRadius: 9, textDecoration: "none" }}>
               <Send size={15} />
               تلگرام
             </a>

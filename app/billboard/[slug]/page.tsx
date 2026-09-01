@@ -49,7 +49,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
   const area = b.width * b.height;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn,sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
       <Topbar />
 
       {/* Breadcrumb */}
@@ -62,7 +62,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
       </div>
 
       <div style={{ maxWidth: 1350, margin: "0 auto", padding: "16px 20px 40px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 440px", gap: 24, alignItems: "start" }}>
+        <div className="detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 440px", gap: 24, alignItems: "start" }}>
 
           {/* Left column */}
           <div>
@@ -103,13 +103,13 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                   <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>آنالیز ترافیک</span>
                   <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.35)", color: "#f59e0b", letterSpacing: "0.02em" }}>تخمین هوشمند</span>
                 </div>
-                <div style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
+                <div className="detail-traffic" style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
                   {/* TrafficMeter — 60% width (RTL: right side) */}
-                  <div style={{ flex: "0 0 60%", minWidth: 0 }}>
+                  <div className="detail-traffic-meter" style={{ flex: "0 0 60%", minWidth: 0 }}>
                     <TrafficMeter traffic={b.traffic} />
                   </div>
                   {/* 6 stat chips — remaining space (RTL: left side) */}
-                  <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+                  <div style={{ flex: 1, minWidth: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
                     {[
                       { label: "تردد روزانه", val: b.traffic.daily ? `${(b.traffic.daily / 1000).toFixed(0)}K` : "—" },
                       { label: "بینندگان تخمینی", val: b.traffic.estimatedViews ? `${(b.traffic.estimatedViews / 1000).toFixed(0)}K` : "—" },

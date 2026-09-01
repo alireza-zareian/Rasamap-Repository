@@ -121,7 +121,6 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: C.font, direction: "rtl", color: C.text }}>
-      <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet" />
 
       {/* Permission toast */}
       {permMsg && (
@@ -146,9 +145,9 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div style={{ display: "flex", maxWidth: 1400, margin: "0 auto", padding: "24px 20px", gap: 20 }}>
+      <div className="admin-shell" style={{ display: "flex", maxWidth: 1400, margin: "0 auto", padding: "24px 20px", gap: 20 }}>
         {/* Sidebar nav */}
-        <div style={{ width: 200, flexShrink: 0 }}>
+        <div className="admin-sidebar" style={{ width: 200, flexShrink: 0 }}>
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 8, position: "sticky", top: 76 }}>
             {navItems.map(([label, key]) => (
               <button key={key} onClick={() => setTab(key)} style={{ display: "block", width: "100%", textAlign: "right", padding: "10px 14px", borderRadius: 8, fontSize: "0.82rem", fontWeight: tab === key ? 700 : 400, color: tab === key ? C.accent : C.muted, background: tab === key ? "rgba(255,77,0,0.08)" : "none", border: "none", fontFamily: C.font, cursor: "pointer", marginBottom: 2 }}>
@@ -180,7 +179,7 @@ export default function AdminDashboard() {
                     <StatCard icon="🆕" label="هفته اخیر"     value={stats.recentlyImported.toLocaleString()} color="#8b5cf6" />
                     <StatCard icon="⚡" label="تکراری"        value={stats.duplicateGroups.toLocaleString()} color="#ef4444" />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                  <div className="admin-3col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
                     {([["منابع داده", stats.bySource, C.accent], ["نوع رسانه", stats.byType, "#8b5cf6"], ["شهرها (برتر)", stats.byCity, C.green]] as const).map(([title, data, color]) => {
                       const entries = Object.entries(data as Record<string, number>).sort(([,a],[,b]) => b-a).slice(0,8);
                       const max = Math.max(...Object.values(data as Record<string, number>));

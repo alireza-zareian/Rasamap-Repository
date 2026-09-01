@@ -33,7 +33,7 @@ export default function ComparePage() {
   if (!loaded) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn,sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
       <Topbar />
 
       <main style={{ maxWidth: 800, margin: "0 auto", padding: "88px 20px 40px" }}>

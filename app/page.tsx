@@ -78,7 +78,7 @@ export default function LandingPage() {
     : "transparent";
 
   return (
-    <div style={{ fontFamily: "Vazirmatn,sans-serif", direction: "rtl", color: "var(--text-main)", background: "var(--bg-deep)", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)", background: "var(--bg-deep)", minHeight: "100vh" }}>
 
       {/* ── Fixed header — logo + auth only ── */}
       <header style={{ position: "fixed", top: 0, right: 0, left: 0, zIndex: 100, background: headerBg, backdropFilter: scrollY > 60 ? "blur(16px)" : "none", borderBottom: scrollY > 60 ? "1px solid var(--border)" : "none", transition: "all 0.35s", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", height: 64 }}>
@@ -150,10 +150,10 @@ export default function LandingPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="منطقه، خیابان، نوع رسانه..."
-              onKeyDown={e => e.key === "Enter" && (window.location.href = `/explore?search=${search}&city=${city}`)}
+              onKeyDown={e => e.key === "Enter" && (window.location.href = `/explore?search=${encodeURIComponent(search)}&city=${encodeURIComponent(city)}`)}
               style={{ flex: 1, background: "none", border: "none", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", outline: "none", minWidth: 0 }}
             />
-            <Link href={`/explore?search=${search}&city=${city}`} style={{ background: "var(--accent)", color: "#fff", border: "none", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 2px 10px rgba(59,123,245,0.4)", display: "flex", alignItems: "center", gap: 5 }}>
+            <Link href={`/explore?search=${encodeURIComponent(search)}&city=${encodeURIComponent(city)}`} style={{ background: "var(--accent)", color: "#fff", border: "none", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, boxShadow: "0 2px 10px rgba(59,123,245,0.4)", display: "flex", alignItems: "center", gap: 5 }}>
               <Search size={14} /> جستجو
             </Link>
           </div>

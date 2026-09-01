@@ -1,6 +1,6 @@
 export default function ExploreLoading() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Vazirmatn, sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: "2rem", marginBottom: 12, animation: "spin 1s linear infinite", display: "inline-block" }}>⟳</div>
         <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>در حال بارگذاری رسانه‌ها...</div>

@@ -81,13 +81,13 @@ export default function AnalyticsTab() {
         <select
           value={city}
           onChange={e => setCity(e.target.value)}
-          style={{ flex: 1, background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "Vazirmatn, sans-serif", fontSize: "0.82rem", padding: "7px 10px", borderRadius: 8, outline: "none" }}
+          style={{ flex: 1, background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", fontSize: "0.82rem", padding: "7px 10px", borderRadius: 8, outline: "none" }}
         >
           <option value="">همه شهرها</option>
           {data.allCities.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         {city && (
-          <button onClick={() => setCity("")} style={{ fontSize: "0.75rem", padding: "6px 10px", borderRadius: 7, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "Vazirmatn, sans-serif" }}>
+          <button onClick={() => setCity("")} style={{ fontSize: "0.75rem", padding: "6px 10px", borderRadius: 7, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif" }}>
             ✕ همه
           </button>
         )}
