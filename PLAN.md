@@ -47,7 +47,7 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
 | F6 | No `LICENSE`. | Low |
 | F7 | No automated tests at all — nothing to run in CI or pre-deploy. | Med (accepted) |
 | F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. | Low |
-| F9 | Reservation overlap check is inside `$transaction` but SQLite deferred-txn still allows a theoretical double-book race; no DB-level exclusion constraint. | Low |
+| F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |
 | F11 | CSP allows `script-src 'unsafe-inline' 'unsafe-eval'` (Leaflet). Documented tradeoff. | Low (accepted) |
 | F12 | No structured logging / rotating log file — only `console.error` guarded by `NODE_ENV`. Professors often ask. | Med |
@@ -59,11 +59,16 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
 ### Tier 1 — blocks demo / embarrasses in front of professors (do first)
 - [x] T1.1 `.env.example` (names only) — 5 min
 - [x] T1.2 `.gitignore`: ignore `*.db*`, zips, logs; keep `.env.example` — 5 min
-- [ ] T1.3 `git init` + first clean commit on `main` (F1) — **needs user OK** (10 min)
+- [x] T1.3 `git init` + first clean commit on `main` + pushed to GitHub (private,
+      SSH auth) — 155 files / ~6 MB, no secrets. `public/images/scraped/` (712 MB) and
+      raw scraper dumps excluded via `.gitignore`. `LICENSE` (MIT) added. (F1, F3, F4)
 - [ ] T1.4 Verify `npm run build` + `npm run lint` pass clean; fix any break — 20 min
-- [ ] T1.5 Manual "try to break it" pass on the 3 core flows (register/login, reserve,
-      admin edit): empty form, 10k-char field, double submit, ID swap in URL/body,
-      direct malformed POST. Log each result. (Phase 10.1 / 7.4 / 7.5) — 1.5 h
+- [x] T1.5 Automated instead of manual: `npm test` — dependency-free `node:test` suite
+      (`test/`) hits a real `next dev` server on an isolated `prisma/test.db`. 19 tests,
+      all passing. Covers validation, sort/param allowlists, per-IP login rate limit,
+      no user enumeration, reservation race guard (concurrent double-submit → exactly
+      one row), and object-level authz. Also added `npm run bench` (dependency-free
+      load benchmark). (Phase 10.1 / 7.4 / 7.5 / 8.3 / 16)
 - [ ] T1.6 U7 UX-breaking bugs (fake contact form, list-media file input + validation,
       compare thumbnails, login shadow) — **product decision, confirm scope** — 2 h
 
@@ -76,8 +81,10 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
       rotating file in prod, console in dev) wired into `error.tsx` + route catch blocks
       + a short error reference ID shown to users (F12, Phase 4 + 5.3) — 2 h
 - [ ] T2.5 `npm audit` — report by severity, patch what is safe (Phase 7.10) — 20 min
-- [ ] T2.6 Object-level authz audit: confirm `/api/reservations/my`, `/api/reviews`,
-      admin `[id]` routes scope by session (F14, Phase 7.4) — 40 min
+- [x] T2.6 Object-level authz — `/api/reservations/my` confirmed scoped by session
+      (test: user B cannot see user A's reservation). Admin GET/POST confirmed to
+      enforce role at the route, not just the UI. `/api/reviews` + admin `[id]` still
+      worth a direct read. (F14, Phase 7.4)
 - [ ] T2.7 `LICENSE` (MIT) + README pass: clean-machine setup steps, env var names,
       screenshots, architecture paragraph (Phase 14.1) — 1 h
 
@@ -91,8 +98,10 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
 - [ ] T3.4 Confirm `AnalyticsTab` reads `/api/analytics` not `lib/data.ts` — 15 min
 
 ### Won't fit / deliberately skipped (tell the professor)
-- Load test 50–200 concurrent users (Phase 8.8) — will note expected first bottleneck
-  (SQLite single-writer lock on reservation writes) instead.
+- Full load test 50–200 concurrent users (Phase 8.8) — partially done: `npm run bench`
+  gives ~108 req/s on `/api/billboards` in dev mode, throughput flat from 20→50 clients
+  (single Node process + sync SQLite reads = the ceiling). First hard limit under write
+  load is SQLite's single-writer lock on `POST /api/reservations`.
 - CI/CD pipeline (Phase 13.4) — no test suite to run; not worth it for a local demo.
 - Writing a real test suite (Phase 7 / 16) — 5 days is not enough to do it honestly.
 - Redis-backed rate limit / audit persistence (Phase 8.7 / 6.6) — single instance,
@@ -108,3 +117,11 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
 - 2026-09-01 — Created `PLAN.md`, `docs/AUDIT.md`, `PRE_DEPLOY_CHECKLIST.md`,
   `RUNBOOK.md`, `.env.example`; hardened `.gitignore`; added `/prod-audit` command and
   standing rules to `CLAUDE.md`. No application code changed.
+- 2026-09-01 — `git init`; excluded 712 MB of scraped images + raw dumps; added
+  `LICENSE` (MIT); first commit `cf77994` on `main`; pushed to private GitHub repo
+  `alireza-zareian/Rasamap-Repository` over SSH. Verified pushed tree: 155 files, no
+  secrets. **Next:** revoke the leaked `ghp_` token; tag a demo version before the
+  presentation.
+- 2026-09-01 — Added `test/` — dependency-free API test suite (`npm test`, 19 tests
+  passing) on an isolated `prisma/test.db`, plus `npm run bench`. No application code
+  changed. Covers T1.5 (automated) and most of T2.6. Race guard verified.
