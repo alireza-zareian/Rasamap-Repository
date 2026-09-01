@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
 import { prisma } from "@/lib/db/client";
+import { withApiLog } from "@/lib/api-log";
 
 const ALLOWED_STATUSES = new Set(["pending", "confirmed", "cancelled", ""]);
 
@@ -15,7 +16,7 @@ const QuerySchema = z.object({
 });
 
 // GET /api/admin/reservations — admin/editor+
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   if (!hasPermission(session.role, "editor")) {
@@ -60,3 +61,5 @@ export async function GET(req: NextRequest) {
     pages: Math.ceil(total / limit),
   }, { headers: { "Cache-Control": "no-store" } });
 }
+
+export const GET = withApiLog("admin/reservations", GETHandler);

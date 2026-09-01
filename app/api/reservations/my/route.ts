@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { withApiLog } from "@/lib/api-log";
 
-export async function GET() {
+async function GETHandler() {
   const session = await getSession();
   if (!session || session.role !== "user") {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
@@ -38,3 +39,5 @@ export async function GET() {
     { headers: { "Cache-Control": "no-store" } }
   );
 }
+
+export const GET = withApiLog("reservations/my", GETHandler);

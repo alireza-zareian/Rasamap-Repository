@@ -5,8 +5,9 @@ import { hasPermission } from "@/lib/auth/users";
 import { getRecentAuditLogs } from "@/lib/auth/audit";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { prisma } from "@/lib/db/client";
+import { withApiLog } from "@/lib/api-log";
 
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
@@ -33,3 +34,5 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ logs, persisted }, { headers: { "Cache-Control": "no-store" } });
 }
+
+export const GET = withApiLog("admin/audit", GETHandler);

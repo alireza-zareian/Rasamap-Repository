@@ -7,6 +7,7 @@ import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
 import { prisma } from "@/lib/db/client";
+import { withApiLog } from "@/lib/api-log";
 
 const PutSchema = z.object({
   images: z.array(z.string().min(1)).max(10),
@@ -16,7 +17,7 @@ const DATA_URL_RE = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/;
 const EXT_MAP: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 // PUT /api/admin/billboards/[id]/images — editor+
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   if (!hasPermission(session.role, "editor")) {
@@ -78,3 +79,5 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   return NextResponse.json({ images: updated.images }, { headers: { "Cache-Control": "no-store" } });
 }
+
+export const PUT = withApiLog("admin/billboards/[id]/images", PUTHandler);

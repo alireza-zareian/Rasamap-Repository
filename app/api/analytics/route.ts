@@ -3,12 +3,13 @@ import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
+import { withApiLog } from "@/lib/api-log";
 
 const Schema = z.object({
   city: z.string().optional(),
 });
 
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const rl = publicApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
@@ -70,3 +71,5 @@ export async function GET(req: NextRequest) {
     coverage: { withImage, geocoded },
   }, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
 }
+
+export const GET = withApiLog("analytics", GETHandler);

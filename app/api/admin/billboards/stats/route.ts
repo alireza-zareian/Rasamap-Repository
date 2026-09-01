@@ -4,8 +4,9 @@ import type { AdminStats } from "@/lib/admin/types";
 import { getAllBillboards } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
+import { withApiLog } from "@/lib/api-log";
 
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   // ── Auth guard ──
   const session = await getSession();
   if (!session) {
@@ -72,3 +73,5 @@ export async function GET(req: NextRequest) {
     headers: { "Cache-Control": "no-store" },
   });
 }
+
+export const GET = withApiLog("admin/billboards/stats", GETHandler);

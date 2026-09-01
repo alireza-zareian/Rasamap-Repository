@@ -6,13 +6,14 @@ import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
 import { persistAudit } from "@/lib/auth/audit";
 import { prisma } from "@/lib/db/client";
+import { withApiLog } from "@/lib/api-log";
 
 const PatchSchema = z.object({
   status: z.enum(["confirmed", "cancelled"]),
 });
 
 // PATCH /api/admin/reservations/[id] — admin+
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function PATCHHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   if (!hasPermission(session.role, "admin")) {
@@ -63,3 +64,5 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   return NextResponse.json({ reservation: updated }, { headers: { "Cache-Control": "no-store" } });
 }
+
+export const PATCH = withApiLog("admin/reservations/[id]", PATCHHandler);

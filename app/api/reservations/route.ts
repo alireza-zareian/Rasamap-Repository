@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
 import { idempotency } from "@/lib/idempotency";
+import { withApiLog } from "@/lib/api-log";
 
 const ReservationSchema = z.object({
   billboardId: z.number().int().positive(),
@@ -15,7 +16,7 @@ const ReservationSchema = z.object({
 });
 
 // GET /api/reservations?billboardId=X — public, returns booked date ranges
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const billboardId = parseInt(req.nextUrl.searchParams.get("billboardId") ?? "", 10);
   if (isNaN(billboardId)) return NextResponse.json({ error: "billboardId الزامی است" }, { status: 400 });
 
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/reservations — requires user auth
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const session = await getSession();
   if (!session || session.role !== "user") {
     return NextResponse.json({ error: "برای رزرو باید وارد حساب کاربری خود شوید" }, { status: 401 });
@@ -124,3 +125,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(responseBody, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
+
+export const GET = withApiLog("reservations", GETHandler);
+export const POST = withApiLog("reservations", POSTHandler);

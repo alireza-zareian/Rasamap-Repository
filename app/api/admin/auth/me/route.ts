@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { withApiLog } from "@/lib/api-log";
 
-export async function GET() {
+async function GETHandler() {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
@@ -16,3 +17,5 @@ export async function GET() {
     },
   });
 }
+
+export const GET = withApiLog("admin/auth/me", GETHandler);

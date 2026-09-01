@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
+import { withApiLog } from "@/lib/api-log";
 
 const ReviewSchema = z.object({
   billboardId: z.number().int().positive(),
@@ -12,7 +13,7 @@ const ReviewSchema = z.object({
 });
 
 // GET /api/reviews?billboardId=X — public
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const rl = userApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/reviews — user auth required; must have a confirmed reservation
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   // 1. Auth
   const session = await getSession();
   if (!session || session.role !== "user") {
@@ -77,3 +78,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ review }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
+
+export const GET = withApiLog("reviews", GETHandler);
+export const POST = withApiLog("reviews", POSTHandler);

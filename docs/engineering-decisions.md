@@ -220,12 +220,15 @@ status 500. `app/error.tsx` surfaces `error.digest` as «کد خطا». Rule: lo
 error-tracking service — no paid platform, works offline. Pattern taken from a
 Django reference project's `log_formatters.py` + middleware.
 
-**Where it applies.** `serverError` wired into `/api/billboards`,
-`/billboards/[slug]`, `/billboards/pins`, `/reservations`, `/admin/billboards`;
-`logger` used by `env` validation and `persistAudit`.
+**Where it applies.** `serverError` in the route catch blocks; `logger` in
+`env` validation and `persistAudit`. **Every** API route is wrapped with
+`withApiLog(name, handler)` (`lib/api-log.ts`), so each request emits one
+`api_request` line — `route`, `method`, `path`, `status`, `ms` — and nothing
+about the body, query string, headers, or user beyond an id.
 
-**Verified.** Manual: a forced 500 returns a `ref` and no stack; the same `ref`
-appears in the log line.
+**Verified.** A forced 500 returns a `ref` and no stack, and the same `ref`
+appears in the log. `api_request` lines confirmed for GET and POST, including a
+401 login (`{"msg":"api_request","route":"auth/login","status":401,...}`).
 
 ---
 

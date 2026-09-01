@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/client";
 import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
 import { registrationRateLimit, resetUserLoginAttempts } from "@/lib/auth/rate-limit";
+import { withApiLog } from "@/lib/api-log";
 
 const RegisterSchema = z.object({
   name:     z.string().min(2).max(100).trim(),
@@ -12,7 +13,7 @@ const RegisterSchema = z.object({
   password: z.string().min(6).max(128),
 });
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = registrationRateLimit(ip);
   if (!rl.allowed) {
@@ -53,3 +54,5 @@ export async function POST(req: NextRequest) {
   res.headers.set("Set-Cookie", buildSessionCookieHeader(token));
   return res;
 }
+
+export const POST = withApiLog("auth/register", POSTHandler);

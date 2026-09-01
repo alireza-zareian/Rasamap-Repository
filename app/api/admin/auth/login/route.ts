@@ -5,13 +5,14 @@ import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
 import { loginRateLimit, resetLoginAttempts } from "@/lib/auth/rate-limit";
 import { auditLog } from "@/lib/auth/audit";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { withApiLog } from "@/lib/api-log";
 
 const LoginSchema = z.object({
   email:    z.string().email().max(254).toLowerCase().trim(),
   password: z.string().min(8).max(128),
 });
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const ip = getClientIp(req);
 
   // ── Rate limiting ──
@@ -92,3 +93,5 @@ export async function POST(req: NextRequest) {
   res.headers.set("Set-Cookie", buildSessionCookieHeader(token));
   return res;
 }
+
+export const POST = withApiLog("admin/auth/login", POSTHandler);

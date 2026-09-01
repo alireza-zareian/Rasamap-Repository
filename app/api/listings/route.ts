@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth/session";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
 import { idempotency } from "@/lib/idempotency";
 import { serverError } from "@/lib/api-error";
+import { withApiLog } from "@/lib/api-log";
 
 const ListingSchema = z.object({
   name:     z.string().min(3, "نام رسانه باید حداقل ۳ کاراکتر باشد").max(100),
@@ -21,7 +22,7 @@ const ListingSchema = z.object({
   price:    z.coerce.number().int().positive("قیمت باید عدد مثبت باشد").max(10_000),
 });
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "برای ثبت رسانه باید وارد حساب کاربری خود شوید" }, { status: 401 });
@@ -63,3 +64,5 @@ export async function POST(req: NextRequest) {
   await idem.save?.(201, responseBody);
   return NextResponse.json(responseBody, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
+
+export const POST = withApiLog("listings", POSTHandler);

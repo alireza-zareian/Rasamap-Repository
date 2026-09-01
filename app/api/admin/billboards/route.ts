@@ -8,6 +8,7 @@ import { hasPermission } from "@/lib/auth/users";
 import { persistAudit } from "@/lib/auth/audit";
 import { serverError } from "@/lib/api-error";
 import { z } from "zod";
+import { withApiLog } from "@/lib/api-log";
 
 const ALLOWED_SORT_KEYS = new Set(["id", "price", "name", "city"]);
 const ALLOWED_SORT_DIRS = new Set(["asc", "desc"]);
@@ -25,7 +26,7 @@ const QuerySchema = z.object({
 });
 
 // GET /api/admin/billboards
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   // ── Auth guard ──
   const session = await getSession();
   if (!session || session.role === "user") {
@@ -123,7 +124,7 @@ const CreateSchema = z.object({
 });
 
 // POST /api/admin/billboards — create a new billboard (editor+ required)
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   if (!hasPermission(session.role, "editor")) return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
@@ -156,3 +157,6 @@ export async function POST(req: NextRequest) {
     return serverError("POST /api/admin/billboards", err, { adminId: session.userId });
   }
 }
+
+export const GET = withApiLog("admin/billboards", GETHandler);
+export const POST = withApiLog("admin/billboards", POSTHandler);

@@ -5,11 +5,12 @@ import bcrypt from "bcryptjs";
 import { getSession, createSession, buildSessionCookieHeader } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
+import { withApiLog } from "@/lib/api-log";
 
 const TWO_HOURS = 2 * 60 * 60; // seconds
 
 // GET /api/auth/me — return current user + sliding session refresh
-export async function GET() {
+async function GETHandler() {
   const session = await getSession();
   if (!session || session.role !== "user") {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
@@ -42,7 +43,7 @@ const PatchSchema = z.object({
 });
 
 // PATCH /api/auth/me — update name and/or password
-export async function PATCH(req: NextRequest) {
+async function PATCHHandler(req: NextRequest) {
   const session = await getSession();
   if (!session || session.role !== "user") {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
@@ -107,3 +108,6 @@ export async function PATCH(req: NextRequest) {
   res.headers.set("Set-Cookie", buildSessionCookieHeader(newToken));
   return res;
 }
+
+export const GET = withApiLog("auth/me", GETHandler);
+export const PATCH = withApiLog("auth/me", PATCHHandler);

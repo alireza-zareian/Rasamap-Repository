@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { persistAudit } from "@/lib/auth/audit";
 import { getBillboardById, updateBillboard, deleteBillboard, hasActiveReservations } from "@/lib/db/billboards";
+import { withApiLog } from "@/lib/api-log";
 
 function adminIdOf(session: Awaited<ReturnType<typeof getSession>>): number | null {
   const n = Number.parseInt(session?.userId ?? "", 10);
@@ -39,7 +40,7 @@ const UpdateSchema = z.object({
 });
 
 // PUT /api/admin/billboards/[id]
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   const guard = authGuard(session, req);
   if (guard) return guard;
@@ -88,7 +89,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 // DELETE /api/admin/billboards/[id]
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function DELETEHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   const guard = authGuard(session, req);
   if (guard) return guard;
@@ -124,3 +125,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
 }
+
+export const PUT = withApiLog("admin/billboards/[id]", PUTHandler);
+export const DELETE = withApiLog("admin/billboards/[id]", DELETEHandler);

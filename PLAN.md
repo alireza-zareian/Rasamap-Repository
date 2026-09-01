@@ -221,10 +221,10 @@ migration or touches product behaviour.
       `20260901120500` hand-applied to dev.db (additive only; `prisma migrate dev`
       wanted a full reset over pre-existing billboards-table drift). `lib/idempotency.ts`,
       +2 tests. 27/27.
-- [x] Structured request-log HOF (`lib/api-log.ts` `withApiLog`) wired into the 4 hot
-      public GET routes (`/api/billboards`, `/billboards/[slug]`, `/billboards/pins`,
-      `/stats`) — logs route/method/path/status/ms. **Follow-up:** extend to the
-      remaining ~19 routes (mechanical, one export-shape change each).
+- [x] Structured request-log HOF (`lib/api-log.ts` `withApiLog`) — now wired into
+      **every** API route (all 23 files, GET/POST/PUT/PATCH/DELETE). Each request
+      emits one `api_request` line: route/method/path/status/ms, no body/headers/PII.
+      Verified live.
 - [x] DB-backed audit **viewer** — AuditPanel has a پایدار/زنده toggle; the persisted
       view renders `audit_logs` rows with their `details`.
 - [~] Responsive — added `html,body { overflow-x: clip }` safety net; the `@media 640`

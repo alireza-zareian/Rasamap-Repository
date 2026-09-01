@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/client";
 import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
 import { userLoginRateLimit, resetUserLoginAttempts } from "@/lib/auth/rate-limit";
+import { withApiLog } from "@/lib/api-log";
 
 const DUMMY_HASH = "$2a$12$dummy.hash.for.timing.safety.padding.1234567890";
 
@@ -13,7 +14,7 @@ const LoginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = userLoginRateLimit(ip);
   if (!rl.allowed) {
@@ -47,3 +48,5 @@ export async function POST(req: NextRequest) {
   res.headers.set("Set-Cookie", buildSessionCookieHeader(token));
   return res;
 }
+
+export const POST = withApiLog("auth/login", POSTHandler);
