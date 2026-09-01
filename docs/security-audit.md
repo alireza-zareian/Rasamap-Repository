@@ -5,23 +5,43 @@ Run `npm audit` and review this file monthly, and before every release.
 Lockfile: `package-lock.json` is committed and pins exact versions, so every
 machine installs the same tree.
 
-## 2026-09-01
+## 2026-09-02
 
-`npm audit` — **10 advisories (1 moderate, 9 high)**. None are on the request
-path; all are build-time or in a feature this project does not use.
+Bumped **`next` 16.2.9 → 16.2.11** (a patch inside the pinned minor). That
+release closes **10 Next.js advisories** whose range was `>=16.0.0 <16.2.11`,
+including one that matters here:
 
-| Package | Severity | What | Reachable here? | Action |
-|---|---|---|---|---|
-| `postcss` (via `@tailwindcss/postcss` and `next`) | moderate/high | `sourceMappingURL` path traversal — a crafted CSS comment can make PostCSS read an arbitrary `.map` file during a build | Build-time only. We author our own CSS; no untrusted CSS is processed. | **Deferred.** Fix requires `next@16.3.4` (outside the pinned `16.2.9`). Not worth a framework bump days before the presentation. Revisit right after. |
-| `sharp` `<0.35.0` (via `next`) | high | Inherited libvips CVEs (image decoding) | Not used — the app has no `next/image` usage; images are plain `<img>`. `sharp` is pulled in transitively but never invoked. | **Deferred.** Same fix (`next@16.3.4`). Re-evaluate together with the `next/image` migration (STATUS.md P5). |
+| Advisory | Severity | Relevance |
+|---|---|---|
+| Middleware / Proxy bypass in App Router (Turbopack, single locale) | high | **Directly relevant** — Rasamap is App Router + single locale + Turbopack, and `proxy.ts` is the auth boundary. Fixed by the bump. |
+| Unauthenticated disclosure of internal Server Function endpoints | moderate | Fixed. |
+| SSRF in rewrites via attacker-controlled destination | high | We have no rewrites; fixed anyway. |
+| DoS in Server Actions / unbounded Server Action payload / cache confusion on bodies / image-optimization SVG DoS | mixed | Mostly not on our paths; fixed anyway. |
 
-### Decision
+`tsc`, `npm run lint` (0 errors), `npm run build`, `npm test` (27/27) all pass
+on 16.2.11.
 
-Do **not** run `npm audit fix --force` before the presentation: it upgrades
-Next.js past the pinned version and risks regressions in a working demo. Both
-issues are non-exploitable in this deployment (no build server exposed to
-untrusted input, no `next/image`). Plan: bump Next.js and re-audit in the first
-post-presentation maintenance pass.
+### Remaining after the bump — 12 advisories, none exploitable here
+
+All are transitive dependencies of build/dev tooling or of a feature the app
+does not use. None are reachable from user input at runtime.
+
+| Package | Via | Why it does not apply |
+|---|---|---|
+| `postcss` (`<=8.5.22`) | `@tailwindcss/postcss`, `next` | Build-time CSS processing. We author our own CSS; no untrusted CSS is ever processed. |
+| `sharp` (`<0.35.0`) | `next` | Image optimization. The app has **no `next/image` usage** — images are plain `<img>`. `sharp` is installed transitively but never invoked. |
+| `mysql2` (`<3.22.0`) | `prisma` (`@prisma/config` optional driver) | SQLite project. The MySQL driver is never loaded. |
+| `nanoid`, `brace-expansion`, `browserslist`, `js-yaml`, `deepmerge-ts` | `next`, `prisma`, build tooling | Dev/build-time only (glob matching, browserslist, YAML/config parsing). Not on the request path. |
+
+Clearing these needs `next@16.3.x` (a minor bump) or `overrides` entries. Both
+carry regression risk for a working demo and none of the issues are
+exploitable in this deployment, so they are **deferred to the first
+post-presentation maintenance pass**, together with the `next/image` migration.
+
+### Do not run `npm audit fix --force`
+
+It pulls `next@16.3.4` (outside the pinned minor) — a framework bump this close
+to the presentation. Bump deliberately, then re-audit.
 
 ### How to re-check
 

@@ -6,7 +6,7 @@ Iranian outdoor-media (billboard) marketplace. Persian UI, RTL (`dir="rtl"`), Va
 
 ## Stack (one-liner per layer)
 
-Next.js 16.2.9 App Router · React 19 · TypeScript 5 strict · SQLite via Prisma 7 + better-sqlite3 · JWT (jose) HttpOnly cookies · Leaflet 1.9 client-only · Inline CSS + Tailwind v4 (no Tailwind classes in JSX — inline style objects only) · Zod on all API inputs
+Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Prisma 7 + better-sqlite3 · JWT (jose) HttpOnly cookies · Leaflet 1.9 client-only · Inline CSS + Tailwind v4 (no Tailwind classes in JSX — inline style objects only) · Zod on all API inputs
 
 ## Critical Breaking Change: Next.js 16 Proxy
 

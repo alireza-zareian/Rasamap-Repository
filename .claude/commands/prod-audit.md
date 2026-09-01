@@ -483,7 +483,7 @@ rule 0.7.
 
 ## PROJECT-SPECIFIC NOTES (Rasamap — read before running the phases)
 
-- **Stack reality:** Next.js 16.2.9 App Router, React 19, TypeScript strict, SQLite +
+- **Stack reality:** Next.js 16.2.11 App Router, React 19, TypeScript strict, SQLite +
   Prisma 7 (`better-sqlite3` adapter, WAL mode), JWT HttpOnly cookies (jose), Leaflet.
   Single instance, single SQLite file. No test suite exists.
 - **Scale reality:** ~2800-3500 billboard rows, read-heavy, a handful of concurrent

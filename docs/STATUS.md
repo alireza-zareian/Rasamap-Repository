@@ -8,7 +8,7 @@
 ## اطلاعات پایه
 
 - **پروژه:** پلتفرم رزرو آنلاین رسانه‌های تبلیغاتی محیطی (بیلبورد) — thesis دانشگاهی
-- **Stack:** Next.js 16.2.9 App Router · React 19 · TypeScript 5 strict · SQLite + Prisma 7 · JWT HttpOnly · Leaflet · Inline CSS (بدون Tailwind class در JSX)
+- **Stack:** Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite + Prisma 7 · JWT HttpOnly · Leaflet · Inline CSS (بدون Tailwind class در JSX)
 - **DB:** 3545 بیلبورد (2660 billboard, 793 bridge, 79 station, 13 digital) · 2015 با تصویر · 3032 geocoded
 - **ارزیابی کد:** A− برای thesis — security غیرمعمول قوی
 

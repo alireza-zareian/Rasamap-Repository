@@ -11,7 +11,7 @@ browses/filters ~2,800–3,500 billboard listings (map + grid), opens a detail p
 after registering with an Iranian mobile number — requests a date-range reservation.
 Admins manage listings and reservations through a separate RBAC-gated panel.
 
-- **Stack:** Next.js 16.2.9 App Router, React 19, TS strict, SQLite + Prisma 7
+- **Stack:** Next.js 16.2.11 App Router, React 19, TS strict, SQLite + Prisma 7
   (`better-sqlite3`, WAL), JWT HttpOnly cookies (jose), Leaflet, inline-CSS.
 - **Scale:** read-heavy, single SQLite file, single instance, a few concurrent users at
   the demo. Data comes from a Python scraper → `seed.ts` → `dev.db`.
@@ -92,7 +92,7 @@ Admins manage listings and reservations through a separate RBAC-gated panel.
       `error.digest` as «کد خطا». (F12, Phase 4 + 5.3)
 - [x] T2.5 `npm audit` → `docs/security-audit.md`. 10 advisories (1 mod, 9 high), **all**
       build-time (postcss) or in an unused feature (sharp / `next/image`), none on the
-      request path. Fixes need `next@16.3.4` (past the pinned `16.2.9`) — deferred to a
+      request path. The `next` CVEs were fixed by bumping to `16.2.11` (2026-09-02); the
       post-presentation bump, documented with rationale + monthly re-check note.
 - [x] T2.6 Object-level authz — `/api/reservations/my` confirmed scoped by session
       (test: user B cannot see user A's reservation). Admin GET/POST confirmed to
@@ -258,8 +258,10 @@ migration or touches product behaviour.
       reworked so the client can safely predict the outcome. STATUS.md P8.
 - [ ] More of the detail-page chrome as Server Components / streaming. STATUS.md P6.
 - [ ] `@next/bundle-analyzer` pass. STATUS.md P9. · JSON-LD on detail pages. P10.
-- [ ] Bump `next` past `16.2.9` and clear the postcss/sharp `npm audit` advisories
-      (`docs/security-audit.md`).
+- [x] Bumped `next` 16.2.9 → 16.2.11 (2026-09-02) — closed 10 Next.js advisories
+      incl. the App-Router proxy-bypass. Remaining `npm audit` items (postcss/sharp/
+      mysql2/…) are transitive build-tooling / unused paths — see `docs/security-audit.md`.
+      Clearing those needs `next@16.3.x`; deferred post-presentation.
 - [x] Lint debt cleared — 63 problems → 10 (0 errors). Real fix in AnalyticsTab;
       the rest were legit data-fetch / mount-hydration effects, scoped-disabled with a
       reason. Remaining 10 are `@next/next/no-page-custom-font` (error/404 pages must
