@@ -6,6 +6,11 @@ import BackgroundPattern from "@/components/BackgroundPattern";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // The app ships its own light/dark themes (data-theme on <html>). Declaring
+  // color-scheme tells mobile browsers (Samsung Internet, Chrome) NOT to apply
+  // their own "force dark" filter on top — which was making the dark UI nearly
+  // unreadable on phones.
+  colorScheme: "dark light",
 };
 
 export const metadata: Metadata = {
@@ -18,6 +23,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fa" dir="rtl">
       <head>
+        {/* Set the theme before first paint so there's no light/dark flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('rasamap-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){}",
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

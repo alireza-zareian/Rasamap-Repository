@@ -28,7 +28,17 @@ const securityHeaders = [
   },
 ];
 
+// Hosts allowed to load /_next/* dev resources when `next dev` is reached from
+// a non-localhost origin (e.g. a phone on the same Wi-Fi at http://<lan-ip>:3000).
+// Dev-only — has no effect on `next build` / `next start`. Add your machine's
+// LAN IP here, or set DEV_ORIGINS="192.168.1.35,10.0.0.4" in .env.local.
+const devOrigins = (process.env.DEV_ORIGINS ?? "192.168.1.35,192.168.*,10.*,172.16.*")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins: devOrigins,
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
