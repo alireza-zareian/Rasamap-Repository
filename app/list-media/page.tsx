@@ -5,24 +5,65 @@ import { ImagePlus, X, Check, Lightbulb, CircleCheckBig, ArrowRight, ArrowLeft, 
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 
-const steps = ["اطلاعات اصلی","موقعیت و نوع","قیمت‌گذاری","تصاویر","تأیید"];
+const steps = ["اطلاعات اصلی","موقعیت و نوع","قیمت‌گذاری","تصاویر","انتخاب پلن","تأیید"];
+const SUBMIT_STEP = 4;   // the plan step is the last one with a submit button
+const DONE_STEP   = 5;
+
+const MAX_PHOTOS = 5;
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
+
+// The server independently re-checks every one of these (size, real file type
+// via magic bytes, count) — the browser-side copy only exists so a mistake is
+// caught before a multi-megabyte upload is attempted.
+const PLANS = [
+  {
+    key: "free",
+    title: "رایگان",
+    price: "۰ تومان",
+    perks: ["نمایش در جستجو و صفحهٔ رسانه", "نمایش شمارهٔ تماس به کاربران عضو", "تأیید توسط کارشناس رسامپ"],
+  },
+  {
+    key: "featured",
+    title: "ویژه",
+    price: "۴۹۰٬۰۰۰ تومان / ۳۰ روز",
+    perks: ["همهٔ امکانات پلن رایگان", "نمایش در ابتدای نتایج جستجو", "نشان «ویژه» روی کارت رسانه"],
+  },
+] as const;
+
+/** Read a picked file as a base64 data URL for the JSON request body. */
+function toDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("read failed"));
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function ListMediaPage() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({name:"",type:"billboard",city:"تهران",region:"",location:"",width:"",height:"",faces:"2",price:"",phone:"",desc:""});
+  const [plan, setPlan] = useState<"free" | "featured">("free");
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s=(k:string,v:string)=>setForm(f=>({...f,[k]:v}));
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    const remaining = 5 - photos.length;
-    const picked = files.slice(0, remaining).map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
+    const remaining = MAX_PHOTOS - photos.length;
+    const picked: { file: File; preview: string }[] = [];
+    let rejected = "";
+
+    for (const file of files.slice(0, remaining)) {
+      if (!ACCEPTED.includes(file.type)) { rejected = "فقط فرمت JPG، PNG یا WEBP پذیرفته می‌شود."; continue; }
+      if (file.size > MAX_PHOTO_BYTES)   { rejected = "حجم هر تصویر باید کمتر از ۲ مگابایت باشد."; continue; }
+      picked.push({ file, preview: URL.createObjectURL(file) });
+    }
+
+    setError(rejected);
     setPhotos(prev => [...prev, ...picked]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
@@ -35,9 +76,11 @@ export default function ListMediaPage() {
   }
 
   async function handleSubmit() {
+    if (submitting) return;                 // ignore a double-tap mid-request
     setError("");
     setSubmitting(true);
     try {
+      const images = await Promise.all(photos.map(p => toDataUrl(p.file)));
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -53,14 +96,20 @@ export default function ListMediaPage() {
           height: form.height ? parseInt(form.height) : 1,
           faces: parseInt(form.faces),
           price: form.price ? parseInt(form.price) : 1,
+          plan,
+          images,
         }),
       });
-      const data = await res.json();
+      if (res.status === 401) {
+        window.location.href = `/login?next=${encodeURIComponent("/list-media")}`;
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error ?? "خطا در ثبت رسانه");
         return;
       }
-      setStep(4);
+      setStep(DONE_STEP);
     } catch {
       setError("خطا در اتصال به سرور. لطفاً دوباره امتحان کنید.");
     } finally {
@@ -144,14 +193,14 @@ export default function ListMediaPage() {
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      {photos.length < 5 && (
+      {photos.length < MAX_PHOTOS && (
         <div
           onClick={() => fileInputRef.current?.click()}
           style={{border:"2px dashed var(--border)",borderRadius:12,padding:"32px",textAlign:"center",color:"var(--text-muted)",marginBottom:14,cursor:"pointer"}}
         >
           <ImagePlus size={32} style={{margin:"0 auto 10px",display:"block",color:"var(--accent)"}} />
           <div style={{fontSize:"0.85rem",marginBottom:4}}>برای انتخاب تصویر کلیک کنید</div>
-          <div style={{fontSize:"0.72rem"}}>(حداکثر ۵ تصویر، فرمت JPG / PNG / WEBP)</div>
+          <div style={{fontSize:"0.72rem"}}>(حداکثر ۵ تصویر، هر کدام تا ۲ مگابایت — JPG / PNG / WEBP)</div>
         </div>
       )}
       {photos.length > 0 && (
@@ -171,14 +220,53 @@ export default function ListMediaPage() {
         </div>
       )}
       <div style={{background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:8,padding:"10px 14px",fontSize:"0.78rem",color:"var(--green)",display:"flex",alignItems:"flex-start",gap:7}}>
-        <Check size={14} style={{flexShrink:0,marginTop:2}} /> ثبت رسانه کاملاً رایگان است. پس از تأیید توسط تیم رسامپ (ظرف ۲۴ ساعت)، رسانه شما در سایت نمایش داده می‌شود.
+        <Check size={14} style={{flexShrink:0,marginTop:2}} /> تصاویر پس از بررسی و تأیید کارشناس رسامپ همراه با آگهی منتشر می‌شوند. حداکثر ۵ تصویر، هر کدام تا ۲ مگابایت.
       </div>
     </div>,
-    <div key={4} style={{textAlign:"center",padding:"20px 0"}}>
+    <div key={4}>
+      <div style={{fontSize:"0.82rem",color:"var(--text-muted)",lineHeight:1.9,marginBottom:14}}>
+        درآمد رسامپ از ثبت آگهی است، نه از اجاره‌کننده. اجاره و قرارداد مستقیماً بین شما و آگهی‌دهنده انجام می‌شود.
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
+        {PLANS.map(p => {
+          const active = plan === p.key;
+          return (
+            <label key={p.key} style={{display:"block",padding:"14px 16px",background:active?"rgba(59,123,245,0.08)":"var(--bg-surface)",border:`1.5px solid ${active?"var(--accent)":"var(--border)"}`,borderRadius:10,cursor:"pointer"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                <input type="radio" checked={active} onChange={()=>setPlan(p.key)} style={{accentColor:"var(--accent)"}} />
+                <span style={{fontSize:"0.92rem",fontWeight:700,flex:1}}>پلن {p.title}</span>
+                <span style={{fontSize:"0.82rem",fontWeight:700,color:active?"var(--accent)":"var(--text-muted)"}}>{p.price}</span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:4,paddingInlineStart:26}}>
+                {p.perks.map(perk => (
+                  <div key={perk} style={{fontSize:"0.75rem",color:"var(--text-muted)",display:"flex",alignItems:"center",gap:6}}>
+                    <Check size={12} style={{color:"var(--green)",flexShrink:0}} /> {perk}
+                  </div>
+                ))}
+              </div>
+            </label>
+          );
+        })}
+      </div>
+      {plan === "featured" && (
+        <div style={{background:"rgba(245,158,11,0.07)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:8,padding:"12px 14px",fontSize:"0.78rem",color:"var(--accent-warm)",lineHeight:1.9,display:"flex",alignItems:"flex-start",gap:7}}>
+          <Lightbulb size={14} style={{flexShrink:0,marginTop:3}} />
+          <span>
+            پرداخت آنلاین فعال نیست. پس از ثبت، آگهی شما در وضعیت «در انتظار پرداخت» قرار می‌گیرد و
+            شمارهٔ کارت از طریق پشتیبانی به شما اعلام می‌شود. با تأیید واریز توسط ادمین، آگهی منتشر
+            شده و نشان «ویژه» می‌گیرد.
+          </span>
+        </div>
+      )}
+    </div>,
+    <div key={5} style={{textAlign:"center",padding:"20px 0"}}>
       <div style={{display:"flex",justifyContent:"center",marginBottom:16,color:"var(--green)"}}><CircleCheckBig size={52} strokeWidth={1.5} /></div>
       <div style={{fontSize:"1.1rem",fontWeight:700,marginBottom:8}}>رسانه شما با موفقیت ثبت شد!</div>
       <div style={{fontSize:"0.82rem",color:"var(--text-muted)",marginBottom:24,lineHeight:1.8}}>
-        تیم رسامپ درخواست شما را بررسی می‌کند.<br/>پس از تأیید، رسانه‌ی شما در سایت نمایش داده می‌شود.
+        {plan === "featured"
+          ? <>آگهی شما ثبت شد و در وضعیت «در انتظار پرداخت» است.<br/>برای هماهنگی واریز، پشتیبانی با شما تماس می‌گیرد.</>
+          : <>تیم رسامپ درخواست شما را بررسی می‌کند.<br/>پس از تأیید، رسانه‌ی شما در سایت نمایش داده می‌شود.</>}
+        <br/>وضعیت آگهی را می‌توانید در داشبورد دنبال کنید.
       </div>
       <Link href="/dashboard" style={{display:"inline-block",background:"var(--accent)",color:"#fff",padding:"11px 28px",borderRadius:9,textDecoration:"none",fontWeight:700,fontSize:"0.88rem"}}>رفتن به داشبورد</Link>
     </div>,
@@ -191,7 +279,7 @@ export default function ListMediaPage() {
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>
           <Link href="/" style={{color:"var(--text-muted)",textDecoration:"none",fontSize:"0.85rem",display:"inline-flex",alignItems:"center",gap:4}}><ArrowRight size={13} /> رسامپ</Link>
           <span style={{color:"var(--border)",display:"inline-flex"}}><ChevronLeft size={13} /></span>
-          <span style={{fontSize:"0.85rem",fontWeight:600}}>ثبت رسانه رایگان</span>
+          <span style={{fontSize:"0.85rem",fontWeight:600}}>ثبت رسانه</span>
         </div>
 
         {/* Steps */}
@@ -213,7 +301,7 @@ export default function ListMediaPage() {
           <div style={{padding:"18px 22px"}}>
             {stepContent[step]}
           </div>
-          {step < 4 && (
+          {step < DONE_STEP && (
             <div style={{padding:"14px 22px",borderTop:"1px solid var(--border)"}}>
               {error && (
                 <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"9px 14px",fontSize:"0.8rem",color:"#ef4444",marginBottom:10}}>
@@ -223,10 +311,10 @@ export default function ListMediaPage() {
               <div style={{display:"flex",gap:8}}>
                 {step>0 && <button onClick={()=>{setError("");setStep(s=>s-1);}} style={{border:"1px solid var(--border)",background:"none",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.82rem",padding:"9px 18px",borderRadius:8,cursor:"pointer",flex:1,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><ArrowRight size={14} /> قبلی</button>}
                 <button
-                  onClick={step===3 ? handleSubmit : goNext}
+                  onClick={step===SUBMIT_STEP ? handleSubmit : goNext}
                   disabled={submitting}
                   style={{background:submitting?"var(--border)":"var(--accent)",border:"none",color:"#fff",fontFamily:"inherit",fontSize:"0.85rem",fontWeight:700,padding:"9px 24px",borderRadius:8,cursor:submitting?"not-allowed":"pointer",flex:2,opacity:submitting?0.7:1,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                  {submitting ? "در حال ثبت..." : step===3 ? <><Check size={15} /> ثبت نهایی</> : <>بعدی <ArrowLeft size={14} /></>}
+                  {submitting ? "در حال ارسال..." : step===SUBMIT_STEP ? <><Check size={15} /> ثبت نهایی</> : <>بعدی <ArrowLeft size={14} /></>}
                 </button>
               </div>
             </div>

@@ -9,15 +9,11 @@ import ReviewsSection from "@/components/ReviewsSection";
 import TrafficMeter from "@/components/TrafficMeter";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
-import BillboardBookingCTA from "@/components/BillboardBookingCTA";
 import BillboardContact from "@/components/BillboardContact";
+import { typeLabels, statusLabels } from "@/lib/types";
 
-const TYPE_LABEL: Record<string, string> = {
-  billboard: "بیلبورد", digital: "دیجیتال", bridge: "پل عابر", station: "ایستگاه", vehicle: "وسیله نقلیه",
-};
-const STATUS_LABEL: Record<string, string> = {
-  available: "آزاد", busy: "اشغال", reserved: "رزرو شده", inactive: "غیرفعال",
-};
+const TYPE_LABEL = typeLabels as Record<string, string>;
+const STATUS_LABEL = statusLabels as Record<string, string>;
 const STATUS_COLOR: Record<string, string> = {
   available: "#22c55e", busy: "#ef4444", reserved: "#f59e0b", inactive: "#6b7280",
 };
@@ -207,16 +203,20 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                   ))}
                 </div>
 
-                <BillboardBookingCTA billboard={b} />
+                {/* Rasamap lists media it does not own, so there is no checkout
+                    here: the next step is talking to the media's owner. The
+                    phone number is fetched from an authed endpoint only when a
+                    signed-in user asks for it — it is never embedded in the
+                    page HTML or the RSC payload. */}
+                <BillboardContact hasPhone={phoneAvailable} agency={b.agency} slug={b.slug} />
 
-                <Link href="/explore" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, textDecoration: "none", color: "var(--text-muted)", fontSize: "0.78rem", padding: "6px" }}>
+                <div style={{ marginTop: 10, fontSize: "0.7rem", color: "var(--text-muted)", lineHeight: 1.8, textAlign: "center" }}>
+                  اجاره و قرارداد مستقیماً با صاحب رسانه انجام می‌شود. رسامپ واسطهٔ مالی نیست.
+                </div>
+
+                <Link href="/explore" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, textDecoration: "none", color: "var(--text-muted)", fontSize: "0.78rem", padding: "6px", marginTop: 6 }}>
                   <ArrowRight size={13} /> بازگشت به جستجو
                 </Link>
-
-                {/* Contact info — the phone number is fetched from an authed
-                    endpoint only when a signed-in user asks for it; it is never
-                    embedded in the page. */}
-                <BillboardContact hasPhone={phoneAvailable} agency={b.agency} slug={b.slug} />
               </div>
 
               {/* Source badge */}

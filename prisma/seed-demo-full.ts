@@ -5,7 +5,7 @@
  *   npm run db:seed:demo:full
  *
  * Idempotent: every record is upserted on a natural key (phone / email / a
- * scoped delete-then-recreate for reservations), so re-running it does not
+ * scoped delete-then-recreate for the demo listings), so re-running it does not
  * create duplicates. Demo-only records are tagged "[DEMO]" in visible text.
  * Refuses to run against the test database. Password for every demo account: demo1234
  *
@@ -27,23 +27,16 @@ const prisma = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url }) });
 const PASSWORD = "demo1234";
 const TAG = "[DEMO]";
 
-function addDays(base: Date, n: number): Date {
-  const d = new Date(base);
-  d.setDate(d.getDate() + n);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
 // ── Users: one per meaningful state a reviewer might click into ─────────
 const USERS = [
-  { key: "active",    phone: "09120000101", name: "سارا محمدی",     note: "confirmed + pending + past reservations, one review" },
-  { key: "pending",   phone: "09120000102", name: "رضا کریمی",      note: "only pending reservations" },
-  { key: "new",       phone: "09120000103", name: "نگار احمدی",     note: "just signed up — no reservations" },
-  { key: "cancelled", phone: "09120000104", name: "امیر حسینی",     note: "one cancelled reservation" },
-  { key: "reviewer",  phone: "09120000105", name: "مریم رستمی",     note: "confirmed past reservation + review" },
-  { key: "heavy",     phone: "09120000106", name: "کاوه نادری",     note: "reservations across several cities" },
-  { key: "history",   phone: "09120000107", name: "لیلا صادقی",     note: "only past (finished) reservations" },
-  { key: "owner",     phone: "09120000108", name: "بابک تهرانی",    note: "also an owner with pending listings" },
+  { key: "publisher", phone: "09120000101", name: "سارا محمدی",  note: "two published listings + a review" },
+  { key: "waiting",   phone: "09120000102", name: "رضا کریمی",   note: "one listing awaiting admin review" },
+  { key: "new",       phone: "09120000103", name: "نگار احمدی",  note: "just signed up — nothing submitted" },
+  { key: "rejected",  phone: "09120000104", name: "امیر حسینی",  note: "one rejected listing" },
+  { key: "reviewer",  phone: "09120000105", name: "مریم رستمی",  note: "wrote a review, no listings" },
+  { key: "paying",    phone: "09120000106", name: "کاوه نادری",  note: "featured plan, awaiting payment confirmation" },
+  { key: "featured",  phone: "09120000107", name: "لیلا صادقی",  note: "featured listing, payment confirmed" },
+  { key: "agency",    phone: "09120000108", name: "بابک تهرانی", note: "agency owner with several listings" },
 ] as const;
 
 const ADMINS = [
@@ -80,7 +73,7 @@ async function main() {
   }
   console.log(`admins: ${ADMINS.length} upserted (roles: viewer / editor / admin / super_admin)`);
 
-  // ── Owners + pending listings ───────────────────────────────────────
+  // ── Owners ──────────────────────────────────────────────────────────
   const ownerSpecs = [
     { name: `${TAG} آژانس تبلیغاتی البرز`, phone: "02100000001", company: "Alborz Media" },
     { name: `${TAG} شرکت رسانه پارس`,      phone: "02100000002", company: "Pars Media" },
@@ -92,69 +85,61 @@ async function main() {
     ownerRows.push(existing ?? (await prisma.owner.create({ data: o })));
   }
 
+  // ── Listings — one per state of the submission pipeline ─────────────
   // Wipe previous demo listings, then recreate (idempotent).
-  await prisma.billboard.deleteMany({ where: { name: { startsWith: TAG }, status: "pending" } });
-  const listingSpecs = [
-    { owner: 0, name: `${TAG} بیلبورد بزرگراه چمران`, city: "تهران",  type: "billboard", price: 90 },
-    { owner: 0, name: `${TAG} عرشه پل پارک‌وی`,        city: "تهران",  type: "bridge",    price: 70 },
-    { owner: 1, name: `${TAG} بیلبورد میدان نقش جهان`, city: "اصفهان", type: "billboard", price: 55 },
-    { owner: 2, name: `${TAG} تابلوی دیجیتال ولنجک`,   city: "تهران",  type: "digital",   price: 120 },
+  await prisma.review.deleteMany({ where: { billboard: { name: { startsWith: TAG } } } });
+  await prisma.billboard.deleteMany({ where: { name: { startsWith: TAG } } });
+
+  type L = {
+    user: string; owner: number; name: string; city: string; type: string;
+    price: number; status: string; plan: string; featured: boolean;
+  };
+  const listingSpecs: L[] = [
+    { user: "publisher", owner: 0, name: `${TAG} بیلبورد بزرگراه چمران`, city: "تهران",  type: "billboard", price: 90,  status: "available",        plan: "free",     featured: false },
+    { user: "publisher", owner: 0, name: `${TAG} عرشه پل پارک‌وی`,        city: "تهران",  type: "bridge",    price: 70,  status: "available",        plan: "free",     featured: false },
+    { user: "waiting",   owner: 1, name: `${TAG} بیلبورد میدان نقش جهان`, city: "اصفهان", type: "billboard", price: 55,  status: "pending",          plan: "free",     featured: false },
+    { user: "paying",    owner: 2, name: `${TAG} تابلوی دیجیتال ولنجک`,   city: "تهران",  type: "digital",   price: 120, status: "awaiting_payment", plan: "featured", featured: false },
+    { user: "featured",  owner: 1, name: `${TAG} بیلبورد بلوار فردوسی`,   city: "مشهد",   type: "billboard", price: 65,  status: "available",        plan: "featured", featured: true  },
+    { user: "rejected",  owner: 2, name: `${TAG} ایستگاه اتوبوس ونک`,     city: "تهران",  type: "station",   price: 25,  status: "inactive",         plan: "free",     featured: false },
+    { user: "agency",    owner: 0, name: `${TAG} بیلبورد اتوبان کرج`,     city: "کرج",    type: "billboard", price: 45,  status: "pending",          plan: "free",     featured: false },
+    { user: "agency",    owner: 0, name: `${TAG} عرشه پل شهید همت`,       city: "تهران",  type: "bridge",    price: 80,  status: "available",        plan: "free",     featured: false },
   ];
-  let listingCount = 0;
+
+  const listingIds: Record<string, number> = {};
   for (const [i, l] of listingSpecs.entries()) {
-    await prisma.billboard.create({
+    const row = await prisma.billboard.create({
       data: {
         name: l.name, slug: `demo-listing-${i + 1}`, location: `${TAG} موقعیت نمونه`,
-        region: "منطقه نمونه", city: l.city, type: l.type, status: "pending",
-        width: 12, height: 4, faces: 2, age: 1,
+        region: "منطقه نمونه", city: l.city, type: l.type,
+        status: l.status, plan: l.plan, featured: l.featured,
+        width: 12, height: 4, area: 48, faces: 2, age: 1,
         price: l.price, priceWeekly: Math.round(l.price / 4),
         priceQuarterly: Math.round(l.price * 3 * 0.9), priceYearly: l.price * 12,
         traffic: { daily: 40000, peakHour: "18:00", congestionLevel: 6, pedestrian: 5000, estimatedViews: 6000, viewabilityScore: 60 },
-        mapX: 50, mapY: 50, icon: "location", images: [], agency: ownerSpecs[l.owner].company || ownerSpecs[l.owner].name,
-        phone: ownerSpecs[l.owner].phone, description: `${TAG} رسانه ثبت‌شده توسط مالک — در انتظار تأیید ادمین`,
+        estimatedViews: 6000,
+        mapX: 50, mapY: 50, icon: "location", images: [], hasImages: false,
+        agency: ownerSpecs[l.owner].company || ownerSpecs[l.owner].name,
+        phone: ownerSpecs[l.owner].phone,
+        description: `${TAG} رسانه ثبت‌شده توسط مالک از طریق فرم «ثبت رسانه»`,
         features: [], nearbyLandmarks: [], rating: 0, reviewCount: 0,
+        source: "listing",
         ownerId: ownerRows[l.owner].id,
+        submittedById: users[l.user].id,
       },
     });
-    listingCount++;
+    listingIds[l.name] = row.id;
   }
-  console.log(`owners: ${ownerRows.length} · pending listings: ${listingCount}`);
+  console.log(`owners: ${ownerRows.length} · listings: ${listingSpecs.length} (published / pending / awaiting payment / rejected)`);
 
-  // ── Reservations — scoped reset then recreate ───────────────────────
-  const demoUserIds = Object.values(users).map((u) => u.id);
-  await prisma.reservation.deleteMany({ where: { userId: { in: demoUserIds } } });
+  // ── Reviews — any signed-in account may review a published media item ─
+  const publishedIds = listingSpecs
+    .filter(l => l.status === "available")
+    .map(l => listingIds[l.name]);
 
-  type R = { user: string; billboardId: number; from: number; to: number; status: string };
-  const reservations: R[] = [
-    { user: "active",    billboardId: 1,  from: 3,   to: 17,  status: "confirmed" },
-    { user: "active",    billboardId: 4,  from: 20,  to: 50,  status: "pending" },
-    { user: "active",    billboardId: 8,  from: -40, to: -10, status: "confirmed" },
-    { user: "pending",   billboardId: 2,  from: 10,  to: 25,  status: "pending" },
-    { user: "pending",   billboardId: 11, from: 30,  to: 60,  status: "pending" },
-    { user: "cancelled", billboardId: 5,  from: 15,  to: 30,  status: "cancelled" },
-    { user: "reviewer",  billboardId: 6,  from: -60, to: -30, status: "confirmed" },
-    { user: "heavy",     billboardId: 1,  from: 60,  to: 75,  status: "pending" },
-    { user: "heavy",     billboardId: 10, from: -20, to: 5,   status: "confirmed" },
-    { user: "heavy",     billboardId: 11, from: 80,  to: 110, status: "pending" },
-    { user: "history",   billboardId: 8,  from: -90, to: -60, status: "confirmed" },
-    { user: "history",   billboardId: 4,  from: -30, to: -5,  status: "confirmed" },
-    { user: "owner",     billboardId: 2,  from: 40,  to: 55,  status: "pending" },
-  ];
-  for (const r of reservations) {
-    await prisma.reservation.create({
-      data: {
-        userId: users[r.user].id, billboardId: r.billboardId,
-        startDate: addDays(today, r.from), endDate: addDays(today, r.to), status: r.status,
-      },
-    });
-  }
-  console.log(`reservations: ${reservations.length} across all statuses`);
-
-  // ── Reviews (only where a confirmed reservation exists) ─────────────
   const reviews = [
-    { user: "reviewer", billboardId: 6, rating: 5, comment: `${TAG} موقعیت عالی، بازدید بالا. راضی بودیم.` },
-    { user: "active",   billboardId: 8, rating: 4, comment: `${TAG} خوب بود، نصب کمی طول کشید.` },
-    { user: "history",  billboardId: 8, rating: 3, comment: `${TAG} متوسط. قیمت نسبت به ترافیک بالاست.` },
+    { user: "reviewer",  billboardId: publishedIds[0], rating: 5, comment: `${TAG} موقعیت عالی، بازدید بالا. راضی بودیم.` },
+    { user: "publisher", billboardId: publishedIds[1], rating: 4, comment: `${TAG} خوب بود، نصب کمی طول کشید.` },
+    { user: "waiting",   billboardId: publishedIds[0], rating: 3, comment: `${TAG} متوسط. قیمت نسبت به ترافیک بالاست.` },
   ];
   for (const rv of reviews) {
     await prisma.review.upsert({
@@ -163,10 +148,21 @@ async function main() {
       create: { billboardId: rv.billboardId, userId: users[rv.user].id, rating: rv.rating, comment: rv.comment },
     });
   }
+  // Keep the denormalised aggregate in step with the rows just written — the
+  // same recomputation POST /api/reviews does.
+  for (const billboardId of new Set(reviews.map(r => r.billboardId))) {
+    const agg = await prisma.review.aggregate({
+      where: { billboardId }, _avg: { rating: true }, _count: { _all: true },
+    });
+    await prisma.billboard.update({
+      where: { id: billboardId },
+      data: {
+        rating: Math.round((agg._avg.rating ?? 0) * 10) / 10,
+        reviewCount: agg._count._all,
+      },
+    });
+  }
   console.log(`reviews: ${reviews.length}`);
-
-  // Reflect the confirmed future booking on the billboard status.
-  await prisma.billboard.update({ where: { id: 1 }, data: { status: "reserved" } });
 
   // ── Print the account sheet ────────────────────────────────────────
   console.log("\n──────────────────────────────────────────────────────────────");

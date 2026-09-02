@@ -7,12 +7,16 @@ import { hasPermission } from "@/lib/auth/users";
 import { persistAudit } from "@/lib/auth/audit";
 import { serverError } from "@/lib/api-error";
 import { z } from "zod";
+import { BILLBOARD_STATUSES } from "@/lib/types";
 import { withApiLog } from "@/lib/api-log";
 
 const ALLOWED_SORT_KEYS = new Set(["id", "price", "name", "city"]);
 const ALLOWED_SORT_DIRS = new Set(["asc", "desc"]);
 const ALLOWED_TYPES     = new Set(["billboard", "digital", "bridge", "station", "vehicle", ""]);
-const ALLOWED_STATUSES  = new Set(["available", "busy", "reserved", "inactive", ""]);
+// The full set, pipeline states included: user submissions land in `pending` /
+// `awaiting_payment` and the admin panel is the only place they can be found
+// and approved. "" means "no status filter".
+const ALLOWED_STATUSES  = new Set<string>([...BILLBOARD_STATUSES, ""]);
 
 const QuerySchema = z.object({
   q:      z.string().max(200).optional().default(""),

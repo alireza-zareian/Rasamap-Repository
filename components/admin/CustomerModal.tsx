@@ -4,27 +4,32 @@ import { C } from "./constants";
 import { Badge } from "./Badge";
 import { User, X, AlertTriangle, KeyRound, Check, Copy } from "lucide-react";
 
-interface Reservation {
+interface UserListing {
   id: number;
+  name: string;
+  city: string;
   status: string;
-  startDate: string;
-  endDate: string;
+  plan: string;
+  featured: boolean;
+  price: number;
   createdAt: string;
-  billboard: { id: number; name: string; city: string };
 }
 interface CustomerDetail {
   id: number;
   name: string;
   phone: string;
   createdAt: string;
-  reservations: Reservation[];
-  _count: { reservations: number; reviews: number };
+  listings: UserListing[];
+  _count: { listings: number; reviews: number };
 }
 
-const RES_STATUS: Record<string, [string, string]> = {
-  pending:   ["در انتظار", "#f59e0b"],
-  confirmed: ["تأیید شده", C.green],
-  cancelled: ["لغو شده", C.red],
+const LISTING_STATUS: Record<string, [string, string]> = {
+  pending:          ["در انتظار تأیید", "#f59e0b"],
+  awaiting_payment: ["در انتظار پرداخت", "#8b5cf6"],
+  available:        ["منتشر شده", C.green],
+  busy:             ["مشغول", "#f59e0b"],
+  reserved:         ["رزرو شده", "#8b5cf6"],
+  inactive:         ["منتشر نشده", C.red],
 };
 const fmt = (d: string) => new Date(d).toLocaleDateString("fa-IR", { year: "numeric", month: "short", day: "numeric" });
 
@@ -116,7 +121,7 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
             </div>
             <div style={{ display: "flex", gap: 16, fontSize: "0.75rem", color: C.muted, marginBottom: 16, flexWrap: "wrap" }}>
               <span>ثبت‌نام: {fmt(data.createdAt)}</span>
-              <span>رزروها: {data._count.reservations.toLocaleString("fa-IR")}</span>
+              <span>آگهی‌ها: {data._count.listings.toLocaleString("fa-IR")}</span>
               <span>نظرها: {data._count.reviews.toLocaleString("fa-IR")}</span>
             </div>
 
@@ -141,18 +146,21 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
               </div>
             )}
 
-            <div style={{ fontSize: "0.8rem", fontWeight: 700, marginBottom: 8 }}>رزروهای این کاربر</div>
-            {data.reservations.length === 0 ? (
-              <div style={{ fontSize: "0.78rem", color: C.muted, padding: "10px 0" }}>هیچ رزروی ندارد.</div>
+            <div style={{ fontSize: "0.8rem", fontWeight: 700, marginBottom: 8 }}>آگهی‌های این کاربر</div>
+            {data.listings.length === 0 ? (
+              <div style={{ fontSize: "0.78rem", color: C.muted, padding: "10px 0" }}>هیچ آگهی ثبت نکرده است.</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {data.reservations.map(r => {
-                  const [label, color] = RES_STATUS[r.status] ?? [r.status, C.muted];
+                {data.listings.map(l => {
+                  const [label, color] = LISTING_STATUS[l.status] ?? [l.status, C.muted];
                   return (
-                    <div key={r.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <div key={l.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: "0.8rem", fontWeight: 600 }}>{r.billboard.name}</div>
-                        <div style={{ fontSize: "0.7rem", color: C.muted }}>{r.billboard.city} · {fmt(r.startDate)} — {fmt(r.endDate)}</div>
+                        <div style={{ fontSize: "0.8rem", fontWeight: 600 }}>{l.name}</div>
+                        <div style={{ fontSize: "0.7rem", color: C.muted }}>
+                          {l.city} · {l.price.toLocaleString("fa-IR")}M تومان/ماه · {fmt(l.createdAt)}
+                          {l.featured ? " · ویژه" : ""}
+                        </div>
                       </div>
                       <Badge text={label} color={color} bg={`${color}1e`} />
                     </div>

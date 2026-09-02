@@ -46,7 +46,7 @@ export default function Footer() {
               <span className="logo-shimmer" style={{ fontSize: "1.1rem", fontWeight: 800 }}>رسامپ</span>
             </Link>
             <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.8, maxWidth: 220, margin: 0 }}>
-              بازار آنلاین رسانه‌های تبلیغاتی محیطی ایران — جستجو، مقایسه و رزرو بدون واسطه
+              فهرست آنلاین رسانه‌های تبلیغاتی محیطی ایران — جستجو، مقایسه و تماس بدون واسطه
             </p>
             <div style={{ marginTop: 18, display: "flex", gap: 8 }}>
               <a href="https://t.me/rasamap" target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.72rem", padding: "5px 12px", borderRadius: 6, border: "1px solid var(--border)", color: "var(--text-muted)", textDecoration: "none" }}>تلگرام</a>

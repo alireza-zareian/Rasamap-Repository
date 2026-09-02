@@ -62,11 +62,24 @@ export function tokenFromSetCookie(res) {
   return null;
 }
 
-/** ISO date (YYYY-MM-DD) N days from today. */
-export function futureDate(daysFromNow) {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromNow);
-  return d.toISOString().slice(0, 10);
+/**
+ * The smallest valid PNG (1x1, transparent) as a data URL — a real file with a
+ * real PNG signature, so the server's magic-byte check accepts it.
+ */
+export function pngDataUrl() {
+  const base64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk" +
+    "YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  return `data:image/png;base64,${base64}`;
+}
+
+/**
+ * A payload that *claims* to be a PNG but whose bytes are something else — the
+ * shape of an upload trying to smuggle a non-image past an extension check.
+ */
+export function fakeImageDataUrl() {
+  const evil = Buffer.from("MZ\x90\x00\x03 this is not an image at all").toString("base64");
+  return `data:image/png;base64,${evil}`;
 }
 
 /** Random valid Iranian mobile number for register tests. */

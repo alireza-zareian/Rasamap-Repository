@@ -13,14 +13,17 @@ export const C = {
   font:    "Vazirmatn, sans-serif",
 } as const;
 
-export const STATUS_LABEL: Record<string, string> = {
-  available: "موجود", busy: "مشغول", reserved: "رزرو", inactive: "غیرفعال",
-};
+// One label map for the whole app — the admin filter, the edit modal's status
+// select and the row badge all read it, so a status cannot be spelled two ways.
+export { statusLabels as STATUS_LABEL } from "@/lib/types";
+
 export const STATUS_COLOR: Record<string, [string, string]> = {
-  available: [C.green,  "rgba(34,197,94,0.12)"],
-  busy:      ["#f59e0b","rgba(245,158,11,0.12)"],
-  reserved:  ["#8b5cf6","rgba(139,92,246,0.12)"],
-  inactive:  [C.muted,  "rgba(148,163,184,0.12)"],
+  pending:          ["#f59e0b","rgba(245,158,11,0.16)"],
+  awaiting_payment: ["#8b5cf6","rgba(139,92,246,0.16)"],
+  available:        [C.green,  "rgba(34,197,94,0.12)"],
+  busy:             ["#f59e0b","rgba(245,158,11,0.12)"],
+  reserved:         ["#8b5cf6","rgba(139,92,246,0.12)"],
+  inactive:         [C.muted,  "rgba(148,163,184,0.12)"],
 };
 export const TYPE_LABEL: Record<string, string> = {
   billboard: "بیلبورد", digital: "دیجیتال", bridge: "عرشه پل", station: "ایستگاه", vehicle: "وسیله",

@@ -48,6 +48,8 @@ project-ai.zip
 # scraped assets & raw dumps — large, third-party content, not part of the app source
 # (scraper/data/billboards.json is kept: lib/data.ts imports it and the build needs it)
 /public/images/scraped/
+# user-submitted listing photos and admin uploads — runtime content, not source
+/public/uploads/
 /scraper/data/raw_latest.json
 /scraper/data/*.raw.json
 

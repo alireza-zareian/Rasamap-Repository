@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { Billboard, typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Scale, X, Star } from "lucide-react";
@@ -6,10 +7,9 @@ import { Scale, X, Star } from "lucide-react";
 interface Props {
   items: Billboard[];
   onClose: () => void;
-  onBook: (b: Billboard) => void;
 }
 
-export default function CompareModal({ items, onClose, onBook }: Props) {
+export default function CompareModal({ items, onClose }: Props) {
   if (items.length < 2) return null;
   const [a, b] = items;
 
@@ -26,7 +26,7 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
     ["قیمت ماهانه (M ت)", b=>b.price, false],
     ["قیمت سالانه (M ت)", b=>b.priceYearly, false],
     ["سن سازه (سال)", b=>b.age, false],
-    ["امتیاز کاربران", b=>b.rating+` (${b.reviewCount})`, true],
+    ["امتیاز کاربران", b=>b.reviewCount>0 ? b.rating+` (${b.reviewCount} نظر)` : "بدون نظر", true],
     ["وضعیت", b=>b.status==="available"?"خالی":"مشغول", false],
   ];
 
@@ -83,13 +83,14 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
           <Star size={11} fill="currentColor" /> سبز = بهتر در این معیار
         </div>
 
-        {/* Footer */}
+        {/* Footer — the next step is the media's own detail page, where the
+            owner's phone number is; Rasamap does not sell the space itself. */}
         <div className="cmp-grid" style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",overflowX:"hidden",gap:8,padding:"14px 22px",borderTop:"1px solid var(--border)"}}>
           <div/>
           {[a,b].map(board=>(
-            <button key={board.id} onClick={()=>{onBook(board);onClose();}} disabled={board.status!=="available"} style={{background:board.status==="available"?"var(--accent)":"var(--border)",border:"none",color:board.status==="available"?"#fff":"var(--text-muted)",fontFamily:"inherit",fontSize:"0.8rem",fontWeight:700,padding:"9px 0",borderRadius:8,cursor:board.status==="available"?"pointer":"not-allowed"}}>
-              {board.status==="available"?"رزرو این رسانه":"مشغول است"}
-            </button>
+            <Link key={board.id} href={`/billboard/${board.slug}`} onClick={onClose} style={{background:"var(--accent)",color:"#fff",fontFamily:"inherit",fontSize:"0.8rem",fontWeight:700,padding:"9px 0",borderRadius:8,textDecoration:"none",textAlign:"center"}}>
+              مشاهده و تماس
+            </Link>
           ))}
         </div>
       </div>

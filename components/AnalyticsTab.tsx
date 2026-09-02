@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PieChart, LayoutGrid, Building2, Wallet, Database, X } from "lucide-react";
+import { typeLabels, statusLabels } from "@/lib/types";
 
 interface AnalyticsData {
   total: number;
@@ -13,13 +14,11 @@ interface AnalyticsData {
   coverage: { withImage: number; geocoded: number };
 }
 
-const TYPE_FA: Record<string, string> = {
-  billboard: "بیلبورد", digital: "دیجیتال", bridge: "پل عابر",
-  station: "ایستگاه", vehicle: "وسیله نقلیه",
-};
-const STATUS_FA: Record<string, string> = {
-  available: "خالی", busy: "مشغول", reserved: "رزرو", inactive: "غیرفعال",
-};
+// Shared label maps, so a type or status never reads differently here than on
+// a card or in the admin panel.
+const TYPE_FA = typeLabels as Record<string, string>;
+const STATUS_FA = statusLabels as Record<string, string>;
+
 const STATUS_COLOR: Record<string, string> = {
   available: "var(--green)", busy: "var(--red, #ef4444)",
   reserved: "var(--accent-warm)", inactive: "var(--text-muted)",

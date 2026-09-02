@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "داشبورد من | رسامپ",
-  description: "رزروهای من، تنظیمات حساب کاربری و مدیریت آگهی‌ها.",
+  description: "آگهی‌های من، وضعیت انتشار و تنظیمات حساب کاربری.",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

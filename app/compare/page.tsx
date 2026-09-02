@@ -132,7 +132,6 @@ export default function ComparePage() {
         <CompareModal
           items={compareList.slice(0, 2)}
           onClose={() => setShowModal(false)}
-          onBook={() => setShowModal(false)}
         />
       )}
     </div>

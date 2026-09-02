@@ -9,7 +9,14 @@
 // ============================================================
 
 export type BillboardType = "billboard" | "digital" | "bridge" | "station" | "vehicle";
-export type BillboardStatus = "available" | "busy" | "reserved" | "inactive";
+// The last two are pipeline states, not descriptions of a live media item: a
+// submission through /list-media is stored as "pending" (or "awaiting_payment"
+// when a paid plan was chosen) and stays out of every public read — search,
+// stats, sitemap, detail page — until an admin approves it. They belong in the
+// union so the compiler can see them.
+export type BillboardStatus =
+  | "available" | "busy" | "reserved" | "inactive"
+  | "pending" | "awaiting_payment";
 export type SortOption = "price_asc" | "price_desc" | "traffic_desc" | "area_desc";
 
 export interface TrafficData {
@@ -53,6 +60,10 @@ export interface Billboard {
   nearbyLandmarks: string[];
   rating: number;
   reviewCount: number;
+  // Monetisation: `plan` is what the submitter asked for, `featured` is what an
+  // admin granted after confirming payment. Only `featured` affects ordering.
+  plan: string;
+  featured: boolean;
   // Scraper-specific fields (optional — not present on static records)
   url?: string;
   source?: string;
@@ -66,5 +77,35 @@ export const typeLabels: Record<BillboardType, string> = {
   bridge: "عرشه پل",
   station: "ایستگاه",
   vehicle: "وسیله نقلیه",
+};
+
+// One label per status for the whole app — the card, the detail page, the
+// analytics bars and the admin panel all read from here, so a status can never
+// be spelled two ways in two places.
+//
+// `satisfies` makes the compiler require an entry for every BillboardStatus,
+// while the exported type stays `Record<string, string>` because callers index
+// it with a plain string read back from the database.
+const STATUS_LABELS = {
+  available:        "خالی",
+  busy:             "مشغول",
+  reserved:         "رزرو شده",
+  inactive:         "غیرفعال",
+  pending:          "در انتظار تأیید",
+  awaiting_payment: "در انتظار پرداخت",
+} satisfies Record<BillboardStatus, string>;
+
+export const statusLabels: Record<string, string> = STATUS_LABELS;
+
+/**
+ * The canonical status allowlist, derived from the label map so the two can
+ * never disagree. Admin routes validate incoming `status` values against this;
+ * adding a status means adding one label above and nothing else.
+ */
+export const BILLBOARD_STATUSES = Object.keys(STATUS_LABELS) as BillboardStatus[];
+
+export const planLabels: Record<string, string> = {
+  free:     "رایگان",
+  featured: "ویژه",
 };
 

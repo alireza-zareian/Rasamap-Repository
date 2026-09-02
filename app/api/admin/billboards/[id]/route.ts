@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
+import { BILLBOARD_STATUSES } from "@/lib/types";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { persistAudit } from "@/lib/auth/audit";
-import { getBillboardById, updateBillboard, deleteBillboard, hasActiveReservations } from "@/lib/db/billboards";
+import { getBillboardById, updateBillboard, deleteBillboard, hasReviews } from "@/lib/db/billboards";
 import { withApiLog } from "@/lib/api-log";
 
 function adminIdOf(session: Awaited<ReturnType<typeof getSession>>): number | null {
@@ -13,10 +14,15 @@ function adminIdOf(session: Awaited<ReturnType<typeof getSession>>): number | nu
 }
 
 const ALLOWED_TYPES    = new Set(["billboard", "digital", "bridge", "station", "vehicle"]);
-const ALLOWED_STATUSES = new Set(["available", "busy", "reserved", "inactive"]);
+const ALLOWED_STATUSES = new Set<string>(BILLBOARD_STATUSES);
 
 function authGuard(session: Awaited<ReturnType<typeof getSession>>, req: NextRequest) {
-  if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
+  // A customer session is a valid session but not an admin one. proxy.ts already
+  // rejects role "user" on /api/admin/*; the check is repeated here so the route
+  // is safe on its own and does not depend on the proxy matcher staying correct.
+  if (!session || session.role === "user") {
+    return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
+  }
   const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
   return null;
@@ -121,9 +127,8 @@ async function DELETEHandler(req: NextRequest, { params }: { params: Promise<{ i
   const existing = await getBillboardById(id);
   if (!existing) return NextResponse.json({ error: "بیلبورد یافت نشد" }, { status: 404 });
 
-  const hasReservations = await hasActiveReservations(id);
-  if (hasReservations) {
-    return NextResponse.json({ error: "نمی‌توان بیلبوردی با رزرو فعال را حذف کرد" }, { status: 409 });
+  if (await hasReviews(id)) {
+    return NextResponse.json({ error: "نمی‌توان رسانه‌ای را که نظر ثبت‌شده دارد حذف کرد" }, { status: 409 });
   }
 
   const ok = await deleteBillboard(id);

@@ -34,4 +34,13 @@ execSync(`npx prisma db push --url "${DB}"`, {
   env: { ...process.env, DATABASE_URL: DB },
 });
 
+// Uploads are written under public/ so Next can serve them statically, which
+// means a test run leaves image files in the working tree. Clear the listing
+// uploads too, so `npm test` is self-cleaning.
+try {
+  rmSync("public/uploads/listings", { recursive: true, force: true });
+} catch {
+  /* nothing to clean */
+}
+
 console.log(`test db reset -> ${file}`);

@@ -29,7 +29,8 @@ model Owner {
 }
 
 // ── User ───────────────────────────────────────────────────────
-// Reservation requires a User — no guest checkout.
+// A registered account. Users submit media for listing and write reviews;
+// buying advertising space happens off-platform, directly with the media owner.
 model User {
   id           Int      @id @default(autoincrement())
   name         String
@@ -37,8 +38,8 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
-  reservations Reservation[]
-  reviews      Review[]
+  listings Billboard[]
+  reviews  Review[]
 
   @@map("users")
 }
@@ -68,12 +69,22 @@ model Billboard {
   region   String
   city     String
   type     String // BillboardType: billboard | digital | bridge | station | vehicle
-  status   String // BillboardStatus: available | busy | reserved
+  // BillboardStatus. Two values belong to the submission pipeline rather than to
+  // the media itself:
+  //   pending          — submitted via /list-media, awaiting admin review
+  //   awaiting_payment — reviewed, waiting for the owner to settle a paid plan
+  // the rest describe a published item: available | busy | reserved | inactive.
+  // Only published items are returned by a public read (see getPublicWhere()).
+  status   String
 
   width  Int
   height Int
   faces  Int
   age    Int
+
+  // Denormalised width * height, for the "largest surface" sort — Prisma cannot
+  // ORDER BY an expression. Recomputed by updateBillboard() on any size change.
+  area Int @default(0)
 
   price          Int
   priceWeekly    Int
@@ -82,6 +93,12 @@ model Billboard {
 
   // TrafficData object ({ daily, peakHour, congestionLevel, pedestrian, estimatedViews, viewabilityScore })
   traffic Json
+
+  // Denormalised copy of traffic.estimatedViews. SQLite can read a JSON path
+  // (json_extract) but Prisma cannot ORDER BY one and an index cannot cover it,
+  // so the single field the catalogue sorts on ("بیشترین بازدید") is kept in its
+  // own indexed column. Written by the seed and by newBillboardDefaults().
+  estimatedViews Int @default(0)
 
   mapX Float
   mapY Float
@@ -109,49 +126,44 @@ model Billboard {
   ownerId Int?
   owner   Owner? @relation(fields: [ownerId], references: [id])
 
+  // Set when the row was created through /list-media, so the submitter can see
+  // its review status on their dashboard. Null for scraped and admin-created
+  // rows, which have no submitting account.
+  submittedById Int?
+  submittedBy   User? @relation(fields: [submittedById], references: [id])
+
+  // Monetisation. `plan` is what the submitter asked for; `featured` is what an
+  // admin actually granted after confirming payment. Keeping them apart means a
+  // requested-but-unpaid plan can never promote a listing on its own.
+  plan     String  @default("free") // free | featured
+  featured Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reservations Reservation[]
-  reviews      Review[]
+  reviews Review[]
 
   @@index([city])
   @@index([type])
   @@index([status])
   @@index([price])
   @@index([ownerId])
+  @@index([submittedById])
   @@index([hasImages])
+  @@index([featured, hasImages, price])
   @@index([hasImages, price])
+  @@index([hasImages, estimatedViews])
+  @@index([hasImages, area])
   @@index([city, status])
   @@index([city, type])
   @@index([type, price])
   @@map("billboards")
 }
 
-// ── Reservation ────────────────────────────────────────────────
-// Multiple reservations per billboard allowed — overlap prevented by
-// start/end date check in POST /api/reservations.
-model Reservation {
-  id          Int      @id @default(autoincrement())
-  billboardId Int
-  billboard   Billboard @relation(fields: [billboardId], references: [id])
-  userId      Int
-  user        User      @relation(fields: [userId], references: [id])
-
-  startDate DateTime
-  endDate   DateTime
-  status    String   @default("pending") // pending | confirmed | cancelled
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([billboardId, startDate, endDate])
-  // DB-level floor against exact-duplicate submits (double click, retry): the
-  // same user cannot hold two rows for the same billboard and identical range.
-  // The overlap check in POST /api/reservations still guards partial overlaps.
-  @@unique([billboardId, userId, startDate, endDate])
-  @@map("reservations")
-}
+// No Reservation model by design. Rasamap is a directory: it does not own the
+// media it lists and cannot sell inventory it does not control, so buyers are
+// handed the owner's phone number instead of a checkout. Revenue comes from the
+// listing side (see Billboard.plan). Removed in the 2026-09-02 review.
 
 // One row per Idempotency-Key seen on a non-idempotent POST. A repeated key
 // returns the stored response instead of creating a second record.
@@ -168,8 +180,10 @@ model IdempotencyKey {
 }
 
 // ── Review ─────────────────────────────────────────────────────
-// Only users with a confirmed reservation for this billboard may post.
-// One review per user per billboard (unique constraint).
+// Any signed-in user may post; the unique constraint below is what keeps one
+// account from inflating a rating. (Before the 2026-09-02 review this required
+// a confirmed reservation — with booking gone there is no purchase record to
+// verify against, so the honest rule is one review per account per media.)
 model Review {
   id          Int       @id @default(autoincrement())
   billboardId Int

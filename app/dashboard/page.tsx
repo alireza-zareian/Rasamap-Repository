@@ -2,38 +2,49 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Megaphone, Monitor, Milestone, Train, Bus, Calendar, Clock, Settings2, CheckCircle2, Search, Menu, X as XIcon } from "lucide-react";
+import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2, CheckCircle2, Plus, Menu, X as XIcon, Sparkles } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
+import { statusLabels, planLabels } from "@/lib/types";
 
-interface Reservation {
+// One of the user's own submissions, in whatever state the review left it.
+interface Listing {
   id: number;
-  billboardId: number;
-  billboardSlug: string;
-  billboardName: string;
-  billboardCity: string;
-  billboardType: string;
-  billboardImage: string | null;
+  slug: string;
+  name: string;
+  city: string;
+  type: string;
   price: number;
-  startDate: string;
-  endDate: string;
   status: string;
+  plan: string;
+  featured: boolean;
+  image: string | null;
   createdAt: string;
 }
 
-const STATUS_LABEL: Record<string, string> = { pending: "در انتظار تأیید", confirmed: "تأیید شده", cancelled: "لغو شده" };
 const STATUS_COLOR: Record<string, [string, string]> = {
-  pending:   ["#f59e0b", "rgba(245,158,11,0.12)"],
-  confirmed: ["var(--green)", "rgba(34,197,94,0.12)"],
-  cancelled: ["#ef4444", "rgba(239,68,68,0.12)"],
+  pending:          ["#f59e0b", "rgba(245,158,11,0.12)"],
+  awaiting_payment: ["#f59e0b", "rgba(245,158,11,0.12)"],
+  available:        ["var(--green)", "rgba(34,197,94,0.12)"],
+  busy:             ["#f59e0b", "rgba(245,158,11,0.12)"],
+  reserved:         ["#8b5cf6", "rgba(139,92,246,0.12)"],
+  inactive:         ["#ef4444", "rgba(239,68,68,0.12)"],
+};
+// What the submitter should do next, per state — a status badge alone doesn't
+// tell someone whether the ball is in their court.
+const STATUS_HINT: Record<string, string> = {
+  pending:          "کارشناسان رسامپ در حال بررسی محتوای آگهی هستند.",
+  awaiting_payment: "برای فعال شدن پلن ویژه، هزینه را واریز کنید و رسید را برای پشتیبانی بفرستید.",
+  available:        "آگهی شما منتشر شده و در جستجو دیده می‌شود.",
+  inactive:         "این آگهی منتشر نشد. برای پیگیری با پشتیبانی تماس بگیرید.",
 };
 const TYPE_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   billboard: Megaphone, digital: Monitor, bridge: Milestone, station: Train, vehicle: Bus,
 };
 
-type Tab = "bookings" | "settings";
+type Tab = "listings" | "settings";
 const navItems: [string, Tab, React.ComponentType<{ size?: number }>][] = [
-  ["رزروهای من", "bookings", Calendar],
+  ["آگهی‌های من", "listings", LayoutList],
   ["ویرایش پروفایل", "settings", Settings2],
 ];
 
@@ -43,10 +54,10 @@ function Badge({ text, color, bg }: { text: string; color: string; bg: string })
 
 export default function Dashboard() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("bookings");
+  const [tab, setTab] = useState<Tab>("listings");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ name: string; phone: string } | null>(null);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Profile edit state
@@ -66,9 +77,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return;
-    fetch("/api/reservations/my")
-      .then(r => r.json())
-      .then(d => setReservations(d.reservations ?? []))
+    fetch("/api/listings")
+      .then(r => r.ok ? r.json() : { listings: [] })
+      .then(d => setListings(d.listings ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [user]);
@@ -93,8 +104,8 @@ export default function Dashboard() {
 
   const card: React.CSSProperties = { background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 18 };
 
-  const pending   = reservations.filter(r => r.status === "pending").length;
-  const confirmed = reservations.filter(r => r.status === "confirmed").length;
+  const underReview = listings.filter(l => l.status === "pending" || l.status === "awaiting_payment").length;
+  const published   = listings.filter(l => l.status === "available").length;
 
   if (!user) return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", color: "var(--text-muted)" }}>
@@ -150,9 +161,9 @@ export default function Dashboard() {
           {/* Stats */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 24 }}>
             {[
-              { Icon: Calendar, label: "کل رزروها", val: reservations.length, color: "var(--accent)" },
-              { Icon: Clock, label: "در انتظار تأیید", val: pending, color: "#f59e0b" },
-              { Icon: CheckCircle2, label: "تأیید شده", val: confirmed, color: "var(--green)" },
+              { Icon: LayoutList, label: "کل آگهی‌ها", val: listings.length, color: "var(--accent)" },
+              { Icon: Clock, label: "در انتظار بررسی", val: underReview, color: "#f59e0b" },
+              { Icon: CheckCircle2, label: "منتشر شده", val: published, color: "var(--green)" },
             ].map(s => (
               <div key={s.label} style={{ ...card, textAlign: "center", padding: 16 }}>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 8, color: s.color }}><s.Icon size={22} /></div>
@@ -162,48 +173,64 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {tab === "bookings" && (
+          {tab === "listings" && (
             <div style={card}>
-              <div style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: 16 }}>رزروهای من</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
+                <div style={{ fontSize: "0.9rem", fontWeight: 700 }}>آگهی‌های من</div>
+                <Link href="/list-media" style={{ background: "var(--accent)", color: "#fff", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontSize: "0.8rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <Plus size={14} /> ثبت رسانه جدید
+                </Link>
+              </div>
               {loading ? (
                 <div style={{ textAlign: "center", padding: "30px 0", color: "var(--text-muted)" }}>در حال بارگذاری...</div>
-              ) : reservations.length === 0 ? (
+              ) : listings.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "48px 20px" }}>
                   <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--bg-surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--text-muted)" }}>
-                    <Search size={26} />
+                    <LayoutList size={26} />
                   </div>
-                  <div style={{ fontSize: "0.92rem", fontWeight: 600, marginBottom: 6 }}>هنوز رزروی ندارید</div>
-                  <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 20, lineHeight: 1.7 }}>رسانه مورد نظرتان را جستجو کنید<br />و آنلاین رزرو نمایید</div>
-                  <Link href="/explore" style={{ background: "var(--accent)", color: "#fff", textDecoration: "none", padding: "11px 24px", borderRadius: 9, fontSize: "0.85rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 8 }}><Search size={14} /> جستجوی رسانه</Link>
+                  <div style={{ fontSize: "0.92rem", fontWeight: 600, marginBottom: 6 }}>هنوز آگهی ثبت نکرده‌اید</div>
+                  <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 20, lineHeight: 1.7 }}>رسانه تبلیغاتی خود را ثبت کنید<br />تا در جستجوی رسامپ دیده شود</div>
+                  <Link href="/list-media" style={{ background: "var(--accent)", color: "#fff", textDecoration: "none", padding: "11px 24px", borderRadius: 9, fontSize: "0.85rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 8 }}><Plus size={14} /> ثبت رسانه</Link>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {reservations.map(r => {
-                    const [sc, sbg] = STATUS_COLOR[r.status] ?? ["var(--text-muted)", "transparent"];
-                    const start = new Date(r.startDate).toLocaleDateString("fa-IR");
-                    const end   = new Date(r.endDate).toLocaleDateString("fa-IR");
+                  {listings.map(l => {
+                    const [sc, sbg] = STATUS_COLOR[l.status] ?? ["var(--text-muted)", "transparent"];
+                    const published = l.status === "available";
+                    const created = new Date(l.createdAt).toLocaleDateString("fa-IR");
                     return (
-                      <div key={r.id} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", gap: 0, overflow: "hidden" }}>
-                        {/* Thumbnail */}
-                        <div style={{ width: 64, height: 64, flexShrink: 0, background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", borderLeft: "1px solid var(--border)" }}>
-                          {r.billboardImage ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={r.billboardImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          ) : (
-                            (() => { const Icon = TYPE_ICON[r.billboardType] ?? Megaphone; return <Icon size={20} />; })()
-                          )}
+                      <div key={l.id} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          {/* Thumbnail */}
+                          <div style={{ width: 64, height: 64, flexShrink: 0, background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", borderLeft: "1px solid var(--border)" }}>
+                            {l.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={l.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                              (() => { const Icon = TYPE_ICON[l.type] ?? Megaphone; return <Icon size={20} />; })()
+                            )}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0, padding: "12px 14px" }}>
+                            {/* Only a published listing has a page to link to. */}
+                            {published ? (
+                              <Link href={`/billboard/${l.slug}`} style={{ fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block", color: "var(--text-main)", textDecoration: "none" }}>{l.name}</Link>
+                            ) : (
+                              <div style={{ fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.name}</div>
+                            )}
+                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>{l.city} · {l.price}M تومان/ماه · {created}</div>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, padding: "12px 14px", flexShrink: 0 }}>
+                            <Badge text={statusLabels[l.status] ?? l.status} color={sc} bg={sbg} />
+                            {l.featured
+                              ? <span style={{ fontSize: "0.66rem", color: "#f59e0b", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 3 }}><Sparkles size={10} /> ویژه</span>
+                              : <span style={{ fontSize: "0.66rem", color: "var(--text-muted)" }}>پلن {planLabels[l.plan] ?? l.plan}</span>}
+                          </div>
                         </div>
-                        <div style={{ flex: 1, minWidth: 0, padding: "12px 14px" }}>
-                          <Link href={`/billboard/${r.billboardSlug}`} style={{ fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block", color: "var(--text-main)", textDecoration: "none" }}
-                            onMouseEnter={e => (e.currentTarget.style.color = "var(--accent)")}
-                            onMouseLeave={e => (e.currentTarget.style.color = "var(--text-main)")}
-                          >{r.billboardName}</Link>
-                          <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>{r.billboardCity} · {start} تا {end}</div>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, padding: "12px 14px", flexShrink: 0 }}>
-                          <Badge text={STATUS_LABEL[r.status] ?? r.status} color={sc} bg={sbg} />
-                          <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>#{r.id}</div>
-                        </div>
+                        {STATUS_HINT[l.status] && (
+                          <div style={{ borderTop: "1px solid var(--border)", padding: "8px 14px", fontSize: "0.72rem", color: "var(--text-muted)", lineHeight: 1.7 }}>
+                            {STATUS_HINT[l.status]}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

@@ -35,6 +35,8 @@ function fromRow(row: Row): Billboard {
     nearbyLandmarks: row.nearbyLandmarks as unknown as string[],
     rating: row.rating,
     reviewCount: row.reviewCount,
+    plan: row.plan,
+    featured: row.featured,
     url: row.url ?? undefined,
     source: row.source ?? undefined,
     structureCode: row.structureCode ?? undefined,
@@ -59,19 +61,38 @@ export interface BillboardFilterParams {
   limit?: number;
 }
 
+/**
+ * Statuses that belong to the submission pipeline, not to a live media item.
+ * A row in either state has not been approved for publication, so no public
+ * read may return it. Exported so the stats, analytics and sitemap queries
+ * share one definition instead of each repeating a literal.
+ */
+export const UNPUBLISHED_STATUSES = ["pending", "awaiting_payment"];
+
+/** Prisma filter for "only rows the public may see". */
+export const publishedOnly = { notIn: UNPUBLISHED_STATUSES };
+
+// Every entry leads with `featured` (a paid, admin-granted promotion) and then
+// `hasImages`, so paid listings sit at the top and photographed ones above bare
+// records. `traffic_desc` and `area_desc` sort on the denormalised
+// `estimatedViews` and `area` columns: both are derived values (one from the
+// traffic JSON, one from width x height) and Prisma cannot ORDER BY an
+// expression or a JSON path.
 const SORT_MAP: Record<string, Prisma.BillboardOrderByWithRelationInput[]> = {
-  price_asc:    [{ hasImages: "desc" }, { price: "asc" }],
-  price_desc:   [{ hasImages: "desc" }, { price: "desc" }],
-  rating_desc:  [{ hasImages: "desc" }, { rating: "desc" }],
-  traffic_desc: [{ hasImages: "desc" }, { rating: "desc" }],
-  area_desc:    [{ hasImages: "desc" }, { width: "desc" }],
+  price_asc:    [{ featured: "desc" }, { hasImages: "desc" }, { price: "asc" }],
+  price_desc:   [{ featured: "desc" }, { hasImages: "desc" }, { price: "desc" }],
+  traffic_desc: [{ featured: "desc" }, { hasImages: "desc" }, { estimatedViews: "desc" }],
+  area_desc:    [{ featured: "desc" }, { hasImages: "desc" }, { area: "desc" }],
 };
 
 function buildWhere(p: BillboardFilterParams): Prisma.BillboardWhereInput {
   const where: Prisma.BillboardWhereInput = {};
   if (p.type)      where.type   = p.type;
-  if (p.status)    where.status = p.status;
-  else             where.status = { not: "pending" }; // pending listings are not publicly visible
+  // An unpublished row is never public, whatever status the caller asked for —
+  // the exclusion is applied here rather than left to each route's allowlist.
+  where.status = p.status && !UNPUBLISHED_STATUSES.includes(p.status)
+    ? p.status
+    : publishedOnly;
   if (p.city)      where.city   = p.city;
   else if (p.cityIn?.length) where.city = { in: p.cityIn };
   if (p.maxPrice !== undefined) where.price = { lte: p.maxPrice };
@@ -91,8 +112,10 @@ export async function getFilteredBillboards(
   p: BillboardFilterParams,
 ): Promise<{ items: Billboard[]; total: number }> {
   const page  = Math.max(1, p.page  ?? 1);
-  const limit = Math.min(100, Math.max(1, p.limit ?? 24));
-  const orderBy = SORT_MAP[p.sortBy ?? ""] ?? [{ hasImages: "desc" as const }, { price: "asc" as const }];
+  // 48 is two screens of results. The ceiling is deliberately low: a bigger
+  // page size buys a real visitor nothing and only makes bulk copying cheaper.
+  const limit = Math.min(48, Math.max(1, p.limit ?? 24));
+  const orderBy = SORT_MAP[p.sortBy ?? ""] ?? SORT_MAP.price_asc;
   const where = buildWhere(p);
 
   const [rows, total] = await Promise.all([
@@ -145,13 +168,17 @@ export async function getBillboardById(id: number): Promise<Billboard | null> {
   return row ? fromRow(row) : null;
 }
 
+/**
+ * Public lookup by slug. Every caller (the REST route, the contact route and
+ * the detail Server Component) is public, so a listing still awaiting admin
+ * approval must not resolve here — otherwise an unapproved submission would be
+ * reachable at its own URL even though it is hidden from search, the map, the
+ * stats and the sitemap. Admin screens read by id via getBillboardById().
+ */
 export async function getBillboardBySlug(slug: string): Promise<Billboard | null> {
   const row = await prisma.billboard.findUnique({ where: { slug } });
-  return row ? fromRow(row) : null;
-}
-
-export async function countBillboards(): Promise<number> {
-  return prisma.billboard.count();
+  if (!row || UNPUBLISHED_STATUSES.includes(row.status)) return null;
+  return fromRow(row);
 }
 
 export interface BillboardCreateInput {
@@ -189,7 +216,10 @@ function newBillboardDefaults(name: string, monthly: number) {
     priceWeekly: Math.round(monthly / 4),
     priceQuarterly: Math.round(monthly * 3 * 0.9),
     priceYearly: Math.round(monthly * 12 * 0.8),
+    // No traffic survey exists for a hand-entered or user-submitted media item,
+    // so the block stays zeroed — and estimatedViews mirrors it.
     traffic: { daily: 0, peakHour: "08:00", congestionLevel: 5, pedestrian: 0, estimatedViews: 0, viewabilityScore: 0 },
+    estimatedViews: 0,
     mapX: 50,
     mapY: 50,
     icon: "🏙️",
@@ -213,6 +243,7 @@ export async function createBillboard(data: BillboardCreateInput): Promise<Billb
       status: "available",
       width: data.width,
       height: data.height,
+      area: data.width * data.height,
       faces: data.faces,
       lat: data.lat ?? null,
       lng: data.lng ?? null,
@@ -237,6 +268,25 @@ export interface ListingCreateInput {
   height:   number;
   faces:    number;
   price:    number;
+  plan:     ListingPlan;
+  images:   string[];       // already-written public URLs
+  submittedById: number;
+}
+
+export type ListingPlan = "free" | "featured";
+
+/**
+ * Where a new submission starts.
+ *
+ * free     → `pending`: an admin only has to check the content before it goes live.
+ * featured → `awaiting_payment`: the same review plus a payment an admin confirms
+ *            by hand (there is no gateway; see docs/engineering-decisions.md).
+ *
+ * `featured` itself stays false until that confirmation, so asking for a paid
+ * plan can never promote a listing on its own.
+ */
+export function initialListingStatus(plan: ListingPlan): string {
+  return plan === "featured" ? "awaiting_payment" : "pending";
 }
 
 export async function createListing(data: ListingCreateInput): Promise<Billboard> {
@@ -248,25 +298,36 @@ export async function createListing(data: ListingCreateInput): Promise<Billboard
       region:      data.region || data.city,
       city:        data.city,
       type:        data.type,
-      status:      "pending",
+      status:      initialListingStatus(data.plan),
+      plan:        data.plan,
+      featured:    false,
       width:       data.width,
       height:      data.height,
+      area:        data.width * data.height,
       faces:       data.faces,
       agency:      "مالک مستقیم",
       phone:       data.phone,
       description: data.desc,
       source:      "listing",
+      images:      data.images,
+      hasImages:   data.images.length > 0,
+      submittedById: data.submittedById,
     },
   });
   return fromRow(row);
 }
 
-export async function getListingsByStatus(status: string): Promise<Billboard[]> {
-  const rows = await prisma.billboard.findMany({
-    where: { status, source: "listing" },
+/** A submitter's own listings, in any state — powers the user dashboard. */
+export async function getListingsForUser(userId: number) {
+  return prisma.billboard.findMany({
+    where:   { submittedById: userId },
     orderBy: { createdAt: "desc" },
+    take:    50,
+    select: {
+      id: true, slug: true, name: true, city: true, type: true, price: true,
+      status: true, plan: true, featured: true, images: true, createdAt: true,
+    },
   });
-  return rows.map(fromRow);
 }
 
 export interface BillboardUpdateInput {
@@ -288,7 +349,22 @@ export interface BillboardUpdateInput {
 
 export async function updateBillboard(id: number, data: BillboardUpdateInput): Promise<Billboard | null> {
   try {
-    const row = await prisma.billboard.update({ where: { id }, data });
+    // `area` is denormalised from width x height, so a size edit has to carry it
+    // along. The patch is partial, so read whichever side is not being changed.
+    let area: number | undefined;
+    if (data.width !== undefined || data.height !== undefined) {
+      const current = await prisma.billboard.findUnique({
+        where: { id },
+        select: { width: true, height: true },
+      });
+      if (!current) return null;
+      area = (data.width ?? current.width) * (data.height ?? current.height);
+    }
+
+    const row = await prisma.billboard.update({
+      where: { id },
+      data: area === undefined ? data : { ...data, area },
+    });
     return fromRow(row);
   } catch {
     return null;
@@ -304,12 +380,11 @@ export async function deleteBillboard(id: number): Promise<boolean> {
   }
 }
 
-export async function hasActiveReservations(id: number): Promise<boolean> {
-  const count = await prisma.reservation.count({
-    where: {
-      billboardId: id,
-      status: { in: ["pending", "confirmed"] },
-    },
-  });
-  return count > 0;
+/**
+ * Reviews reference a billboard with no cascade, so deleting a reviewed row
+ * would fail deep inside Prisma and surface as an opaque 500. The admin DELETE
+ * route checks this first and answers with a clear 409 instead.
+ */
+export async function hasReviews(id: number): Promise<boolean> {
+  return (await prisma.review.count({ where: { billboardId: id } })) > 0;
 }

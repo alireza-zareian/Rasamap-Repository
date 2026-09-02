@@ -6,14 +6,7 @@ import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
 import { withApiLog } from "@/lib/api-log";
 
-// Known scraper/bot UA substrings — respond empty (not 403), same as the list route.
-const BOT_UA_PATTERNS = [
-  /python-requests/i, /scrapy/i, /curl\/\d/i, /wget\//i,
-  /go-http-client/i, /java\//i, /libwww/i, /lwp-/i,
-  /headlesschrome/i, /phantomjs/i, /htmlunit/i, /selenium/i,
-  /playwright/i, /puppeteer/i,
-];
-const isBotUA = (ua: string) => BOT_UA_PATTERNS.some((p) => p.test(ua));
+// Bot user agents are rejected in proxy.ts for every /api/* path.
 
 // Slugs are lowercase latin + digits + hyphens (see prisma/seed.ts).
 const slugSchema = z.string().min(1).max(120).regex(/^[a-z0-9-]+$/);
@@ -24,11 +17,6 @@ const slugSchema = z.string().min(1).max(120).regex(/^[a-z0-9-]+$/);
 // the same resource over REST for API clients and tests.
 async function getHandler(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const ip = getClientIp(req);
-  const ua = req.headers.get("user-agent") ?? "";
-
-  if (isBotUA(ua)) {
-    return NextResponse.json({ error: "یافت نشد" }, { status: 404 });
-  }
 
   const rl = publicApiRateLimit(ip);
   if (!rl.allowed) {

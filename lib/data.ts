@@ -13,6 +13,16 @@ import type { Billboard, TrafficData } from "./types";
 export type { Billboard, BillboardType, BillboardStatus, SortOption, TrafficData } from "./types";
 export { typeLabels } from "./types";
 
+/**
+ * The shape of a row in this file.
+ *
+ * `plan` and `featured` exist on every Billboard the app serves, but they are
+ * monetisation state owned by the database: a listing gets them when it is
+ * submitted and approved, not from the seed data. The columns carry their
+ * defaults ("free" / false), so the static source deliberately omits them.
+ */
+type SeedBillboard = Omit<Billboard, "plan" | "featured">;
+
 // Traffic calculation helper
 function calcTraffic(dailyVehicles: number, congestion: number, pedestrian: number): TrafficData {
   const peakHours = ["۸-۹ صبح", "۵-۶ عصر", "۱۲-۱ ظهر"];
@@ -23,7 +33,7 @@ function calcTraffic(dailyVehicles: number, congestion: number, pedestrian: numb
   return { daily: dailyVehicles, peakHour, congestionLevel: congestion, pedestrian, estimatedViews, viewabilityScore };
 }
 
-export const billboards: Billboard[] = [
+export const billboards: SeedBillboard[] = [
   {
     id: 1,
     name: "بیلبورد اتوبان همت غرب — تقاطع شیخ فضل‌الله",
@@ -291,7 +301,7 @@ export const billboards: Billboard[] = [
 ];
 
 // ── Extra cities ────────────────────────────────────────────────
-export const extraBillboards: Billboard[] = [
+export const extraBillboards: SeedBillboard[] = [
   {
     id:20, name:"بیلبورد میدان انقلاب زنجان", slug:"zanjan-enghelab",
     location:"میدان انقلاب، بلوار اصلی، سمت شمال", region:"مرکز شهر", city:"زنجان",
@@ -349,13 +359,13 @@ export const extraBillboards: Billboard[] = [
   },
 ];
 
-export const allBillboards: Billboard[] = [...billboards, ...extraBillboards];
+export const allBillboards: SeedBillboard[] = [...billboards, ...extraBillboards];
 
 // ── Auto-scraped listings ───────────────────────────────────────
 // scraper/data/billboards.json is regenerated nightly by
 // .github/workflows/scrape.yml (or manually via `python scraper/scraper.py`).
 // It starts as an empty array so the build never breaks before the first run.
 import scrapedRaw from "../scraper/data/billboards.json";
-export const scrapedBillboards: Billboard[] = scrapedRaw as Billboard[];
+export const scrapedBillboards: SeedBillboard[] = scrapedRaw as SeedBillboard[];
 
-export const everyBillboard: Billboard[] = [...allBillboards, ...scrapedBillboards];
+export const everyBillboard: SeedBillboard[] = [...allBillboards, ...scrapedBillboards];

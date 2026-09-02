@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Billboard } from "@/lib/types";
 import type { AdminStats } from "@/lib/admin/types";
 import type { UserRole } from "@/lib/auth/session";
-import { LayoutDashboard, ClipboardList, CalendarCheck, ShieldCheck, Bot, Users, ScrollText, Plus, Lock, Trash2, AlertTriangle, MapPin, CheckCircle2, ImageOff, Sparkles, Copy } from "lucide-react";
+import { LayoutDashboard, ClipboardList, ClipboardCheck, ShieldCheck, Bot, Users, ScrollText, Plus, Lock, Trash2, AlertTriangle, MapPin, CheckCircle2, ImageOff, Sparkles, Copy } from "lucide-react";
 import { C, TYPE_LABEL, STATUS_LABEL, ROLE_LABEL, ROLE_COLOR } from "@/components/admin/constants";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Badge, StatCard, BarRow } from "@/components/admin/Badge";
@@ -17,9 +17,9 @@ import { ScraperPanel } from "@/components/admin/ScraperPanel";
 import { UsersPanel } from "@/components/admin/UsersPanel";
 import { AuditPanel } from "@/components/admin/AuditPanel";
 import { CreateModal } from "@/components/admin/CreateModal";
-import { ReservationsPanel } from "@/components/admin/ReservationsPanel";
+import { ListingsPanel } from "@/components/admin/ListingsPanel";
 
-type Tab = "overview" | "billboards" | "reservations" | "quality" | "scraper" | "users" | "audit";
+type Tab = "overview" | "billboards" | "listings" | "quality" | "scraper" | "users" | "audit";
 interface SessionUser { id: string; name: string; role: UserRole; email: string; }
 
 export default function AdminDashboard() {
@@ -46,26 +46,6 @@ export default function AdminDashboard() {
   const [allBillboards, setAllBillboards] = useState<Billboard[]>([]);
   const [loggingOut, setLoggingOut] = useState(false);
   const [permMsg, setPermMsg] = useState("");
-  const [openingBillboard, setOpeningBillboard] = useState(false);
-
-  const openBillboardById = async (id: number) => {
-    setOpeningBillboard(true);
-    try {
-      const res = await fetch(`/api/admin/billboards/${id}`);
-      const data = await res.json();
-      if (!res.ok || !data.billboard) {
-        setPermMsg(data.error ?? "رسانه یافت نشد");
-        setTimeout(() => setPermMsg(""), 3000);
-        return;
-      }
-      setEditTarget(data.billboard as Billboard);
-    } catch {
-      setPermMsg("خطای شبکه در باز کردن رسانه");
-      setTimeout(() => setPermMsg(""), 3000);
-    } finally {
-      setOpeningBillboard(false);
-    }
-  };
 
   useEffect(() => {
     fetch("/api/admin/auth/me")
@@ -145,7 +125,7 @@ export default function AdminDashboard() {
   const navItems: [string, Tab, React.ComponentType<{ size?: number }>][] = [
     ["نمای کلی", "overview", LayoutDashboard],
     ["بیلبوردها", "billboards", ClipboardList],
-    ["رزروها", "reservations", CalendarCheck],
+    ["تأیید آگهی‌ها", "listings", ClipboardCheck],
     ["کیفیت", "quality", ShieldCheck],
     ["اسکرپر", "scraper", Bot],
     ["کاربران", "users", Users],
@@ -154,12 +134,6 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: C.font, direction: "rtl", color: C.text }}>
-
-      {openingBillboard && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1050, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "0.9rem", fontWeight: 700 }}>
-          در حال باز کردن رسانه...
-        </div>
-      )}
 
       {/* Permission toast */}
       {permMsg && (
@@ -306,9 +280,9 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {tab === "reservations" && (
+          {tab === "listings" && (
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
-              <ReservationsPanel userRole={user.role} onOpenBillboard={openBillboardById} />
+              <ListingsPanel canDecide={canManage} />
             </div>
           )}
 
@@ -319,7 +293,7 @@ export default function AdminDashboard() {
           )}
           {tab === "scraper" && (
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
-              <ScraperPanel canRun={canManage} />
+              <ScraperPanel stats={stats} />
             </div>
           )}
           {tab === "users" && (

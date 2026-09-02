@@ -7,7 +7,6 @@ import { provinces, getProvince } from "@/lib/iranLocations";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import BillboardCard from "@/components/BillboardCard";
-import BookingModal from "@/components/BookingModal";
 import CompareModal from "@/components/CompareModal";
 import CompareBar from "@/components/CompareBar";
 import Toast from "@/components/Toast";
@@ -88,7 +87,6 @@ export default function ExplorePage() {
   const [page, setPage] = useState(1);
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState(false);
-  const [bookingTarget, setBookingTarget] = useState<Billboard | null>(null);
   const [compareList, setCompareList] = useState<Billboard[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -225,10 +223,6 @@ export default function ExplorePage() {
       return [...prev, b];
     });
   }, [showToast]);
-
-  const handleBook = useCallback((b: Billboard) => {
-    setBookingTarget(b);
-  }, []);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg-deep)" }}>
@@ -557,18 +551,10 @@ export default function ExplorePage() {
       </main>
 
       {/* Modals */}
-      {bookingTarget && (
-        <BookingModal
-          billboard={bookingTarget}
-          onClose={() => setBookingTarget(null)}
-          onSuccess={() => { setBookingTarget(null); showToast("درخواست رزرو ثبت شد! می‌توانید وضعیت رزرو را در داشبورد پیگیری کنید.", "success"); }}
-        />
-      )}
       {showCompareModal && compareList.length >= 2 && (
         <CompareModal
           items={compareList}
           onClose={() => setShowCompareModal(false)}
-          onBook={b => { setShowCompareModal(false); handleBook(b); }}
         />
       )}
       <CompareBar

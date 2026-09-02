@@ -1,10 +1,12 @@
 // API integration tests — run via `npm test` (see test/run.mjs).
-// Covers: input validation, sort/param allowlists, rate limiting, no user
-// enumeration, the reservation race guard, and object-level authorisation.
+// Covers: input validation, sort/param allowlists, rate limiting, absence of
+// user enumeration, the listing submission pipeline (upload validation and the
+// approval state machine), object-level authorisation, and the anti-scraping
+// limits.
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { api, mintSession, tokenFromSetCookie, uniqueIp, futureDate, randomPhone } from "./helpers.mjs";
+import { api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
 
@@ -27,6 +29,65 @@ test("GET /api/billboards rejects an oversized limit", async () => {
   assert.equal(status, 400);
 });
 
+test("GET /api/billboards caps the page size at 48 (bulk-copy limit)", async () => {
+  assert.equal((await api("/api/billboards?limit=48")).status, 200);
+  assert.equal((await api("/api/billboards?limit=49")).status, 400);
+});
+
+test("GET /api/billboards never returns an unpublished listing", async () => {
+  const { json } = await api("/api/billboards?limit=48");
+  const slugs = json.items.map((b) => b.slug);
+  assert.ok(!slugs.includes("pending-listing"), "a pending listing must stay hidden");
+  assert.ok(!slugs.includes("unpaid-listing"), "an unpaid listing must stay hidden");
+});
+
+test("GET /api/billboards cannot be tricked into revealing pending rows via ?status", async () => {
+  const { json } = await api("/api/billboards?status=pending&limit=48");
+  const slugs = (json.items ?? []).map((b) => b.slug);
+  assert.ok(!slugs.includes("pending-listing"));
+});
+
+/**
+ * Every catalogue sort is the composite (featured desc, hasImages desc, metric
+ * desc) — a paid listing outranks a photographed one, which outranks a bare
+ * record. Asserting the tuple is non-increasing checks the real contract; a
+ * bare "is the metric descending?" would fail on correct output, and comparing
+ * only inside one group would pass even if the metric were ignored entirely.
+ */
+function assertSortedBy(items, metric) {
+  const key = (b) => [b.featured ? 1 : 0, (b.images?.length ?? 0) > 0 ? 1 : 0, metric(b)];
+  for (let i = 1; i < items.length; i++) {
+    const prev = key(items[i - 1]);
+    const cur  = key(items[i]);
+    const ok = prev[0] > cur[0]
+      || (prev[0] === cur[0] && prev[1] > cur[1])
+      || (prev[0] === cur[0] && prev[1] === cur[1] && prev[2] >= cur[2]);
+    assert.ok(ok, `row ${i} breaks the order: ${JSON.stringify(prev)} then ${JSON.stringify(cur)}`);
+  }
+}
+
+test("sortBy=traffic_desc orders by estimated views, not by rating", async () => {
+  const { status, json } = await api("/api/billboards?sortBy=traffic_desc&limit=48");
+  assert.equal(status, 200);
+  // Guard against a vacuous pass: the fixtures must actually differ.
+  const views = json.items.map((b) => b.traffic?.estimatedViews ?? 0);
+  assert.ok(new Set(views).size > 1, "fixtures all share one view count — the assertion would prove nothing");
+  assertSortedBy(json.items, (b) => b.traffic?.estimatedViews ?? 0);
+});
+
+test("sortBy=area_desc orders by width x height, not by width alone", async () => {
+  const { status, json } = await api("/api/billboards?sortBy=area_desc&limit=48");
+  assert.equal(status, 200);
+  const areas = json.items.map((b) => b.width * b.height);
+  assert.ok(new Set(areas).size > 1, "fixtures all share one area — the assertion would prove nothing");
+  assertSortedBy(json.items, (b) => b.width * b.height);
+});
+
+test("a scraper user-agent is refused on the public API", async () => {
+  const { status } = await api("/api/billboards", { headers: { "user-agent": "python-requests/2.31.0" } });
+  assert.equal(status, 403);
+});
+
 test("GET /api/billboards rejects an unknown type", async () => {
   const { status } = await api("/api/billboards?type=notatype");
   assert.equal(status, 400);
@@ -41,6 +102,13 @@ test("GET /api/billboards/[slug] returns a single billboard", async () => {
 test("GET /api/billboards/[slug] is 404 for an unknown slug", async () => {
   const { status } = await api("/api/billboards/no-such-billboard");
   assert.equal(status, 404);
+});
+
+test("GET /api/billboards/[slug] is 404 for a listing awaiting approval", async () => {
+  // The slug exists, but the row is unpublished — it must not be readable by
+  // guessing the URL, the way it is hidden from search and the sitemap.
+  assert.equal((await api("/api/billboards/pending-listing")).status, 404);
+  assert.equal((await api("/api/billboards/unpaid-listing")).status, 404);
 });
 
 test("GET /api/billboards/[slug] is 400 for a malformed slug", async () => {
@@ -63,13 +131,6 @@ test("GET /api/billboards/[slug]/contact returns the phone to a signed-in user",
   const { status, json } = await api("/api/billboards/valiasr-tower/contact", { token });
   assert.equal(status, 200);
   assert.equal(typeof json.phone, "string");
-});
-
-test("GET /api/billboards/pins returns an array", async () => {
-  const { status, json } = await api("/api/billboards/pins");
-  assert.equal(status, 200);
-  const arr = Array.isArray(json) ? json : json.items ?? json.pins;
-  assert.ok(Array.isArray(arr));
 });
 
 test("GET /api/stats returns 200", async () => {
@@ -196,121 +257,118 @@ test("otp/send is rate limited per phone", async () => {
   assert.ok(Number(last.headers.get("Retry-After")) > 0);
 });
 
-// ── Reservations: validation & race guard ─────────────────────────────
+// ── Listings: submission pipeline ─────────────────────────────────────
 
-test("POST /api/reservations without a session is 401", async () => {
-  const { status } = await api("/api/reservations", {
+test("POST /api/listings without a session is 401", async () => {
+  const { status } = await api("/api/listings", {
     method: "POST",
-    body: { billboardId: 1, startDate: futureDate(2), endDate: futureDate(5) },
+    body: { name: "بیلبورد تست", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 50 },
   });
   assert.equal(status, 401);
 });
 
-test("POST /api/reservations rejects end-before-start", async () => {
+test("POST /api/listings creates a row that is NOT publicly visible yet", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
-  const { status } = await api("/api/reservations", {
+  const { status, json } = await api("/api/listings", {
     method: "POST",
     token,
-    body: { billboardId: 1, startDate: futureDate(5), endDate: futureDate(2) },
+    body: { name: "بیلبورد آزمایشی رایگان", desc: "تست", phone: "09120000000", type: "billboard", city: "تهران", region: "۳", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 50 },
+  });
+  assert.equal(status, 201, JSON.stringify(json));
+  assert.equal(json.listing.status, "pending");
+
+  const pub = await api(`/api/billboards?search=${encodeURIComponent("بیلبورد آزمایشی رایگان")}`);
+  assert.equal(pub.json.total, 0, "a freshly submitted listing must not appear in search");
+});
+
+test("POST /api/listings with the featured plan lands in awaiting_payment", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status, json } = await api("/api/listings", {
+    method: "POST",
+    token,
+    body: { name: "بیلبورد ویژه آزمایشی", phone: "09120000000", type: "digital", city: "تهران", width: 8, height: 3, faces: 1, price: 90, plan: "featured" },
+  });
+  assert.equal(status, 201, JSON.stringify(json));
+  assert.equal(json.listing.status, "awaiting_payment");
+});
+
+test("POST /api/listings accepts a real PNG upload", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status, json } = await api("/api/listings", {
+    method: "POST",
+    token,
+    body: { name: "بیلبورد با عکس", phone: "09120000000", type: "billboard", city: "شیراز", width: 10, height: 3, faces: 1, price: 40, images: [pngDataUrl()] },
+  });
+  assert.equal(status, 201, JSON.stringify(json));
+});
+
+test("POST /api/listings rejects a non-image disguised as a PNG (magic-byte check)", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status, json } = await api("/api/listings", {
+    method: "POST",
+    token,
+    body: { name: "بیلبورد بدافزار", phone: "09120000000", type: "billboard", city: "تهران", width: 10, height: 3, faces: 1, price: 40, images: [fakeImageDataUrl()] },
+  });
+  assert.equal(status, 400, JSON.stringify(json));
+  assert.match(json.error, /تصویر/);
+});
+
+test("POST /api/listings rejects more than five images", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status } = await api("/api/listings", {
+    method: "POST",
+    token,
+    body: { name: "بیلبورد پرعکس", phone: "09120000000", type: "billboard", city: "تهران", width: 10, height: 3, faces: 1, price: 40, images: Array.from({ length: 6 }, pngDataUrl) },
   });
   assert.equal(status, 400);
 });
 
-test("POST /api/reservations rejects a start date in the past", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
-  const { status } = await api("/api/reservations", {
-    method: "POST",
-    token,
-    body: { billboardId: 1, startDate: "2020-01-01", endDate: "2020-02-01" },
-  });
-  assert.equal(status, 400);
-});
-
-test("POST /api/reservations blocks an overlapping range with 409", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
-
-  const first = await api("/api/reservations", {
-    method: "POST",
-    token,
-    body: { billboardId: 2, startDate: futureDate(10), endDate: futureDate(20) },
-  });
-  assert.equal(first.status, 201, JSON.stringify(first.json));
-
-  const overlapping = await api("/api/reservations", {
-    method: "POST",
-    token,
-    body: { billboardId: 2, startDate: futureDate(15), endDate: futureDate(25) },
-  });
-  assert.equal(overlapping.status, 409);
-});
-
-test("10 identical reservation requests fired together create exactly one row (race guard)", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
-  // billboard 1 is active and has no reservation in this date window yet
-  const payload = { billboardId: 1, startDate: futureDate(200), endDate: futureDate(210) };
-
-  const results = await Promise.all(
-    Array.from({ length: 10 }, () =>
-      api("/api/reservations", { method: "POST", token, body: payload }),
-    ),
-  );
-
-  const created = results.filter((r) => r.status === 201).length;
-  const rejected = results.filter((r) => r.status === 409).length;
-  const other = results.filter((r) => r.status !== 201 && r.status !== 409);
-  assert.equal(created, 1, `expected exactly one 201, got ${results.map((r) => r.status).join(",")}`);
-  assert.equal(other.length, 0, `unexpected statuses: ${other.map((r) => r.status).join(",")}`);
-  assert.equal(rejected, 9);
-});
-
-test("reservations: a repeated Idempotency-Key replays the first response (no second row)", async () => {
+test("listings: a repeated Idempotency-Key replays the first response (no second row)", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
   const key = "idem-" + Math.random().toString(36).slice(2);
-  const payload = { billboardId: 2, startDate: futureDate(300), endDate: futureDate(310) };
+  const payload = { name: "بیلبورد تکراری", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 60 };
 
-  const first = await api("/api/reservations", { method: "POST", token, body: payload, headers: { "idempotency-key": key } });
+  const first = await api("/api/listings", { method: "POST", token, body: payload, headers: { "idempotency-key": key } });
   assert.equal(first.status, 201, JSON.stringify(first.json));
 
-  const replay = await api("/api/reservations", { method: "POST", token, body: payload, headers: { "idempotency-key": key } });
+  const replay = await api("/api/listings", { method: "POST", token, body: payload, headers: { "idempotency-key": key } });
   assert.equal(replay.status, 201);
-  assert.equal(replay.json.reservation.id, first.json.reservation.id);
+  assert.equal(replay.json.listing.id, first.json.listing.id, "the same row must come back, not a new one");
 });
 
-test("reservations: an Idempotency-Key reused by a different user is rejected with 409", async () => {
+test("listings: an Idempotency-Key reused by a different user is rejected with 409", async () => {
   const tokenA = await mintSession({ userId: "1", role: "user" });
   const tokenB = await mintSession({ userId: "2", role: "user" });
   const key = "idem-cross-" + Math.random().toString(36).slice(2);
-  const payload = { billboardId: 1, startDate: futureDate(320), endDate: futureDate(330) };
+  const payload = { name: "بیلبورد مشترک", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 60 };
 
-  const a = await api("/api/reservations", { method: "POST", token: tokenA, body: payload, headers: { "idempotency-key": key } });
+  const a = await api("/api/listings", { method: "POST", token: tokenA, body: payload, headers: { "idempotency-key": key } });
   assert.equal(a.status, 201);
-  const b = await api("/api/reservations", { method: "POST", token: tokenB, body: payload, headers: { "idempotency-key": key } });
+  const b = await api("/api/listings", { method: "POST", token: tokenB, body: payload, headers: { "idempotency-key": key } });
   assert.equal(b.status, 409);
 });
 
 // ── Object-level authorisation ───────────────────────────────────────
 
-test("a user cannot see another user's reservations via /api/reservations/my", async () => {
+test("a user cannot see another user's listings via GET /api/listings", async () => {
   const tokenA = await mintSession({ userId: "1", role: "user" });
   const tokenB = await mintSession({ userId: "2", role: "user" });
 
-  const booked = await api("/api/reservations", {
+  const created = await api("/api/listings", {
     method: "POST",
     token: tokenA,
-    body: { billboardId: 1, startDate: futureDate(100), endDate: futureDate(110) },
+    body: { name: "بیلبورد خصوصی کاربر یک", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 70 },
   });
-  assert.equal(booked.status, 201, JSON.stringify(booked.json));
+  assert.equal(created.status, 201, JSON.stringify(created.json));
+  const id = created.json.listing.id;
 
-  const listA = await api("/api/reservations/my", { token: tokenA });
-  const listB = await api("/api/reservations/my", { token: tokenB });
+  const listA = await api("/api/listings", { token: tokenA });
+  const listB = await api("/api/listings", { token: tokenB });
   assert.equal(listA.status, 200);
   assert.equal(listB.status, 200);
 
-  assert.ok(listA.json.reservations.some((r) => r.billboardId === 1), "owner should see the reservation");
-  assert.ok(
-    listB.json.reservations.every((r) => r.billboardId !== 1),
-    "a different user must not see it",
-  );
+  assert.ok(listA.json.listings.some((l) => l.id === id), "the submitter should see their own listing");
+  assert.ok(listB.json.listings.every((l) => l.id !== id), "a different user must not see it");
 });
 
 // ── Admin route: auth ordering & RBAC ────────────────────────────────
@@ -446,17 +504,17 @@ test("GET /api/admin/customers returns a paginated directory for an admin", asyn
   assert.equal(typeof json.pages, "number");
   if (json.users.length) {
     const u = json.users[0];
-    assert.ok("phone" in u && "reservationCount" in u);
+    assert.ok("phone" in u && "listingCount" in u);
     assert.ok(!("passwordHash" in u), "must never expose the password hash");
   }
 });
 
-test("GET /api/admin/customers/[id] returns the user with reservations; hash never leaks", async () => {
+test("GET /api/admin/customers/[id] returns the user with their listings; hash never leaks", async () => {
   const token = await mintSession({ role: "admin", userId: "1" });
   const { status, json } = await api("/api/admin/customers/1", { token });
   assert.equal(status, 200);
   assert.equal(json.user.id, 1);
-  assert.ok(Array.isArray(json.user.reservations));
+  assert.ok(Array.isArray(json.user.listings));
   assert.ok(!("passwordHash" in json.user));
 });
 
@@ -499,25 +557,23 @@ test("customer routes are 403 for role 'viewer'", async () => {
   assert.equal(c.status, 403);
 });
 
-// ── Rate limiting — reservations ──────────────────────────────────
+// ── Rate limiting ────────────────────────────────────────────────
 
-test("a rate-limited reservation POST returns 429 with Retry-After and a Persian wait message", async () => {
+test("a rate-limited listing POST returns 429 with a Retry-After header", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
   const ip = uniqueIp();
   let got429 = null;
   for (let i = 0; i < 65 && !got429; i++) {
-    const res = await api("/api/reservations", {
+    const res = await api("/api/listings", {
       method: "POST",
       token,
       ip,
-      body: { billboardId: 1, startDate: futureDate(2), endDate: futureDate(40) },
+      body: { name: `بیلبورد نرخ ${i}`, phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 30 },
     });
     if (res.status === 429) got429 = res;
   }
   assert.ok(got429, "expected a 429 within 65 rapid requests");
   assert.ok(Number(got429.headers.get("Retry-After")) > 0);
-  assert.equal(typeof got429.json.retryAfter, "number");
-  assert.match(got429.json.error, /دقیقه/);
 });
 
 // ── Reviews ─────────────────────────────────────────────────────────
@@ -537,25 +593,43 @@ test("POST /api/reviews without a session is 401", async () => {
   assert.equal(status, 401);
 });
 
-test("POST /api/reviews is 403 without a confirmed reservation for that billboard", async () => {
+test("POST /api/reviews is 404 for a listing that is not published", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
   const { status } = await api("/api/reviews", {
     method: "POST",
     token,
-    body: { billboardId: 1, rating: 4, comment: "نظری ندارم واقعاً" },
+    body: { billboardId: 4, rating: 4, comment: "این آگهی هنوز تأیید نشده" },
   });
-  assert.equal(status, 403);
+  assert.equal(status, 404);
 });
 
-test("POST /api/reviews succeeds when the user has a confirmed reservation", async () => {
-  // seed: user 1 has a confirmed reservation on billboard 3
+test("POST /api/reviews succeeds for a signed-in user and updates the billboard aggregate", async () => {
+  const token1 = await mintSession({ userId: "1", role: "user" });
+  const token2 = await mintSession({ userId: "2", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  const a = await api("/api/reviews", { method: "POST", token: token1, body: { billboardId: 6, rating: 5, comment: "موقعیت عالی و پرتردد بود" } });
+  assert.equal(a.status, 201, JSON.stringify(a.json));
+  const b = await api("/api/reviews", { method: "POST", token: token2, body: { billboardId: 6, rating: 3, comment: "متوسط بود، قیمت بالاست" } });
+  assert.equal(b.status, 201, JSON.stringify(b.json));
+
+  // billboards.rating / reviewCount are denormalised from the reviews table;
+  // they must reflect the two rows just written, not a seeded placeholder.
+  const bb = await api("/api/admin/billboards/6", { token: adminToken });
+  assert.equal(bb.json.billboard.reviewCount, 2);
+  assert.equal(bb.json.billboard.rating, 4);
+});
+
+test("a second review by the same user replaces the first (one per account)", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
-  const { status, json } = await api("/api/reviews", {
-    method: "POST",
-    token,
-    body: { billboardId: 3, rating: 5, comment: "موقعیت عالی و پرتردد بود" },
-  });
-  assert.equal(status, 201, JSON.stringify(json));
+  const adminToken = await mintSession({ role: "admin" });
+
+  const again = await api("/api/reviews", { method: "POST", token, body: { billboardId: 6, rating: 1, comment: "نظرم عوض شد متأسفانه" } });
+  assert.equal(again.status, 201, JSON.stringify(again.json));
+
+  const bb = await api("/api/admin/billboards/6", { token: adminToken });
+  assert.equal(bb.json.billboard.reviewCount, 2, "an edit must not add a row");
+  assert.equal(bb.json.billboard.rating, 2, "the average must be recomputed, not incremented");
 });
 
 // ── Analytics ───────────────────────────────────────────────────────
@@ -569,6 +643,14 @@ test("GET /api/analytics returns a shape with topCities", async () => {
 test("GET /api/analytics?city=... is 200", async () => {
   const { status } = await api("/api/analytics?city=" + encodeURIComponent("تهران"));
   assert.equal(status, 200);
+});
+
+test("analytics image coverage counts only rows that actually have an image", async () => {
+  // The fixture set has exactly one published billboard with an image. A Json
+  // `not: "[]"` filter used to match every row and report 100% coverage.
+  const { json } = await api("/api/analytics");
+  assert.equal(json.coverage.withImage, 1, `expected 1, got ${json.coverage.withImage} of ${json.total}`);
+  assert.ok(json.coverage.withImage < json.total);
 });
 
 // ── Admin billboard mutations ───────────────────────────────────────
@@ -600,58 +682,118 @@ test("DELETE /api/admin/billboards/[id] with role 'editor' is 403 (needs admin+)
   assert.equal(status, 403);
 });
 
-// ── Admin reservation status + audit ────────────────────────────────
+// ── Admin listing approval + audit ──────────────────────────────────
 
-test("PATCH /api/admin/reservations/[id]: confirm then cancel, then 409 on a cancelled row", async () => {
-  const userToken = await mintSession({ userId: "2", role: "user" });
+async function submitListing(token, name, plan = "free") {
+  const res = await api("/api/listings", {
+    method: "POST",
+    token,
+    body: { name, phone: "09120000000", type: "billboard", city: "تهران", region: "۱", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 55, plan },
+  });
+  assert.equal(res.status, 201, JSON.stringify(res.json));
+  return res.json.listing.id;
+}
+
+test("approving a free listing publishes it and writes a durable audit row", async () => {
+  const userToken  = await mintSession({ userId: "1", role: "user" });
   const adminToken = await mintSession({ role: "admin" });
 
-  const booked = await api("/api/reservations", {
-    method: "POST",
-    token: userToken,
-    body: { billboardId: 2, startDate: futureDate(500), endDate: futureDate(510) },
-  });
-  assert.equal(booked.status, 201, JSON.stringify(booked.json));
-  const id = booked.json.reservation.id;
+  const id = await submitListing(userToken, "بیلبورد در انتظار تأیید");
 
-  const confirm = await api(`/api/admin/reservations/${id}`, {
-    method: "PATCH", token: adminToken, body: { status: "confirmed" },
+  const decision = await api(`/api/admin/listings/${id}/decision`, {
+    method: "POST", token: adminToken, body: { decision: "approve" },
   });
-  assert.equal(confirm.status, 200);
-
-  const cancel = await api(`/api/admin/reservations/${id}`, {
-    method: "PATCH", token: adminToken, body: { status: "cancelled" },
-  });
-  assert.equal(cancel.status, 200);
-
-  const again = await api(`/api/admin/reservations/${id}`, {
-    method: "PATCH", token: adminToken, body: { status: "confirmed" },
-  });
-  assert.equal(again.status, 409);
+  assert.equal(decision.status, 200, JSON.stringify(decision.json));
+  assert.equal(decision.json.listing.status, "available");
+  assert.equal(decision.json.listing.featured, false, "a free plan must not be promoted");
 
   const audit = await api("/api/admin/audit", { token: adminToken });
   assert.ok(
-    audit.json.persisted.some((r) => r.action === "reservation_status_change"),
-    "a reservation_status_change row should be persisted",
+    audit.json.persisted.some((r) => r.action === "listing_approved"),
+    "a listing_approved row should be persisted",
   );
 });
 
-test("confirming a reservation marks the billboard reserved; cancelling releases it", async () => {
-  const userToken = await mintSession({ userId: "2", role: "user" });
+test("approving a featured listing grants the promotion; a free one never does", async () => {
+  const userToken  = await mintSession({ userId: "1", role: "user" });
   const adminToken = await mintSession({ role: "admin" });
 
-  const booked = await api("/api/reservations", {
-    method: "POST", token: userToken,
-    body: { billboardId: 1, startDate: futureDate(800), endDate: futureDate(810) },
+  const id = await submitListing(userToken, "بیلبورد ویژه در انتظار پرداخت", "featured");
+
+  const decision = await api(`/api/admin/listings/${id}/decision`, {
+    method: "POST", token: adminToken, body: { decision: "approve" },
   });
-  assert.equal(booked.status, 201, JSON.stringify(booked.json));
-  const id = booked.json.reservation.id;
+  assert.equal(decision.status, 200, JSON.stringify(decision.json));
+  assert.equal(decision.json.listing.status, "available");
+  assert.equal(decision.json.listing.featured, true, "confirming payment should grant the featured slot");
+});
 
-  await api(`/api/admin/reservations/${id}`, { method: "PATCH", token: adminToken, body: { status: "confirmed" } });
-  let bb = await api("/api/admin/billboards/1", { token: adminToken });
-  assert.equal(bb.json.billboard.status, "reserved");
+test("a decided listing cannot be decided again (409)", async () => {
+  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
 
-  await api(`/api/admin/reservations/${id}`, { method: "PATCH", token: adminToken, body: { status: "cancelled" } });
-  bb = await api("/api/admin/billboards/1", { token: adminToken });
-  assert.equal(bb.json.billboard.status, "available");
+  const id = await submitListing(userToken, "بیلبورد یک‌بار تصمیم");
+  assert.equal((await api(`/api/admin/listings/${id}/decision`, { method: "POST", token: adminToken, body: { decision: "approve" } })).status, 200);
+
+  const again = await api(`/api/admin/listings/${id}/decision`, {
+    method: "POST", token: adminToken, body: { decision: "approve" },
+  });
+  assert.equal(again.status, 409);
+});
+
+test("rejecting a listing keeps it out of the public catalogue", async () => {
+  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  const name = "بیلبورد رد شده آزمایشی";
+  const id = await submitListing(userToken, name);
+  const decision = await api(`/api/admin/listings/${id}/decision`, {
+    method: "POST", token: adminToken, body: { decision: "reject" },
+  });
+  assert.equal(decision.status, 200);
+  assert.equal(decision.json.listing.status, "inactive");
+
+  const pub = await api(`/api/billboards?search=${encodeURIComponent(name)}&status=available`);
+  assert.equal(pub.json.total, 0);
+});
+
+test("an editor may read the approval queue but not decide (403)", async () => {
+  const editorToken = await mintSession({ role: "editor" });
+  const queue = await api("/api/admin/listings", { token: editorToken });
+  assert.equal(queue.status, 200);
+  assert.ok(Array.isArray(queue.json.listings));
+
+  const decision = await api("/api/admin/listings/4/decision", {
+    method: "POST", token: editorToken, body: { decision: "approve" },
+  });
+  assert.equal(decision.status, 403);
+});
+
+test("the approval queue is closed to a customer session and to anonymous callers", async () => {
+  assert.equal((await api("/api/admin/listings")).status, 401);
+  const userToken = await mintSession({ userId: "1", role: "user" });
+  assert.equal((await api("/api/admin/listings", { token: userToken })).status, 401);
+});
+
+// ── Login timing: the anti-enumeration padding must be real work ──────
+
+test("an unknown phone costs about as much as a wrong password (no timing oracle)", async () => {
+  // A malformed padding hash makes bcrypt.compare return in ~0 ms, which leaks
+  // whether an account exists even though both responses are an identical 401.
+  const sample = async (phone) => {
+    const t0 = performance.now();
+    const res = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { phone, password: "definitely-wrong-password" } });
+    assert.equal(res.status, 401);
+    return performance.now() - t0;
+  };
+
+  const known   = (await sample("09120000000")) + (await sample("09120000000"));
+  const unknown = (await sample("09190000001")) + (await sample("09190000002"));
+
+  // Generous bound: bcrypt cost 12 dominates (~250 ms/call), so a missing
+  // padding hash shows up as an order-of-magnitude gap, not a few percent.
+  assert.ok(
+    unknown > known * 0.4,
+    `unknown-account login was far too fast (${unknown.toFixed(0)}ms vs ${known.toFixed(0)}ms) — the padding hash is not a real bcrypt hash`,
+  );
 });

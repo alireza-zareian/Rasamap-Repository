@@ -27,8 +27,8 @@ const advantages = [
   },
   {
     Icon: Zap,
-    title: "رزرو سریع",
-    desc: "در کمتر از ۵ دقیقه رسانه را رزرو کنید — بدون کاغذبازی و انتظار.",
+    title: "تماس مستقیم",
+    desc: "شمارهٔ صاحب رسانه در دسترس است — بدون واسطه و بدون کاغذبازی.",
   },
   {
     Icon: TrendingUp,
@@ -62,7 +62,7 @@ export default async function AboutPage() {
           <span style={{ color: "var(--accent)" }}>دیجیتال می‌شود</span>
         </h1>
         <p style={{ fontSize: "1rem", color: "var(--text-muted)", lineHeight: 1.9, fontWeight: 300, maxWidth: 560, margin: "0 auto 32px" }}>
-          رسامپ یک پلتفرم دیجیتال برای جستجو، مقایسه و رزرو رسانه‌های تبلیغاتی محیطی ایران است —
+          رسامپ یک پلتفرم دیجیتال برای جستجو و مقایسهٔ رسانه‌های تبلیغاتی محیطی ایران است —
           بدون تماس تلفنی، بدون واسطه، با قیمت شفاف.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -83,7 +83,7 @@ export default async function AboutPage() {
             </p>
             <p>
               رسامپ این فرآیند را به چند دقیقه تقلیل می‌دهد. داده‌های واقعی از بازار جمع‌آوری شده،
-              یک موتور جستجو و مقایسه ساخته شده، و یک تجربه رزرو آنلاین ایجاد شده — برای اولین بار در ایران.
+              یک موتور جستجو و مقایسه ساخته شده تا صاحبان رسانه و تبلیغ‌دهندگان یکدیگر را پیدا کنند.
             </p>
           </div>
         </div>
@@ -137,7 +137,7 @@ export default async function AboutPage() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <Link href="/explore" style={{ background: "var(--accent)", color: "#fff", textDecoration: "none", padding: "12px 28px", borderRadius: 9, fontWeight: 700, fontSize: "0.9rem" }}>شروع جستجو</Link>
-            <Link href="/list-media" style={{ border: "1px solid var(--border)", color: "var(--text-main)", textDecoration: "none", padding: "12px 28px", borderRadius: 9, fontSize: "0.9rem" }}>ثبت رسانه رایگان</Link>
+            <Link href="/list-media" style={{ border: "1px solid var(--border)", color: "var(--text-main)", textDecoration: "none", padding: "12px 28px", borderRadius: 9, fontSize: "0.9rem" }}>ثبت رسانه شما</Link>
           </div>
         </div>
       </section>

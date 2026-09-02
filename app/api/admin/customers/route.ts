@@ -49,7 +49,7 @@ async function GETHandler(req: NextRequest) {
         name: true,
         phone: true,
         createdAt: true,
-        _count: { select: { reservations: true, reviews: true } },
+        _count: { select: { listings: true, reviews: true } },
       },
     }),
   ]);
@@ -59,7 +59,7 @@ async function GETHandler(req: NextRequest) {
     name: u.name,
     phone: u.phone,
     createdAt: u.createdAt,
-    reservationCount: u._count.reservations,
+    listingCount: u._count.listings,
     reviewCount: u._count.reviews,
   }));
 

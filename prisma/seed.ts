@@ -16,7 +16,9 @@
 import "dotenv/config";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { everyBillboard, type Billboard as StaticBillboard } from "../lib/data";
+import { everyBillboard } from "../lib/data";
+
+type StaticBillboard = (typeof everyBillboard)[number];
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./dev.db",
@@ -36,6 +38,8 @@ function toRow(b: StaticBillboard) {
     status: b.status,
     width: b.width,
     height: b.height,
+    // Denormalised sort keys — see the comments on the schema fields.
+    area: b.width * b.height,
     faces: b.faces,
     age: b.age,
     price: b.price,
@@ -43,6 +47,7 @@ function toRow(b: StaticBillboard) {
     priceQuarterly: b.priceQuarterly,
     priceYearly: b.priceYearly,
     traffic: b.traffic as unknown as object,
+    estimatedViews: b.traffic?.estimatedViews ?? 0,
     mapX: b.mapX,
     mapY: b.mapY,
     lat: b.lat ?? null,
@@ -82,12 +87,17 @@ async function main() {
 
   // Remove stale records — rows in DB that no longer exist in the source data.
   // Uses raw SQL because SQLite's bound-variable limit (~999) blocks large notIn lists.
+  //
+  // Rows submitted by users through /list-media are exempt: they were never in
+  // lib/data.ts and never will be, so a plain "delete what isn't in the source"
+  // would wipe every customer listing on the next re-seed.
   const newIds = everyBillboard.map(b => b.id).join(",");
+  const staleFilter = `id NOT IN (${newIds}) AND (source IS NULL OR source != 'listing')`;
   const stale: Array<{ count: bigint }> =
-    await prisma.$queryRawUnsafe(`SELECT COUNT(*) as count FROM billboards WHERE id NOT IN (${newIds})`);
+    await prisma.$queryRawUnsafe(`SELECT COUNT(*) as count FROM billboards WHERE ${staleFilter}`);
   const staleCount = Number(stale[0]?.count ?? 0);
   if (staleCount > 0) {
-    await prisma.$executeRawUnsafe(`DELETE FROM billboards WHERE id NOT IN (${newIds})`);
+    await prisma.$executeRawUnsafe(`DELETE FROM billboards WHERE ${staleFilter}`);
     console.log(`Removed ${staleCount} stale rows not present in new data.`);
   }
 
@@ -102,11 +112,13 @@ async function main() {
   }
 
   const count = await prisma.billboard.count();
-  console.log(`Done. Upserted ${created} rows. Billboard table now has ${count} rows.`);
+  const listingCount = await prisma.billboard.count({ where: { source: "listing" } });
+  console.log(`Done. Upserted ${created} rows. Billboard table now has ${count} rows (${listingCount} user listings).`);
 
-  if (count !== everyBillboard.length) {
+  // The assertion covers only what this script owns; user listings are extra.
+  if (count - listingCount !== everyBillboard.length) {
     throw new Error(
-      `Mismatch: Billboard table has ${count} rows but everyBillboard.length is ${everyBillboard.length}.`
+      `Mismatch: Billboard table has ${count - listingCount} seeded rows but everyBillboard.length is ${everyBillboard.length}.`
     );
   }
 

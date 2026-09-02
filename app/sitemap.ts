@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/client";
+import { publishedOnly } from "@/lib/db/billboards";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://rasamap.ir";
 
   const billboards = await prisma.billboard.findMany({
-    where:  { status: { not: "pending" } },
+    where:  { status: publishedOnly },
     select: { slug: true, updatedAt: true },
     orderBy: { id: "asc" },
   });

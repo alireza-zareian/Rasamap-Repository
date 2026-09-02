@@ -22,7 +22,7 @@ interface CustomerRow {
   name: string;
   phone: string;
   createdAt: string;
-  reservationCount: number;
+  listingCount: number;
   reviewCount: number;
 }
 
@@ -273,7 +273,7 @@ function CustomersSection() {
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
             <thead>
               <tr style={{ background: C.card }}>
-                {["نام", "شماره", "ثبت‌نام", "رزروها", "نظرها"].map(h => (
+                {["نام", "شماره", "ثبت‌نام", "آگهی‌ها", "نظرها"].map(h => (
                   <th key={h} style={{ padding: "11px 14px", textAlign: "right", fontSize: "0.75rem", color: C.muted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
                 ))}
               </tr>
@@ -284,7 +284,7 @@ function CustomersSection() {
                   <td style={{ padding: "12px 14px", fontSize: "0.85rem", fontWeight: 600, color: C.accent }}>{u.name}</td>
                   <td style={{ padding: "12px 14px", fontSize: "0.8rem", color: C.muted, direction: "ltr", textAlign: "right" }}>{u.phone}</td>
                   <td style={{ padding: "12px 14px", fontSize: "0.75rem", color: C.muted }}>{fmt(u.createdAt)}</td>
-                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{u.reservationCount.toLocaleString("fa-IR")}</td>
+                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{u.listingCount.toLocaleString("fa-IR")}</td>
                   <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{u.reviewCount.toLocaleString("fa-IR")}</td>
                 </tr>
               ))}

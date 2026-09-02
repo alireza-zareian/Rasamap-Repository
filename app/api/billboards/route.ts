@@ -6,17 +6,8 @@ import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
 import { withApiLog } from "@/lib/api-log";
 
-// Known scraper/bot UA substrings — block silently (return empty, not 403)
-const BOT_UA_PATTERNS = [
-  /python-requests/i, /scrapy/i, /curl\/\d/i, /wget\//i,
-  /go-http-client/i, /java\//i, /libwww/i, /lwp-/i,
-  /headlesschrome/i, /phantomjs/i, /htmlunit/i, /selenium/i,
-  /playwright/i, /puppeteer/i,
-];
-
-function isBotUA(ua: string): boolean {
-  return BOT_UA_PATTERNS.some(p => p.test(ua));
-}
+// Bot user agents are rejected in proxy.ts for every /api/* path, so the
+// per-route copies of that list are gone — one matcher, one place to update.
 
 const ALLOWED_TYPES   = ["billboard", "digital", "bridge", "station", "vehicle"] as const;
 const ALLOWED_STATUS  = ["available", "busy", "reserved", "inactive"] as const;
@@ -30,18 +21,14 @@ const querySchema = z.object({
   cities:   z.string().max(500).optional(), // comma-separated city names for province filter
   maxPrice: z.coerce.number().int().min(0).max(100_000).optional(),
   sortBy:   z.enum(ALLOWED_SORT).optional(),
-  page:     z.coerce.number().int().min(1).max(1000).optional(),
-  limit:    z.coerce.number().int().min(1).max(100).optional(),
+  // Page and size ceilings are anti-scraping limits as much as validation ones:
+  // together they cap how much of the catalogue one request can carry off.
+  page:     z.coerce.number().int().min(1).max(200).optional(),
+  limit:    z.coerce.number().int().min(1).max(48).optional(),
 });
 
 async function getHandler(req: NextRequest) {
   const ip = getClientIp(req);
-  const ua = req.headers.get("user-agent") ?? "";
-
-  // Silent empty response for known scraper UAs — don't reveal we detected them
-  if (isBotUA(ua)) {
-    return NextResponse.json({ items: [], total: 0, page: 1, pageSize: 24, totalPages: 0 });
-  }
 
   const rl = publicApiRateLimit(ip);
   if (!rl.allowed) {

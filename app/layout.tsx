@@ -18,8 +18,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "Rasamap | رسامپ — پلتفرم جامع رسانه‌های محیطی ایران",
-  description: "جستجو، مقایسه و رزرو آنلاین بیلبورد، تلویزیون شهری، عرشه پل و تمام رسانه‌های محیطی ایران.",
-  keywords: "بیلبورد، اجاره بیلبورد، رسانه محیطی، تبلیغات محیطی، تلویزیون شهری، rasamap",
+  description: "جستجو و مقایسهٔ بیلبورد، تلویزیون شهری، عرشه پل و تمام رسانه‌های محیطی ایران — و تماس مستقیم با صاحب رسانه.",
+  keywords: "بیلبورد، اجاره بیلبورد، رسانه محیطی، تبلیغات محیطی، تلویزیون شهری، ثبت آگهی رسانه، rasamap",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

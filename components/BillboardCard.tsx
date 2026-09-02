@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Billboard, typeLabels } from "@/lib/types";
-import { Scale, Megaphone, Monitor, Milestone, Train, Bus, Star } from "lucide-react";
+import { Billboard, typeLabels, statusLabels } from "@/lib/types";
+import { Scale, Megaphone, Monitor, Milestone, Train, Bus, Star, Sparkles } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 
 const TYPE_THEMES: Record<string, { grad: string; ring: string; glow: string }> = {
@@ -65,7 +65,7 @@ export default function BillboardCard({
   const { theme } = useTheme();
   const dark = theme === "dark";
   const statusColor = b.status === "available" ? "var(--green-accent)" : b.status === "busy" ? "var(--red)" : "var(--accent-warm)";
-  const statusLabel = b.status === "available" ? "● خالی" : b.status === "busy" ? "● مشغول" : "● رزرو شده";
+  const statusLabel = `● ${statusLabels[b.status] ?? b.status}`;
   const [imgError, setImgError] = useState(false);
   const showImage = !!(b.images && b.images.length > 0) && !imgError;
   const views = b.traffic?.estimatedViews ?? 0;
@@ -162,10 +162,20 @@ export default function BillboardCard({
         <div style={{ position: "absolute", top: 8, left: 8, background: `${statusColor}18`, border: `1px solid ${statusColor}44`, borderRadius: 6, padding: "2px 9px", fontSize: "0.7rem", color: statusColor, fontWeight: 600, backdropFilter: "blur(4px)" }}>
           {statusLabel}
         </div>
-        {/* Rating */}
-        <div style={{ position: "absolute", bottom: 8, right: 8, background: dark ? "rgba(10,14,26,0.78)" : "rgba(255,255,255,0.82)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: "0.68rem", color: "var(--accent-warm)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: 4 }}>
-          <Star size={11} fill="currentColor" /> {b.rating} ({b.reviewCount})
-        </div>
+        {/* Paid promotion — the only thing `featured` buys is this badge and a
+            place at the top of the results. */}
+        {b.featured && (
+          <div style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(245,158,11,0.92)", borderRadius: 6, padding: "2px 8px", fontSize: "0.68rem", color: "#1a1206", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+            <Sparkles size={11} /> ویژه
+          </div>
+        )}
+        {/* Rating — only shown once the media actually has reviews, so a card
+            never displays a score nobody gave. */}
+        {b.reviewCount > 0 && (
+          <div style={{ position: "absolute", bottom: 8, right: 8, background: dark ? "rgba(10,14,26,0.78)" : "rgba(255,255,255,0.82)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: "0.68rem", color: "var(--accent-warm)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: 4 }}>
+            <Star size={11} fill="currentColor" /> {b.rating} ({b.reviewCount})
+          </div>
+        )}
       </div>
 
       {/* Compact card body */}

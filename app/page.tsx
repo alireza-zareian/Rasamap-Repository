@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Billboard, BillboardType } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
-import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Calendar, Monitor, Milestone, Train, Sun, Moon, User, Map, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Phone, Monitor, Milestone, Train, Sun, Moon, User, Map, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 function toFa(n: number) {
   return n.toLocaleString("fa-IR");
@@ -13,7 +13,7 @@ function toFa(n: number) {
 const howSteps = [
   { Icon: Search, title: "جستجو کن", desc: "شهر، منطقه، بودجه و نوع رسانه‌ات رو انتخاب کن" },
   { Icon: Scale, title: "مقایسه کن", desc: "چند رسانه رو کنار هم بذار و بر اساس بازدید و قیمت تصمیم بگیر" },
-  { Icon: Calendar, title: "رزرو کن", desc: "آنلاین رزرو کن — بدون تماس تلفنی، بدون واسطه" },
+  { Icon: Phone, title: "تماس بگیر", desc: "شمارهٔ صاحب رسانه را بگیر و مستقیم توافق کن — بدون واسطه" },
 ];
 
 const types: { type: BillboardType; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
@@ -328,7 +328,7 @@ export default function LandingPage() {
           <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
             {[
               { name: "علی رضایی", company: "آژانس تبلیغاتی آرتا", color: "#3B7BF5", letter: "ع", text: "با رسامپ توانستم در کمتر از ۱۰ دقیقه بیلبوردهای خیابان ولیعصر رو مقایسه کنم و بهترین قیمت رو پیدا کنم. دیگه نیازی به تماس تلفنی نیست." },
-              { name: "مریم کریمی", company: "برند پوشاک کاج", color: "#00D17A", letter: "م", text: "نقشه تعاملی رسامپ کارمون رو خیلی آسون کرد. موقعیت دقیق هر بیلبورد رو می‌بینیم و تراکم رقبا رو بررسی می‌کنیم قبل از رزرو." },
+              { name: "مریم کریمی", company: "برند پوشاک کاج", color: "#00D17A", letter: "م", text: "رسامپ کارمون رو خیلی آسون کرد. موقعیت دقیق هر بیلبورد رو می‌بینیم و تراکم رقبا رو بررسی می‌کنیم قبل از تماس." },
               { name: "حسین موسوی", company: "شرکت داروسازی پارسیان", color: "#9B72F5", letter: "ح", text: "قیمت‌گذاری شفاف رسامپ باورنکردنیه. می‌دونیم دقیقاً چقدر باید بپردازیم — بدون مذاکره، بدون سورپرایز." },
             ].map(t => (
               <div key={t.name} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
@@ -365,7 +365,7 @@ export default function LandingPage() {
         <p style={{ color: "var(--text-muted)", marginBottom: 36, fontSize: "0.95rem" }}>بیش از {siteStats ? toFa(siteStats.total) : "۳۵۰۰"} رسانه منتظرته — رایگان شروع کن</p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/explore" style={{ background: "var(--accent)", color: "#fff", padding: "14px 36px", borderRadius: 10, textDecoration: "none", fontWeight: 700, fontSize: "1rem", boxShadow: "0 4px 24px rgba(59,123,245,0.4)", display: "inline-flex", alignItems: "center", gap: 8 }}><Map size={18} /> ورود به پلتفرم</Link>
-          <Link href="/list-media" style={{ border: "1px solid var(--border)", color: "var(--text-main)", padding: "14px 36px", borderRadius: 10, textDecoration: "none", fontSize: "0.95rem" }}>ثبت رسانه رایگان</Link>
+          <Link href="/list-media" style={{ border: "1px solid var(--border)", color: "var(--text-main)", padding: "14px 36px", borderRadius: 10, textDecoration: "none", fontSize: "0.95rem" }}>ثبت رسانه شما</Link>
         </div>
       </section>
 
@@ -374,7 +374,7 @@ export default function LandingPage() {
         <div className="footer-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 40 }}>
           <div>
             <div style={{ fontSize: "1.2rem", fontWeight: 800, marginBottom: 12 }}>رسا<span style={{ color: "var(--accent)" }}>مپ</span></div>
-            <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.8 }}>پلتفرم دیجیتال جستجو، مقایسه و رزرو آنلاین رسانه‌های تبلیغاتی محیطی ایران</div>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.8 }}>پلتفرم دیجیتال جستجو و مقایسهٔ رسانه‌های تبلیغاتی محیطی ایران</div>
           </div>
           {[
             { title: "پلتفرم", links: [["جستجو رسانه", "/explore"], ["مقایسه", "/compare"]] },
