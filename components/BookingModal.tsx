@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Billboard } from "@/lib/types";
-import { X, Check, AlertTriangle, Info, ArrowRight, ArrowLeft } from "lucide-react";
+import { X, Check, AlertTriangle, Info, ArrowRight, ArrowLeft, CalendarX } from "lucide-react";
 
 interface Props {
   billboard: Billboard | null;
@@ -36,11 +36,24 @@ function tomorrowStr() {
   return addDays(todayStr(), 1);
 }
 
+interface BookedRange { startDate: string; endDate: string; status: string }
+
 export default function BookingModal({ billboard: b, onClose, onSuccess }: Props) {
   const [form, setForm] = useState({ start: tomorrowStr(), duration: 2, note: "" });
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [booked, setBooked] = useState<BookedRange[]>([]);
+
+  useEffect(() => {
+    if (!b) return;
+    let live = true;
+    fetch(`/api/reservations?billboardId=${b.id}`)
+      .then(r => r.ok ? r.json() : { reservations: [] })
+      .then(d => { if (live) setBooked(d.reservations ?? []); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [b]);
 
   if (!b) return null;
 
@@ -51,12 +64,16 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
   const total = base - discount;
   const endDate = form.start ? addDays(form.start, dur.days) : "";
 
+  // Two [start,end) ranges overlap iff each starts before the other ends.
+  const clashesWith = booked.find(r => form.start < r.endDate.slice(0, 10) && endDate > r.startDate.slice(0, 10));
+
   const set = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
     if (loading) return;                       // ignore a double-tap while a request is in flight
     if (!form.start) { setError("تاریخ شروع را انتخاب کنید"); return; }
     if (form.start < tomorrowStr()) { setError("تاریخ شروع باید از فردا به بعد باشد"); return; }
+    if (clashesWith) { setError("این بازه با یک رزرو موجود تداخل دارد. تاریخ دیگری انتخاب کنید."); return; }
     setError(""); setLoading(true);
     try {
       const res = await fetch("/api/reservations", {
@@ -135,6 +152,21 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
                 <label style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginBottom: 5 }}>تاریخ شروع اکران *</label>
                 <input type="date" value={form.start} min={tomorrowStr()} onChange={e => set("start", e.target.value)} style={{ ...iS, direction: "ltr" }} />
                 {endDate && <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4 }}>تاریخ پایان: <span style={{ color: "var(--text-main)" }}>{endDate}</span></div>}
+                {booked.length > 0 && (
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: 8, lineHeight: 1.9 }}>
+                    بازه‌های رزروشده:
+                    {booked.map((r, i) => (
+                      <span key={i} style={{ display: "inline-block", marginInlineStart: 6, padding: "1px 8px", borderRadius: 20, background: "var(--bg-surface)", border: "1px solid var(--border)", direction: "ltr" }}>
+                        {r.startDate.slice(0, 10)} — {r.endDate.slice(0, 10)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {clashesWith && (
+                  <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, fontSize: "0.72rem", color: "#ef4444" }}>
+                    <CalendarX size={13} /> این بازه با یک رزرو موجود تداخل دارد.
+                  </div>
+                )}
               </div>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginBottom: 8 }}>مدت اکران</label>
@@ -208,7 +240,7 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
           {step > 1 && <button onClick={() => setStep(s => s - 1)} style={{ border: "1px solid var(--border)", background: "none", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.82rem", padding: "9px 18px", borderRadius: 8, cursor: "pointer", flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}><ArrowRight size={14} /> قبلی</button>}
           <button onClick={onClose} style={{ border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", fontFamily: "inherit", fontSize: "0.82rem", padding: "9px 14px", borderRadius: 8, cursor: "pointer" }}>انصراف</button>
           {step < 2
-            ? <button onClick={() => setStep(s => s + 1)} disabled={!form.start} style={{ background: "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, padding: "9px 24px", borderRadius: 8, cursor: "pointer", flex: 2, opacity: !form.start ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}>بعدی <ArrowLeft size={14} /></button>
+            ? <button onClick={() => setStep(s => s + 1)} disabled={!form.start || !!clashesWith} style={{ background: "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, padding: "9px 24px", borderRadius: 8, cursor: (!form.start || clashesWith) ? "not-allowed" : "pointer", flex: 2, opacity: (!form.start || clashesWith) ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}>بعدی <ArrowLeft size={14} /></button>
             : <button onClick={handleSubmit} disabled={loading} style={{ background: loading ? "var(--border)" : "var(--green)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, padding: "9px 24px", borderRadius: 8, cursor: loading ? "default" : "pointer", flex: 2, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                 {loading ? "در حال ثبت..." : <><Check size={15} /> ثبت نهایی رزرو</>}
               </button>

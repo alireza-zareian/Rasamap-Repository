@@ -27,6 +27,14 @@ async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: 
   const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
+  // Bound the body before reading it: up to 10 images at ~5 MB each, base64 is
+  // ~1.37× — 80 MB is a generous ceiling. Stops a huge payload from being
+  // buffered into memory just to be rejected later.
+  const MAX_BODY = 80 * 1024 * 1024;
+  if (Number(req.headers.get("content-length")) > MAX_BODY) {
+    return NextResponse.json({ error: "حجم درخواست بیش از حد مجاز است" }, { status: 413 });
+  }
+
   const { id: rawId } = await params;
   const id = parseInt(rawId, 10);
   if (isNaN(id) || id <= 0) return NextResponse.json({ error: "شناسه نامعتبر" }, { status: 400 });

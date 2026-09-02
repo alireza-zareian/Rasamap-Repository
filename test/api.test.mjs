@@ -635,3 +635,23 @@ test("PATCH /api/admin/reservations/[id]: confirm then cancel, then 409 on a can
     "a reservation_status_change row should be persisted",
   );
 });
+
+test("confirming a reservation marks the billboard reserved; cancelling releases it", async () => {
+  const userToken = await mintSession({ userId: "2", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  const booked = await api("/api/reservations", {
+    method: "POST", token: userToken,
+    body: { billboardId: 1, startDate: futureDate(800), endDate: futureDate(810) },
+  });
+  assert.equal(booked.status, 201, JSON.stringify(booked.json));
+  const id = booked.json.reservation.id;
+
+  await api(`/api/admin/reservations/${id}`, { method: "PATCH", token: adminToken, body: { status: "confirmed" } });
+  let bb = await api("/api/admin/billboards/1", { token: adminToken });
+  assert.equal(bb.json.billboard.status, "reserved");
+
+  await api(`/api/admin/reservations/${id}`, { method: "PATCH", token: adminToken, body: { status: "cancelled" } });
+  bb = await api("/api/admin/billboards/1", { token: adminToken });
+  assert.equal(bb.json.billboard.status, "available");
+});

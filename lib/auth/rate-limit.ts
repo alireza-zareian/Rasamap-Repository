@@ -14,9 +14,25 @@ interface Window {
 
 const store = new Map<string, Window>();
 
+// Hard cap on tracked keys. A distributed flood (one key per source IP) must not
+// let this Map grow without bound. When the cap is hit, drop the oldest-inserted
+// entries first (Map preserves insertion order) — a key that is still being
+// hammered gets re-added on its next request, so active limiters survive.
+const MAX_KEYS = 50_000;
+
+function evictIfNeeded() {
+  if (store.size <= MAX_KEYS) return;
+  const drop = store.size - MAX_KEYS + 1000; // trim a slug at once, not one-by-one
+  let n = 0;
+  for (const key of store.keys()) {
+    store.delete(key);
+    if (++n >= drop) break;
+  }
+}
+
 // Clean expired entries every 5 minutes
 if (typeof setInterval !== "undefined") {
-  setInterval(() => {
+  const timer = setInterval(() => {
     const now = Date.now();
     for (const [key, w] of store.entries()) {
       if (w.resetAt < now && (!w.lockedUntil || w.lockedUntil < now)) {
@@ -24,6 +40,8 @@ if (typeof setInterval !== "undefined") {
       }
     }
   }, 5 * 60 * 1000);
+  // Don't keep the process alive just for the sweeper.
+  timer.unref?.();
 }
 
 export interface RateLimitOptions {
@@ -66,6 +84,7 @@ export function checkRateLimit(key: string, opts: RateLimitOptions): RateLimitRe
   if (!w || w.resetAt <= now) {
     w = { count: 0, resetAt: now + opts.windowMs };
     store.set(key, w);
+    evictIfNeeded();
   }
 
   w.count++;

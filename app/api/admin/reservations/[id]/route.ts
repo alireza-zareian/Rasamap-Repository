@@ -37,19 +37,38 @@ async function PATCHHandler(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "اطلاعات نامعتبر" }, { status: 400 });
   }
 
-  const existing = await prisma.reservation.findUnique({ where: { id }, select: { id: true, status: true } });
+  const existing = await prisma.reservation.findUnique({ where: { id }, select: { id: true, status: true, billboardId: true } });
   if (!existing) return NextResponse.json({ error: "رزرو یافت نشد" }, { status: 404 });
   if (existing.status === "cancelled") {
     return NextResponse.json({ error: "رزرو لغو شده قابل تغییر نیست" }, { status: 409 });
   }
 
-  const updated = await prisma.reservation.update({
-    where: { id },
-    data:  { status: parsed.data.status },
-    include: {
-      billboard: { select: { name: true } },
-      user:      { select: { name: true } },
-    },
+  const next = parsed.data.status;
+
+  // Change the reservation and reconcile the billboard's own status in one
+  // transaction: confirming marks the board "reserved"; cancelling releases it
+  // back to "available" only when no other confirmed reservation remains.
+  const updated = await prisma.$transaction(async (tx) => {
+    const res = await tx.reservation.update({
+      where: { id },
+      data:  { status: next },
+      include: {
+        billboard: { select: { name: true } },
+        user:      { select: { name: true } },
+      },
+    });
+
+    if (next === "confirmed") {
+      await tx.billboard.update({ where: { id: existing.billboardId }, data: { status: "reserved" } });
+    } else if (next === "cancelled") {
+      const stillActive = await tx.reservation.count({
+        where: { billboardId: existing.billboardId, status: "confirmed", id: { not: id } },
+      });
+      if (stillActive === 0) {
+        await tx.billboard.update({ where: { id: existing.billboardId }, data: { status: "available" } });
+      }
+    }
+    return res;
   });
 
   const adminId = Number.parseInt(session.userId, 10);
