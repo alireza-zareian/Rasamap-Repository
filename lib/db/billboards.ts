@@ -63,11 +63,11 @@ export interface BillboardFilterParams {
 
 /**
  * Statuses that belong to the submission pipeline, not to a live media item.
- * A row in either state has not been approved for publication, so no public
- * read may return it. Exported so the stats, analytics and sitemap queries
- * share one definition instead of each repeating a literal.
+ * A row in any of these states has not been approved for publication, so no
+ * public read may return it. Exported so the stats, analytics and sitemap
+ * queries share one definition instead of each repeating a literal.
  */
-export const UNPUBLISHED_STATUSES = ["pending", "awaiting_payment"];
+export const UNPUBLISHED_STATUSES = ["pending", "awaiting_payment", "rejected"];
 
 /** Prisma filter for "only rows the public may see". */
 export const publishedOnly = { notIn: UNPUBLISHED_STATUSES };
@@ -197,12 +197,27 @@ export interface BillboardCreateInput {
   lng?: number | null;
 }
 
+/**
+ * Build a URL-safe slug.
+ *
+ * ASCII only, because `GET /api/billboards/[slug]` validates against
+ * `^[a-z0-9-]+$`. The previous version kept the Persian block, so every
+ * user-submitted listing got a slug that route answered with 400 — the record
+ * was published but unreachable through the public API.
+ *
+ * Persian names therefore contribute nothing and the slug falls back to
+ * `listing-<base36 timestamp>`, which matches the shape the scraper already
+ * produces (`scraped-bih-63fa5bde`) and stays unique via the suffix.
+ */
 function slugify(name: string, suffix: string): string {
-  return name
-    .replace(/\s+/g, "-")
-    .replace(/[^\w؀-ۿ-]/g, "")
+  const ascii = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")   // any run of non-ASCII/punctuation → one dash
+    .replace(/^-+|-+$/g, "")
     .slice(0, 60)
-    .toLowerCase() + "-" + suffix;
+    .replace(/-+$/, "");           // don't let the slice leave a trailing dash
+
+  return `${ascii || "listing"}-${suffix}`;
 }
 
 // Fields shared by every freshly-created billboard row (manual create or a

@@ -100,7 +100,7 @@ async function main() {
     { user: "waiting",   owner: 1, name: `${TAG} بیلبورد میدان نقش جهان`, city: "اصفهان", type: "billboard", price: 55,  status: "pending",          plan: "free",     featured: false },
     { user: "paying",    owner: 2, name: `${TAG} تابلوی دیجیتال ولنجک`,   city: "تهران",  type: "digital",   price: 120, status: "awaiting_payment", plan: "featured", featured: false },
     { user: "featured",  owner: 1, name: `${TAG} بیلبورد بلوار فردوسی`,   city: "مشهد",   type: "billboard", price: 65,  status: "available",        plan: "featured", featured: true  },
-    { user: "rejected",  owner: 2, name: `${TAG} ایستگاه اتوبوس ونک`,     city: "تهران",  type: "station",   price: 25,  status: "inactive",         plan: "free",     featured: false },
+    { user: "rejected",  owner: 2, name: `${TAG} ایستگاه اتوبوس ونک`,     city: "تهران",  type: "station",   price: 25,  status: "rejected",         plan: "free",     featured: false },
     { user: "agency",    owner: 0, name: `${TAG} بیلبورد اتوبان کرج`,     city: "کرج",    type: "billboard", price: 45,  status: "pending",          plan: "free",     featured: false },
     { user: "agency",    owner: 0, name: `${TAG} عرشه پل شهید همت`,       city: "تهران",  type: "bridge",    price: 80,  status: "available",        plan: "free",     featured: false },
   ];

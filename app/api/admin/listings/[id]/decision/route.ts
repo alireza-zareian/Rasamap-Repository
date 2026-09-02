@@ -20,7 +20,7 @@ import { withApiLog } from "@/lib/api-log";
  *                                 (admin confirms the transfer by hand; there
  *                                  is no payment gateway — see §17 of
  *                                  docs/engineering-decisions.md)
- *   either           --reject---> inactive
+ *   either           --reject---> rejected  (never publicly reachable)
  *
  * Only rows still awaiting a decision are accepted, so a second click cannot
  * re-approve a live listing or silently re-grant a paid promotion.
@@ -83,7 +83,7 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
   const updated = await prisma.billboard.update({
     where: { id },
     data: {
-      status:   approve ? "available" : "inactive",
+      status:   approve ? "available" : "rejected",
       featured: grantFeatured,
     },
     select: { id: true, name: true, status: true, plan: true, featured: true },

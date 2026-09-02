@@ -28,7 +28,8 @@ const STATUS_COLOR: Record<string, [string, string]> = {
   available:        ["var(--green)", "rgba(34,197,94,0.12)"],
   busy:             ["#f59e0b", "rgba(245,158,11,0.12)"],
   reserved:         ["#8b5cf6", "rgba(139,92,246,0.12)"],
-  inactive:         ["#ef4444", "rgba(239,68,68,0.12)"],
+  inactive:         ["var(--text-muted)", "rgba(148,163,184,0.12)"],
+  rejected:         ["#ef4444", "rgba(239,68,68,0.12)"],
 };
 // What the submitter should do next, per state — a status badge alone doesn't
 // tell someone whether the ball is in their court.
@@ -36,7 +37,7 @@ const STATUS_HINT: Record<string, string> = {
   pending:          "کارشناسان رسامپ در حال بررسی محتوای آگهی هستند.",
   awaiting_payment: "برای فعال شدن پلن ویژه، هزینه را واریز کنید و رسید را برای پشتیبانی بفرستید.",
   available:        "آگهی شما منتشر شده و در جستجو دیده می‌شود.",
-  inactive:         "این آگهی منتشر نشد. برای پیگیری با پشتیبانی تماس بگیرید.",
+  rejected:         "این آگهی تأیید نشد. برای پیگیری با پشتیبانی تماس بگیرید.",
 };
 const TYPE_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   billboard: Megaphone, digital: Monitor, bridge: Milestone, station: Train, vehicle: Bus,

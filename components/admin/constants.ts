@@ -24,6 +24,7 @@ export const STATUS_COLOR: Record<string, [string, string]> = {
   busy:             ["#f59e0b","rgba(245,158,11,0.12)"],
   reserved:         ["#8b5cf6","rgba(139,92,246,0.12)"],
   inactive:         [C.muted,  "rgba(148,163,184,0.12)"],
+  rejected:         ["#ef4444","rgba(239,68,68,0.12)"],
 };
 export const TYPE_LABEL: Record<string, string> = {
   billboard: "بیلبورد", digital: "دیجیتال", bridge: "عرشه پل", station: "ایستگاه", vehicle: "وسیله",

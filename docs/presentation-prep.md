@@ -49,6 +49,23 @@ Public site:
 - [ ] Login `/login` and the `/reset-password` 3-step flow (step 2 shows the
       "کد تست" line only because `OTP_DEV_ECHO=1` locally)
 - [ ] Dashboard `/dashboard` — a user with listings in several states (pending / awaiting payment / published / rejected)
+- [ ] **Reconcile the two legacy review aggregates before the demo.** Reviews
+      written before the final review did not update the billboard's summary
+      columns, so two seeded rows still claim more reviews than they have
+      (e.g. `5.0/7` stored against `5.0/1` actual). Every review written from
+      now on recomputes them, but these two predate that. One command:
+
+      ```sql
+      -- sqlite3 dev.db
+      UPDATE billboards SET
+        rating = (SELECT ROUND(AVG(rating),1) FROM reviews WHERE billboardId = billboards.id),
+        reviewCount = (SELECT COUNT(*) FROM reviews WHERE billboardId = billboards.id)
+      WHERE id IN (SELECT DISTINCT billboardId FROM reviews);
+      ```
+
+      This only touches rows that actually have reviews; the synthetic ratings
+      on the ~3,500 scraped rows are left alone (they are seed data, and the
+      card only shows a score when `reviewCount > 0`).
 - [ ] 404 (`/nope`) and the styled error page
 
 Admin (`docs/demo-accounts.md` → super-admin):

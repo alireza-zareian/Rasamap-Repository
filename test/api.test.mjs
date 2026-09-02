@@ -281,6 +281,21 @@ test("POST /api/listings creates a row that is NOT publicly visible yet", async 
   assert.equal(pub.json.total, 0, "a freshly submitted listing must not appear in search");
 });
 
+test("a listing submitted under a Persian name still gets a URL-safe slug", async () => {
+  // The public slug route validates `^[a-z0-9-]+$`; a slug carrying Persian
+  // characters would publish a row the API then answers 400 for.
+  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  const id = await submitListing(userToken, "بیلبورد نام کاملاً فارسی");
+  const admin = await api(`/api/admin/billboards/${id}`, { token: adminToken });
+  const slug = admin.json.billboard.slug;
+  assert.match(slug, /^[a-z0-9-]+$/, `slug is not URL-safe: ${slug}`);
+
+  await api(`/api/admin/listings/${id}/decision`, { method: "POST", token: adminToken, body: { decision: "approve" } });
+  assert.equal((await api(`/api/billboards/${slug}`)).status, 200, "an approved listing must be readable by slug");
+});
+
 test("POST /api/listings with the featured plan lands in awaiting_payment", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
   const { status, json } = await api("/api/listings", {
@@ -741,7 +756,7 @@ test("a decided listing cannot be decided again (409)", async () => {
   assert.equal(again.status, 409);
 });
 
-test("rejecting a listing keeps it out of the public catalogue", async () => {
+test("a rejected listing is unreachable, not merely absent from search", async () => {
   const userToken  = await mintSession({ userId: "1", role: "user" });
   const adminToken = await mintSession({ role: "admin" });
 
@@ -751,10 +766,17 @@ test("rejecting a listing keeps it out of the public catalogue", async () => {
     method: "POST", token: adminToken, body: { decision: "reject" },
   });
   assert.equal(decision.status, 200);
-  assert.equal(decision.json.listing.status, "inactive");
+  // "rejected", not "inactive": inactive is a public status describing a real
+  // media item that is idle, and a turned-down submission must not be public.
+  assert.equal(decision.json.listing.status, "rejected");
 
-  const pub = await api(`/api/billboards?search=${encodeURIComponent(name)}&status=available`);
-  assert.equal(pub.json.total, 0);
+  const pub = await api(`/api/billboards?search=${encodeURIComponent(name)}`);
+  assert.equal(pub.json.total, 0, "must not appear in search");
+
+  // And the row itself must 404 by slug, the way a pending one does.
+  const admin = await api(`/api/admin/billboards/${id}`, { token: adminToken });
+  const slug = admin.json.billboard.slug;
+  assert.equal((await api(`/api/billboards/${slug}`)).status, 404, "must not be readable by URL");
 });
 
 test("an editor may read the approval queue but not decide (403)", async () => {
