@@ -86,7 +86,7 @@ export default function Dashboard() {
       setUser(data.user);
       setEditName(data.user.name);
       setEditCurPass(""); setEditNewPass("");
-      setProfileSuccess("اطلاعات با موفقیت ذخیره شد ✓");
+      setProfileSuccess("اطلاعات با موفقیت ذخیره شد");
     } catch { setProfileError("خطای شبکه"); }
     finally { setProfileSaving(false); }
   };
@@ -142,7 +142,7 @@ export default function Dashboard() {
               {sidebarOpen ? <XIcon size={18} /> : <Menu size={18} />}
             </button>
             <div>
-              <div style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 2 }}>خوش آمدید، {user.name} 👋</div>
+              <div style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 2 }}>خوش آمدید، {user.name}</div>
               <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{user.phone}</div>
             </div>
           </div>

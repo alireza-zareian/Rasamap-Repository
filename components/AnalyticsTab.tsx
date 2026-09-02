@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { PieChart, LayoutGrid, Building2, Wallet, Database, X } from "lucide-react";
 
 interface AnalyticsData {
   total: number;
@@ -62,7 +63,7 @@ export default function AnalyticsTab() {
   if (loading || !data) {
     return (
       <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem" }}>
-        {loading ? "⏳ در حال بارگذاری..." : "⚠ خطا در دریافت اطلاعات"}
+        {loading ? "در حال بارگذاری..." : "خطا در دریافت اطلاعات"}
       </div>
     );
   }
@@ -87,8 +88,8 @@ export default function AnalyticsTab() {
           {data.allCities.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         {city && (
-          <button onClick={() => setCity("")} style={{ fontSize: "0.75rem", padding: "6px 10px", borderRadius: 7, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif" }}>
-            ✕ همه
+          <button onClick={() => setCity("")} style={{ fontSize: "0.75rem", padding: "6px 10px", borderRadius: 7, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <X size={12} /> همه
           </button>
         )}
       </div>
@@ -110,7 +111,7 @@ export default function AnalyticsTab() {
 
       {/* Status breakdown */}
       <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px" }}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12 }}>📊 وضعیت اشغال</div>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}><PieChart size={14} /> وضعیت اشغال</div>
         {Object.entries(data.byStatus).map(([status, count]) => (
           <Bar key={status} label={STATUS_FA[status] ?? status} value={count} max={data.total} color={STATUS_COLOR[status] ?? "var(--accent)"} />
         ))}
@@ -118,7 +119,7 @@ export default function AnalyticsTab() {
 
       {/* Type breakdown */}
       <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px" }}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12 }}>🏛 توزیع نوع رسانه</div>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}><LayoutGrid size={14} /> توزیع نوع رسانه</div>
         {Object.entries(data.byType).map(([type, count], i) => (
           <Bar key={type} label={TYPE_FA[type] ?? type} value={count} max={maxTypeCount} color={TYPE_COLORS[i % TYPE_COLORS.length]} />
         ))}
@@ -126,7 +127,7 @@ export default function AnalyticsTab() {
 
       {/* Top cities */}
       <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px" }}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12 }}>🏙 پرتراکم‌ترین شهرها</div>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}><Building2 size={14} /> پرتراکم‌ترین شهرها</div>
         {data.topCities.map((c, i) => (
           <Bar key={c.city} label={c.city} value={c.count} max={maxCityCount} color={TYPE_COLORS[i % TYPE_COLORS.length]} />
         ))}
@@ -134,7 +135,7 @@ export default function AnalyticsTab() {
 
       {/* Price brackets */}
       <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px" }}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 4 }}>💰 محدوده قیمتی</div>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}><Wallet size={14} /> محدوده قیمتی</div>
         <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginBottom: 12 }}>
           کمینه {data.price.min.toLocaleString("fa-IR")}M · بیشینه {data.price.max.toLocaleString("fa-IR")}M · میانگین {data.price.avg.toLocaleString("fa-IR")}M
         </div>
@@ -145,7 +146,7 @@ export default function AnalyticsTab() {
 
       {/* Data coverage */}
       <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px" }}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12 }}>📁 پوشش داده</div>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}><Database size={14} /> پوشش داده</div>
         <Bar label="با تصویر" value={data.coverage.withImage} max={data.total} color="var(--accent-warm)" />
         <Bar label="با مختصات" value={data.coverage.geocoded}  max={data.total} color="#06b6d4" />
       </div>

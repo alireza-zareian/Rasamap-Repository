@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { C } from "./constants";
 import { Badge } from "./Badge";
+import { ScrollText } from "lucide-react";
 
 interface Row {
   id: string | number;
@@ -46,7 +47,7 @@ export function AuditPanel() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-        <div style={{ fontSize: "0.9rem", fontWeight: 700 }}>📋 لاگ‌های امنیتی</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><ScrollText size={16} /> لاگ‌های امنیتی</div>
         <div style={{ display: "flex", gap: 8 }}>
           {tab("persisted", "پایدار (دیتابیس)", persisted.length)}
           {tab("live", "زنده (حافظه)", logs.length)}

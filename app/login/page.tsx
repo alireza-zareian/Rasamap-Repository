@@ -2,7 +2,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, ArrowRight } from "lucide-react";
 
 // Persian/Arabic digits → Latin digits
 const toLatin = (v: string) =>
@@ -127,15 +127,15 @@ function LoginForm() {
             {passInp(form.pass, v => s("pass", v), "رمز عبور", showPass, setShowPass)}
             {tab === "register" && passInp(form.confirm, v => s("confirm", v), "تکرار رمز", showConfirm, setShowConfirm)}
             {error && (
-              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 13px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 14 }}>⚠ {error}</div>
+              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 13px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>
             )}
             <button onClick={submit} disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer", boxShadow: "0 4px 16px rgba(59,123,245,0.3)", marginBottom: 14 }}>
-              {loading ? "⏳ در حال پردازش..." : tab === "login" ? "ورود به حساب" : "ایجاد حساب"}
+              {loading ? "در حال پردازش..." : tab === "login" ? "ورود به حساب" : "ایجاد حساب"}
             </button>
           </div>
         </div>
         <div style={{ textAlign: "center", marginTop: 16 }}>
-          <Link href="/" style={{ color: "var(--text-muted)", fontSize: "0.78rem", textDecoration: "none" }}>← بازگشت</Link>
+          <Link href="/" style={{ color: "var(--text-muted)", fontSize: "0.78rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}><ArrowRight size={13} /> بازگشت</Link>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import type { Billboard } from "@/lib/types";
 import { C } from "./constants";
 import { Badge } from "./Badge";
+import { Image as ImageIcon, X, FolderOpen } from "lucide-react";
 
 export function ImageManager({ billboard, onClose }: { billboard: Billboard; onClose: () => void }) {
   const [images, setImages] = useState<string[]>(billboard.images ?? []);
@@ -48,8 +49,8 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 24, width: 560, maxHeight: "90vh", overflowY: "auto", direction: "rtl" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>🖼 تصاویر — #{billboard.id}</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: C.muted }}>✕</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700, fontSize: "0.95rem" }}><ImageIcon size={15} /> تصاویر — #{billboard.id}</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
         </div>
 
         {error && (
@@ -59,8 +60,8 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
         )}
 
         <div onClick={() => fileRef.current?.click()} style={{ border: `2px dashed ${C.accent}`, borderRadius: 12, padding: 20, textAlign: "center", cursor: "pointer", marginBottom: 16, background: "rgba(255,77,0,0.04)" }}>
-          <div style={{ fontSize: "1.5rem", marginBottom: 6 }}>📁</div>
-          <div style={{ fontSize: "0.82rem", color: C.muted }}>{uploading ? "⏳ پردازش..." : "کلیک برای انتخاب (JPG/PNG/WEBP، max 5MB)"}</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 6, color: C.muted }}><FolderOpen size={22} /></div>
+          <div style={{ fontSize: "0.82rem", color: C.muted }}>{uploading ? "پردازش..." : "کلیک برای انتخاب (JPG/PNG/WEBP، max 5MB)"}</div>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleFiles} style={{ display: "none" }} />
         </div>
 
@@ -96,7 +97,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
             onClick={handleSave}
             disabled={saving || uploading}
             style={{ flex: 1, background: saving ? C.border : C.accent, border: "none", color: "#fff", fontFamily: C.font, fontWeight: 700, padding: 10, borderRadius: 9, cursor: saving ? "default" : "pointer", fontSize: "0.85rem" }}>
-            {saving ? "⏳ در حال ذخیره..." : `ذخیره (${images.length} تصویر)`}
+            {saving ? "در حال ذخیره..." : `ذخیره (${images.length} تصویر)`}
           </button>
           <button onClick={onClose} style={{ padding: "10px 18px", background: "none", border: `1px solid ${C.border}`, color: C.muted, fontFamily: C.font, borderRadius: 9, cursor: "pointer" }}>انصراف</button>
         </div>

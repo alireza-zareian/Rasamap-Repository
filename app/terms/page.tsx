@@ -1,6 +1,7 @@
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import { Mail } from "lucide-react";
 
 const sections = [
   { title: "۱. پذیرش شرایط", body: "با استفاده از پلتفرم رسامپ، کاربر تمامی شرایط و قوانین مندرج در این سند را می‌پذیرد. استفاده از خدمات به معنای موافقت با این شرایط است." },
@@ -33,7 +34,7 @@ export default function TermsPage() {
         </div>
 
         <div style={{ marginTop: 40, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 22px", display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ fontSize: "1.2rem" }}>📬</div>
+          <div style={{ display: "flex", color: "var(--accent)" }}><Mail size={20} /></div>
           <div>
             <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 3 }}>سوال دارید؟</div>
             <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>برای هرگونه سوال درباره قوانین، با ما در <Link href="/contact" style={{ color: "var(--accent)", textDecoration: "none" }}>تماس</Link> باشید.</div>

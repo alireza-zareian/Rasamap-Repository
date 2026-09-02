@@ -2,6 +2,7 @@
 import type { UserRole } from "@/lib/auth/session";
 import { C, ROLE_LABEL, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
+import { Users, Construction } from "lucide-react";
 
 interface SessionUser { id: string; name: string; role: UserRole; email: string; }
 
@@ -13,7 +14,7 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <div style={{ fontSize: "0.9rem", fontWeight: 700 }}>👥 مدیریت کاربران</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><Users size={16} /> مدیریت کاربران</div>
           <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4 }}>نقش‌ها: Super Admin، Admin، Editor، Viewer</div>
         </div>
         {isSA && <button style={{ fontSize: "0.78rem", padding: "7px 14px", borderRadius: 8, background: C.accent, border: "none", color: "#fff", fontFamily: C.font, fontWeight: 700, cursor: "pointer", opacity: 0.7 }}>+ افزودن</button>}
@@ -50,7 +51,7 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
         </table>
       </div>
       <div style={{ marginTop: 16, padding: 14, background: "rgba(245,158,11,0.06)", borderRadius: 10, fontSize: "0.75rem", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
-        🚧 مدیریت کاربران نیاز به DB دارد. کاربر از env vars تعریف می‌شود: ADMIN_EMAIL و ADMIN_PASSWORD_HASH
+        <Construction size={14} style={{ verticalAlign: "-2px" }} /> مدیریت کاربران نیاز به DB دارد. کاربر از env vars تعریف می‌شود: ADMIN_EMAIL و ADMIN_PASSWORD_HASH
       </div>
     </div>
   );

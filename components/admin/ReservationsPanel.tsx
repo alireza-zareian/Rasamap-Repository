@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { C } from "./constants";
 import type { UserRole } from "@/lib/auth/session";
+import { MapPin, User, Calendar, Coins, Check, X } from "lucide-react";
 
 interface ReservationRow {
   id:        number;
@@ -124,10 +125,10 @@ export function ReservationsPanel({ userRole }: Props) {
                   </div>
                   <div style={{ fontSize: "0.88rem", fontWeight: 700, marginBottom: 4 }}>{r.billboard.name}</div>
                   <div style={{ fontSize: "0.78rem", color: C.muted, display: "flex", gap: 16, flexWrap: "wrap" }}>
-                    <span>📍 {r.billboard.city}</span>
-                    <span>👤 {r.user.name} · {r.user.phone}</span>
-                    <span>📅 {fmt(r.startDate)} — {fmt(r.endDate)}</span>
-                    <span>💰 {r.billboard.price.toLocaleString("fa-IR")}M/ماه</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {r.billboard.city}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><User size={12} /> {r.user.name} · {r.user.phone}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Calendar size={12} /> {fmt(r.startDate)} — {fmt(r.endDate)}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Coins size={12} /> {r.billboard.price.toLocaleString("fa-IR")}M/ماه</span>
                   </div>
                 </div>
                 {canManage && r.status === "pending" && (
@@ -135,19 +136,19 @@ export function ReservationsPanel({ userRole }: Props) {
                     <button
                       onClick={() => updateStatus(r.id, "confirmed")}
                       disabled={acting === r.id}
-                      style={{ fontSize: "0.78rem", padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.green}40`, background: "rgba(34,197,94,0.08)", color: C.green, fontFamily: C.font, cursor: acting === r.id ? "not-allowed" : "pointer", fontWeight: 700 }}>
-                      {acting === r.id ? "..." : "✓ تأیید"}
+                      style={{ fontSize: "0.78rem", padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.green}40`, background: "rgba(34,197,94,0.08)", color: C.green, fontFamily: C.font, cursor: acting === r.id ? "not-allowed" : "pointer", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      {acting === r.id ? "..." : <><Check size={13} /> تأیید</>}
                     </button>
                     <button
                       onClick={() => updateStatus(r.id, "cancelled")}
                       disabled={acting === r.id}
-                      style={{ fontSize: "0.78rem", padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.red}40`, background: "rgba(239,68,68,0.08)", color: C.red, fontFamily: C.font, cursor: acting === r.id ? "not-allowed" : "pointer", fontWeight: 700 }}>
-                      {acting === r.id ? "..." : "✗ رد"}
+                      style={{ fontSize: "0.78rem", padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.red}40`, background: "rgba(239,68,68,0.08)", color: C.red, fontFamily: C.font, cursor: acting === r.id ? "not-allowed" : "pointer", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      {acting === r.id ? "..." : <><X size={13} /> رد</>}
                     </button>
                   </div>
                 )}
                 {r.status === "confirmed" && (
-                  <span style={{ fontSize: "0.72rem", color: C.green, padding: "7px 10px" }}>تأیید شده ✓</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.72rem", color: C.green, padding: "7px 10px" }}><Check size={12} /> تأیید شده</span>
                 )}
                 {r.status === "cancelled" && (
                   <span style={{ fontSize: "0.72rem", color: C.red, padding: "7px 10px" }}>لغو شده</span>

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Search, X, LayoutGrid, List, MapPin, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train } from "lucide-react";
+import { Search, X, LayoutGrid, List, MapPin, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train, Building2, TriangleAlert, SearchX } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import type { Billboard, BillboardType } from "@/lib/types";
 import { provinces, getProvince } from "@/lib/iranLocations";
@@ -296,7 +296,7 @@ export default function ExplorePage() {
             {/* Province + City */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
               <select value={filters.province} onChange={e => handleProvinceChange(e.target.value)} style={selectStyle}>
-                <option value="">📌 همه استان‌ها</option>
+                <option value="">همه استان‌ها</option>
                 {sortedProvinces.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
               </select>
               <select
@@ -456,7 +456,7 @@ export default function ExplorePage() {
                 justifyContent: "center", flexDirection: "column", gap: 8,
                 color: "var(--text-muted)",
               }}>
-                <div style={{ fontSize: "2.5rem", opacity: 0.3 }}>🏙️</div>
+                <div style={{ opacity: 0.3, display: "flex" }}><Building2 size={40} strokeWidth={1.4} /></div>
                 <div style={{ fontSize: "0.75rem" }}>در حال بارگذاری تصاویر...</div>
               </div>
             )}
@@ -492,7 +492,7 @@ export default function ExplorePage() {
           </div>
         ) : dataError ? (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, color: "var(--text-muted)", padding: 60 }}>
-            <div style={{ fontSize: "3rem" }}>⚠️</div>
+            <div style={{ display: "flex", color: "var(--accent-warm)" }}><TriangleAlert size={44} strokeWidth={1.5} /></div>
             <div style={{ fontSize: "1rem", fontWeight: 600 }}>خطا در بارگذاری رسانه‌ها</div>
             <button onClick={() => fetchBillboards(filters, page)} style={{ padding: "8px 20px", borderRadius: 8, fontSize: "0.82rem", border: "1px solid var(--border)", background: "none", color: "var(--accent)", fontFamily: "inherit", cursor: "pointer" }}>
               تلاش دوباره
@@ -500,7 +500,7 @@ export default function ExplorePage() {
           </div>
         ) : items.length === 0 ? (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, color: "var(--text-muted)", padding: 60 }}>
-            <div style={{ fontSize: "3rem" }}>🔍</div>
+            <div style={{ display: "flex" }}><SearchX size={44} strokeWidth={1.5} /></div>
             <div style={{ fontSize: "1rem", fontWeight: 600 }}>رسانه‌ای با این فیلترها یافت نشد</div>
             <button onClick={resetFilters} style={{ padding: "8px 20px", borderRadius: 8, fontSize: "0.82rem", border: "1px solid var(--border)", background: "none", color: "var(--accent)", fontFamily: "inherit", cursor: "pointer" }}>
               پاک کردن فیلترها
@@ -558,7 +558,7 @@ export default function ExplorePage() {
         <BookingModal
           billboard={bookingTarget}
           onClose={() => setBookingTarget(null)}
-          onSuccess={() => { setBookingTarget(null); showToast("✅ درخواست رزرو ثبت شد! می‌توانید وضعیت رزرو را در داشبورد پیگیری کنید.", "success"); }}
+          onSuccess={() => { setBookingTarget(null); showToast("درخواست رزرو ثبت شد! می‌توانید وضعیت رزرو را در داشبورد پیگیری کنید.", "success"); }}
         />
       )}
       {showCompareModal && compareList.length >= 2 && (

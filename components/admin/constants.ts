@@ -25,9 +25,6 @@ export const STATUS_COLOR: Record<string, [string, string]> = {
 export const TYPE_LABEL: Record<string, string> = {
   billboard: "بیلبورد", digital: "دیجیتال", bridge: "عرشه پل", station: "ایستگاه", vehicle: "وسیله",
 };
-export const TYPE_ICON: Record<string, string> = {
-  billboard: "🏙️", digital: "📺", bridge: "🌉", station: "🚇", vehicle: "🚌",
-};
 export const ROLE_LABEL: Record<string, string> = {
   super_admin: "سوپر ادمین", admin: "ادمین", editor: "ویرایشگر", viewer: "بیننده",
 };

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, X, Check, Lightbulb, CircleCheckBig, ArrowRight, ArrowLeft, ChevronLeft } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 
@@ -131,8 +131,8 @@ export default function ListMediaPage() {
       </div>
       {sel("تعداد وجوه","faces",["1","2","4","6"])}
       {inp("قیمت پایه ماهانه (میلیون تومان)","price","مثال: 85","number")}
-      {form.price && <div style={{background:"rgba(255,179,0,0.08)",border:"1px solid rgba(255,179,0,0.3)",borderRadius:8,padding:"10px 14px",fontSize:"0.8rem",color:"var(--accent-warm)"}}>
-        💡 قیمت هفتگی: ~{Math.round(+form.price/4)}M · سه‌ماهه (۱۰٪ تخفیف): ~{Math.round(+form.price*3*0.9)}M
+      {form.price && <div style={{background:"rgba(255,179,0,0.08)",border:"1px solid rgba(255,179,0,0.3)",borderRadius:8,padding:"10px 14px",fontSize:"0.8rem",color:"var(--accent-warm)",display:"flex",alignItems:"center",gap:7}}>
+        <Lightbulb size={14} style={{flexShrink:0}} /> قیمت هفتگی: ~{Math.round(+form.price/4)}M · سه‌ماهه (۱۰٪ تخفیف): ~{Math.round(+form.price*3*0.9)}M
       </div>}
     </div>,
     <div key={3}>
@@ -170,12 +170,12 @@ export default function ListMediaPage() {
           ))}
         </div>
       )}
-      <div style={{background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:8,padding:"10px 14px",fontSize:"0.78rem",color:"var(--green)"}}>
-        ✅ ثبت رسانه کاملاً رایگان است. پس از تأیید توسط تیم رسامپ (ظرف ۲۴ ساعت)، رسانه شما در سایت نمایش داده می‌شود.
+      <div style={{background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:8,padding:"10px 14px",fontSize:"0.78rem",color:"var(--green)",display:"flex",alignItems:"flex-start",gap:7}}>
+        <Check size={14} style={{flexShrink:0,marginTop:2}} /> ثبت رسانه کاملاً رایگان است. پس از تأیید توسط تیم رسامپ (ظرف ۲۴ ساعت)، رسانه شما در سایت نمایش داده می‌شود.
       </div>
     </div>,
     <div key={4} style={{textAlign:"center",padding:"20px 0"}}>
-      <div style={{fontSize:"3rem",marginBottom:16}}>🎉</div>
+      <div style={{display:"flex",justifyContent:"center",marginBottom:16,color:"var(--green)"}}><CircleCheckBig size={52} strokeWidth={1.5} /></div>
       <div style={{fontSize:"1.1rem",fontWeight:700,marginBottom:8}}>رسانه شما با موفقیت ثبت شد!</div>
       <div style={{fontSize:"0.82rem",color:"var(--text-muted)",marginBottom:24,lineHeight:1.8}}>
         تیم رسامپ درخواست شما را بررسی می‌کند.<br/>پس از تأیید، رسانه‌ی شما در سایت نمایش داده می‌شود.
@@ -189,8 +189,8 @@ export default function ListMediaPage() {
       <Topbar />
       <div style={{maxWidth:560,margin:"0 auto",padding:"86px 20px 40px"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>
-          <Link href="/" style={{color:"var(--text-muted)",textDecoration:"none",fontSize:"0.85rem"}}>← رسامپ</Link>
-          <span style={{color:"var(--border)"}}>›</span>
+          <Link href="/" style={{color:"var(--text-muted)",textDecoration:"none",fontSize:"0.85rem",display:"inline-flex",alignItems:"center",gap:4}}><ArrowRight size={13} /> رسامپ</Link>
+          <span style={{color:"var(--border)",display:"inline-flex"}}><ChevronLeft size={13} /></span>
           <span style={{fontSize:"0.85rem",fontWeight:600}}>ثبت رسانه رایگان</span>
         </div>
 
@@ -199,7 +199,7 @@ export default function ListMediaPage() {
           {steps.map((l,i)=>(
             <div key={l} style={{flex:1,textAlign:"center"}}>
               <div style={{width:28,height:28,borderRadius:"50%",margin:"0 auto 4px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.72rem",fontWeight:700,background:step>i?"var(--green)":step===i?"var(--accent)":"var(--bg-surface)",color:step>=i?"#fff":"var(--text-muted)",border:`1px solid ${step>=i?"transparent":"var(--border)"}`}}>
-                {step>i?"✓":i+1}
+                {step>i?<Check size={14} />:i+1}
               </div>
               <div style={{fontSize:"0.6rem",color:step===i?"var(--accent)":"var(--text-muted)"}}>{l}</div>
             </div>
@@ -221,12 +221,12 @@ export default function ListMediaPage() {
                 </div>
               )}
               <div style={{display:"flex",gap:8}}>
-                {step>0 && <button onClick={()=>{setError("");setStep(s=>s-1);}} style={{border:"1px solid var(--border)",background:"none",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.82rem",padding:"9px 18px",borderRadius:8,cursor:"pointer",flex:1}}>← قبلی</button>}
+                {step>0 && <button onClick={()=>{setError("");setStep(s=>s-1);}} style={{border:"1px solid var(--border)",background:"none",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.82rem",padding:"9px 18px",borderRadius:8,cursor:"pointer",flex:1,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><ArrowRight size={14} /> قبلی</button>}
                 <button
                   onClick={step===3 ? handleSubmit : goNext}
                   disabled={submitting}
-                  style={{background:submitting?"var(--border)":"var(--accent)",border:"none",color:"#fff",fontFamily:"inherit",fontSize:"0.85rem",fontWeight:700,padding:"9px 24px",borderRadius:8,cursor:submitting?"not-allowed":"pointer",flex:2,opacity:submitting?0.7:1}}>
-                  {submitting ? "در حال ثبت..." : step===3 ? "ثبت نهایی ✅" : "بعدی ←"}
+                  style={{background:submitting?"var(--border)":"var(--accent)",border:"none",color:"#fff",fontFamily:"inherit",fontSize:"0.85rem",fontWeight:700,padding:"9px 24px",borderRadius:8,cursor:submitting?"not-allowed":"pointer",flex:2,opacity:submitting?0.7:1,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  {submitting ? "در حال ثبت..." : step===3 ? <><Check size={15} /> ثبت نهایی</> : <>بعدی <ArrowLeft size={14} /></>}
                 </button>
               </div>
             </div>

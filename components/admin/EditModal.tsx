@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { Billboard } from "@/lib/types";
 import { C, TYPE_LABEL, STATUS_LABEL } from "./constants";
+import { Image as ImageIcon, X, MapPin, AlertTriangle } from "lucide-react";
 
 function parseGoogleMapsUrl(url: string): { lat: string; lng: string } | null {
   const patterns = [
@@ -82,8 +83,8 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: "1rem", fontWeight: 700 }}>ویرایش #{billboard.id}</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => onImageManager(billboard)} style={{ fontSize: "0.78rem", padding: "5px 12px", borderRadius: 7, background: "rgba(139,92,246,0.1)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.3)", cursor: "pointer", fontFamily: C.font }}>🖼 تصاویر</button>
-            <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: C.muted }}>✕</button>
+            <button onClick={() => onImageManager(billboard)} style={{ fontSize: "0.78rem", padding: "5px 12px", borderRadius: 7, background: "rgba(139,92,246,0.1)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.3)", cursor: "pointer", fontFamily: C.font, display: "inline-flex", alignItems: "center", gap: 5 }}><ImageIcon size={13} /> تصاویر</button>
+            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -98,7 +99,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
           <div><label style={lS}>آژانس</label><input style={iS} value={form.agency} onChange={set("agency")} /></div>
           <div><label style={lS}>تلفن</label><input style={iS} value={form.phone} onChange={set("phone")} /></div>
           <div style={{ gridColumn: "1/-1", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: 12 }}>
-            <div style={{ fontSize: "0.75rem", color: C.green, fontWeight: 700, marginBottom: 10 }}>📍 مختصات — ایران: lat ۲۴–۴۰ | lng ۴۴–۶۴</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.75rem", color: C.green, fontWeight: 700, marginBottom: 10 }}><MapPin size={13} /> مختصات — ایران: lat ۲۴–۴۰ | lng ۴۴–۶۴</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div><label style={lS}>عرض (lat)</label><input style={iS} value={form.lat} onChange={set("lat")} placeholder="35.6892" /></div>
               <div><label style={lS}>طول (lng)</label><input style={iS} value={form.lng} onChange={set("lng")} placeholder="51.3890" /></div>
@@ -127,7 +128,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
                 استخراج
               </button>
             </div>
-            {urlError && <div style={{ marginTop: 5, fontSize: "0.7rem", color: "#ef4444" }}>⚠ {urlError}</div>}
+            {urlError && <div style={{ marginTop: 5, fontSize: "0.7rem", color: "#ef4444", display: "flex", alignItems: "center", gap: 5 }}><AlertTriangle size={12} /> {urlError}</div>}
             <div style={{ marginTop: 6, fontSize: "0.68rem", color: C.muted, lineHeight: 1.6 }}>
               Google Maps را باز کنید ← روی نقطه راست‌کلیک کنید ← «چه چیزی اینجاست؟» ← URL صفحه را paste کنید
             </div>
@@ -154,15 +155,15 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
           </div>
           <div style={{ gridColumn: "1/-1" }}><label style={lS}>توضیحات</label><textarea style={{ ...iS, minHeight: 60, resize: "vertical" }} value={form.description} onChange={set("description")} /></div>
         </div>
-        {error && <div style={{ marginTop: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444" }}>⚠ {error}</div>}
+        {error && <div style={{ marginTop: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>}
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
           <button onClick={save} disabled={saving} style={{ flex: 1, background: C.accent, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.85rem", fontWeight: 700, padding: 11, borderRadius: 9, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
-            {saved ? "✓ ذخیره شد" : saving ? "⏳ در حال ذخیره..." : "ذخیره"}
+            {saved ? "ذخیره شد" : saving ? "در حال ذخیره..." : "ذخیره"}
           </button>
           <button onClick={onClose} style={{ padding: "11px 20px", background: "none", border: `1px solid ${C.border}`, color: C.muted, fontFamily: C.font, borderRadius: 9, cursor: "pointer" }}>انصراف</button>
         </div>
         <div style={{ marginTop: 12, padding: 10, background: "rgba(245,158,11,0.08)", borderRadius: 8, fontSize: "0.7rem", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
-          ⚠ هرگز مختصات اصلی اسکرپر یا آدرس/نام اصلی منبع را بازنویسی نکنید مگر اشتباه باشند.
+          <AlertTriangle size={12} style={{ verticalAlign: "-2px" }} /> هرگز مختصات اصلی اسکرپر یا آدرس/نام اصلی منبع را بازنویسی نکنید مگر اشتباه باشند.
         </div>
       </div>
     </div>

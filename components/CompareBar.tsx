@@ -1,6 +1,6 @@
 "use client";
 import { Billboard } from "@/lib/types";
-import { Scale, X } from "lucide-react";
+import { Scale, X, ArrowLeft } from "lucide-react";
 import { TypeIcon } from "@/components/TypeIcon";
 
 interface Props {
@@ -35,8 +35,8 @@ export default function CompareBar({ items, onRemove, onCompare, onClear }: Prop
 
       <div className="compare-bar-actions" style={{display:"flex",gap:8,flexShrink:0}}>
         <button onClick={onClear} style={{border:"1px solid var(--border)",background:"none",color:"var(--text-muted)",fontFamily:"inherit",fontSize:"0.78rem",padding:"7px 14px",borderRadius:8,cursor:"pointer"}}>پاک</button>
-        <button onClick={onCompare} disabled={items.length<2} style={{background:items.length<2?"var(--border)":"var(--accent-warm)",border:"none",color:items.length<2?"var(--text-muted)":"#111",fontFamily:"inherit",fontSize:"0.82rem",fontWeight:700,padding:"8px 20px",borderRadius:8,cursor:items.length<2?"not-allowed":"pointer",transition:"all 0.2s",whiteSpace:"nowrap"}}>
-          {items.length<2?"۱ رسانه دیگر":"مقایسه کن ←"}
+        <button onClick={onCompare} disabled={items.length<2} style={{background:items.length<2?"var(--border)":"var(--accent-warm)",border:"none",color:items.length<2?"var(--text-muted)":"#111",fontFamily:"inherit",fontSize:"0.82rem",fontWeight:700,padding:"8px 20px",borderRadius:8,cursor:items.length<2?"not-allowed":"pointer",transition:"all 0.2s",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          {items.length<2?"۱ رسانه دیگر":<>مقایسه کن <ArrowLeft size={14} /></>}
         </button>
       </div>
     </div>

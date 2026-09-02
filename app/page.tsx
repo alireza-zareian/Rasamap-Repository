@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Billboard, BillboardType } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
-import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Calendar, Monitor, Milestone, Train, Sun, Moon, User, Map, MapPin } from "lucide-react";
+import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Calendar, Monitor, Milestone, Train, Sun, Moon, User, Map, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 function toFa(n: number) {
   return n.toLocaleString("fa-IR");
@@ -229,8 +229,8 @@ export default function LandingPage() {
               </div>
 
               {/* Prev / Next */}
-              <button onClick={() => goGal(-1)} style={{ position: "absolute", top: "50%", right: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", fontSize: "1.2rem", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}>›</button>
-              <button onClick={() => goGal(1)} style={{ position: "absolute", top: "50%", left: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", fontSize: "1.2rem", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}>‹</button>
+              <button onClick={() => goGal(-1)} style={{ position: "absolute", top: "50%", right: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}><ChevronRight size={22} /></button>
+              <button onClick={() => goGal(1)} style={{ position: "absolute", top: "50%", left: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}><ChevronLeft size={22} /></button>
 
               {/* Dot indicators */}
               <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 20 }}>
@@ -244,8 +244,8 @@ export default function LandingPage() {
             <div style={{ display: "flex", gap: 16 }}>
               {[0, 1, 2, 3].map(i => (
                 <div key={i} style={{ flexShrink: 0, width: 280, aspectRatio: "3/4", borderRadius: 16, background: "var(--bg-card)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ textAlign: "center", color: "var(--text-muted)", opacity: 0.4 }}>
-                    <div style={{ fontSize: "2.5rem" }}>🏙️</div>
+                  <div style={{ textAlign: "center", color: "var(--text-muted)", opacity: 0.4, display: "flex" }}>
+                    <Building2 size={40} strokeWidth={1.4} />
                   </div>
                 </div>
               ))}

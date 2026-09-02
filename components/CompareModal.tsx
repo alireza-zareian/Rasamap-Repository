@@ -1,6 +1,7 @@
 "use client";
 import { Billboard, typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
+import { Scale, X, Star } from "lucide-react";
 
 interface Props {
   items: Billboard[];
@@ -26,7 +27,7 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
     ["قیمت سالانه (M ت)", b=>b.priceYearly, false],
     ["سن سازه (سال)", b=>b.age, false],
     ["امتیاز کاربران", b=>b.rating+` (${b.reviewCount})`, true],
-    ["وضعیت", b=>b.status==="available"?"✅ خالی":"🔴 مشغول", false],
+    ["وضعیت", b=>b.status==="available"?"خالی":"مشغول", false],
   ];
 
   const better = (row: typeof rows[0], val: Billboard) => {
@@ -45,8 +46,8 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
       <div onClick={e=>e.stopPropagation()} style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:16,width:"100%",maxWidth:680,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 32px 80px rgba(0,0,0,0.8)",animation:"fadeIn 0.25s ease"}}>
 
         <div style={{padding:"18px 22px 14px",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontSize:"1.05rem",fontWeight:700}}>⚖️ مقایسه رسانه‌ها</div>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"var(--text-muted)",fontSize:"1.3rem",cursor:"pointer"}}>✕</button>
+          <div style={{fontSize:"1.05rem",fontWeight:700,display:"flex",alignItems:"center",gap:7}}><Scale size={18} /> مقایسه رسانه‌ها</div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",display:"flex"}}><X size={18} /></button>
         </div>
 
         {/* Header row */}
@@ -69,8 +70,8 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
               {[a,b].map(board=>{
                 const isBetter = row[2] && better(row, board);
                 return (
-                  <div key={board.id} style={{textAlign:"center",fontSize:"0.85rem",fontWeight:isBetter?700:400,color:isBetter?"var(--green)":"var(--text-main)",background:isBetter?"rgba(34,197,94,0.06)":"transparent",borderRadius:6,padding:"4px 8px"}}>
-                    {isBetter && "★ "}{row[1](board)}
+                  <div key={board.id} style={{textAlign:"center",fontSize:"0.85rem",fontWeight:isBetter?700:400,color:isBetter?"var(--green)":"var(--text-main)",background:isBetter?"rgba(34,197,94,0.06)":"transparent",borderRadius:6,padding:"4px 8px",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                    {isBetter && <Star size={11} fill="currentColor" />}{row[1](board)}
                   </div>
                 );
               })}
@@ -78,8 +79,8 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
           ))}
         </div>
 
-        <div style={{fontSize:"0.68rem",color:"var(--text-muted)",padding:"8px 22px",textAlign:"center"}}>
-          ★ سبز = بهتر در این معیار
+        <div style={{fontSize:"0.68rem",color:"var(--text-muted)",padding:"8px 22px",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <Star size={11} fill="currentColor" /> سبز = بهتر در این معیار
         </div>
 
         {/* Footer */}

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Billboard } from "@/lib/types";
+import { X, Check, AlertTriangle, Info, ArrowRight, ArrowLeft } from "lucide-react";
 
 interface Props {
   billboard: Billboard | null;
@@ -92,7 +93,7 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
             <div style={{ fontSize: "1.05rem", fontWeight: 700 }}>رزرو آنلاین رسانه</div>
             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 2 }}>{b.name}</div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "1.3rem", cursor: "pointer" }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex" }}><X size={18} /></button>
         </div>
 
         {/* Steps */}
@@ -100,7 +101,7 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
           {["زمان‌بندی", "تأیید"].map((s, i) => (
             <div key={s} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
               <div style={{ width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, background: step > i + 1 ? "var(--green)" : step === i + 1 ? "var(--accent)" : "var(--bg-surface)", color: step >= i + 1 ? "#fff" : "var(--text-muted)", border: `1px solid ${step >= i + 1 ? "transparent" : "var(--border)"}` }}>
-                {step > i + 1 ? "✓" : i + 1}
+                {step > i + 1 ? <Check size={14} /> : i + 1}
               </div>
               <div style={{ fontSize: "0.68rem", color: step === i + 1 ? "var(--accent)" : "var(--text-muted)" }}>{s}</div>
             </div>
@@ -169,10 +170,10 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
                 </div>
               </div>
               {error && (
-                <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "10px 14px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 12 }}>⚠ {error}</div>
+                <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "10px 14px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>
               )}
               <div style={{ background: "rgba(59,123,245,0.06)", border: "1px solid rgba(59,123,245,0.25)", borderRadius: 8, padding: "12px 14px", fontSize: "0.78rem", lineHeight: 1.8 }}>
-                <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--accent)" }}>ℹ نحوه تأیید رزرو</div>
+                <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--accent)", display: "flex", alignItems: "center", gap: 6 }}><Info size={13} /> نحوه تأیید رزرو</div>
                 <div style={{ color: "var(--text-muted)" }}>
                   درخواست شما ثبت می‌شود و کارشناسان رسامپ برای هماهنگی با صاحب رسانه با شما تماس می‌گیرند.
                   رزرو نهایی پس از تأیید هر دو طرف اعمال می‌شود.
@@ -184,12 +185,12 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
 
         {/* Footer */}
         <div style={{ padding: "14px 22px", borderTop: "1px solid var(--border)", display: "flex", gap: 8 }}>
-          {step > 1 && <button onClick={() => setStep(s => s - 1)} style={{ border: "1px solid var(--border)", background: "none", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.82rem", padding: "9px 18px", borderRadius: 8, cursor: "pointer", flex: 1 }}>← قبلی</button>}
+          {step > 1 && <button onClick={() => setStep(s => s - 1)} style={{ border: "1px solid var(--border)", background: "none", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.82rem", padding: "9px 18px", borderRadius: 8, cursor: "pointer", flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}><ArrowRight size={14} /> قبلی</button>}
           <button onClick={onClose} style={{ border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", fontFamily: "inherit", fontSize: "0.82rem", padding: "9px 14px", borderRadius: 8, cursor: "pointer" }}>انصراف</button>
           {step < 2
-            ? <button onClick={() => setStep(s => s + 1)} disabled={!form.start} style={{ background: "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, padding: "9px 24px", borderRadius: 8, cursor: "pointer", flex: 2, opacity: !form.start ? 0.5 : 1 }}>بعدی ←</button>
-            : <button onClick={handleSubmit} disabled={loading} style={{ background: loading ? "var(--border)" : "var(--green)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, padding: "9px 24px", borderRadius: 8, cursor: loading ? "default" : "pointer", flex: 2 }}>
-                {loading ? "⏳ در حال ثبت..." : "✅ ثبت نهایی رزرو"}
+            ? <button onClick={() => setStep(s => s + 1)} disabled={!form.start} style={{ background: "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, padding: "9px 24px", borderRadius: 8, cursor: "pointer", flex: 2, opacity: !form.start ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}>بعدی <ArrowLeft size={14} /></button>
+            : <button onClick={handleSubmit} disabled={loading} style={{ background: loading ? "var(--border)" : "var(--green)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, padding: "9px 24px", borderRadius: 8, cursor: loading ? "default" : "pointer", flex: 2, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                {loading ? "در حال ثبت..." : <><Check size={15} /> ثبت نهایی رزرو</>}
               </button>
           }
         </div>

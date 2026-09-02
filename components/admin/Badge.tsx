@@ -6,12 +6,12 @@ export function Badge({ text, color, bg }: { text: string; color: string; bg: st
   );
 }
 
-export function StatCard({ icon, label, value, color, sub }: { icon: string; label: string; value: string | number; color: string; sub?: string }) {
+export function StatCard({ icon, label, value, color, sub }: { icon: React.ReactNode; label: string; value: string | number; color: string; sub?: string }) {
   const C = { card: "var(--bg-card)", border: "var(--border)", muted: "var(--text-muted)" };
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "18px 20px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-        <span style={{ fontSize: "1.4rem" }}>{icon}</span>
+        <span style={{ display: "flex", color }}>{icon}</span>
         <span style={{ fontSize: "0.72rem", color: C.muted }}>{label}</span>
       </div>
       <div style={{ fontSize: "1.6rem", fontWeight: 800, color }}>{value}</div>

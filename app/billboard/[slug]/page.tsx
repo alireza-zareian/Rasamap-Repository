@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ruler, Square, Layers, MapPin } from "lucide-react";
+import { Ruler, Square, Layers, MapPin, Check } from "lucide-react";
 import { getBillboardBySlug } from "@/lib/db/billboards";
 import BillboardGallery from "@/components/BillboardGallery";
 import ShareButton from "@/components/ShareButton";
@@ -87,7 +87,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
             <div style={{ fontSize: "0.76rem", color: "var(--text-muted)", marginBottom: 10, textAlign: "right" }}>{b.location}</div>
 
             {/* Image — full width, right up under the title */}
-            <BillboardGallery images={allImgs} name={b.name} icon={b.icon} />
+            <BillboardGallery images={allImgs} name={b.name} />
 
             {/* Specs chips — below image, Lucide icons */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
@@ -158,7 +158,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                 <div style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: 12 }}>ویژگی‌ها</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {b.features.map((f, i) => (
-                    <span key={i} style={{ background: "rgba(255,77,0,0.07)", color: "var(--accent)", border: "1px solid rgba(255,77,0,0.2)", padding: "4px 12px", borderRadius: 20, fontSize: "0.75rem" }}>✓ {f}</span>
+                    <span key={i} style={{ background: "rgba(255,77,0,0.07)", color: "var(--accent)", border: "1px solid rgba(255,77,0,0.2)", padding: "4px 12px", borderRadius: 20, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: 5 }}><Check size={12} /> {f}</span>
                   ))}
                 </div>
               </div>
@@ -170,7 +170,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                 <div style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: 12 }}>مکان‌های اطراف</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {b.nearbyLandmarks.map((lm, i) => (
-                    <span key={i} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", padding: "4px 12px", borderRadius: 20, fontSize: "0.75rem", color: "var(--text-muted)" }}>📍 {lm}</span>
+                    <span key={i} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", padding: "4px 12px", borderRadius: 20, fontSize: "0.75rem", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 5 }}><MapPin size={12} /> {lm}</span>
                   ))}
                 </div>
               </div>

@@ -2,7 +2,7 @@
 import { useState, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Lock, AlertTriangle, ArrowRight } from "lucide-react";
 
 // Persian/Arabic digits → Latin digits
 const toLatin = (v: string) =>
@@ -96,8 +96,8 @@ function LoginForm() {
 
         {/* Card */}
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.4)" }}>
-          <div style={{ background: "rgba(59,123,245,0.06)", borderBottom: `1px solid ${C.border}`, padding: "14px 24px", fontSize: "0.82rem", fontWeight: 700, color: C.accent }}>
-            🔐 ورود به پنل مدیریت
+          <div style={{ background: "rgba(59,123,245,0.06)", borderBottom: `1px solid ${C.border}`, padding: "14px 24px", fontSize: "0.82rem", fontWeight: 700, color: C.accent, display: "flex", alignItems: "center", gap: 7 }}>
+            <Lock size={15} /> ورود به پنل مدیریت
           </div>
 
           <form onSubmit={handleSubmit} style={{ padding: "24px" }}>
@@ -144,23 +144,23 @@ function LoginForm() {
             </div>
 
             {error && (
-              <div style={{ background: "rgba(239,68,68,0.1)", border: `1px solid rgba(239,68,68,0.3)`, borderRadius: 8, padding: "10px 12px", fontSize: "0.78rem", color: C.red, marginBottom: 14 }}>
-                {locked ? `🔒 ${error} (${retryIn}s)` : `⚠ ${error}`}
+              <div style={{ background: "rgba(239,68,68,0.1)", border: `1px solid rgba(239,68,68,0.3)`, borderRadius: 8, padding: "10px 12px", fontSize: "0.78rem", color: C.red, marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
+                {locked ? <><Lock size={13} /> {error} ({retryIn}s)</> : <><AlertTriangle size={13} /> {error}</>}
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading || locked || !email || !password}
-              style={{ width: "100%", background: loading || locked ? "var(--border)" : C.accent, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading || locked ? "not-allowed" : "pointer", boxShadow: "0 4px 16px rgba(59,123,245,0.3)", transition: "all 0.2s" }}
+              style={{ width: "100%", background: loading || locked ? "var(--border)" : C.accent, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading || locked ? "not-allowed" : "pointer", boxShadow: "0 4px 16px rgba(59,123,245,0.3)", transition: "all 0.2s", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}
             >
-              {loading ? "⏳ در حال ورود..." : locked ? `🔒 قفل شده (${retryIn}s)` : "ورود به سیستم"}
+              {loading ? "در حال ورود..." : locked ? <><Lock size={15} /> قفل شده ({retryIn}s)</> : "ورود به سیستم"}
             </button>
           </form>
         </div>
 
         <div style={{ textAlign: "center", marginTop: 16 }}>
-          <Link href="/" style={{ color: C.muted, fontSize: "0.78rem", textDecoration: "none" }}>← بازگشت به سایت</Link>
+          <Link href="/" style={{ color: C.muted, fontSize: "0.78rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}><ArrowRight size={13} /> بازگشت به سایت</Link>
         </div>
       </div>
     </div>

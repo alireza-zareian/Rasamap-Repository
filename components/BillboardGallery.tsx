@@ -1,13 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { ImageOff, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
   images: string[];
   name: string;
-  icon?: string;
 }
 
-export default function BillboardGallery({ images, name, icon }: Props) {
+export default function BillboardGallery({ images, name }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(false);
 
@@ -27,8 +27,8 @@ export default function BillboardGallery({ images, name, icon }: Props) {
 
   if (!images.length) {
     return (
-      <div style={{ width: "100%", aspectRatio: "16/9", background: "var(--bg-surface)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3rem", border: "1px solid var(--border)" }}>
-        {icon ?? "🏙️"}
+      <div style={{ width: "100%", aspectRatio: "16/9", background: "var(--bg-surface)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+        <ImageOff size={48} strokeWidth={1.4} />
       </div>
     );
   }
@@ -47,7 +47,7 @@ export default function BillboardGallery({ images, name, icon }: Props) {
             {active + 1} / {images.length}
           </div>
         )}
-        <div style={{ position: "absolute", bottom: 12, right: 12, background: "rgba(0,0,0,0.55)", borderRadius: 8, padding: "4px 10px", fontSize: "0.7rem", color: "#fff", backdropFilter: "blur(4px)" }}>🔍 بزرگ‌نمایی</div>
+        <div style={{ position: "absolute", bottom: 12, right: 12, background: "rgba(0,0,0,0.55)", borderRadius: 8, padding: "4px 10px", fontSize: "0.7rem", color: "#fff", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: 5 }}><Search size={12} /> بزرگ‌نمایی</div>
       </div>
 
       {/* Thumbnails */}
@@ -77,11 +77,11 @@ export default function BillboardGallery({ images, name, icon }: Props) {
             <img src={images[active]} alt={name} style={{ width: "90vw", maxHeight: "88vh", objectFit: "contain", borderRadius: 12, display: "block" }} />
             {images.length > 1 && (
               <>
-                <button onClick={prev} style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", fontSize: "1.2rem", cursor: "pointer" }}>›</button>
-                <button onClick={next} style={{ position: "absolute", top: "50%", left: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", fontSize: "1.2rem", cursor: "pointer" }}>‹</button>
+                <button onClick={prev} style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={22} /></button>
+                <button onClick={next} style={{ position: "absolute", top: "50%", left: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronLeft size={22} /></button>
               </>
             )}
-            <button onClick={() => setLightbox(false)} style={{ position: "absolute", top: -16, left: -16, background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", fontSize: "1rem", cursor: "pointer", lineHeight: 1 }}>✕</button>
+            <button onClick={() => setLightbox(false)} style={{ position: "absolute", top: -16, left: -16, background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>
             <div style={{ position: "absolute", bottom: -28, left: "50%", transform: "translateX(-50%)", fontSize: "0.72rem", color: "rgba(255,255,255,0.6)" }}>{active + 1} / {images.length}</div>
           </div>
         </div>

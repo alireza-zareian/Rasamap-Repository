@@ -1,6 +1,7 @@
 import type { Billboard } from "@/lib/types";
 import { C } from "./constants";
 import { Badge } from "./Badge";
+import { ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export function QualityPanel({ billboards }: { billboards: Billboard[] }) {
   const warnings: { id: number | string; name: string; issues: string[]; sev: "high" | "medium" | "low" }[] = [];
@@ -21,14 +22,14 @@ export function QualityPanel({ billboards }: { billboards: Billboard[] }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div style={{ fontSize: "0.9rem", fontWeight: 700 }}>🔍 کنترل کیفیت</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><ShieldCheck size={16} /> کنترل کیفیت</div>
         <div style={{ display: "flex", gap: 8 }}>
           {warnings.filter(w => w.sev === "high").length > 0 && <Badge text={`${warnings.filter(w => w.sev === "high").length} بحرانی`} color="#ef4444" bg="rgba(239,68,68,0.1)" />}
           <Badge text={`${warnings.length} مورد`} color={warnings.length > 0 ? "#f59e0b" : C.green} bg={warnings.length > 0 ? "rgba(245,158,11,0.1)" : "rgba(34,197,94,0.1)"} />
         </div>
       </div>
       {warnings.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 0", color: C.muted }}>✅ هیچ مشکلی یافت نشد</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "40px 0", color: C.muted }}><CheckCircle2 size={16} /> هیچ مشکلی یافت نشد</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {sorted.slice(0, 100).map(w => (

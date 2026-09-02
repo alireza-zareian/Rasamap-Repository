@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Billboard, typeLabels } from "@/lib/types";
-import { Scale, Megaphone, Monitor, Milestone, Train, Bus } from "lucide-react";
+import { Scale, Megaphone, Monitor, Milestone, Train, Bus, Star } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 
 const TYPE_THEMES: Record<string, { grad: string; ring: string; glow: string }> = {
@@ -163,8 +163,8 @@ export default function BillboardCard({
           {statusLabel}
         </div>
         {/* Rating */}
-        <div style={{ position: "absolute", bottom: 8, right: 8, background: dark ? "rgba(10,14,26,0.78)" : "rgba(255,255,255,0.82)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: "0.68rem", color: "var(--accent-warm)", backdropFilter: "blur(4px)" }}>
-          ★ {b.rating} ({b.reviewCount})
+        <div style={{ position: "absolute", bottom: 8, right: 8, background: dark ? "rgba(10,14,26,0.78)" : "rgba(255,255,255,0.82)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: "0.68rem", color: "var(--accent-warm)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: 4 }}>
+          <Star size={11} fill="currentColor" /> {b.rating} ({b.reviewCount})
         </div>
       </div>
 

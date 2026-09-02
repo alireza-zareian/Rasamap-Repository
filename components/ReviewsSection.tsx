@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Star, MessageSquare, Send } from "lucide-react";
+import { Star, MessageSquare, Send, Check } from "lucide-react";
 
 interface Review {
   id: number;
@@ -16,22 +16,25 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
   const [hover, setHover] = useState(0);
   return (
     <div style={{ display: "flex", gap: 4 }}>
-      {[1,2,3,4,5].map(n => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange?.(n)}
-          onMouseEnter={() => onChange && setHover(n)}
-          onMouseLeave={() => onChange && setHover(0)}
-          style={{
-            background: "none", border: "none", cursor: onChange ? "pointer" : "default", padding: 0,
-            color: n <= (hover || value) ? "#f59e0b" : "var(--border)",
-            fontSize: "1.1rem", lineHeight: 1,
-          }}
-        >
-          ★
-        </button>
-      ))}
+      {[1,2,3,4,5].map(n => {
+        const active = n <= (hover || value);
+        return (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange?.(n)}
+            onMouseEnter={() => onChange && setHover(n)}
+            onMouseLeave={() => onChange && setHover(0)}
+            style={{
+              background: "none", border: "none", cursor: onChange ? "pointer" : "default", padding: 0,
+              color: active ? "#f59e0b" : "var(--border)",
+              lineHeight: 1, display: "flex",
+            }}
+          >
+            <Star size={17} fill={active ? "currentColor" : "none"} />
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -126,8 +129,8 @@ export default function ReviewsSection({ billboardId }: Props) {
       )}
 
       {success && (
-        <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, padding: "12px 16px", fontSize: "0.82rem", color: "var(--green)", marginBottom: 16 }}>
-          نظر شما با موفقیت ثبت شد ✓
+        <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, padding: "12px 16px", fontSize: "0.82rem", color: "var(--green)", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
+          <Check size={15} /> نظر شما با موفقیت ثبت شد
         </div>
       )}
 
