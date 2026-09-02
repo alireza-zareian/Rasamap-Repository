@@ -48,6 +48,23 @@ test("GET /api/billboards/[slug] is 400 for a malformed slug", async () => {
   assert.equal(status, 400);
 });
 
+test("GET /api/billboards/[slug] never includes the owner phone", async () => {
+  const { json } = await api("/api/billboards/valiasr-tower");
+  assert.equal(json.billboard.phone, undefined);
+});
+
+test("GET /api/billboards/[slug]/contact is 401 without a session", async () => {
+  const { status } = await api("/api/billboards/valiasr-tower/contact");
+  assert.equal(status, 401);
+});
+
+test("GET /api/billboards/[slug]/contact returns the phone to a signed-in user", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status, json } = await api("/api/billboards/valiasr-tower/contact", { token });
+  assert.equal(status, 200);
+  assert.equal(typeof json.phone, "string");
+});
+
 test("GET /api/billboards/pins returns an array", async () => {
   const { status, json } = await api("/api/billboards/pins");
   assert.equal(status, 200);

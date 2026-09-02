@@ -39,8 +39,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BillboardPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const b = await getBillboardBySlug(slug);
-  if (!b) notFound();
+  const raw = await getBillboardBySlug(slug);
+  if (!raw) notFound();
+
+  // The owner/agency phone must never reach the client (it would end up in the
+  // page HTML / RSC payload). Keep only whether one exists; the number itself
+  // is served by GET /api/billboards/[slug]/contact to signed-in users.
+  const phoneAvailable = !!(raw.phone && raw.phone !== "—" && raw.phone.trim());
+  const b = { ...raw, phone: "" };
 
   const allImgs: string[] = [
     ...(b.images ?? []),
@@ -210,7 +216,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                 {/* Contact info — the phone number is fetched from an authed
                     endpoint only when a signed-in user asks for it; it is never
                     embedded in the page. */}
-                <BillboardContact hasPhone={!!(b.phone && b.phone !== "—" && b.phone.trim())} agency={b.agency} slug={b.slug} />
+                <BillboardContact hasPhone={phoneAvailable} agency={b.agency} slug={b.slug} />
               </div>
 
               {/* Source badge */}
