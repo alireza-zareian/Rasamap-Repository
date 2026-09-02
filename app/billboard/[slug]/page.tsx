@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ruler, Square, Layers, MapPin, Check } from "lucide-react";
+import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink } from "lucide-react";
 import { getBillboardBySlug } from "@/lib/db/billboards";
 import BillboardGallery from "@/components/BillboardGallery";
 import ShareButton from "@/components/ShareButton";
@@ -209,8 +209,8 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
 
                 <BillboardBookingCTA billboard={b} />
 
-                <Link href="/explore" style={{ display: "block", textAlign: "center", textDecoration: "none", color: "var(--text-muted)", fontSize: "0.78rem", padding: "6px" }}>
-                  ← بازگشت به جستجو
+                <Link href="/explore" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, textDecoration: "none", color: "var(--text-muted)", fontSize: "0.78rem", padding: "6px" }}>
+                  <ArrowRight size={13} /> بازگشت به جستجو
                 </Link>
 
                 {/* Contact info — the phone number is fetched from an authed
@@ -232,7 +232,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               <div style={{ marginTop: 12, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
                 <div style={{ padding: "8px 14px", fontSize: "0.75rem", fontWeight: 700, borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span>موقعیت</span>
-                  <a href={`https://www.google.com/maps?q=${b.lat},${b.lng}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none" }}>Google Maps ↗</a>
+                  <a href={`https://www.google.com/maps?q=${b.lat},${b.lng}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>گوگل مپ <ExternalLink size={11} /></a>
                 </div>
                 <iframe
                   src={`https://maps.google.com/maps?q=${b.lat},${b.lng}&z=15&output=embed&hl=fa`}

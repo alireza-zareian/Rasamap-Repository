@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { Billboard } from "@/lib/types";
 import { C, TYPE_LABEL, STATUS_LABEL } from "./constants";
-import { Image as ImageIcon, X, MapPin, AlertTriangle } from "lucide-react";
+import { Image as ImageIcon, X, MapPin, AlertTriangle, ExternalLink } from "lucide-react";
 
 function parseGoogleMapsUrl(url: string): { lat: string; lng: string } | null {
   const patterns = [
@@ -130,7 +130,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
             </div>
             {urlError && <div style={{ marginTop: 5, fontSize: "0.7rem", color: "#ef4444", display: "flex", alignItems: "center", gap: 5 }}><AlertTriangle size={12} /> {urlError}</div>}
             <div style={{ marginTop: 6, fontSize: "0.68rem", color: C.muted, lineHeight: 1.6 }}>
-              Google Maps را باز کنید ← روی نقطه راست‌کلیک کنید ← «چه چیزی اینجاست؟» ← URL صفحه را paste کنید
+              گوگل مپ را باز کنید، روی نقطه راست‌کلیک کنید، گزینهٔ نمایش مختصات را بزنید و نشانی صفحه را همین‌جا بچسبانید.
             </div>
             {form.lat && form.lng && parseFloat(form.lat) >= 24 && parseFloat(form.lng) >= 44 && (
               <div style={{ marginTop: 10 }}>
@@ -147,7 +147,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
                   />
                 </div>
                 <div style={{ marginTop: 6, fontSize: "0.68rem", display: "flex", gap: 12 }}>
-                  <a href={`https://www.google.com/maps?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>↗ باز در Google Maps</a>
+                  <a href={`https://www.google.com/maps?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer" style={{ color: C.accent, display: "inline-flex", alignItems: "center", gap: 4 }}><ExternalLink size={11} /> باز کردن در گوگل مپ</a>
                   <span style={{ color: C.muted }}>lat: {form.lat} | lng: {form.lng}</span>
                 </div>
               </div>

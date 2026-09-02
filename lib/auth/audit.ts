@@ -20,6 +20,8 @@ export type AuditAction =
   | "scraper_trigger"
   | "geocode_trigger"
   | "admin_access"
+  | "admin_user_create"
+  | "admin_user_update"
   | "rate_limit_hit"
   | "auth_bypass_attempt";
 
