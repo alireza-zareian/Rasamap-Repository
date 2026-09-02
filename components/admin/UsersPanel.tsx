@@ -4,6 +4,7 @@ import type { UserRole } from "@/lib/auth/session";
 import { C, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
 import { Users, ShieldCheck, Plus, X, AlertTriangle, Search } from "lucide-react";
+import { CustomerModal } from "./CustomerModal";
 
 interface SessionUser { id: string; name: string; role: UserRole; email: string; }
 
@@ -206,6 +207,7 @@ function CustomersSection() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [openId, setOpenId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -277,8 +279,8 @@ function CustomersSection() {
             </thead>
             <tbody>
               {rows.map(u => (
-                <tr key={u.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <td style={{ padding: "12px 14px", fontSize: "0.85rem", fontWeight: 600 }}>{u.name}</td>
+                <tr key={u.id} onClick={() => setOpenId(u.id)} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
+                  <td style={{ padding: "12px 14px", fontSize: "0.85rem", fontWeight: 600, color: C.accent }}>{u.name}</td>
                   <td style={{ padding: "12px 14px", fontSize: "0.8rem", color: C.muted, direction: "ltr", textAlign: "right" }}>{u.phone}</td>
                   <td style={{ padding: "12px 14px", fontSize: "0.75rem", color: C.muted }}>{fmt(u.createdAt)}</td>
                   <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{u.reservationCount.toLocaleString("fa-IR")}</td>
@@ -296,6 +298,10 @@ function CustomersSection() {
           <span style={{ padding: "7px 14px", fontSize: "0.78rem", color: C.muted }}>{page.toLocaleString("fa-IR")} / {pages.toLocaleString("fa-IR")}</span>
           <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: page === pages ? "not-allowed" : "pointer" }}>بعدی</button>
         </div>
+      )}
+
+      {openId != null && (
+        <CustomerModal userId={openId} onClose={() => setOpenId(null)} onSaved={load} />
       )}
     </div>
   );

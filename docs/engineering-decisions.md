@@ -254,6 +254,49 @@ about the body, query string, headers, or user beyond an id.
 appears in the log. `api_request` lines confirmed for GET and POST, including a
 401 login (`{"msg":"api_request","route":"auth/login","status":401,...}`).
 
+### 7a. Why not Docker / a real log stack yet — and the path to it
+
+**The question a reviewer asks.** "Serious systems ship logs to Docker /
+journald / ELK / Loki / CloudWatch. Why does this project write JSON lines to
+stdout and one SQLite table?"
+
+**Answer — same model, smaller footprint.** A production log pipeline has three
+parts: (1) the app emits **structured lines**, (2) the runtime **captures**
+them (a container's stdout, a systemd unit's journal), (3) a **shipper/store**
+indexes them for search and alerting. This project already does (1) properly —
+one JSON object per line, one `api_request` per request, one `rate_limit_hit`
+per lockout, audit rows for every admin mutation. (2) and (3) are
+**deployment concerns, not code**: the moment this runs in a container,
+`docker logs` *is* the capture layer, and pointing Promtail→Loki or Fluent
+Bit→Elasticsearch at that stream needs zero application change — the log
+*format* was designed for exactly that hand-off. Adding a hosted logging SDK
+now (Sentry, Datadog, Better Stack) would mean a paid, region-blocked
+dependency for a single-instance thesis demo — explicitly out of scope — and
+would not teach anything the stdout+file approach doesn't.
+
+**What is deliberately kept in-app.** The `audit_logs` **table** is not
+"logging" in the pipeline sense — it is a business record ("who confirmed this
+reservation", "who reset this user's password") that must survive a restart,
+be queryable from the admin UI, and be reasoned about like domain data. That
+belongs in the database regardless of what the log pipeline looks like. This
+mirrors the Django reference project's dedicated `statuslog` app.
+
+**The path to "real" infra, when it's warranted.**
+1. **Containerise.** stdout is already the log surface; `docker logs` / the
+   orchestrator captures it. Set `LOG_DIR` to a mounted volume if a file copy
+   is also wanted.
+2. **Ship.** Add a sidecar/agent (Promtail, Fluent Bit, Vector) that tails
+   stdout or `app.log` and pushes to Loki / Elasticsearch / OpenSearch —
+   self-hostable, no code change.
+3. **Correlate.** The per-request `ref` id and `route`/`status`/`ms` fields are
+   already the query keys; build dashboards and alert rules on them.
+4. **Scale the rate limiter with it.** The in-memory limiter (§4) becomes
+   Redis-backed at the same time multi-instance arrives; its `rate_limit_hit`
+   events then aggregate across nodes in the same store.
+
+None of this changes a line of handler code — which is the point of emitting
+structured logs from day one.
+
 ---
 
 ## 8. Audit trail for sensitive actions

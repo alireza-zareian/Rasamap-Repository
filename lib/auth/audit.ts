@@ -22,6 +22,8 @@ export type AuditAction =
   | "admin_access"
   | "admin_user_create"
   | "admin_user_update"
+  | "customer_update"
+  | "customer_password_reset"
   | "rate_limit_hit"
   | "auth_bypass_attempt";
 

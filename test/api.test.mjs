@@ -401,6 +401,54 @@ test("GET /api/admin/customers returns a paginated directory for an admin", asyn
   }
 });
 
+test("GET /api/admin/customers/[id] returns the user with reservations; hash never leaks", async () => {
+  const token = await mintSession({ role: "admin", userId: "1" });
+  const { status, json } = await api("/api/admin/customers/1", { token });
+  assert.equal(status, 200);
+  assert.equal(json.user.id, 1);
+  assert.ok(Array.isArray(json.user.reservations));
+  assert.ok(!("passwordHash" in json.user));
+});
+
+test("GET /api/admin/customers/[id] is 404 for an unknown user", async () => {
+  const token = await mintSession({ role: "admin", userId: "1" });
+  const { status } = await api("/api/admin/customers/999999", { token });
+  assert.equal(status, 404);
+});
+
+test("PATCH /api/admin/customers/[id] edits the name and audits it", async () => {
+  const token = await mintSession({ role: "admin", userId: "1" });
+  const patched = await api("/api/admin/customers/2", {
+    method: "PATCH", token, body: { name: "Sara Renamed" },
+  });
+  assert.equal(patched.status, 200, JSON.stringify(patched.json));
+  assert.equal(patched.json.user.name, "Sara Renamed");
+
+  const audit = await api("/api/admin/audit", { token });
+  assert.ok(audit.json.persisted.some((r) => r.action === "customer_update"));
+});
+
+test("POST /api/admin/customers/[id]/reset-password returns a fresh password (never the old one)", async () => {
+  const token = await mintSession({ role: "admin", userId: "1" });
+  const res = await api("/api/admin/customers/1/reset-password", { method: "POST", token });
+  assert.equal(res.status, 200, JSON.stringify(res.json));
+  assert.equal(typeof res.json.password, "string");
+  assert.ok(res.json.password.length >= 8);
+
+  const audit = await api("/api/admin/audit", { token });
+  assert.ok(audit.json.persisted.some((r) => r.action === "customer_password_reset"));
+});
+
+test("customer routes are 403 for role 'viewer'", async () => {
+  const token = await mintSession({ role: "viewer", userId: "1" });
+  const a = await api("/api/admin/customers/1", { token });
+  const b = await api("/api/admin/customers/1", { method: "PATCH", token, body: { name: "x" } });
+  const c = await api("/api/admin/customers/1/reset-password", { method: "POST", token });
+  assert.equal(a.status, 403);
+  assert.equal(b.status, 403);
+  assert.equal(c.status, 403);
+});
+
 // ── Rate limiting — reservations ──────────────────────────────────
 
 test("a rate-limited reservation POST returns 429 with Retry-After and a Persian wait message", async () => {

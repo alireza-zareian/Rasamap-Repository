@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { C } from "./constants";
 import type { UserRole } from "@/lib/auth/session";
 import { MapPin, User, Calendar, Coins, Check, X, SlidersHorizontal } from "lucide-react";
+import { CustomerModal } from "./CustomerModal";
 
 interface ReservationRow {
   id:        number;
@@ -40,8 +41,10 @@ export function ReservationsPanel({ userRole, onOpenBillboard }: Props) {
   const [loading, setLoading] = useState(false);
   const [acting, setActing]   = useState<number | null>(null);
   const [error, setError]     = useState("");
+  const [customerId, setCustomerId] = useState<number | null>(null);
 
   const canManage = ["super_admin", "admin"].includes(userRole);
+  const canOpenCustomer = ["super_admin", "admin"].includes(userRole);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -135,7 +138,13 @@ export function ReservationsPanel({ userRole, onOpenBillboard }: Props) {
                   )}
                   <div style={{ fontSize: "0.78rem", color: C.muted, display: "flex", gap: 16, flexWrap: "wrap" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {r.billboard.city}</span>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><User size={12} /> {r.user.name} · {r.user.phone}</span>
+                    {canOpenCustomer ? (
+                      <button onClick={() => setCustomerId(r.user.id)} title="مشاهده مشخصات کاربر" style={{ background: "none", border: "none", padding: 0, fontFamily: C.font, fontSize: "inherit", color: C.accent, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <User size={12} /> {r.user.name} · {r.user.phone}
+                      </button>
+                    ) : (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><User size={12} /> {r.user.name} · {r.user.phone}</span>
+                    )}
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Calendar size={12} /> {fmt(r.startDate)} — {fmt(r.endDate)}</span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Coins size={12} /> {r.billboard.price.toLocaleString("fa-IR")}M/ماه</span>
                   </div>
@@ -174,6 +183,10 @@ export function ReservationsPanel({ userRole, onOpenBillboard }: Props) {
           <span style={{ padding: "7px 14px", fontSize: "0.78rem", color: C.muted }}>{page} / {pages}</span>
           <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: page === pages ? "not-allowed" : "pointer" }}>بعدی →</button>
         </div>
+      )}
+
+      {customerId != null && (
+        <CustomerModal userId={customerId} onClose={() => setCustomerId(null)} />
       )}
     </div>
   );
