@@ -89,10 +89,13 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 | GET | `/api/admin/reservations` | admin | All reservations for the management panel. |
 | PATCH | `/api/admin/reservations/[id]` | admin | Update a reservation `status` (`confirmed` / `cancelled`). Writes a `reservation_status_change` row to the durable audit log. |
 | GET | `/api/admin/customers` | admin+ | Registered end-user directory. Query: `q` (name/phone), `page`, `limit` (≤100), `sort` (`created_desc` \| `created_asc` \| `name_asc`). Returns `{ users: [{id,name,phone,createdAt,reservationCount,reviewCount}], total, page, pages }`. `no-store`. Never returns the password hash. |
+| GET | `/api/admin/customers/[id]` | admin+ | One user + their last 50 reservations + reservation/review counts. `no-store`. Never returns the password hash. |
+| PATCH | `/api/admin/customers/[id]` | admin+ | Edit `name` and/or `phone` (phone must be a valid `09xxxxxxxxx` and unique → 409). Writes `customer_update`. |
+| POST | `/api/admin/customers/[id]/reset-password` | admin+ | Set a new password. Optional body `{ password }` (≥8); omitted → a readable random one is generated and returned **once** as `{ password }`. An existing password can never be read back (bcrypt). Writes `customer_password_reset`. |
 | GET | `/api/admin/users` | super_admin | List admin accounts (`{ admins, currentId }`). `no-store`. |
 | POST | `/api/admin/users` | super_admin | Create an admin. Body (Zod): `email`, `name`, `role` (`viewer\|editor\|admin\|super_admin`), `password` (≥8). 409 on a duplicate email. Writes `admin_user_create`. |
 | PATCH | `/api/admin/users/[id]` | super_admin | Change `role` and/or `active`. 409 if the id is your own account. Writes `admin_user_update`. |
-| GET | `/api/admin/audit` | admin+ | Returns `{ logs, persisted }` — `logs` is the in-memory ring buffer (last 500), `persisted` is the durable `audit_logs` table (last 200, survives restart). Persisted actions: `billboard_create` / `billboard_update` / `billboard_delete` / `reservation_status_change` / `admin_user_create` / `admin_user_update`, each with actor email + IP + a `details` object. |
+| GET | `/api/admin/audit` | admin+ | Returns `{ logs, persisted }` — `logs` is the in-memory ring buffer (last 500), `persisted` is the durable `audit_logs` table (last 200, survives restart). Persisted actions: `billboard_create` / `billboard_update` / `billboard_delete` / `reservation_status_change` / `admin_user_create` / `admin_user_update` / `customer_update` / `customer_password_reset` / `rate_limit_hit` (one per lockout), each with actor email + IP + a `details` object. |
 
 ---
 
