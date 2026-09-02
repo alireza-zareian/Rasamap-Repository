@@ -48,7 +48,7 @@ export function AuditPanel() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><ScrollText size={16} /> لاگ‌های امنیتی</div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {tab("persisted", "پایدار (دیتابیس)", persisted.length)}
           {tab("live", "زنده (حافظه)", logs.length)}
         </div>
@@ -68,13 +68,13 @@ export function AuditPanel() {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {rows.map(row => (
             <div key={String(row.id)} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0, maxWidth: "100%" }}>
                 <Badge text={row.severity.toUpperCase()} color={sevC[row.severity] ?? C.muted} bg={`${sevC[row.severity] ?? C.muted}18`} />
-                <span style={{ fontSize: "0.8rem", fontWeight: 600, fontFamily: "monospace" }}>{row.action}</span>
-                {row.userEmail && <span style={{ fontSize: "0.75rem", color: C.muted }}>{row.userEmail}</span>}
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, fontFamily: "monospace", overflowWrap: "anywhere" }}>{row.action}</span>
+                {row.userEmail && <span style={{ fontSize: "0.75rem", color: C.muted, overflowWrap: "anywhere" }}>{row.userEmail}</span>}
                 {row.ip && <span style={{ fontSize: "0.72rem", color: C.muted }}>IP: {row.ip}</span>}
                 {view === "persisted" && row.details != null && (
-                  <span style={{ fontSize: "0.7rem", color: C.muted, fontFamily: "monospace" }}>
+                  <span style={{ fontSize: "0.7rem", color: C.muted, fontFamily: "monospace", overflowWrap: "anywhere", minWidth: 0 }}>
                     {typeof row.details === "string" ? row.details : JSON.stringify(row.details)}
                   </span>
                 )}

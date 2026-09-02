@@ -328,6 +328,18 @@ button, a, input, select, label,
   .admin-sidebar button { display: inline-block !important; width: auto !important; }
   .admin-3col { grid-template-columns: 1fr !important; }
 
+  /* Admin topbar: the logo row + role badge + name + logout don't fit a phone
+     width and the right group runs off the card. Tighten padding, drop the
+     "پنل مدیریت" sub-label and divider, and let the admin name ellipsize so
+     the badge and logout button always stay on-screen. */
+  .admin-topbar { padding: 0 12px !important; gap: 8px !important; }
+  .admin-topbar-sep, .admin-topbar-sub { display: none !important; }
+  .admin-topbar-name { max-width: 96px; }
+
+  /* Admin create/edit modals: the two-column field grid is too tight at
+     phone width — collapse to a single column. */
+  .admin-modal-grid { grid-template-columns: 1fr !important; }
+
   /* Decorative animated-orb background: pure eye-candy and a real GPU cost on
      phones (4 big blurred layers + a scroll-parallax transform). Drop it on
      mobile — the body keeps its dot-grid texture. */

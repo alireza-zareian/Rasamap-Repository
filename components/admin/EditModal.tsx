@@ -79,7 +79,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: 580, maxHeight: "90vh", overflowY: "auto", direction: "rtl" }}>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: "min(580px, 94vw)", maxHeight: "90vh", overflowY: "auto", direction: "rtl", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: "1rem", fontWeight: 700 }}>ویرایش #{billboard.id}</div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -87,7 +87,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
             <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="admin-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div style={{ gridColumn: "1/-1" }}><label style={lS}>نام</label><input style={iS} value={form.name} onChange={set("name")} /></div>
           <div style={{ gridColumn: "1/-1" }}><label style={lS}>آدرس</label><input style={iS} value={form.location} onChange={set("location")} /></div>
           <div><label style={lS}>شهر</label><input style={iS} value={form.city} onChange={set("city")} /></div>

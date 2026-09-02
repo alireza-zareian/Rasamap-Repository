@@ -140,16 +140,16 @@ export default function AdminDashboard() {
       )}
 
       {/* Topbar */}
-      <div style={{ background: C.card, borderBottom: `1px solid ${C.border}`, padding: "0 28px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <div className="admin-topbar" style={{ background: C.card, borderBottom: `1px solid ${C.border}`, padding: "0 28px", minHeight: 60, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
           <Link href="/" style={{ textDecoration: "none", color: C.text, fontSize: "1.1rem", fontWeight: 800 }}>رسا<span style={{ color: C.accent }}>مپ</span></Link>
-          <div style={{ width: 1, height: 24, background: C.border }} />
-          <span style={{ fontSize: "0.8rem", color: C.muted, fontWeight: 600 }}>پنل مدیریت</span>
+          <div className="admin-topbar-sep" style={{ width: 1, height: 24, background: C.border }} />
+          <span className="admin-topbar-sub" style={{ fontSize: "0.8rem", color: C.muted, fontWeight: 600 }}>پنل مدیریت</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <Badge text={ROLE_LABEL[user.role] ?? user.role} color={ROLE_COLOR[user.role] ?? C.muted} bg={`${ROLE_COLOR[user.role] ?? C.muted}18`} />
-          <div style={{ fontSize: "0.78rem", color: C.muted }}>{user.name}</div>
-          <button onClick={handleLogout} disabled={loggingOut} style={{ fontSize: "0.75rem", padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: "pointer" }}>
+          <div className="admin-topbar-name" style={{ fontSize: "0.78rem", color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</div>
+          <button onClick={handleLogout} disabled={loggingOut} style={{ fontSize: "0.75rem", padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: "pointer", flexShrink: 0 }}>
             {loggingOut ? "..." : "خروج"}
           </button>
         </div>
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
       {/* Delete confirmation */}
       {deleteTarget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: 420, direction: "rtl" }}>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: "min(420px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "1rem", fontWeight: 700, marginBottom: 10 }}><Trash2 size={17} /> حذف بیلبورد</div>
             <div style={{ fontSize: "0.85rem", color: C.muted, marginBottom: 6 }}>این عمل برگشت‌پذیر نیست.</div>
             <div style={{ background: C.surface, borderRadius: 10, padding: "12px 14px", marginBottom: 18, fontSize: "0.85rem", fontWeight: 600 }}>
