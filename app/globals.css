@@ -293,11 +293,19 @@ button, a, input, select, label,
   .topbar-logout-label { display: none !important; }
 
   /* Explore hero: stack instead of side-by-side. Search on top, the auto-
-     rotating showcase drops below it (and off the wide left rail that a phone
-     can't see). */
-  .explore-hero { grid-template-columns: 1fr !important; }
+     rotating showcase drops below it (and off the wide left rail a phone
+     can't see). Use block layout + explicit width so the showcase can't
+     shrink to `max-height * ratio` and drift to the right in RTL. */
+  .explore-hero { display: block !important; }
+  .explore-hero > * { width: 100% !important; }
   .explore-hero > :first-child { border-left: none !important; }
-  .explore-hero-showcase { aspect-ratio: 4 / 3 !important; max-height: 260px; border-top: 1px solid var(--border); }
+  .explore-hero-showcase {
+    width: 100% !important;
+    aspect-ratio: 16 / 10 !important;
+    max-height: 240px;
+    align-self: auto !important;
+    border-top: 1px solid var(--border);
+  }
 
   /* Billboard detail: the "1fr 440px" grid can't fit a phone. Stack it, and
      reorder so it reads: header+gallery -> booking + map -> description ->
@@ -327,6 +335,13 @@ button, a, input, select, label,
 
   /* Compare modal: narrower label column so the two value columns fit. */
   .cmp-grid { grid-template-columns: 78px 1fr 1fr !important; }
+
+  /* Compare bar (fixed, bottom of explore): in portrait the chips + both
+     buttons don't fit one row and the "پاک / مقایسه کن" buttons run off the
+     left edge. Put the chips on their own full-width row above the buttons. */
+  .compare-bar { padding: 10px 14px !important; gap: 8px !important; }
+  .compare-bar-chips { order: 3; flex-basis: 100% !important; }
+  .compare-bar-actions { margin-inline-start: auto; }
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────── */
