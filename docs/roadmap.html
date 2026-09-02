@@ -733,9 +733,9 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="task-list">
         <div class="task done-t"><div class="tick">✓</div><div>Seed: <code>prisma.admin.upsert</code> از env var به جدول <code>admins</code> در DB (idempotent)</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><code>lib/auth/users.ts</code> — <code>findUserByEmail/findUserById</code> حالا <code>prisma.admin.findUnique</code> می‌خوانند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>Admin panel: صفحه تغییر رمز admin — deferred (env var → db:seed کافی است)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>پنل کاربران: <code>GET/POST /api/admin/users</code> + <code>PATCH /api/admin/users/[id]</code> — سوپر ادمین می‌تواند حساب مدیریتی بسازد، نقش عوض کند و فعال/غیرفعال کند؛ نمی‌تواند حساب خودش را تغییر دهد؛ هر تغییر در <code>audit_logs</code> ثبت می‌شود</div></div>
       </div>
-      <div class="proof">✓ Build موفق. Admin login از DB می‌خواند — password rotation با db:seed بدون redeploy ممکن است.</div>
+      <div class="proof">✓ Build موفق. Admin login از DB می‌خواند. مدیریت چند-ادمین از پنل سوپر ادمین کار می‌کند — تست: gate سوپر ادمین، ساخت + تغییر نقش + audit، ایمیل تکراری ۴۰۹، منع تغییر حساب خود ۴۰۹.</div>
     </div>
   </div>
 
@@ -1454,7 +1454,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
 </div>
 
 <footer>
-  Rasamap · ۱۱ شهریور ۱۴۰۵ · Prod-readiness cont.: Idempotency-Key + reservation slot unique, withApiLog on all 23 routes, next 16.2.9→16.2.11 (10 CVEs incl. proxy bypass), clean-machine setup fixed (postinstall + migration drift reconciled), dead-code cleanup + lint 63→10 (0 errors), demo-full seed (8 users/4 admins), /api-docs, docs/engineering-decisions.md + docs/presentation-summary.md, tests 19→37
+  Rasamap · ۱۲ شهریور ۱۴۰۵ · Prod-readiness cont.: Idempotency-Key + reservation slot unique, withApiLog on all 23 routes, next 16.2.9→16.2.11 (10 CVEs incl. proxy bypass), clean-machine setup fixed (postinstall + migration drift reconciled), dead-code cleanup + lint 63→10 (0 errors), demo-full seed (8 users/4 admins), /api-docs, docs/engineering-decisions.md + docs/presentation-summary.md, tests 19→41, keyboard-emoji → Lucide sweep (admin + site), admin mobile overflow fixes, quality-panel edit link + image lightbox, reservation → billboard management, multi-admin user management (super_admin)
 
 </div>
 
