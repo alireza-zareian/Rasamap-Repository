@@ -312,6 +312,68 @@ test("an admin billboard create is written to the durable audit log", async () =
   );
 });
 
+// ── Admin — user management ────────────────────────────────────────
+
+test("GET /api/admin/users with role 'admin' is 403 (super_admin only)", async () => {
+  const token = await mintSession({ role: "admin", userId: "1" });
+  const { status } = await api("/api/admin/users", { token });
+  assert.equal(status, 403);
+});
+
+test("super_admin can create an admin, change its role, and both are audited", async () => {
+  const token = await mintSession({ role: "super_admin", userId: "1" });
+  const email = `mgr_${Date.now()}@example.com`;
+
+  const created = await api("/api/admin/users", {
+    method: "POST",
+    token,
+    body: { email, name: "Manager Fixture", role: "viewer", password: "secret123" },
+  });
+  assert.equal(created.status, 200, JSON.stringify(created.json));
+  const id = created.json.admin.id;
+  assert.equal(created.json.admin.role, "viewer");
+
+  const patched = await api(`/api/admin/users/${id}`, {
+    method: "PATCH",
+    token,
+    body: { role: "editor" },
+  });
+  assert.equal(patched.status, 200, JSON.stringify(patched.json));
+  assert.equal(patched.json.admin.role, "editor");
+
+  const audit = await api("/api/admin/audit", { token });
+  assert.ok(audit.json.persisted.some((r) => r.action === "admin_user_create"));
+  assert.ok(audit.json.persisted.some((r) => r.action === "admin_user_update"));
+});
+
+test("a duplicate admin email is rejected with 409", async () => {
+  const token = await mintSession({ role: "super_admin", userId: "1" });
+  const email = `dup_${Date.now()}@example.com`;
+  const body = { email, name: "Dup", role: "viewer", password: "secret123" };
+  const first = await api("/api/admin/users", { method: "POST", token, body });
+  assert.equal(first.status, 200);
+  const second = await api("/api/admin/users", { method: "POST", token, body });
+  assert.equal(second.status, 409);
+});
+
+test("a super_admin cannot change the role of its own account (409)", async () => {
+  const token = await mintSession({ role: "super_admin", userId: "1" });
+  const created = await api("/api/admin/users", {
+    method: "POST",
+    token,
+    body: { email: `self_${Date.now()}@example.com`, name: "Self", role: "admin", password: "secret123" },
+  });
+  const id = created.json.admin.id;
+
+  const selfToken = await mintSession({ role: "super_admin", userId: String(id) });
+  const { status } = await api(`/api/admin/users/${id}`, {
+    method: "PATCH",
+    token: selfToken,
+    body: { role: "viewer" },
+  });
+  assert.equal(status, 409);
+});
+
 // ── Reviews ─────────────────────────────────────────────────────────
 
 test("GET /api/reviews returns reviews for a billboard", async () => {

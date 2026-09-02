@@ -81,13 +81,17 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 |--------|------|------|-------|
 | GET | `/api/admin/billboards` | admin | List for the admin table. Query (Zod): `q`, `city`, `type`, `status`, `page`, `limit` (≤100), `sort` (`<key>_<dir>`, keys `id\|price\|name\|city`, dirs `asc\|desc`). `no-store`. |
 | POST | `/api/admin/billboards` | editor+ | Create. Body (Zod): `name`, `location`, `city`, `type` (allowlist), `price`, plus optional `agency`, `phone`, `description`, `width`, `height`, `faces`, `lat`, `lng`. 201. |
+| GET | `/api/admin/billboards/[id]` | admin | Single record for the edit view (used when opening a billboard from a reservation). `no-store`. |
 | PUT | `/api/admin/billboards/[id]` | editor+ | Partial update. Body (Zod): any of `name`, `location`, `city`, `type`, `status`, `lat`, `lng`, `price`, `description`, `agency`, `phone`, `width`, `height`, `faces`. |
 | DELETE | `/api/admin/billboards/[id]` | admin+ | Deletes. Refuses (409) if the billboard has active reservations. |
 | PUT | `/api/admin/billboards/[id]/images` | editor+ | Replace the image list for a billboard. |
 | GET | `/api/admin/billboards/stats` | admin | Aggregate counts by type / status / city for the admin dashboard. |
 | GET | `/api/admin/reservations` | admin | All reservations for the management panel. |
 | PATCH | `/api/admin/reservations/[id]` | admin | Update a reservation `status` (`confirmed` / `cancelled`). Writes a `reservation_status_change` row to the durable audit log. |
-| GET | `/api/admin/audit` | admin+ | Returns `{ logs, persisted }` — `logs` is the in-memory ring buffer (last 500), `persisted` is the durable `audit_logs` table (last 200, survives restart). Persisted actions: `billboard_create` / `billboard_update` / `billboard_delete` / `reservation_status_change`, each with actor email + IP + a `details` object. |
+| GET | `/api/admin/users` | super_admin | List admin accounts (`{ admins, currentId }`). `no-store`. |
+| POST | `/api/admin/users` | super_admin | Create an admin. Body (Zod): `email`, `name`, `role` (`viewer\|editor\|admin\|super_admin`), `password` (≥8). 409 on a duplicate email. Writes `admin_user_create`. |
+| PATCH | `/api/admin/users/[id]` | super_admin | Change `role` and/or `active`. 409 if the id is your own account. Writes `admin_user_update`. |
+| GET | `/api/admin/audit` | admin+ | Returns `{ logs, persisted }` — `logs` is the in-memory ring buffer (last 500), `persisted` is the durable `audit_logs` table (last 200, survives restart). Persisted actions: `billboard_create` / `billboard_update` / `billboard_delete` / `reservation_status_change` / `admin_user_create` / `admin_user_update`, each with actor email + IP + a `details` object. |
 
 ---
 

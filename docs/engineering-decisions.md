@@ -121,7 +121,11 @@ body for "wrong password" and "unknown account".
 battle-tested primitives (jose, bcrypt cost 12) rather than anything hand-rolled.
 
 **Where it applies.** `proxy.ts`, every `app/api/admin/**`, `app/api/auth/**`,
-`app/api/reservations`, `app/api/listings`.
+`app/api/reservations`, `app/api/listings`. Admin accounts themselves live in
+the `admins` table and are managed from the super-admin panel
+(`/api/admin/users`, `super_admin` only): create hashes with bcrypt, role/active
+changes refuse to touch the caller's own row so a super-admin can't lock itself
+out, every change is audit-logged.
 
 **Verified.** Tests: no user enumeration, 401 without a session, 401 for role
 `user` on admin routes, 403 for `viewer` on a write, object-level scoping on
@@ -253,7 +257,9 @@ migration needed — the table was already in the schema. Pattern from the Djang
 reference's decoupled `statuslog` app.
 
 **Where it applies.** `POST/PUT/DELETE /api/admin/billboards`,
-`PATCH /api/admin/reservations/[id]`.
+`PATCH /api/admin/reservations/[id]`, `POST /api/admin/users`,
+`PATCH /api/admin/users/[id]` (`admin_user_create` / `admin_user_update`,
+severity `warn`).
 
 **Verified.** Test: an admin create lands in `persisted[]` with
 `action: "billboard_create"`.
