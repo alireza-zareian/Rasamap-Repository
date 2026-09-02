@@ -39,26 +39,19 @@ async function GETHandler(req: NextRequest) {
     if (b.scrapedAt && now - new Date(b.scrapedAt).getTime() < week) recentlyImported++;
   }
 
-  // Detect rough duplicate groups by coordinate proximity
-  let duplicateGroups = 0;
-  const withCoordsList = all.filter(b => b.lat && b.lng);
-  const seen = new Set<number>();
-  for (let i = 0; i < withCoordsList.length; i++) {
-    if (seen.has(i)) continue;
-    const a = withCoordsList[i];
-    let group = false;
-    for (let j = i + 1; j < withCoordsList.length; j++) {
-      if (seen.has(j)) continue;
-      const bItem = withCoordsList[j];
-      const dlat = (a.lat! - bItem.lat!) * 111000;
-      const dlng = (a.lng! - bItem.lng!) * 111000 * Math.cos((a.lat! * Math.PI) / 180);
-      if (Math.sqrt(dlat * dlat + dlng * dlng) < 50) {
-        seen.add(j);
-        group = true;
-      }
-    }
-    if (group) { seen.add(i); duplicateGroups++; }
+  // Rough count of "boards sitting on top of each other": bucket coordinates
+  // into a ~50 m grid and count cells holding two or more. O(n) instead of the
+  // O(n²) pairwise scan — for ~3.5k rows that's the difference between a few
+  // million ops and a few thousand. It's only a heuristic either way.
+  const GRID = 0.00045; // ≈ 50 m in latitude degrees
+  const cell = new Map<string, number>();
+  for (const b of all) {
+    if (!b.lat || !b.lng) continue;
+    const key = `${Math.round(b.lat / GRID)}:${Math.round(b.lng / GRID)}`;
+    cell.set(key, (cell.get(key) ?? 0) + 1);
   }
+  let duplicateGroups = 0;
+  for (const n of cell.values()) if (n >= 2) duplicateGroups++;
 
   const stats: AdminStats = {
     total: all.length,

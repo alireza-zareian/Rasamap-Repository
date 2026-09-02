@@ -76,13 +76,10 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/api/admin/:path*",
     "/dashboard/:path*",
     "/list-media/:path*",
-    "/api/reservations",
-    "/api/reservations/:path*",
-    "/api/listings",
-    "/api/listings/:path*",
-    "/api/:path*",  // needed for bot UA blocking on all API routes
+    // `/api/:path*` already covers /api/admin, /api/reservations and
+    // /api/listings; it's this broad so the bot-UA block runs on every API route.
+    "/api/:path*",
   ],
 };

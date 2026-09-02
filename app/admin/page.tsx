@@ -216,7 +216,7 @@ export default function AdminDashboard() {
                     <StatCard icon={<AlertTriangle size={20} />} label="بدون مختصات"   value={stats.missingCoords.toLocaleString()}  color="#f59e0b" />
                     <StatCard icon={<ImageOff size={20} />} label="بدون تصویر"    value={stats.missingImages.toLocaleString()}  color="#f59e0b" />
                     <StatCard icon={<Sparkles size={20} />} label="هفته اخیر"     value={stats.recentlyImported.toLocaleString()} color="#8b5cf6" />
-                    <StatCard icon={<Copy size={20} />} label="تکراری"        value={stats.duplicateGroups.toLocaleString()} color="#ef4444" />
+                    <StatCard icon={<Copy size={20} />} label="خوشه هم‌مکان (~۵۰م)" value={stats.duplicateGroups.toLocaleString()} color="#ef4444" sub="نقاطی با ۲+ رسانه نزدیک هم" />
                   </div>
                   <div className="admin-3col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
                     {([["منابع داده", stats.bySource, C.accent], ["نوع رسانه", stats.byType, "#8b5cf6"], ["شهرها (برتر)", stats.byCity, C.green]] as const).map(([title, data, color]) => {
