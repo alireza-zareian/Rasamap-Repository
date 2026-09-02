@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import type { UserRole } from "@/lib/auth/session";
-import { C, ROLE_LABEL, ROLE_COLOR } from "./constants";
+import { C, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
-import { Users, Plus, X, AlertTriangle } from "lucide-react";
+import { Users, ShieldCheck, Plus, X, AlertTriangle, Search } from "lucide-react";
 
 interface SessionUser { id: string; name: string; role: UserRole; email: string; }
 
@@ -14,6 +14,15 @@ interface AdminRow {
   role: UserRole;
   active: boolean;
   createdAt: string;
+}
+
+interface CustomerRow {
+  id: number;
+  name: string;
+  phone: string;
+  createdAt: string;
+  reservationCount: number;
+  reviewCount: number;
 }
 
 const ROLES: { value: UserRole; label: string }[] = [
@@ -27,10 +36,33 @@ const fmt = (d: string) => new Date(d).toLocaleDateString("fa-IR", { year: "nume
 
 export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
   const isSA = currentUser.role === "super_admin";
+  const isAdminPlus = currentUser.role === "admin" || isSA;
 
+  if (!isAdminPlus) {
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700, marginBottom: 8 }}><Users size={16} /> کاربران</div>
+        <div style={{ padding: 14, background: "rgba(245,158,11,0.06)", borderRadius: 10, fontSize: "0.8rem", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
+          این بخش برای نقش «ادمین» و بالاتر در دسترس است.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+      {isSA && <AdminAccounts currentUser={currentUser} />}
+      <CustomersSection />
+    </div>
+  );
+}
+
+// ── Admin accounts (super_admin only) ──────────────────────────────
+
+function AdminAccounts({ currentUser }: { currentUser: SessionUser }) {
   const [rows, setRows] = useState<AdminRow[]>([]);
   const [currentId, setCurrentId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(isSA);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -49,7 +81,7 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
 
   // Data-fetch effect: load() flips loading/error state, which is expected here.
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (isSA) load(); }, [isSA, load]);
+  useEffect(() => { load(); }, [load]);
 
   const patch = async (id: number, body: { role?: UserRole; active?: boolean }) => {
     setBusyId(id); setError("");
@@ -64,22 +96,11 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
     finally { setBusyId(null); }
   };
 
-  if (!isSA) {
-    return (
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700, marginBottom: 8 }}><Users size={16} /> مدیریت کاربران</div>
-        <div style={{ padding: 14, background: "rgba(245,158,11,0.06)", borderRadius: 10, fontSize: "0.8rem", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
-          فقط سوپر ادمین به این بخش دسترسی دارد.
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, gap: 10, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><Users size={16} /> مدیریت کاربران</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><ShieldCheck size={16} /> حساب‌های مدیریت (ادمین‌ها)</div>
           <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4, lineHeight: 1.8 }}>
             حساب‌های مدیریتی در جدول admins نگه‌داری می‌شوند. نقش‌ها از کم‌ترین به بیش‌ترین دسترسی:
             بیننده، ویرایشگر، ادمین، سوپر ادمین. هر ساخت یا تغییر نقش در لاگ امنیتی ثبت می‌شود.
@@ -90,7 +111,7 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(116px, 1fr))", gap: 10, marginBottom: 18 }}>
         {ROLES.slice().reverse().map(r => (
           <div key={r.value} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 12, textAlign: "center" }}>
             <Badge text={r.label} color={ROLE_COLOR[r.value]} bg={`${ROLE_COLOR[r.value]}20`} />
@@ -162,6 +183,119 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
           onClose={() => setShowAdd(false)}
           onCreated={a => { setRows(prev => [...prev, a]); setShowAdd(false); }}
         />
+      )}
+    </div>
+  );
+}
+
+// ── Registered end-users directory (admin+) ───────────────────────
+
+const CUSTOMER_SORTS: { value: string; label: string }[] = [
+  { value: "created_desc", label: "جدیدترین" },
+  { value: "created_asc", label: "قدیمی‌ترین" },
+  { value: "name_asc", label: "نام (الفبا)" },
+];
+
+function CustomersSection() {
+  const [rows, setRows] = useState<CustomerRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState("created_desc");
+  const [q, setQ] = useState("");
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: "20", sort });
+      if (query) params.set("q", query);
+      const res = await fetch(`/api/admin/customers?${params}`);
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "خطا در بارگذاری کاربران"); return; }
+      setRows(data.users ?? []);
+      setTotal(data.total ?? 0);
+      setPages(data.pages ?? 1);
+    } catch { setError("خطای شبکه"); }
+    finally { setLoading(false); }
+  }, [page, sort, query]);
+
+  // Data-fetch effect: load() flips loading/error state, which is expected here.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { load(); }, [load]);
+
+  const runSearch = () => { setQuery(q.trim()); setPage(1); };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><Users size={16} /> کاربران ثبت‌نام‌شده</div>
+        <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4 }}>
+          همهٔ حساب‌های کاربری سایت (جدول users) — چه سفارش داشته باشند چه نه. {total.toLocaleString("fa-IR")} نفر.
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flex: "1 1 220px", gap: 6 }}>
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") runSearch(); }}
+            placeholder="جستجوی نام یا شماره..."
+            style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 12px", borderRadius: 8, outline: "none" }}
+          />
+          <button onClick={runSearch} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.78rem", padding: "8px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontFamily: C.font, cursor: "pointer" }}>
+            <Search size={13} /> جستجو
+          </button>
+        </div>
+        <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 12px", borderRadius: 8, outline: "none" }}>
+          {CUSTOMER_SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+      </div>
+
+      {error && (
+        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 13px", fontSize: "0.8rem", color: C.red, marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
+          <AlertTriangle size={13} /> {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 40, color: C.muted, fontSize: "0.85rem" }}>در حال بارگذاری...</div>
+      ) : rows.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 40, color: C.muted, fontSize: "0.85rem" }}>کاربری یافت نشد</div>
+      ) : (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
+            <thead>
+              <tr style={{ background: C.card }}>
+                {["نام", "شماره", "ثبت‌نام", "رزروها", "نظرها"].map(h => (
+                  <th key={h} style={{ padding: "11px 14px", textAlign: "right", fontSize: "0.75rem", color: C.muted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(u => (
+                <tr key={u.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                  <td style={{ padding: "12px 14px", fontSize: "0.85rem", fontWeight: 600 }}>{u.name}</td>
+                  <td style={{ padding: "12px 14px", fontSize: "0.8rem", color: C.muted, direction: "ltr", textAlign: "right" }}>{u.phone}</td>
+                  <td style={{ padding: "12px 14px", fontSize: "0.75rem", color: C.muted }}>{fmt(u.createdAt)}</td>
+                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{u.reservationCount.toLocaleString("fa-IR")}</td>
+                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{u.reviewCount.toLocaleString("fa-IR")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {pages > 1 && (
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16 }}>
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: page === 1 ? "not-allowed" : "pointer" }}>قبلی</button>
+          <span style={{ padding: "7px 14px", fontSize: "0.78rem", color: C.muted }}>{page.toLocaleString("fa-IR")} / {pages.toLocaleString("fa-IR")}</span>
+          <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: page === pages ? "not-allowed" : "pointer" }}>بعدی</button>
+        </div>
       )}
     </div>
   );

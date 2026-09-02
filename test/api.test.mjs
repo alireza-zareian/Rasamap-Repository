@@ -321,7 +321,7 @@ test("GET /api/admin/users with role 'admin' is 403 (super_admin only)", async (
 });
 
 test("super_admin can create an admin, change its role, and both are audited", async () => {
-  const token = await mintSession({ role: "super_admin", userId: "1" });
+  const token = await mintSession({ role: "super_admin", userId: "99001" });
   const email = `mgr_${Date.now()}@example.com`;
 
   const created = await api("/api/admin/users", {
@@ -347,7 +347,7 @@ test("super_admin can create an admin, change its role, and both are audited", a
 });
 
 test("a duplicate admin email is rejected with 409", async () => {
-  const token = await mintSession({ role: "super_admin", userId: "1" });
+  const token = await mintSession({ role: "super_admin", userId: "99002" });
   const email = `dup_${Date.now()}@example.com`;
   const body = { email, name: "Dup", role: "viewer", password: "secret123" };
   const first = await api("/api/admin/users", { method: "POST", token, body });
@@ -357,7 +357,7 @@ test("a duplicate admin email is rejected with 409", async () => {
 });
 
 test("a super_admin cannot change the role of its own account (409)", async () => {
-  const token = await mintSession({ role: "super_admin", userId: "1" });
+  const token = await mintSession({ role: "super_admin", userId: "99003" });
   const created = await api("/api/admin/users", {
     method: "POST",
     token,
@@ -372,6 +372,54 @@ test("a super_admin cannot change the role of its own account (409)", async () =
     body: { role: "viewer" },
   });
   assert.equal(status, 409);
+});
+
+// ── Admin — registered-users directory ────────────────────────────
+
+test("GET /api/admin/customers without a session is 401", async () => {
+  const { status } = await api("/api/admin/customers");
+  assert.equal(status, 401);
+});
+
+test("GET /api/admin/customers with role 'viewer' is 403", async () => {
+  const token = await mintSession({ role: "viewer", userId: "1" });
+  const { status } = await api("/api/admin/customers", { token });
+  assert.equal(status, 403);
+});
+
+test("GET /api/admin/customers returns a paginated directory for an admin", async () => {
+  const token = await mintSession({ role: "admin", userId: "1" });
+  const { status, json } = await api("/api/admin/customers?limit=5", { token });
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(json.users));
+  assert.equal(typeof json.total, "number");
+  assert.equal(typeof json.pages, "number");
+  if (json.users.length) {
+    const u = json.users[0];
+    assert.ok("phone" in u && "reservationCount" in u);
+    assert.ok(!("passwordHash" in u), "must never expose the password hash");
+  }
+});
+
+// ── Rate limiting — reservations ──────────────────────────────────
+
+test("a rate-limited reservation POST returns 429 with Retry-After and a Persian wait message", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const ip = uniqueIp();
+  let got429 = null;
+  for (let i = 0; i < 65 && !got429; i++) {
+    const res = await api("/api/reservations", {
+      method: "POST",
+      token,
+      ip,
+      body: { billboardId: 1, startDate: futureDate(2), endDate: futureDate(40) },
+    });
+    if (res.status === 429) got429 = res;
+  }
+  assert.ok(got429, "expected a 429 within 65 rapid requests");
+  assert.ok(Number(got429.headers.get("Retry-After")) > 0);
+  assert.equal(typeof got429.json.retryAfter, "number");
+  assert.match(got429.json.error, /دقیقه/);
 });
 
 // ── Reviews ─────────────────────────────────────────────────────────

@@ -150,13 +150,27 @@ inline extractions across the API. Limits live in `lib/auth/rate-limit.ts` as
 an in-memory sliding window (documented limitation: resets on restart, not
 multi-instance — acceptable for a single-instance demo).
 
+**Lockout durations are deliberate, not one-size.** Credential-guessing paths
+(`login`, `register`) keep a long lockout (15 min / 1 hr) — that is the point.
+The general `userApiRateLimit` (60/min: booking, review, phone reveal) uses a
+short **2-minute** cooldown: passing 60/min there means a script or a stuck
+button, and an accidental double-tap storm on a failing form should not lock a
+real person out for a quarter hour. `lib/api-rate-limit.ts::rateLimited()` is
+the single 429 shape — `Retry-After` header + a Persian "try again in N
+minutes" message + a `retryAfter` field the client shows — and it writes
+exactly one durable `rate_limit_hit` audit row per lockout (the request that
+trips it, flagged by `justLocked`); the repeated 429s that follow stay in the
+in-memory log only, so a burst cannot flood `audit_logs`.
+
 **Why here.** Login, registration, password paths, search and every write are
 the endpoints an abuser hammers; the fix is one small helper, not a service.
 
 **Where it applies.** All rate-limited routes; audit log IP field.
+`rateLimited()` wired into `POST /api/reservations`.
 
-**Verified.** Test: 12 rapid logins from one IP → `429`. Benchmark:
-`BENCH_SINGLE_IP=1` shows 60 requests then `429`.
+**Verified.** Tests: 12 rapid logins from one IP → `429`; 60+ rapid reservation
+POSTs → `429` with a positive `Retry-After` and a Persian message naming the
+minutes. Benchmark: `BENCH_SINGLE_IP=1` shows 60 requests then `429`.
 
 ---
 
@@ -219,6 +233,12 @@ bare 500 leaves neither the user nor the operator knowing what failed.
 `{ref, error, stack}` and returns `{ error: "<generic Persian>", ref }` with
 status 500. `app/error.tsx` surfaces `error.digest` as «کد خطا». Rule: log
 `userId`, never a phone/name/token.
+
+**Persisting to a file.** `lib/logger.ts` writes to stdout/stderr by default;
+set `LOG_DIR` and every line is also appended to `<LOG_DIR>/app.log`, rotated
+at 10 MB with 5 backups. `auditLog()` now emits through this same logger (not a
+bare `console.*`), so audit and `rate_limit_hit` lines land in that file too —
+a durable, greppable incident record without a per-request DB row.
 
 **Why here.** It is the self-hosted, zero-dependency equivalent of an
 error-tracking service — no paid platform, works offline. Pattern taken from a
