@@ -129,9 +129,14 @@ function LoginForm() {
             {error && (
               <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 13px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>
             )}
-            <button onClick={submit} disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer", boxShadow: "0 4px 16px rgba(59,123,245,0.3)", marginBottom: 14 }}>
+            <button onClick={submit} disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer", boxShadow: "0 4px 16px rgba(59,123,245,0.3)", marginBottom: tab === "login" ? 10 : 14 }}>
               {loading ? "در حال پردازش..." : tab === "login" ? "ورود به حساب" : "ایجاد حساب"}
             </button>
+            {tab === "login" && (
+              <div style={{ textAlign: "center" }}>
+                <Link href="/reset-password" style={{ color: "var(--text-muted)", fontSize: "0.78rem", textDecoration: "none" }}>رمز عبور را فراموش کرده‌اید؟</Link>
+              </div>
+            )}
           </div>
         </div>
         <div style={{ textAlign: "center", marginTop: 16 }}>

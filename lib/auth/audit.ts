@@ -24,6 +24,8 @@ export type AuditAction =
   | "admin_user_update"
   | "customer_update"
   | "customer_password_reset"
+  | "password_reset_self"
+  | "otp_sent"
   | "rate_limit_hit"
   | "auth_bypass_attempt";
 

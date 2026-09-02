@@ -187,6 +187,24 @@ model Review {
   @@map("reviews")
 }
 
+// ── OtpCode ────────────────────────────────────────────────────
+// One-time codes for phone-verified flows (password reset). The code itself is
+// never stored — only an HMAC-SHA256 hash. Short-lived, single-use, attempt-
+// capped. Consumed rows are kept briefly for audit then pruned opportunistically.
+model OtpCode {
+  id         Int       @id @default(autoincrement())
+  phone      String
+  codeHash   String
+  purpose    String // "password_reset"
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, purpose])
+  @@map("otp_codes")
+}
+
 // ── AuditLog ───────────────────────────────────────────────────
 // In-memory ring buffer in lib/auth/audit.ts; DB table reserved for
 // future persistence.

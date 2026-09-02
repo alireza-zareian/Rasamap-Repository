@@ -23,6 +23,9 @@ const env = {
   NESHAN_API_KEY: "test-key",
   NEXT_PUBLIC_NESHAN_KEY: "test-key",
   NEXT_TELEMETRY_DISABLED: "1",
+  // SMS stays dormant (no KAVENEGAR_API_KEY); echo the OTP back so the reset
+  // flow is testable end-to-end without a live SMS line.
+  OTP_DEV_ECHO: "1",
 };
 
 function step(msg) {

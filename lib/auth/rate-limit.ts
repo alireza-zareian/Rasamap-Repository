@@ -139,6 +139,35 @@ export function registrationRateLimit(ip: string): RateLimitResult {
   });
 }
 
+/** OTP send — per phone: 3 per 10 min, 10 min lockout (SMS costs money and
+ *  spamming a number is abuse). Verify is limited separately per phone. */
+export function otpSendRateLimit(phone: string): RateLimitResult {
+  return checkRateLimit(`otp_send:${phone}`, {
+    windowMs:    10 * 60 * 1000,
+    maxRequests: 3,
+    lockoutMs:   10 * 60 * 1000,
+  });
+}
+
+/** OTP send — per IP: 10 per hour, so one client can't fan out across numbers. */
+export function otpSendIpRateLimit(ip: string): RateLimitResult {
+  return checkRateLimit(`otp_send_ip:${ip}`, {
+    windowMs:    60 * 60 * 1000,
+    maxRequests: 10,
+    lockoutMs:   30 * 60 * 1000,
+  });
+}
+
+/** OTP verify — per phone: 10 attempts per 10 min (the code itself is also
+ *  attempt-capped at 5; this stops brute-forcing across fresh codes). */
+export function otpVerifyRateLimit(phone: string): RateLimitResult {
+  return checkRateLimit(`otp_verify:${phone}`, {
+    windowMs:    10 * 60 * 1000,
+    maxRequests: 10,
+    lockoutMs:   10 * 60 * 1000,
+  });
+}
+
 /**
  * Public API rate limit — 60 req/min per IP, 10-min lockout after burst.
  * Applied to /api/billboards and /api/billboards/pins to slow automated crawling.

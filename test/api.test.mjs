@@ -146,6 +146,56 @@ test("login is rate limited per IP", async () => {
   assert.equal(last.status, 429);
 });
 
+// ── Password reset via phone OTP (SMS layer dormant) ──────────────
+
+test("otp/send for an unknown phone is 200 and reveals nothing", async () => {
+  const { status, json } = await api("/api/auth/otp/send", {
+    method: "POST",
+    body: { phone: "09123339999", purpose: "password_reset" },
+  });
+  assert.equal(status, 200);
+  assert.equal(json.devCode, undefined, "no code for a phone that isn't registered");
+});
+
+test("otp/send + otp/verify resets the password; the new one then logs in", async () => {
+  const phone = "09120000000"; // seeded user 1
+  const send = await api("/api/auth/otp/send", {
+    method: "POST", ip: uniqueIp(),
+    body: { phone, purpose: "password_reset" },
+  });
+  assert.equal(send.status, 200);
+  assert.match(String(send.json.devCode ?? ""), /^\d{6}$/, "dev echo should carry the code in tests");
+
+  const wrong = await api("/api/auth/otp/verify", {
+    method: "POST", ip: uniqueIp(),
+    body: { phone, purpose: "password_reset", code: "000000", newPassword: "brandnew1" },
+  });
+  assert.equal(wrong.status, 400);
+
+  const ok = await api("/api/auth/otp/verify", {
+    method: "POST", ip: uniqueIp(),
+    body: { phone, purpose: "password_reset", code: send.json.devCode, newPassword: "brandnew1" },
+  });
+  assert.equal(ok.status, 200, JSON.stringify(ok.json));
+
+  const login = await api("/api/auth/login", {
+    method: "POST", ip: uniqueIp(),
+    body: { phone, password: "brandnew1" },
+  });
+  assert.equal(login.status, 200);
+  assert.ok(tokenFromSetCookie(login));
+});
+
+test("otp/send is rate limited per phone", async () => {
+  const phone = "09120000002"; // seeded user 2
+  let last;
+  for (let i = 0; i < 5; i++) {
+    last = await api("/api/auth/otp/send", { method: "POST", ip: uniqueIp(), body: { phone, purpose: "password_reset" } });
+  }
+  assert.equal(last.status, 429);
+  assert.ok(Number(last.headers.get("Retry-After")) > 0);
+});
+
 // ── Reservations: validation & race guard ─────────────────────────────
 
 test("POST /api/reservations without a session is 401", async () => {
