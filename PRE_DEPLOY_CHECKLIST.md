@@ -23,7 +23,7 @@ Run through this every time before deploying or before a live demo. Tick each li
       `prisma/schema.prisma`, including composite indexes.
 - [ ] A fresh backup exists from **today** (`npm run db:backup`) and a test restore
       has been done at least once (see `RUNBOOK.md` — done 2026-09-01).
-- [ ] Demo/seed data is the intended dataset — no stray test reservations in the tables
+- [ ] Demo/seed data is the intended dataset — no stray `[DEMO]` listings in the tables
       you will show.
 
 ## 4. Security
@@ -32,7 +32,7 @@ Run through this every time before deploying or before a live demo. Tick each li
 - [ ] Admin panel: hitting `/admin` and `/api/admin/billboards` while logged out
       redirects / returns 401.
 - [ ] Rate limiting active: 6 rapid wrong logins to `/api/auth/login` → 429 + lockout.
-- [ ] Object-level check: logged in as user A, requesting user B's reservation by ID
+- [ ] Object-level check: logged in as user A, `GET /api/listings` never returns user B's submissions
       does not return B's data.
 - [ ] `npm audit` reviewed; no unpatched High/Critical, or each one is written down with
       a reason.

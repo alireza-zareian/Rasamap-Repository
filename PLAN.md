@@ -3,13 +3,21 @@
 > Generated from `PRODUCTION_AUDIT.md`. Scope filter: bachelor capstone, ~5 days to
 > demo, solo dev, Iran (no paid SaaS), local/private-server demo. Priority beats
 > completeness.
+>
+> ⚠️ **2026-09-02 — the product model changed.** The final review removed the whole
+> reservation subsystem: Rasamap does not own the media it lists, so it cannot sell
+> inventory it does not control. Buyers now get the owner's phone number; revenue
+> comes from the listing side (two plans + a manual payment confirmation). Sections
+> below that discuss reservations are **historical record**, not current state.
+> Current state: `docs/api.md` and `docs/engineering-decisions.md` §17–21.
 
 ## (a) What this project actually is
 
 Rasamap is an Iranian outdoor-media (billboard) marketplace. Persian RTL UI. A visitor
-browses/filters ~2,800–3,500 billboard listings (map + grid), opens a detail page, and —
-after registering with an Iranian mobile number — requests a date-range reservation.
-Admins manage listings and reservations through a separate RBAC-gated panel.
+browses/filters ~3,500 billboard listings, opens a detail page, and — after registering
+with an Iranian mobile number — sees the owner's phone number and deals with them
+directly. Media owners submit their own listings (with photos) on a free or paid plan;
+admins review, approve and publish them through a separate RBAC-gated panel.
 
 - **Stack:** Next.js 16.2.11 App Router, React 19, TS strict, SQLite + Prisma 7
   (`better-sqlite3`, WAL), JWT HttpOnly cookies (jose), Leaflet, inline-CSS.

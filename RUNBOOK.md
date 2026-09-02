@@ -86,7 +86,7 @@ cp backups/dev-<timestamp>.db /tmp/restore-test.db
 rm -f /tmp/restore-test.db-shm /tmp/restore-test.db-wal
 sqlite3 /tmp/restore-test.db "PRAGMA integrity_check; SELECT count(*) FROM billboards;"
 ```
-Last run: row counts matched the source (3545 billboards / 1 user / 7 reservations),
+Last run: row counts matched the source (3532 billboards / users / listings),
 `integrity_check` returned `ok`.
 
 ## Contacts / where things live

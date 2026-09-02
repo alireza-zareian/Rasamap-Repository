@@ -1302,6 +1302,33 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
   </div>
 
   <!-- ─── PREP — آماده‌سازی نهایی ─── -->
+  <!-- ─── REV — بازبینی نهایی مهندسی ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">REV</div>
+      <div class="ph-title"><h3>بازبینی نهایی صفر تا صد + تغییر مدل کسب‌وکار</h3><p>مرور کامل کد، حذف زیرسیستم رزرو، مسیر درآمدی سمت آگهی‌دهنده، سخت‌سازی ضد کپی‌برداری</p></div>
+      <div class="ph-badge">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">بازبینی کامل پیش از نگارش مستندات و ارائه — از دید مهندس ارشد بک‌اند، معمار نرم‌افزار و داور.</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مدل کسب‌وکار اصلاح شد:</strong> کل زیرسیستم رزرو حذف شد (جدول، دو API، مودال رزرو، تب داشبورد، پنل ادمین). رسامپ مالک رسانه‌ها نیست، پس نمی‌تواند چیزی را که در اختیار ندارد بفروشد — خریدار شماره صاحب رسانه را می‌گیرد. <code>docs/engineering-decisions.md</code> §۱۷</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>درآمد از سمت آگهی‌دهنده:</strong> دو پلن (رایگان / ویژه)، وضعیت <code>awaiting_payment</code>، تأیید دستی و قابل‌ممیزی توسط ادمین به‌جای درگاه جعلی. <code>featured</code> فقط با تأیید ادمین داده می‌شود، نه با انتخاب پلن. §۱۸</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>آپلود عکس واقعی شد:</strong> مرحله عکس در فرم ثبت رسانه قبلاً عکس‌ها را بی‌صدا دور می‌ریخت. حالا ذخیره می‌شوند و نوع فایل از روی magic bytes تشخیص داده می‌شود (نه از ادعای مرورگر)، نام فایل را سرور می‌سازد، مسیر غیرقابل‌حدس است. §۱۹</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ضد کپی‌برداری:</strong> مسدودسازی UA ربات‌ها روی صفحه‌ها و نه فقط API، سقف ۹۰ درخواست/دقیقه روی صفحات کاتالوگ، محافظت hotlink روی تصاویر، سقف صفحه ۱۰۰ → ۴۸، حذف endpoint حجیم <code>/api/billboards/pins</code> (بدون مصرف‌کننده) و وابستگی‌های بلااستفاده Leaflet. گوگل‌بات عمداً استثنا شد. §۲۰</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>باگ امنیتی:</strong> هش «زمان‌ثابت» ضدِ شمارش کاربر یک هش bcrypt معتبر نبود — <code>compare</code> در ۰ میلی‌ثانیه برمی‌گشت به‌جای ۲۵۰. یعنی با کرنومتر می‌شد فهمید یک شماره ثبت شده یا نه. تست موجود فقط بدنه پاسخ را چک می‌کرد و سبز بود.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پنل اسکرپر ساختگی حذف شد:</strong> دکمه «اجرا» فقط پیام‌های از پیش نوشته را پخش می‌کرد و عدد ثابت «۴۵ انجام شد» نشان می‌داد. جایش پنل وضعیت واقعی از روی دیتابیس نشست.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>آگهی تأییدنشده دیگر عمومی نیست:</strong> قبلاً با دانستن slug از راه API و صفحه جزئیات قابل دیدن بود، در حالی که از جستجو و sitemap پنهان بود.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مرتب‌سازی‌ها درست شدند:</strong> «بیشترین بازدید» روی <code>rating</code> مرتب می‌کرد و «بزرگترین سطح» فقط روی <code>width</code>. دو ستون denormal (<code>estimatedViews</code>، <code>area</code>) با ایندکس اضافه شد. §۲۱</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>آمار پوشش تصویر:</strong> فیلتر Json روی SQLite کار نمی‌کرد و همیشه ۱۰۰٪ گزارش می‌داد — واقعیت ۵۷٪ بود (۲۰۰۹ از ۳۵۲۸).</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>امتیاز واقعی شد:</strong> ثبت نظر حالا <code>rating</code>/<code>reviewCount</code> بیلبورد را در همان تراکنش از روی جدول نظرات بازمحاسبه می‌کند؛ کارت رسانه‌ای که نظر ندارد دیگر امتیاز نشان نمی‌دهد.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پاک‌سازی:</strong> کد مرده حذف شد (<code>getListingsByStatus</code>، <code>countBillboards</code>، لیست تکراری UA ربات‌ها در ۳ روت، دو seed دمو ادغام شد)، برچسب وضعیت‌ها یک‌جا شد (<code>statusLabels</code>)، همه ۴۲۹ها یک شکل شدند.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>متن سایت با محصول هم‌خوان شد:</strong> «رزرو آنلاین» از لندینگ، درباره‌ما، شرایط، فوتر و متادیتا برداشته شد.</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> ۷۱ تست سبز (<code>npm test</code>) — از ۵۷ تست قبلی؛ <code>npx tsc --noEmit</code> بدون خطا؛ <code>npm run lint</code> بدون هشدار؛ <code>npm run build</code> موفق. آزمون دستی روی سرور واقعی: UA ربات ۴۰۳، گوگل‌بات ۲۰۰، hotlink خارجی ۴۰۳، آگهی pending از API و صفحه ۴۰۴، <code>limit=100</code> → ۴۰۰، فایل جعلیِ PNG رد شد، ثبت آگهی ویژه → <code>awaiting_payment</code> → تأیید ادمین → منتشر + <code>featured</code>، تأیید دوباره ۴۰۹، ردیف <code>listing_approved</code> در لاگ ماندگار. تست زمان‌سنجی لاگین با برگرداندن عمدی باگ راستی‌آزمایی شد (قرمز شد).</div>
+    </div>
+  </div>
+
   <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>
@@ -1313,11 +1340,12 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="task-list">
         <div class="task todo-t"><div class="tick"></div><div><strong>اجرای scrapers با VPN خاموش:</strong> <code>cd scraper &amp;&amp; python scraper.py</code> — داده‌های تازه</div></div>
         <div class="task todo-t"><div class="tick"></div><div>تعداد رکوردها بررسی کن: <code>npm run db:studio</code> → جدول billboards</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>Flow کاربر کامل: ثبت‌نام → جستجو (فیلتر شهر/نوع) → جزئیات → رزرو → داشبورد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>Flow ادمین: ورود → مشاهده بیلبوردها → ویرایش قیمت → تأیید/رد رزرو</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Flow تبلیغ‌دهنده: ثبت‌نام → جستجو (فیلتر شهر/نوع) → جزئیات → «برای دیدن اطلاعات تماس وارد شوید» → شماره صاحب رسانه</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Flow صاحب رسانه: ورود → ثبت رسانه (۵ مرحله، با آپلود عکس و انتخاب پلن) → داشبورد «آگهی‌های من» با وضعیت</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Flow ادمین: ورود → تب «تأیید آگهی‌ها» → دیدن عکس‌های ارسالی → تأیید و انتشار → بررسی در تب «لاگ»</div></div>
         <div class="task todo-t"><div class="tick"></div><div>صفحه مقایسه: ۲ بیلبورد از explore انتخاب کن → modal باز می‌شود → همه ردیف‌ها پر</div></div>
         <div class="task todo-t"><div class="tick"></div><div>صفحه تحلیل‌بازار: نمودارها لود می‌شوند؟ فیلتر شهر کار می‌کند؟</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>نقشه: <strong>VPN خاموش</strong> باشد — بررسی کن pin‌ها لود می‌شوند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>نقشه صفحه جزئیات (iframe گوگل‌مپ): <strong>VPN خاموش</strong> باشد — بررسی کن لود می‌شود</div></div>
         <div class="task todo-t"><div class="tick"></div><div>یک حساب demo کاربر بساز — نام و رمز را یادداشت کن برای روز ارائه</div></div>
         <div class="task todo-t"><div class="tick"></div><div>Admin demo: <code>ADMIN_EMAIL</code> در <code>.env</code> بررسی کن — ورود موفق باشد</div></div>
         <div class="task todo-t"><div class="tick"></div><div><code>npm run build</code> — مطمئن شو بدون خطا build می‌شود</div></div>
@@ -1336,13 +1364,13 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">داور احتمالاً می‌پرسد: <em>«چرا رسامپ از IRBillboard و Billboardiha بهتر است؟»</em> پاسخ آماده:</p>
       <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div><strong>رزرو آنلاین</strong> <em style="color:var(--amber);font-size:0.78rem">(زیرساخت کامل؛ صاحبان رسانه هنوز به‌صورت مستقیم به پلتفرم نپیوسته‌اند — رزرو هماهنگ می‌شود)</em> — رقبا فرم تماس دارند؛ رسامپ DB + overlap check + transaction دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ثبت آگهی خودسرویس با تأیید مدیر</strong> — صاحب رسانه خودش ثبت می‌کند (با عکس)، مدیر بررسی و منتشر می‌کند؛ پلن ویژه هم هست. رقبا فرم تماس دارند و ثبت دستی می‌کنند. <em style="color:var(--amber);font-size:0.78rem">رسامپ عمداً «رزرو آنلاین» ندارد: مالک رسانه‌ها نیست و واسطه مالی نیست — §۱۷ engineering-decisions</em></div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>مقایسه جانب‌به‌جانب</strong> — هیچ‌کدام از رقبای ایرانی compare tool ندارند</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>تخمین ترافیک روزانه</strong> <em style="color:var(--amber);font-size:0.78rem">(heuristic — جمعیت × ضریب موقعیت × ضریب نوع × ضریب مساحت، نه داده واقعی)</em> — رقبا اصلاً عدد نمی‌دهند</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>قیمت نمایش داده می‌شود</strong> <em style="color:var(--amber);font-size:0.78rem">(حدسی یا متغیر — از منابع scrape شده، نه تأیید صاحب رسانه)</em> — IRBillboard «تماس بگیرید» دارد</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>داشبورد تحلیلی</strong> — نمودار توزیع شهر/نوع/قیمت از DB واقعی؛ رقبا هیچ analytics ندارند</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>حجم داده</strong> — ۲۸۰۸+ رکورد از ۵ منبع (Divar، Sheypoor، IRBillboard، Billboardiha، Arad) با dedup</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>امنیت</strong> — JWT HttpOnly، bcrypt cost 12، rate limit، Zod، RBAC، TOCTOU-safe reservation</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>امنیت</strong> — JWT HttpOnly، bcrypt cost 12، rate limit، Zod، RBAC، اعتبارسنجی آپلود از روی magic bytes، محافظت ضدِ کپی‌برداری</div></div>
       </div>
       <div class="proof" style="background:var(--amber-dim); border-color:var(--amber-mid); color:var(--text)">رسامپ در ساختار فنی و قابلیت‌ها از رقبا پیشتاز است — با این صداقت که برخی داده‌ها heuristic هستند و همه صاحبان رسانه هنوز به پلتفرم متصل نشده‌اند. این محدودیت‌ها ذاتی مرحله MVP است، نه نقص طراحی.</div>
     </div>
@@ -1454,7 +1482,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
 </div>
 
 <footer>
-  Rasamap · ۱۲ شهریور ۱۴۰۵ · Prod-readiness cont.: Idempotency-Key + reservation slot unique, next 16.2.9→16.2.11 (10 CVEs), keyboard-emoji → Lucide sweep, admin mobile fixes, multi-admin management + registered-users directory + customer view/edit/reset-password, reservation → billboard management, confirm-flips-billboard-status (transaction) + BookingModal booked-range clash guard, humane rate-limit (2-min cooldown + Retry-After + Persian wait + one durable rate_limit_hit/lockout + 50k key cap), SMS/Kavenegar + phone-OTP reset (dormant, §16), audit → LOG_DIR/app.log + §7a "why no Docker/ELK yet", admin billboards list DB-side filter/sort/paginate, O(n²) stat → O(n), tests 19→57, lint 63→0
+  Rasamap · ۱۱ شهریور ۱۴۰۵ · بازبینی نهایی صفر تا صد: حذف زیرسیستم رزرو و چرخش مدل کسب‌وکار به سمت آگهی‌دهنده (§۱۷)، دو پلن + تأیید دستی پرداخت به‌جای درگاه جعلی (§۱۸)، آپلود عکس واقعی با اعتبارسنجی magic-byte (§۱۹)، سخت‌سازی ضد کپی‌برداری با حفظ گوگل (§۲۰)، دو ستون denormal برای مرتب‌سازی درست (§۲۱)؛ رفع باگ زمان‌سنجی لاگین، پوشش تصویر ۱۰۰٪→۵۷٪، drift شدن hasImages، دیده‌شدن آگهی تأییدنشده؛ حذف پنل اسکرپر ساختگی؛ امتیاز از روی جدول نظرات؛ تست‌ها ۵۷→۷۱
 
 </div>
 

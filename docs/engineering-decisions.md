@@ -535,9 +535,155 @@ optionally `KAVENEGAR_SENDER` / `KAVENEGAR_OTP_TEMPLATE`) in `.env`, redeploy.
 No code change: the welcome SMS and the reset flow start delivering
 immediately. `.env.example` documents every knob.
 
-**Verified.** Tests (part of the 57): an unknown phone gets a generic 200 and
+**Verified.** Tests (part of the 71): an unknown phone gets a generic 200 and
 no code; a full send → verify → login with the new password succeeds; a wrong
 code is rejected; the per-phone send limit returns 429 with `Retry-After`.
+
+---
+
+## 17. The business model: a directory, not a booking engine
+
+**Decision.** Rasamap lists media it does not own. Revenue comes from the
+listing side (the media owner pays to be listed), not from the buyer. There is
+no online reservation and no checkout.
+
+**Why.** The original build had a full "رزرو آنلاین" flow: pick a date range,
+see a total with duration discounts, submit. That flow claims something the
+platform cannot deliver — Rasamap holds no inventory, signs no contract and
+takes no money for the space, so a "reservation" it issues is not binding on the
+owner. The modal's own text already admitted this ("کارشناسان رسامپ برای
+هماهنگی با صاحب رسانه با شما تماس می‌گیرند"): the booking engine was an
+inquiry form wearing a checkout's clothes. An examiner asking "how do you
+actually reserve a billboard you don't own?" had no good answer.
+
+Matching the product to what it can honestly do also fixes the revenue
+question. A directory is paid for by the side that wants to be found.
+
+**What changed.**
+- `Reservation` model, both reservation APIs, the booking modal, the user
+  "my bookings" tab and the admin reservations panel: removed
+  (migration `20260902113000_drop_reservations_add_listing_plan`).
+- The buyer's path is now: search → compare → open the media → reveal the
+  owner's phone (signed-in only) → deal offline. Every page that promised
+  "رزرو آنلاین" was reworded.
+- The seller's path became the product: submit media → admin review → publish.
+- `Billboard.submittedById` links a listing to the account that sent it, which
+  is what the user dashboard now shows.
+
+**What was lost.** The reservation code was the strongest concurrency work in
+the project — a transaction-wrapped overlap check, a DB unique constraint, and a
+test firing 10 identical requests to prove exactly one row was created. The
+`Idempotency-Key` mechanism and that class of test survive on
+`POST /api/listings`; the date-overlap logic did not, because nothing overlaps
+any more.
+
+---
+
+## 18. Monetisation without a payment gateway
+
+**Decision.** Two plans (`free`, `featured`). A paid plan does not go through a
+gateway: the listing is parked in `awaiting_payment` and an admin confirms the
+transfer by hand, which publishes it and grants the promotion.
+
+**Why.** Every Iranian payment gateway needs a registered business, a contract
+and a fee — outside what a capstone can obtain, and against the project's rule
+against paid or region-blocked services. The two alternatives were a *simulated*
+checkout screen or an honest manual step. A fake gateway would be the same
+defect as the fake scraper panel this review removed: a UI that claims work
+nobody does. The manual step is a real state machine, it is auditable, and
+swapping in a gateway later means replacing one admin action with a webhook —
+no schema change.
+
+**Implementation.**
+- `Billboard.plan` records what the submitter asked for; `Billboard.featured`
+  records what an admin granted. Keeping them apart is the point: choosing the
+  paid plan can never promote a listing on its own.
+- `POST /api/admin/listings/[id]/decision` is the only place the transition
+  runs, refuses a row that was already decided (409), and writes
+  `listing_approved` / `listing_rejected` to the durable audit log.
+- `featured` is the first key of every catalogue sort, so the promotion is a
+  real, visible thing and not a badge with no effect.
+
+---
+
+## 19. Accepting file uploads from the public
+
+**Decision.** Listing photos are accepted (≤5, ≤2 MB each), validated by the
+file's own magic bytes, and stored under an unguessable path. The listing stays
+unpublished until an admin has seen them.
+
+**Why.** The listing form had an upload step that collected up to five photos
+and then silently discarded them — the request never carried them. Making it
+real means taking files from unauthenticated-by-default strangers, so nothing
+the client says about a file is trusted:
+
+| Claim | Why it is not trusted |
+|-------|----------------------|
+| declared MIME (`data:image/png`) | checked against the actual header bytes (JPEG `FF D8 FF`, PNG `89 50 4E 47…`, WEBP `RIFF…WEBP`); a mismatch is rejected |
+| file extension | never used — derived from the detected type |
+| file name | never used — the server generates it, so no traversal, no null byte, no overwrite |
+| declared size | capped after decoding, on the real byte count |
+
+**What this does not do.** It is not a virus scanner. A structurally valid JPEG
+can still target a decoder bug. The mitigations that matter here are that
+uploads are served as inert static files with `X-Content-Type-Options: nosniff`
+and are never executed, that SVG (which can carry script) is not accepted, and
+that a human approves the listing before anyone else sees it.
+
+`lib/uploads.ts` holds this once; both the public listing route and the admin
+image manager call it, so the two cannot drift apart.
+
+---
+
+## 20. Anti-scraping: raising the cost, not claiming immunity
+
+**Decision.** Bot user agents, per-IP budgets on the catalogue *pages* as well
+as the API, hotlink protection on media, a 48-row page cap, and no bulk
+endpoint. Search engines stay allowed.
+
+**Why the honest framing matters.** A public website cannot be made
+scrape-proof: anything a browser renders, a headless browser with a normal user
+agent can extract. Claiming otherwise in a defense invites the obvious
+follow-up — this project's own dataset was built by scraping other sites. What
+is defensible is removing the *cheap* paths and making the expensive one slow:
+
+- `/api/billboards/pins` returned every geocoded record — around 2 000 rows with
+  name, slug, coordinates and price — in one cacheable request. It was the best
+  scraping target on the site and had **no consumer**: the map it was built for
+  no longer exists (the detail page uses a Google iframe). Deleted, along with
+  the unused `leaflet` dependencies.
+- `limit` fell from 100 to 48, so a full copy needs ~74 requests instead of ~36,
+  against a 60/min budget.
+- The catalogue HTML pages now carry their own 90/min per-IP budget; limiting
+  only the API would have left the cheaper door open.
+- The owner's phone — the commercially valuable field — is behind a session and
+  never in a public payload.
+- The user-agent blocklist is a speed bump, not a wall, and is documented as
+  such. The rate limits are what actually cost an attacker something.
+
+**The tension.** Every measure above trades away discoverability. Googlebot and
+friends are explicitly exempted and the sitemap is kept, because a marketplace
+nobody can find is worse than one that can be copied slowly.
+
+---
+
+## 21. Denormalising the two sort keys
+
+**Decision.** `Billboard.estimatedViews` and `Billboard.area` are stored
+columns, copied from `traffic.estimatedViews` and from `width × height`.
+
+**Why.** The catalogue offers «بیشترین بازدید» and «بزرگترین سطح». Neither was
+sorting on what its label promised: `traffic_desc` ordered by `rating` (a
+seeded, largely synthetic number) and `area_desc` ordered by `width` alone, so a
+14×4 board (56 m²) outranked an 8×12 one (96 m²). Both were wrong answers, not
+approximations.
+
+The correct value lives in a JSON column and in an arithmetic expression, and
+Prisma can express neither in `ORDER BY` — SQLite can read a JSON path with
+`json_extract`, but no index can cover it and the ORM cannot emit it. The
+standard answer is to materialise the sort key. `estimatedViews` is immutable in
+practice (only the seed writes traffic); `area` is not, so `updateBillboard()`
+recomputes it whenever width or height changes.
 
 ---
 
@@ -566,3 +712,7 @@ code is rejected; the per-phone send limit returns 429 with `Retry-After`.
 | 2026-09-02 | SMS (dormant) | §16 — Kavenegar adapter + `otp_codes` + `/api/auth/otp/{send,verify}` + `/reset-password` page + welcome SMS. Inert until `KAVENEGAR_API_KEY`. |
 | 2026-09-02 | Efficiency | Admin billboards list: DB-side filter/sort/paginate instead of loading all 3.5k rows. Overview "co-located clusters" stat O(n²) → O(n) grid bucket. Lint clean (0 warnings). |
 | 2026-09-02 | Data cleanup + defense prep | `db:dedupe --apply` → 17 cross-source duplicate rows removed (3549 → 3532; pre-dedupe backup kept). `LOG_DIR` set. `docs/presentation-prep.md` (screenshot + talking-point checklist) and `docs/self-assessment.md` (A− rubric) added. |
+| 2026-09-02 | **Final review — business model** | Reservation subsystem removed (§17). Rasamap is a directory: buyers get the owner's phone, owners pay to be listed. Two plans + a manual, auditable payment confirmation (§18). |
+| 2026-09-02 | **Final review — correctness** | Timing-attack padding hash was not a valid bcrypt hash (0 ms vs 250 ms — enumeration by stopwatch); analytics reported 100% image coverage instead of 57%; `hasImages` drifted on admin image edits; unapproved listings were readable by URL; both catalogue sorts ordered by the wrong column (§21). All fixed, each with a regression test. |
+| 2026-09-02 | **Final review — honesty** | Fake scraper panel (canned log lines, hardcoded "45 processed") replaced with a read-only status view fed by real counts. Listing photo upload made real and hardened (§19). Ratings now recomputed from the reviews table. |
+| 2026-09-02 | **Final review — anti-scraping** | Bot UAs blocked on pages as well as the API, per-IP page budget, hotlink protection, page cap 100 → 48, dead bulk `pins` endpoint and unused Leaflet dependencies removed (§20). |

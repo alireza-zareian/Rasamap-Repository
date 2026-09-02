@@ -3,13 +3,21 @@
 > این فایل جایگزین خواندن `roadmap.html` برای Claude است.
 > هر session جدید: این فایل را بخوان → وضعیت کامل را بفهم → شروع کن.
 
+> ⚠️ **۱۱ شهریور ۱۴۰۵ — مدل محصول عوض شد.** در بازبینی نهایی، کل زیرسیستم رزرو
+> حذف شد: رساماپ مالک رسانه‌ها نیست، پس چیزی را که در اختیار ندارد نمی‌فروشد.
+> خریدار شماره‌ی صاحب رسانه را می‌گیرد و مستقیم توافق می‌کند؛ درآمد از ثبتِ آگهی
+> است (دو پلن + تأیید دستی پرداخت). بخش‌های زیر که از «رزرو» حرف می‌زنند **سابقه‌ی
+> تاریخی**‌اند، نه وضعیت فعلی. وضعیت فعلی: `docs/api.md` و
+> `docs/engineering-decisions.md` §۱۷–۲۱.
+
+
 ---
 
 ## اطلاعات پایه
 
-- **پروژه:** پلتفرم رزرو آنلاین رسانه‌های تبلیغاتی محیطی (بیلبورد) — thesis دانشگاهی
-- **Stack:** Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite + Prisma 7 · JWT HttpOnly · Leaflet · Inline CSS (بدون Tailwind class در JSX)
-- **DB:** 3545 بیلبورد (2660 billboard, 793 bridge, 79 station, 13 digital) · 2015 با تصویر · 3032 geocoded
+- **پروژه:** فهرست آنلاین رسانه‌های تبلیغاتی محیطی (بیلبورد) با ثبتِ آگهیِ پولی — thesis دانشگاهی
+- **Stack:** Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite + Prisma 7 · JWT HttpOnly · Inline CSS (بدون Tailwind class در JSX)
+- **DB:** 3532 بیلبورد · 2009 با تصویر (۵۷٪) · 3020 geocoded
 - **ارزیابی کد:** A− برای thesis — security غیرمعمول قوی
 
 ---
@@ -245,9 +253,9 @@ app/
   list-media/page.tsx         ثبت رسانه (wizard 5-step)
   api/
     billboards/route.ts       GET (فیلتر + pagination)
-    billboards/pins/route.ts  GET slim برای نقشه
-    reservations/route.ts     POST + GET
-    reservations/my/route.ts  GET رزروهای کاربر جاری
+    listings/route.ts         POST ثبت آگهی (با آپلود عکس) + GET آگهی‌های کاربر جاری
+    admin/listings/route.ts   GET صف تأیید
+    admin/listings/[id]/decision/route.ts  POST تأیید/رد
     reviews/route.ts          GET + POST نظرات
     listings/route.ts         POST ثبت رسانه (pending)
     stats/route.ts            GET آمار کلی

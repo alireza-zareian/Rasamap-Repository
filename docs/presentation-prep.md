@@ -44,11 +44,11 @@ Public site:
 - [ ] Billboard detail `/billboard/<slug>` — gallery, specs chips, traffic meter,
       booking CTA, map ★
 - [ ] Booking modal — step 1 with the **booked-range chips + clash warning**
-      visible (pick a date that overlaps a seeded reservation) ★
+      visible — submit a listing with a photo and watch it reach the admin queue ★
 - [ ] Compare `/compare` with 2 boards + the CompareModal
 - [ ] Login `/login` and the `/reset-password` 3-step flow (step 2 shows the
       "کد تست" line only because `OTP_DEV_ECHO=1` locally)
-- [ ] Dashboard `/dashboard` — a user with reservations in several states
+- [ ] Dashboard `/dashboard` — a user with listings in several states (pending / awaiting payment / published / rejected)
 - [ ] 404 (`/nope`) and the styled error page
 
 Admin (`docs/demo-accounts.md` → super-admin):
@@ -102,7 +102,7 @@ is git-tracked-friendly (images aren't in `.gitignore` there).
    architecture.
 3. **"Is it secure?"** — §3 (JWT/RBAC, endpoint is the boundary), §4 (rate
    limiting with a non-spoofable IP + humane lockouts + one durable
-   `rate_limit_hit` per lockout + a 50k-key cap), §5 (the reservation race:
+   `rate_limit_hit` per lockout + a 50k-key cap), §5 (the idempotency guard:
    atomic overlap check in a transaction **and** a DB unique constraint — the
    "10 concurrent requests → exactly 1 row" test), §6 (Zod on every input, no
    raw SQL), §8 (audit trail).
@@ -143,7 +143,7 @@ is git-tracked-friendly (images aren't in `.gitignore` there).
   the story if a reviewer pushes on it; don't do it before the defense.
 - `next/image` for scraped images, PPR on explore, `useOptimistic` on the
   booking modal — `docs/STATUS.md` P5–P10.
-- A cron to expire past-dated confirmed reservations (right now a finished
+- A cron to expire a paid `featured` slot after 30 days (right now a granted
   booking keeps the board "reserved" until an admin cancels it).
 - Marketing polish (testimonials, brand bar, Enamad placeholder) —
   `docs/STATUS.md` U5.

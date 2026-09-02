@@ -9,13 +9,13 @@ real admin row untouched.
 
 | Phone | Name | What this account exercises |
 |-------|------|-----------------------------|
-| `09120000101` | سارا محمدی | confirmed + pending + past reservations, one review — the "full dashboard" case |
-| `09120000102` | رضا کریمی | only pending reservations |
-| `09120000103` | نگار احمدی | fresh signup — no reservations (empty-state screen) |
-| `09120000104` | امیر حسینی | one cancelled reservation |
-| `09120000105` | مریم رستمی | confirmed past reservation + a review |
-| `09120000106` | کاوه نادری | reservations across several cities |
-| `09120000107` | لیلا صادقی | only finished (past) reservations |
+| `09120000101` | سارا محمدی | two published listings + a review — the "full dashboard" case |
+| `09120000102` | رضا کریمی | one listing awaiting admin review |
+| `09120000103` | نگار احمدی | fresh signup — nothing submitted (empty-state screen) |
+| `09120000104` | امیر حسینی | one rejected listing |
+| `09120000105` | مریم رستمی | wrote a review, submitted nothing |
+| `09120000106` | کاوه نادری | featured plan, still awaiting payment confirmation |
+| `09120000107` | لیلا صادقی | featured listing, payment confirmed — shows the «ویژه» badge |
 | `09120000108` | بابک تهرانی | also an owner, with pending listings awaiting approval |
 
 ## Admins — sign in at `/admin/login` with the email
@@ -24,21 +24,21 @@ real admin row untouched.
 |-------|------|-----|
 | `viewer@rasamap.demo` | `viewer` | read the admin panel only — every write returns 403 |
 | `editor@rasamap.demo` | `editor` | create / update billboards |
-| `admin@rasamap.demo` | `admin` | + delete billboards, change reservation status |
+| `admin@rasamap.demo` | `admin` | + delete billboards, approve/reject listings |
 | `superadmin@rasamap.demo` | `super_admin` | everything |
 
 The real `super_admin` account already in the database is not modified.
 
 ## Records the seed creates
 
-- **13 reservations** across every status (`pending`, `confirmed`, `cancelled`)
-  and time position (future / current / past), spread over billboards 1–11.
-- **3 owners** + **4 pending listings** (`[DEMO]`-tagged billboards with
-  `status = "pending"` and an `ownerId`) — use these to demo the admin approval
-  flow.
-- **3 reviews**, only on billboards where the reviewing user has a confirmed
-  reservation (the API enforces this).
-- Billboard #1 set to `reserved` to reflect its confirmed future booking.
+- **8 listings** (`[DEMO]`-tagged) covering every state of the submission
+  pipeline — `pending` (awaiting content review), `awaiting_payment` (featured
+  plan, transfer not yet confirmed), `available` (published, one of them with
+  the «ویژه» promotion granted) and `inactive` (rejected). Each is linked to the
+  account that submitted it, so the admin approval queue shows a real submitter.
+- **3 owners** (agency records the listings point at).
+- **3 reviews** on published listings, with `billboards.rating` /
+  `reviewCount` recomputed from them — the same aggregate the API maintains.
 
 ## Manual API testing
 
@@ -54,7 +54,7 @@ curl -s 'http://localhost:3000/api/stats' | jq
 curl -s -c cookies.txt -X POST http://localhost:3000/api/auth/login \
   -H 'content-type: application/json' \
   -d '{"phone":"09120000101","password":"demo1234"}'
-curl -s -b cookies.txt http://localhost:3000/api/reservations/my | jq
+curl -s -b cookies.txt http://localhost:3000/api/listings | jq
 ```
 
 See [`api.md`](./api.md) for the full endpoint reference.

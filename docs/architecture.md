@@ -61,7 +61,7 @@ request.
 | `/` (Home) | `fetch("/api/billboards")`, `fetch("/api/stats")` | B |
 | `/explore` | `fetch("/api/billboards?…")` | B |
 | `/explore/map` | redirects to `/explore` | — |
-| `/dashboard` | `fetch("/api/auth/me")`, `fetch("/api/reservations/my")` | B |
+| `/dashboard` | `fetch("/api/auth/me")`, `fetch("/api/listings")` | B |
 | `/analytics` | `fetch("/api/analytics")` | B |
 | `/admin` | `fetch("/api/admin/*")` (also guarded by `proxy.ts`) | B |
 | `/list-media` | `fetch("/api/listings")` | B |

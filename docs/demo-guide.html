@@ -257,9 +257,9 @@ body {
         <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="5">
           <div class="step-num">5</div>
           <div class="step-content">
-            <div class="step-title">رزرو بیلبورد</div>
-            <div class="step-sub">انتخاب بیلبورد ← دکمه «رزرو» ← انتخاب تاریخ + مدت ← ثبت. overlap check در سرور</div>
-            <div class="step-badge"><span class="chip chip-orange">POST /api/reservations</span><span class="chip chip-green">Zod validation</span></div>
+            <div class="step-title">دیدن اطلاعات تماس صاحب رسانه</div>
+            <div class="step-sub">انتخاب بیلبورد ← صفحه جزئیات ← «برای دیدن اطلاعات تماس وارد شوید» ← شماره از endpoint احراز‌هویت‌شده می‌آید، نه از HTML صفحه</div>
+            <div class="step-badge"><span class="chip chip-orange">GET /api/billboards/[slug]/contact</span><span class="chip chip-green">signed-in only</span></div>
           </div>
         </div>
 
@@ -267,8 +267,8 @@ body {
           <div class="step-num">6</div>
           <div class="step-content">
             <div class="step-title">داشبورد کاربر</div>
-            <div class="step-sub">رزروهای من با badge وضعیت (تأیید/انتظار/لغو). تب تنظیمات. خروج</div>
-            <div class="step-badge"><span class="chip chip-blue">/dashboard</span><span class="chip chip-green">GET /api/reservations/my</span></div>
+            <div class="step-sub">آگهی‌های من با badge وضعیت (در انتظار تأیید / در انتظار پرداخت / منتشر شده) و راهنمای قدم بعدی. تب تنظیمات. خروج</div>
+            <div class="step-badge"><span class="chip chip-blue">/dashboard</span><span class="chip chip-green">GET /api/listings</span></div>
           </div>
         </div>
 
@@ -305,7 +305,7 @@ body {
         <div class="creds">
           <div class="cred-row"><span class="cred-label">موبایل</span><span class="cred-val">09123456789</span></div>
           <div class="cred-row"><span class="cred-label">رمز عبور</span><span class="cred-val">demo1234</span></div>
-          <div class="cred-row"><span class="cred-label">رزروها</span><span class="cred-val" style="color:var(--blue)">۶ رزرو (تأیید/انتظار/لغو)</span></div>
+          <div class="cred-row"><span class="cred-label">آگهی‌ها</span><span class="cred-val" style="color:var(--blue)">۸ آگهی در همه وضعیت‌ها</span></div>
         </div>
         <div style="font-size:0.7rem;color:var(--muted);font-weight:700;margin-top:4px;margin-bottom:2px">🛡 ادمین سیستم</div>
         <div class="creds">

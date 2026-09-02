@@ -231,7 +231,7 @@
     <div>
       <div class="label">آماده‌سازی قبل از ارائه</div>
       <div class="val" style="font-size:0.85rem"><code style="direction:ltr;font-family:monospace">npm run db:seed:demo</code></div>
-      <div class="note">user demo + 6 reservation می‌سازد</div>
+      <div class="note">۸ کاربر، ۴ نقش ادمین و ۸ آگهی در همه وضعیت‌ها می‌سازد</div>
     </div>
   </div>
 
@@ -304,7 +304,7 @@
     <div class="step-header" onclick="toggle(this.parentElement)">
       <div class="step-num purple">۴</div>
       <div>
-        <div class="step-title">ثبت‌نام + رزرو + Dashboard</div>
+        <div class="step-title">ثبت‌نام + ثبت رسانه + Dashboard</div>
         <div class="step-url">login → explore → dashboard</div>
       </div>
       <div class="step-toggle">◀</div>
@@ -312,10 +312,10 @@
     <div class="step-body">
       <ul class="action-list">
         <li><span class="icon">👤</span><span>با اعتبارسنجی دمو وارد شوید: <span class="cmd">09123456789 / demo1234</span></span></li>
-        <li><span class="icon">🏢</span><span>یک بیلبورد available انتخاب کنید — دکمه «رزرو» در detail page</span></li>
+        <li><span class="icon">🏢</span><span>یک بیلبورد انتخاب کنید — در صفحه جزئیات «برای دیدن اطلاعات تماس وارد شوید»؛ بعد از ورود شماره صاحب رسانه ظاهر می‌شود</span></li>
         <li><span class="icon">📅</span><span>BookingModal: تاریخ شروع و پایان بزنید — API overlap را چک می‌کند</span></li>
-        <li><span class="icon">✅</span><span>رزرو ثبت شد — به <b>/dashboard</b> بروید — رزرو جدید در لیست است</span></li>
-        <li><span class="icon">📋</span><span>رزروهای قبلی demo (confirmed/pending/cancelled) هم نمایش داده می‌شوند</span></li>
+        <li><span class="icon">✅</span><span><b>/list-media</b> — پنج مرحله: اطلاعات، موقعیت، قیمت، آپلود عکس، انتخاب پلن. ثبت کنید و به <b>/dashboard</b> بروید — آگهی با وضعیت «در انتظار تأیید» در لیست است</span></li>
+        <li><span class="icon">📋</span><span>آگهی‌های demo در وضعیت‌های دیگر (در انتظار پرداخت / منتشر شده / رد شده) هم نمایش داده می‌شوند</span></li>
       </ul>
       <div class="tip">💡 نکته امنیتی: JWT HttpOnly cookie — XSS نمی‌تواند token را بدزدد.</div>
     </div>
@@ -334,11 +334,14 @@
     <div class="step-body">
       <ul class="action-list">
         <li><span class="icon">🔐</span><span>با credentials ادمین وارد شوید (از .env.local)</span></li>
+        <li><span class="icon">✅</span><span><b>تب «تأیید آگهی‌ها»</b> — آگهی‌ای که همین حالا ثبت کردید در صف است، با عکس ارسالی و نام فرستنده. روی عکس بزنید تا بزرگ شود</span></li>
+        <li><span class="icon">🚀</span><span>«تأیید و انتشار» — آگهی از صف بیرون می‌رود. حالا در /explore جستجویش کنید: منتشر شده. (آگهی پلن ویژه پس از تأیید نشان «ویژه» می‌گیرد و اول نتایج می‌آید)</span></li>
+        <li><span class="icon">📜</span><span>تب «لاگ» — ردیف <code>listing_approved</code> با ایمیل ادمین، IP و جزئیات ثبت شده — بعد از restart هم می‌ماند</span></li>
         <li><span class="icon">✏️</span><span>یک بیلبورد را انتخاب کنید — دکمه ویرایش — قیمت را عوض کنید</span></li>
         <li><span class="icon">💾</span><span>ذخیره — API فوری پاسخ می‌دهد — Refresh کنید — قیمت ماند</span></li>
-        <li><span class="icon">🗑️</span><span>دکمه حذف — confirm dialog — API بررسی می‌کند رزرو فعال ندارد</span></li>
+        <li><span class="icon">🗑️</span><span>دکمه حذف — confirm dialog — API بررسی می‌کند نظر ثبت‌شده نداشته باشد (۴۰۹)</span></li>
       </ul>
-      <div class="tip">💡 هر admin route: session → rate limit → Zod → business logic. ترتیب قابل توضیح.</div>
+      <div class="tip">💡 هر admin route: session → rate limit → Zod → business logic. ترتیب قابل توضیح.<br>💡 تصمیم تأیید/رد فقط یک‌بار پذیرفته می‌شود — دوباره بزنید، ۴۰۹ می‌گیرید. نشان «ویژه» فقط با تأیید ادمین داده می‌شود، نه با انتخاب پلن توسط کاربر.</div>
     </div>
   </div>
 

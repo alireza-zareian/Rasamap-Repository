@@ -12,7 +12,7 @@ app/
   explore/page.tsx                Browse/filter — "use client", fetches /api/billboards
   explore/map/page.tsx            redirect → /explore (map deferred; RealMap removed in cleanup)
   billboard/[slug]/page.tsx       Individual billboard detail — Server Component, generateMetadata
-  dashboard/page.tsx              User dashboard — real data from /api/reservations/my
+  dashboard/page.tsx              User dashboard — the caller's own listings from /api/listings
   login/page.tsx                  User login
   list-media/page.tsx             Owner listing wizard — POSTs to /api/listings (status "pending")
   admin/page.tsx                  Admin dashboard — "use client", uses /api/admin/*
@@ -23,13 +23,14 @@ app/
     auth/login/route.ts           POST: user login (rate-limited)
     auth/me/route.ts              GET: current user session
     auth/logout/route.ts          POST: clears session cookie
-    reservations/route.ts         GET: booked dates for a billboard | POST: create reservation (user auth)
-    reservations/my/route.ts      GET: current user's reservations
+    listings/route.ts             POST: submit media for review (user auth, image upload) | GET: the caller's own submissions
+    admin/listings/route.ts       GET: the approval queue (editor+)
+    admin/listings/[id]/decision/route.ts  POST: approve / reject (admin+) — the listing state machine
     admin/auth/login/route.ts     POST: admin login (bcrypt + JWT + audit)
     admin/auth/logout/route.ts    POST: clears admin session
     admin/auth/me/route.ts        GET: current admin session
     admin/billboards/route.ts     GET: admin billboard list (auth + rate-limit + Zod + DB)
-    admin/billboards/[id]/route.ts PUT: update billboard (editor+) | DELETE: delete (admin+, checks active reservations)
+    admin/billboards/[id]/route.ts PUT: update billboard (editor+) | DELETE: delete (admin+, refuses if reviewed)
     admin/billboards/stats/route.ts GET: aggregate stats
     admin/audit/route.ts          GET: { logs (in-memory), persisted (audit_logs table) } — admin+
 
@@ -48,13 +49,13 @@ lib/
 
 components/
   BillboardCard.tsx Grid + list card modes, Link to /billboard/[slug]
-  BookingModal.tsx  Multi-step booking wizard — POSTs to /api/reservations
+  admin/ListingsPanel.tsx  Approval queue — shows submitted photos, approve/reject
   CompareBar/CompareModal  Side-by-side comparison
   TrafficMeter.tsx  Circular traffic score gauge
   Topbar.tsx        Fixed header with user auth state
   Toast.tsx         Notifications
 
-proxy.ts            Auth guard: /admin/* and /api/admin/* require non-user role; /dashboard/* and /api/reservations/* require any valid session; /api/auth/* always passes through
+proxy.ts            Auth guard: /admin/* and /api/admin/* require non-user role; /dashboard/*, /list-media/* and /api/listings/* require any valid session; /api/auth/* always passes through. Also the anti-scraping layer: bot-UA block, per-IP budget on catalogue pages, hotlink protection on media
 ```
 
 ---

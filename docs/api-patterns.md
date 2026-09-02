@@ -81,7 +81,7 @@ Check: `hasPermission(session.role, "admin")` — returns true if session role �
 | GET | `/api/admin/billboards` | viewer+ | list with filters |
 | POST | `/api/admin/billboards` | editor+ | create |
 | PUT | `/api/admin/billboards/[id]` | editor+ | update |
-| DELETE | `/api/admin/billboards/[id]` | admin+ | fails with 409 if active reservations exist |
+| DELETE | `/api/admin/billboards/[id]` | admin+ | fails with 409 if the row has reviews |
 | GET | `/api/admin/billboards/stats` | viewer+ | aggregate stats |
 
 ## Auth Endpoints (always public, bypass proxy)
@@ -100,6 +100,7 @@ Check: `hasPermission(session.role, "admin")` — returns true if session role �
 
 | Method | Route | Notes |
 |---|---|---|
-| GET | `/api/reservations?billboardId=X` | public — booked date ranges |
-| POST | `/api/reservations` | user session required, overlap check |
-| GET | `/api/reservations/my` | user session required, last 50 with billboard details |
+| POST | `/api/listings` | user session required; image upload validated by magic bytes; `Idempotency-Key` supported |
+| GET | `/api/listings` | user session required — the caller's own submissions only |
+| GET | `/api/admin/listings` | editor+ — the approval queue |
+| POST | `/api/admin/listings/[id]/decision` | admin+ — approve/reject; single-shot (409 on a second decision) |

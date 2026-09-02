@@ -6,7 +6,7 @@ Iranian outdoor-media (billboard) marketplace. Persian UI, RTL (`dir="rtl"`), Va
 
 ## Stack (one-liner per layer)
 
-Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Prisma 7 + better-sqlite3 · JWT (jose) HttpOnly cookies · Leaflet 1.9 client-only · Inline CSS + Tailwind v4 (no Tailwind classes in JSX — inline style objects only) · Zod on all API inputs
+Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Prisma 7 + better-sqlite3 · JWT (jose) HttpOnly cookies · Inline CSS + Tailwind v4 (no Tailwind classes in JSX — inline style objects only) · Zod on all API inputs
 
 ## Critical Breaking Change: Next.js 16 Proxy
 
@@ -87,7 +87,7 @@ Triage and status live in `PLAN.md`; 13-layer assessment in `docs/AUDIT.md`.
   non-idempotent POSTs with a DB unique constraint / idempotency key / get-or-create in a
   transaction, plus a disabled button and client de-dup.
 - **Atomicity:** any op touching >1 row/table runs in a transaction — all or nothing.
-- **Race conditions:** every read-modify-write (counters, reservation-overlap checks,
+- **Race conditions:** every read-modify-write (counters, review aggregates,
   "check then insert") is fixed with an atomic DB update, a row lock in a transaction, or a
   unique constraint. Never bare check-then-write.
 - **Duplicates:** defined at the DB level (unique constraint + explicit conflict handling),
@@ -112,7 +112,7 @@ as a shortcut or a gap — it is the framework's recommended pattern and the fas
 
 - `docs/architecture.md` — the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API
 - `docs/api.md` — full HTTP API reference (~28 endpoints, method / auth / params)
-- `docs/engineering-decisions.md` — 16 decision records + milestone log (the "what we built and why" spine; §7a = why no Docker/ELK yet, §16 = SMS built-but-dormant)
+- `docs/engineering-decisions.md` — 21 decision records + milestone log (the "what we built and why" spine; §7a = why no Docker/ELK yet, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys)
 - `docs/presentation-prep.md` — checklist for building the thesis document / defense: screenshots to take, live checks, talking points, doc map
 - `docs/self-assessment.md` — internal rubric score (A−) with honest weak spots
 - `docs/project-reference.md` — file map, data flow, schema, auth, types, phase roadmap, stubs, known issues
