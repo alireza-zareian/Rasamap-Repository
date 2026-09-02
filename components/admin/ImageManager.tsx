@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import type { Billboard } from "@/lib/types";
 import { C } from "./constants";
 import { Badge } from "./Badge";
-import { Image as ImageIcon, X, FolderOpen } from "lucide-react";
+import { Image as ImageIcon, X, FolderOpen, ArrowUp } from "lucide-react";
 
 export function ImageManager({ billboard, onClose }: { billboard: Billboard; onClose: () => void }) {
   const [images, setImages] = useState<string[]>(billboard.images ?? []);
@@ -11,6 +11,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -81,10 +82,10 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
                 style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 8, display: "flex", flexDirection: "column", gap: 6, alignItems: "center", cursor: "grab" }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 6 }} loading="lazy" />
+                <img src={src} alt="" onClick={e => { e.stopPropagation(); setLightbox(src); }} style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 6, cursor: "zoom-in" }} loading="lazy" />
                 {i === 0 && <Badge text="اصلی" color={C.green} bg="rgba(34,197,94,0.12)" />}
                 <div style={{ display: "flex", gap: 4 }}>
-                  {i > 0 && <button onClick={() => setImages(p => { const a = [...p]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; return a; })} style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "none", color: C.muted, cursor: "pointer" }}>↑</button>}
+                  {i > 0 && <button title="انتقال به بالا" onClick={() => setImages(p => { const a = [...p]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; return a; })} style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "none", color: C.muted, cursor: "pointer", display: "inline-flex", alignItems: "center" }}><ArrowUp size={12} /></button>}
                   <button onClick={() => setImages(p => p.filter((_, j) => j !== i))} style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, border: "1px solid rgba(239,68,68,0.4)", background: "none", color: "#ef4444", cursor: "pointer" }}>حذف</button>
                 </div>
               </div>
@@ -102,6 +103,14 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
           <button onClick={onClose} style={{ padding: "10px 18px", background: "none", border: `1px solid ${C.border}`, color: C.muted, fontFamily: C.font, borderRadius: 9, cursor: "pointer" }}>انصراف</button>
         </div>
       </div>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
+          <button onClick={() => setLightbox(null)} style={{ position: "absolute", top: 16, left: 16, background: "rgba(255,255,255,0.14)", border: "none", color: "#fff", width: 34, height: 34, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={18} /></button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt="" onClick={e => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "88vh", objectFit: "contain", borderRadius: 10, display: "block" }} />
+        </div>
+      )}
     </div>
   );
 }

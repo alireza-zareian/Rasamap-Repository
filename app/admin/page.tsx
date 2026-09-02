@@ -88,7 +88,10 @@ export default function AdminDashboard() {
     router.push("/admin/login");
   };
 
-  const handleSaved = (updated: Billboard) => setBillboards(prev => prev.map(b => b.id === updated.id ? updated : b));
+  const handleSaved = (updated: Billboard) => {
+    setBillboards(prev => prev.map(b => b.id === updated.id ? updated : b));
+    setAllBillboards(prev => prev.map(b => b.id === updated.id ? updated : b));
+  };
 
   const handleCreated = (created: Billboard) => {
     setBillboards(prev => [created, ...prev]);
@@ -285,7 +288,7 @@ export default function AdminDashboard() {
 
           {tab === "quality" && (
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
-              <QualityPanel billboards={allBillboards} />
+              <QualityPanel billboards={allBillboards} onFix={canEdit ? setEditTarget : () => { setPermMsg("دسترسی ویرایش ندارید"); setTimeout(() => setPermMsg(""), 3000); }} />
             </div>
           )}
           {tab === "scraper" && (
