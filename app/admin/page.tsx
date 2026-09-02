@@ -46,6 +46,26 @@ export default function AdminDashboard() {
   const [allBillboards, setAllBillboards] = useState<Billboard[]>([]);
   const [loggingOut, setLoggingOut] = useState(false);
   const [permMsg, setPermMsg] = useState("");
+  const [openingBillboard, setOpeningBillboard] = useState(false);
+
+  const openBillboardById = async (id: number) => {
+    setOpeningBillboard(true);
+    try {
+      const res = await fetch(`/api/admin/billboards/${id}`);
+      const data = await res.json();
+      if (!res.ok || !data.billboard) {
+        setPermMsg(data.error ?? "رسانه یافت نشد");
+        setTimeout(() => setPermMsg(""), 3000);
+        return;
+      }
+      setEditTarget(data.billboard as Billboard);
+    } catch {
+      setPermMsg("خطای شبکه در باز کردن رسانه");
+      setTimeout(() => setPermMsg(""), 3000);
+    } finally {
+      setOpeningBillboard(false);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/admin/auth/me")
@@ -134,6 +154,12 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: C.font, direction: "rtl", color: C.text }}>
+
+      {openingBillboard && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1050, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "0.9rem", fontWeight: 700 }}>
+          در حال باز کردن رسانه...
+        </div>
+      )}
 
       {/* Permission toast */}
       {permMsg && (
@@ -282,7 +308,7 @@ export default function AdminDashboard() {
 
           {tab === "reservations" && (
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
-              <ReservationsPanel userRole={user.role} />
+              <ReservationsPanel userRole={user.role} onOpenBillboard={openBillboardById} />
             </div>
           )}
 

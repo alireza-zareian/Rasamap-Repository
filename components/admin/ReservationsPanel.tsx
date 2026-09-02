@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { C } from "./constants";
 import type { UserRole } from "@/lib/auth/session";
-import { MapPin, User, Calendar, Coins, Check, X } from "lucide-react";
+import { MapPin, User, Calendar, Coins, Check, X, SlidersHorizontal } from "lucide-react";
 
 interface ReservationRow {
   id:        number;
@@ -29,9 +29,9 @@ function fmt(d: string) {
   return new Date(d).toLocaleDateString("fa-IR", { year: "numeric", month: "short", day: "numeric" });
 }
 
-interface Props { userRole: UserRole; }
+interface Props { userRole: UserRole; onOpenBillboard?: (id: number) => void; }
 
-export function ReservationsPanel({ userRole }: Props) {
+export function ReservationsPanel({ userRole, onOpenBillboard }: Props) {
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [total, setTotal]     = useState(0);
   const [pages, setPages]     = useState(1);
@@ -123,7 +123,16 @@ export function ReservationsPanel({ userRole }: Props) {
                     {pill(r.status)}
                     <span style={{ fontSize: "0.72rem", color: C.muted }}>#{r.id}</span>
                   </div>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 700, marginBottom: 4 }}>{r.billboard.name}</div>
+                  {onOpenBillboard ? (
+                    <button
+                      onClick={() => onOpenBillboard(r.billboard.id)}
+                      title="باز کردن رسانه برای مدیریت کامل"
+                      style={{ background: "none", border: "none", padding: 0, margin: "0 0 4px", fontFamily: C.font, fontSize: "0.88rem", fontWeight: 700, color: C.accent, cursor: "pointer", textAlign: "right", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      {r.billboard.name} <SlidersHorizontal size={13} />
+                    </button>
+                  ) : (
+                    <div style={{ fontSize: "0.88rem", fontWeight: 700, marginBottom: 4 }}>{r.billboard.name}</div>
+                  )}
                   <div style={{ fontSize: "0.78rem", color: C.muted, display: "flex", gap: 16, flexWrap: "wrap" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {r.billboard.city}</span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><User size={12} /> {r.user.name} · {r.user.phone}</span>

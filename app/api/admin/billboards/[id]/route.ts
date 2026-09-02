@@ -39,6 +39,22 @@ const UpdateSchema = z.object({
   faces:       z.number().int().min(1).optional(),
 });
 
+// GET /api/admin/billboards/[id] — single record for the admin edit view
+async function GETHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession();
+  const guard = authGuard(session, req);
+  if (guard) return guard;
+
+  const { id: idStr } = await params;
+  const id = parseInt(idStr, 10);
+  if (isNaN(id)) return NextResponse.json({ error: "شناسه نامعتبر" }, { status: 400 });
+
+  const billboard = await getBillboardById(id);
+  if (!billboard) return NextResponse.json({ error: "بیلبورد یافت نشد" }, { status: 404 });
+
+  return NextResponse.json({ billboard }, { headers: { "Cache-Control": "no-store" } });
+}
+
 // PUT /api/admin/billboards/[id]
 async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -126,5 +142,6 @@ async function DELETEHandler(req: NextRequest, { params }: { params: Promise<{ i
   return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
 }
 
+export const GET = withApiLog("admin/billboards/[id]", GETHandler);
 export const PUT = withApiLog("admin/billboards/[id]", PUTHandler);
 export const DELETE = withApiLog("admin/billboards/[id]", DELETEHandler);
