@@ -570,12 +570,25 @@ question. A directory is paid for by the side that wants to be found.
 - `Billboard.submittedById` links a listing to the account that sent it, which
   is what the user dashboard now shows.
 
-**What was lost.** The reservation code was the strongest concurrency work in
-the project — a transaction-wrapped overlap check, a DB unique constraint, and a
-test firing 10 identical requests to prove exactly one row was created. The
-`Idempotency-Key` mechanism and that class of test survive on
-`POST /api/listings`; the date-overlap logic did not, because nothing overlaps
-any more.
+**Where the concurrency work went.** The reservation code carried the strongest
+concurrency guards in the project. They were not dropped — they moved to
+`POST /api/listings`, which is now the non-idempotent write:
+
+| Guard | On reservations (old) | On listings (now) |
+|-------|----------------------|-------------------|
+| `Idempotency-Key` | opt-in header, replays the stored response | same |
+| DB unique constraint | `(billboardId, userId, startDate, endDate)` | **partial** unique index on `(submittedById, name, city)` `WHERE source='listing'` |
+| Race test | 10 concurrent identical requests → exactly one row | same test, same assertion |
+| Single-shot transition | — | approve/reject accepted once, 409 on a repeat |
+
+The index is partial because scraped and admin-created rows may legitimately
+repeat a name in a city. Prisma cannot express a `WHERE` clause on an index, so
+it lives in raw migration SQL — and `test/reset-db.mjs` builds the test database
+with `prisma migrate deploy` rather than `db push`, because `db push` works from
+`schema.prisma` alone and would have produced a test DB silently missing the
+very constraint the race test exists to prove.
+
+Only the date-overlap logic itself is gone, because nothing overlaps any more.
 
 ---
 

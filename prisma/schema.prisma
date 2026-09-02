@@ -149,6 +149,9 @@ model Billboard {
   @@index([price])
   @@index([ownerId])
   @@index([submittedById])
+  // A partial unique index on (submittedById, name, city) WHERE source='listing'
+  // also exists — see migration 20260902140000_listing_submit_unique. Prisma
+  // cannot express a partial index, so it is raw SQL and is not repeated here.
   @@index([hasImages])
   @@index([featured, hasImages, price])
   @@index([hasImages, price])

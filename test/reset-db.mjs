@@ -27,9 +27,11 @@ for (const suffix of ["", "-shm", "-wal", "-journal"]) {
 }
 console.log(`removed ${removed} stale test db file(s)`);
 
-// Prisma 7: pass --url explicitly so the test file is targeted regardless of
-// what prisma.config.ts / .env resolve DATABASE_URL to.
-execSync(`npx prisma db push --url "${DB}"`, {
+// `migrate deploy` rather than `db push`: the schema includes a partial unique
+// index that only exists in a migration file (Prisma cannot express one), and
+// `db push` builds from schema.prisma alone — the test DB would silently lack
+// the constraint the race test is there to prove.
+execSync(`npx prisma migrate deploy`, {
   stdio: "inherit",
   env: { ...process.env, DATABASE_URL: DB },
 });

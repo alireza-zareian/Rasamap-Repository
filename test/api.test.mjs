@@ -338,6 +338,52 @@ test("POST /api/listings rejects more than five images", async () => {
   assert.equal(status, 400);
 });
 
+test("10 identical listing submissions fired together create exactly one row (race guard)", async () => {
+  // The non-idempotent write now lives on this path, so the concurrency guard
+  // does too. Idempotency-Key is opt-in; these requests deliberately send none,
+  // so the only thing standing between a double-click and a duplicate row is
+  // the partial unique index on (submittedById, name, city).
+  const token = await mintSession({ userId: "2", role: "user" });
+  const payload = {
+    name: "بیلبورد مسابقه همزمانی", phone: "09120000000", type: "billboard",
+    city: "تهران", region: "۱", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 55,
+  };
+
+  const results = await Promise.all(
+    Array.from({ length: 10 }, () => api("/api/listings", { method: "POST", token, body: payload })),
+  );
+
+  const created  = results.filter((r) => r.status === 201).length;
+  const rejected = results.filter((r) => r.status === 409).length;
+  const other    = results.filter((r) => r.status !== 201 && r.status !== 409);
+
+  assert.equal(created, 1, `expected exactly one 201, got ${results.map((r) => r.status).join(",")}`);
+  assert.equal(other.length, 0, `unexpected statuses: ${other.map((r) => r.status).join(",")}`);
+  assert.equal(rejected, 9);
+});
+
+test("a duplicate listing submitted later is refused with a clear 409", async () => {
+  const token = await mintSession({ userId: "2", role: "user" });
+  const payload = {
+    name: "بیلبورد تکراری دیرهنگام", phone: "09120000000", type: "billboard",
+    city: "اصفهان", width: 10, height: 3, faces: 1, price: 40,
+  };
+  assert.equal((await api("/api/listings", { method: "POST", token, body: payload })).status, 201);
+
+  const again = await api("/api/listings", { method: "POST", token, body: payload });
+  assert.equal(again.status, 409);
+  assert.match(again.json.error, /قبلاً ثبت/);
+});
+
+test("a different user may submit a media with the same name (the constraint is per submitter)", async () => {
+  const other = await mintSession({ userId: "1", role: "user" });
+  const { status } = await api("/api/listings", {
+    method: "POST", token: other,
+    body: { name: "بیلبورد تکراری دیرهنگام", phone: "09120000000", type: "billboard", city: "اصفهان", width: 10, height: 3, faces: 1, price: 40 },
+  });
+  assert.equal(status, 201);
+});
+
 test("listings: a repeated Idempotency-Key replays the first response (no second row)", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
   const key = "idem-" + Math.random().toString(36).slice(2);

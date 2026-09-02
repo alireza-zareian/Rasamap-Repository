@@ -91,6 +91,15 @@ async function POSTHandler(req: NextRequest) {
     };
   } catch (e) {
     await discardImages(saved.dir);
+    // The partial unique index on (submittedById, name, city) is the DB-level
+    // floor under the opt-in Idempotency-Key: a double-click or a retry without
+    // the header loses the race here instead of creating a second listing.
+    if ((e as { code?: string })?.code === "P2002") {
+      return NextResponse.json(
+        { error: "این رسانه را قبلاً ثبت کرده‌اید. وضعیت آن را در داشبورد ببینید." },
+        { status: 409 },
+      );
+    }
     return serverError("POST /api/listings", e, { userId: session.userId });
   }
 

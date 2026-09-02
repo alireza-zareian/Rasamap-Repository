@@ -1323,9 +1323,11 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
         <div class="task done-t"><div class="tick">✓</div><div><strong>آمار پوشش تصویر:</strong> فیلتر Json روی SQLite کار نمی‌کرد و همیشه ۱۰۰٪ گزارش می‌داد — واقعیت ۵۷٪ بود (۲۰۰۹ از ۳۵۲۸).</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>امتیاز واقعی شد:</strong> ثبت نظر حالا <code>rating</code>/<code>reviewCount</code> بیلبورد را در همان تراکنش از روی جدول نظرات بازمحاسبه می‌کند؛ کارت رسانه‌ای که نظر ندارد دیگر امتیاز نشان نمی‌دهد.</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>پاک‌سازی:</strong> کد مرده حذف شد (<code>getListingsByStatus</code>، <code>countBillboards</code>، لیست تکراری UA ربات‌ها در ۳ روت، دو seed دمو ادغام شد)، برچسب وضعیت‌ها یک‌جا شد (<code>statusLabels</code>)، همه ۴۲۹ها یک شکل شدند.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>گاردهای همزمانی به مسیر ثبت آگهی منتقل شدند:</strong> نوشتنِ غیرidempotent حالا آنجاست، پس <code>Idempotency-Key</code> + یک ایندکس یکتای <em>جزئی</em> روی <code>(submittedById, name, city)</code> با شرط <code>source='listing'</code> + همان تستِ ده درخواستِ همزمان (دقیقاً یک ردیف، نُه تای دیگر ۴۰۹) روی <code>POST /api/listings</code> کار می‌کنند. <code>test/reset-db.mjs</code> از <code>migrate deploy</code> استفاده می‌کند وگرنه دیتابیس تست بی‌سروصدا بدون آن محدودیت ساخته می‌شد.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>یادداشت‌های نگارش پایان‌نامه:</strong> <code>docs/final-review-notes.md</code> — خلاصه کامل تغییرات، سؤالات آماده داور، ضعف‌های باقی‌مانده و اعدادِ قابل نقل.</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>متن سایت با محصول هم‌خوان شد:</strong> «رزرو آنلاین» از لندینگ، درباره‌ما، شرایط، فوتر و متادیتا برداشته شد.</div></div>
       </div>
-      <div class="proof"><b>تأیید:</b> ۷۱ تست سبز (<code>npm test</code>) — از ۵۷ تست قبلی؛ <code>npx tsc --noEmit</code> بدون خطا؛ <code>npm run lint</code> بدون هشدار؛ <code>npm run build</code> موفق. آزمون دستی روی سرور واقعی: UA ربات ۴۰۳، گوگل‌بات ۲۰۰، hotlink خارجی ۴۰۳، آگهی pending از API و صفحه ۴۰۴، <code>limit=100</code> → ۴۰۰، فایل جعلیِ PNG رد شد، ثبت آگهی ویژه → <code>awaiting_payment</code> → تأیید ادمین → منتشر + <code>featured</code>، تأیید دوباره ۴۰۹، ردیف <code>listing_approved</code> در لاگ ماندگار. تست زمان‌سنجی لاگین با برگرداندن عمدی باگ راستی‌آزمایی شد (قرمز شد).</div>
+      <div class="proof"><b>تأیید:</b> ۷۵ تست سبز (<code>npm test</code>) — از ۵۷ تست قبلی؛ <code>npx tsc --noEmit</code> بدون خطا؛ <code>npm run lint</code> بدون هشدار؛ <code>npm run build</code> موفق. آزمون دستی روی سرور واقعی: UA ربات ۴۰۳، گوگل‌بات ۲۰۰، hotlink خارجی ۴۰۳، آگهی pending از API و صفحه ۴۰۴، <code>limit=100</code> → ۴۰۰، فایل جعلیِ PNG رد شد، ثبت آگهی ویژه → <code>awaiting_payment</code> → تأیید ادمین → منتشر + <code>featured</code>، تأیید دوباره ۴۰۹، ردیف <code>listing_approved</code> در لاگ ماندگار. تست زمان‌سنجی لاگین با برگرداندن عمدی باگ راستی‌آزمایی شد (قرمز شد).</div>
     </div>
   </div>
 
@@ -1482,7 +1484,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
 </div>
 
 <footer>
-  Rasamap · ۱۱ شهریور ۱۴۰۵ · بازبینی نهایی صفر تا صد: حذف زیرسیستم رزرو و چرخش مدل کسب‌وکار به سمت آگهی‌دهنده (§۱۷)، دو پلن + تأیید دستی پرداخت به‌جای درگاه جعلی (§۱۸)، آپلود عکس واقعی با اعتبارسنجی magic-byte (§۱۹)، سخت‌سازی ضد کپی‌برداری با حفظ گوگل (§۲۰)، دو ستون denormal برای مرتب‌سازی درست (§۲۱)؛ رفع باگ زمان‌سنجی لاگین، پوشش تصویر ۱۰۰٪→۵۷٪، drift شدن hasImages، دیده‌شدن آگهی تأییدنشده؛ حذف پنل اسکرپر ساختگی؛ امتیاز از روی جدول نظرات؛ تست‌ها ۵۷→۷۱
+  Rasamap · ۱۱ شهریور ۱۴۰۵ · بازبینی نهایی صفر تا صد: حذف زیرسیستم رزرو و چرخش مدل کسب‌وکار به سمت آگهی‌دهنده (§۱۷)، دو پلن + تأیید دستی پرداخت به‌جای درگاه جعلی (§۱۸)، آپلود عکس واقعی با اعتبارسنجی magic-byte (§۱۹)، سخت‌سازی ضد کپی‌برداری با حفظ گوگل (§۲۰)، دو ستون denormal برای مرتب‌سازی درست (§۲۱)؛ رفع باگ زمان‌سنجی لاگین، پوشش تصویر ۱۰۰٪→۵۷٪، drift شدن hasImages، دیده‌شدن آگهی تأییدنشده؛ حذف پنل اسکرپر ساختگی؛ امتیاز از روی جدول نظرات؛ گاردهای همزمانی منتقل‌شده به مسیر ثبت آگهی؛ تست‌ها ۵۷→۷۵
 
 </div>
 
