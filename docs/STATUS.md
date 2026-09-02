@@ -285,7 +285,7 @@ prisma/schema.prisma
 npm run dev              # localhost:3000
 npm run build            # باید بدون خطا پاس شود
 npm run lint
-npm test                 # سوییت API (node:test) — ۳۷ تست
+npm test                 # سوییت API (node:test) — ۵۷ تست
 npm run bench            # بنچمارک بار (سرور dev باید بالا باشد)
 npm run db:migrate
 npm run db:seed          # 3545 رکورد
@@ -295,6 +295,28 @@ npm run db:studio        # Prisma Studio
 ```
 
 **Env لازم:** `DATABASE_URL` · `AUTH_SECRET` · `ADMIN_EMAIL` · `ADMIN_PASSWORD_HASH` · `ADMIN_NAME` · `NESHAN_API_KEY`
+**Env اختیاری:** `LOG_DIR` / `LOG_LEVEL` (لاگ به فایل) · `KAVENEGAR_API_KEY` + `KAVENEGAR_SENDER` / `KAVENEGAR_OTP_TEMPLATE` (SMS — تا وقتی خالی باشد کل لایه SMS خاموش است) · `OTP_DEV_ECHO` (فقط لوکال)
+
+---
+
+## کارهای دور دوم (شهریور ۱۴۰۵) — کامل
+
+- **امنیت پایه:** `next` 16.2.11 (۱۰ CVE)، env fail-closed، client-IP غیرقابل جعل، Idempotency-Key + یکتایی بازه رزرو + تست همزمانی.
+- **حریم خصوصی:** شماره مالک از همه پاسخ‌های عمومی و RSC حذف شد؛ `GET /api/billboards/[slug]/contact` فقط برای کاربر واردشده؛ دکمه رزرو اول login می‌خواهد.
+- **آیکون‌ها:** جاروی کل سایت — ایموجی کیبوردی → Lucide (پنل ادمین + همه صفحات کاربر).
+- **موبایل:** فونت self-host، خنثی‌سازی dark-mode مرورگر، رفع سرریزهای topbar / explore / جزئیات / پنل ادمین / نوار مقایسه.
+- **پنل ادمین:** مدیریت چند-ادمین (`/api/admin/users`)، فهرست کاربران ثبت‌نام‌شده (`/api/admin/customers`)، کلیک روی کاربر → مشاهده/ویرایش/بازنشانی رمز، کلیک روی بیلبورد در پنل رزرو → مدیریت کامل، بخش کیفیت با توضیح + دکمه اصلاح، lightbox تصاویر.
+- **Rate limit:** قفل ۲ دقیقه‌ای برای `userApi` (نه ۱۵ دقیقه)، پاسخ ۴۲۹ با `Retry-After` + پیام فارسی «N دقیقه دیگر»، یک ردیف durable `rate_limit_hit` به‌ازای هر قفل، سقف ۵۰هزار کلید در حافظه.
+- **منطق On-Time:** تأیید رزرو → وضعیت بیلبورد `reserved` (تراکنش)؛ لغو → آزاد. BookingModal بازه‌های رزروشده را نشان می‌دهد و انتخاب متداخل را همان‌جا می‌بندد.
+- **لاگ:** `auditLog` از `logger` رد می‌شود؛ `LOG_DIR` → `app.log` چرخشی. `engineering-decisions §7a` = چرا هنوز Docker/ELK/Sentry نداریم + مسیر افزودنش.
+- **SMS (خاموش):** `engineering-decisions §16` — آداپتر کاوه‌نگار + `otp_codes` + `/api/auth/otp/{send,verify}` + صفحه `/reset-password` + پیامک خوش‌آمد. تا `KAVENEGAR_API_KEY` خالی باشد بی‌اثر.
+- **کارایی:** فهرست بیلبورد ادمین حالا در DB فیلتر/مرتب/صفحه‌بندی می‌شود (نه بارگذاری ۳۵۴۵ ردیف). آمار «خوشه هم‌مکان» از O(n²) به O(n). lint تمیز (۰ هشدار).
+
+### پیشنهادها برای قبل از ارائه
+- `npm run db:dedupe -- --apply` → حذف ۱۷ رکورد تکراری واقعی (اختیاری، برگشت‌پذیر با re-seed).
+- تست مرورگری روی گوشی: تب کاربران، جریان رزرو با تاریخ فردا، جریان `/reset-password`.
+- `LOG_DIR=./logs` در `.env` برای ثبت فایل لاگ در روز ارائه.
+- اسکرین‌شات‌های README (اختیاری).
 
 ---
 

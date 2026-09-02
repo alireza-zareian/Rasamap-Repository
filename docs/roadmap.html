@@ -1454,7 +1454,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
 </div>
 
 <footer>
-  Rasamap · ۱۲ شهریور ۱۴۰۵ · Prod-readiness cont.: Idempotency-Key + reservation slot unique, withApiLog on all 23 routes, next 16.2.9→16.2.11 (10 CVEs incl. proxy bypass), clean-machine setup fixed (postinstall + migration drift reconciled), dead-code cleanup + lint 63→10 (0 errors), demo-full seed (8 users/4 admins), /api-docs, docs/engineering-decisions.md + docs/presentation-summary.md, tests 19→48, keyboard-emoji → Lucide sweep (admin + site), admin mobile overflow fixes, quality-panel edit link + image lightbox, reservation → billboard management, multi-admin user management + registered-users directory, booking defaults to tomorrow, humane rate-limit (2-min cooldown + Retry-After + Persian wait message), audit lines to LOG_DIR/app.log
+  Rasamap · ۱۲ شهریور ۱۴۰۵ · Prod-readiness cont.: Idempotency-Key + reservation slot unique, next 16.2.9→16.2.11 (10 CVEs), keyboard-emoji → Lucide sweep, admin mobile fixes, multi-admin management + registered-users directory + customer view/edit/reset-password, reservation → billboard management, confirm-flips-billboard-status (transaction) + BookingModal booked-range clash guard, humane rate-limit (2-min cooldown + Retry-After + Persian wait + one durable rate_limit_hit/lockout + 50k key cap), SMS/Kavenegar + phone-OTP reset (dormant, §16), audit → LOG_DIR/app.log + §7a "why no Docker/ELK yet", admin billboards list DB-side filter/sort/paginate, O(n²) stat → O(n), tests 19→57, lint 63→0
 
 </div>
 

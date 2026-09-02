@@ -494,6 +494,53 @@ with rendered tables under `next start`.
 
 ---
 
+## 16. SMS & phone-verified password reset — built, shipped dormant
+
+**Decision.** The full SMS layer (Kavenegar) and a phone-OTP password-reset
+flow are implemented and tested, but inert until `KAVENEGAR_API_KEY` is set.
+Nothing about registration, login or the OTP endpoints breaks while it's off.
+
+**Why it ships disabled, not omitted.** A Kavenegar line needs a paid minimum
+top-up and a verified sender — not worth doing for a capstone demo, and the
+project rule bars standing up a paid service just to tick a box. Leaving the
+feature *out* would mean re-deriving the design under deadline later; leaving it
+*in but dormant* means the reviewer can read the backend, the tests prove it
+works, and switching it on is one env var + a redeploy. This is the same
+"structured from day one, wire the vendor in later" stance as the logging stack
+(§7a).
+
+**Structure it produces.**
+- `lib/sms.ts` — Kavenegar adapter. `smsEnabled` (derived from the key) gates
+  every call; no path throws. `sendSms()` for plain text; `sendOtp()` uses
+  Kavenegar's dedicated verify-lookup line when `KAVENEGAR_OTP_TEMPLATE` is set
+  (higher deliverability, no sender approval), else a plain SMS. Logs a masked
+  phone only — never the number or the code.
+- `lib/otp.ts` + `otp_codes` table (hand migration `20260902090000`) — 6-digit
+  codes, stored only as an HMAC-SHA256 hash keyed by `AUTH_SECRET`, 5-minute
+  TTL, single-use, 5-attempt cap, rows older than a day pruned opportunistically.
+- `POST /api/auth/otp/send` + `/verify` — public, rate-limited per phone **and**
+  per IP (`otpSendRateLimit` 3/10 min, `otpSendIpRateLimit` 10/hr,
+  `otpVerifyRateLimit` 10/10 min). `send` responds identically whether or not
+  the number is registered (no account enumeration). `verify` checks the code
+  and sets the new bcrypt hash in one step — no intermediate token — and audits
+  it as `password_reset_self`. `OTP_DEV_ECHO=1` returns the code in the `send`
+  response for local testing (ignored under `NODE_ENV=production`).
+- `/reset-password` — a 3-step page (phone → code + new password → done), linked
+  from `/login` as «رمز عبور را فراموش کرده‌اید؟».
+- Register hook — a fire-and-forget welcome SMS after `prisma.user.create`;
+  it can never fail the sign-up.
+
+**How to switch it on.** Buy a Kavenegar line, put `KAVENEGAR_API_KEY` (and
+optionally `KAVENEGAR_SENDER` / `KAVENEGAR_OTP_TEMPLATE`) in `.env`, redeploy.
+No code change: the welcome SMS and the reset flow start delivering
+immediately. `.env.example` documents every knob.
+
+**Verified.** Tests (part of the 57): an unknown phone gets a generic 200 and
+no code; a full send → verify → login with the new password succeeds; a wrong
+code is rejected; the per-phone send limit returns 429 with `Retry-After`.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -507,6 +554,14 @@ with rendered tables under `next start`.
 | 2026-09-01 | Config safety + IP | `lib/env.ts` + `instrumentation.ts` (fail-closed). `lib/auth/client-ip.ts` (`TRUSTED_PROXY_COUNT`) across 20 routes. |
 | 2026-09-01 | Durable audit | `persistAudit()` → `audit_logs` for all admin mutations. `/api/admin/audit` → `{ logs, persisted }`. Race test → 10 concurrent. |
 | 2026-09-01 | Demo data + docs | `npm run db:seed:demo:full` (8 users / 4 admin roles / 3 owners / 4 listings / 13 reservations / 3 reviews, idempotent). `/api-docs` in-app reference. `docs/engineering-decisions.md`, `docs/demo-accounts.md`. |
-
-Pending (tracked in `PLAN.md` "Next update"): `Idempotency-Key` + reservation
-slot unique constraint (needs one `prisma db push` on dev.db).
+| 2026-09-02 | Idempotency + races | `Idempotency-Key` on reservation/listing POSTs; unique `(billboardId,userId,startDate,endDate)`; wider concurrency test. |
+| 2026-09-02 | Security patch | `next` 16.2.9 → 16.2.11 (10 CVEs incl. App-Router proxy bypass). Fail-closed env at boot. Non-spoofable client IP. |
+| 2026-09-02 | Icon system | Site-wide keyboard-emoji → Lucide sweep (admin panel + all customer pages). Shared `TypeIcon`. |
+| 2026-09-02 | Mobile | Self-hosted Vazirmatn; browser force-dark neutralised; responsive fixes for topbar / explore hero / billboard detail / admin panel / compare bar. |
+| 2026-09-02 | Phone privacy | Owner phone removed from every public payload + RSC stream; `GET /api/billboards/[slug]/contact` (signed-in only); booking CTA gates on login. |
+| 2026-09-02 | Admin — users | Multi-admin management (`/api/admin/users`, super_admin); registered-user directory (`/api/admin/customers`); click a user to view/edit/reset-password; open a reservation's billboard for full management. |
+| 2026-09-02 | Rate-limit UX | `userApiRateLimit` 2-min cooldown (not the 15-min credential default); `rateLimited()` — one 429 shape with `Retry-After` + a Persian "try again in N minutes" + one durable `rate_limit_hit` per lockout. Store capped at 50k keys. |
+| 2026-09-02 | On-time logic | Confirming a reservation flips the billboard to `reserved` (transaction); cancel releases it. BookingModal shows booked ranges + blocks a clashing selection client-side. |
+| 2026-09-02 | Logging to file | `auditLog()` routes through `logger`; `LOG_DIR` → rotated `app.log`. `docs/engineering-decisions.md` §7a: why no Docker/ELK/Sentry yet + the path to it. |
+| 2026-09-02 | SMS (dormant) | §16 — Kavenegar adapter + `otp_codes` + `/api/auth/otp/{send,verify}` + `/reset-password` page + welcome SMS. Inert until `KAVENEGAR_API_KEY`. |
+| 2026-09-02 | Efficiency | Admin billboards list: DB-side filter/sort/paginate instead of loading all 3.5k rows. Overview "co-located clusters" stat O(n²) → O(n) grid bucket. Lint clean (0 warnings). |
