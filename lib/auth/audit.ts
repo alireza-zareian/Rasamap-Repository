@@ -60,11 +60,10 @@ export function auditLog(
   if (LOG_BUFFER.length >= MAX_BUFFER) LOG_BUFFER.shift();
   LOG_BUFFER.push(entry);
 
-  // Structured console output (capture by log aggregators)
-  const fn = severity === "critical" ? console.error
-           : severity === "warn"     ? console.warn
-           : console.log;
-  fn(JSON.stringify({ type: "AUDIT", ...entry }));
+  // Structured output via the shared logger, so audit lines also land in the
+  // rotated LOG_DIR/app.log file (when LOG_DIR is set) and any log collector.
+  const level = severity === "critical" ? "error" : severity === "warn" ? "warn" : "info";
+  logger[level]("audit", { audit: true, ...entry });
 }
 
 export function getRecentAuditLogs(limit = 100): AuditEntry[] {

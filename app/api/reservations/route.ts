@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { serverError } from "@/lib/api-error";
 import { idempotency } from "@/lib/idempotency";
 import { withApiLog } from "@/lib/api-log";
@@ -40,8 +41,9 @@ async function POSTHandler(req: NextRequest) {
     return NextResponse.json({ error: "برای رزرو باید وارد حساب کاربری خود شوید" }, { status: 401 });
   }
 
-  const rl = userApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = userApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "reservations", ip, userId: session.userId, userEmail: session.email });
 
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }

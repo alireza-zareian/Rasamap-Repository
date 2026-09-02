@@ -29,8 +29,15 @@ function todayStr() {
   return new Date().toISOString().split("T")[0];
 }
 
+// The API rejects a start date that is not strictly in the future, so the
+// picker defaults to (and cannot go below) tomorrow — otherwise a user who
+// just clicks through hits "تاریخ شروع نمی‌تواند در گذشته باشد".
+function tomorrowStr() {
+  return addDays(todayStr(), 1);
+}
+
 export default function BookingModal({ billboard: b, onClose, onSuccess }: Props) {
-  const [form, setForm] = useState({ start: todayStr(), duration: 2, note: "" });
+  const [form, setForm] = useState({ start: tomorrowStr(), duration: 2, note: "" });
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,7 +54,9 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
   const set = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
+    if (loading) return;                       // ignore a double-tap while a request is in flight
     if (!form.start) { setError("تاریخ شروع را انتخاب کنید"); return; }
+    if (form.start < tomorrowStr()) { setError("تاریخ شروع باید از فردا به بعد باشد"); return; }
     setError(""); setLoading(true);
     try {
       const res = await fetch("/api/reservations", {
@@ -64,7 +73,18 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
         window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
         return;
       }
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        const secs = Number(res.headers.get("Retry-After")) || 0;
+        const mins = Math.ceil(secs / 60);
+        setError(
+          mins > 0
+            ? `درخواست‌های زیادی فرستاده شده. لطفاً ${mins.toLocaleString("fa-IR")} دقیقه دیگر دوباره تلاش کنید.`
+            : (data.error ?? "درخواست‌های زیادی فرستاده شده. کمی بعد دوباره تلاش کنید."),
+        );
+        setLoading(false);
+        return;
+      }
       if (!res.ok) {
         setError(data.error ?? "خطا در ثبت رزرو");
         setLoading(false);
@@ -113,7 +133,7 @@ export default function BookingModal({ billboard: b, onClose, onSuccess }: Props
             <div>
               <div style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginBottom: 5 }}>تاریخ شروع اکران *</label>
-                <input type="date" value={form.start} min={todayStr()} onChange={e => set("start", e.target.value)} style={{ ...iS, direction: "ltr" }} />
+                <input type="date" value={form.start} min={tomorrowStr()} onChange={e => set("start", e.target.value)} style={{ ...iS, direction: "ltr" }} />
                 {endDate && <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4 }}>تاریخ پایان: <span style={{ color: "var(--text-main)" }}>{endDate}</span></div>}
               </div>
               <div style={{ marginBottom: 16 }}>

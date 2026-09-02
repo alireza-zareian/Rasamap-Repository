@@ -40,6 +40,15 @@ export interface RateLimitResult {
   remaining:  number;
   resetAt:    number;
   lockedUntil?: number;
+  /** True only on the single call that trips the lockout — used to write one
+   *  durable audit row per lockout instead of one per rejected request. */
+  justLocked?: boolean;
+}
+
+/** Whole seconds until the caller may retry (lockout end, else window end). */
+export function retryAfterSeconds(r: RateLimitResult): number {
+  const until = r.lockedUntil ?? r.resetAt;
+  return Math.max(1, Math.ceil((until - Date.now()) / 1000));
 }
 
 export function checkRateLimit(key: string, opts: RateLimitOptions): RateLimitResult {
@@ -64,7 +73,7 @@ export function checkRateLimit(key: string, opts: RateLimitOptions): RateLimitRe
   if (w.count > opts.maxRequests) {
     w.lockedUntil = now + lockoutMs;
     store.set(key, w);
-    return { allowed: false, remaining: 0, resetAt: w.resetAt, lockedUntil: w.lockedUntil };
+    return { allowed: false, remaining: 0, resetAt: w.resetAt, lockedUntil: w.lockedUntil, justLocked: true };
   }
 
   const remaining = Math.max(0, opts.maxRequests - w.count);
@@ -106,11 +115,18 @@ export function resetUserLoginAttempts(ip: string): void {
   store.delete(`user_login:${ip}`);
 }
 
-/** Specific preset: user API — 60 req per minute */
+/**
+ * Specific preset: user API — 60 req/min per IP, then a short 2-minute cooldown.
+ * 60/min is far above real interactive use (a booking form, a review, a phone
+ * reveal), so tripping it means a script or a stuck button. The cooldown is
+ * deliberately short: an accidental burst (e.g. rapid double-taps on a failing
+ * form) should not lock a real person out for the 15-minute credential default.
+ */
 export function userApiRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`user_api:${ip}`, {
     windowMs:    60 * 1000,
     maxRequests: 60,
+    lockoutMs:   2 * 60 * 1000,
   });
 }
 
