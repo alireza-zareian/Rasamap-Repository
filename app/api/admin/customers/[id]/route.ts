@@ -35,7 +35,7 @@ async function guard(req: NextRequest): Promise<Guarded> {
   return { session, ip };
 }
 
-// GET /api/admin/customers/[id] — one user + their reservations (admin+)
+// GET /api/admin/customers/[id] — one user + the media they submitted (admin+)
 async function GETHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
   const g = await guard(req);
   if (g instanceof NextResponse) return g;
@@ -48,15 +48,15 @@ async function GETHandler(req: NextRequest, { params }: { params: Promise<{ id: 
     where: { id },
     select: {
       id: true, name: true, phone: true, createdAt: true,
-      reservations: {
+      listings: {
         orderBy: { createdAt: "desc" },
         take: 50,
         select: {
-          id: true, status: true, startDate: true, endDate: true, createdAt: true,
-          billboard: { select: { id: true, name: true, city: true } },
+          id: true, name: true, city: true, status: true, plan: true,
+          featured: true, price: true, createdAt: true,
         },
       },
-      _count: { select: { reservations: true, reviews: true } },
+      _count: { select: { listings: true, reviews: true } },
     },
   });
   if (!user) return NextResponse.json({ error: "کاربر یافت نشد" }, { status: 404 });
@@ -92,11 +92,23 @@ async function PATCHHandler(req: NextRequest, { params }: { params: Promise<{ id
     if (clash) return NextResponse.json({ error: "این شماره قبلاً ثبت شده است" }, { status: 409 });
   }
 
-  const updated = await prisma.user.update({
-    where: { id },
-    data: { ...(data.name !== undefined ? { name: data.name } : {}), ...(data.phone !== undefined ? { phone: data.phone } : {}) },
-    select: { id: true, name: true, phone: true, createdAt: true },
-  });
+  // The clash lookup above is a friendly pre-check; the unique index on
+  // users.phone is what actually decides. Two admins editing at once can slip
+  // between the two, so the constraint violation is turned into the same 409
+  // rather than an unhandled 500.
+  let updated: { id: number; name: string; phone: string; createdAt: Date };
+  try {
+    updated = await prisma.user.update({
+      where: { id },
+      data: { ...(data.name !== undefined ? { name: data.name } : {}), ...(data.phone !== undefined ? { phone: data.phone } : {}) },
+      select: { id: true, name: true, phone: true, createdAt: true },
+    });
+  } catch (e) {
+    if ((e as { code?: string })?.code === "P2002") {
+      return NextResponse.json({ error: "این شماره قبلاً ثبت شده است" }, { status: 409 });
+    }
+    throw e;
+  }
 
   await persistAudit({
     action: "customer_update",

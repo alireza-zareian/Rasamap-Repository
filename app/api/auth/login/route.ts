@@ -5,9 +5,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/client";
 import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
 import { userLoginRateLimit, resetUserLoginAttempts } from "@/lib/auth/rate-limit";
+import { TIMING_PAD_HASH } from "@/lib/auth/users";
 import { withApiLog } from "@/lib/api-log";
-
-const DUMMY_HASH = "$2a$12$dummy.hash.for.timing.safety.padding.1234567890";
 
 const LoginSchema = z.object({
   phone:    z.string().regex(/^09[0-9]{9}$/, "شماره موبایل معتبر نیست"),
@@ -33,8 +32,9 @@ async function POSTHandler(req: NextRequest) {
 
   const user = await prisma.user.findUnique({ where: { phone } });
 
-  // Timing-safe: always run bcrypt even when user not found
-  const hashToCheck = user?.passwordHash ?? DUMMY_HASH;
+  // Timing-safe: always run a real bcrypt comparison, even when the phone is
+  // not registered, so response time can't be used to enumerate accounts.
+  const hashToCheck = user?.passwordHash ?? TIMING_PAD_HASH;
   const match = await bcrypt.compare(password, hashToCheck);
 
   if (!user || !match) {

@@ -7,14 +7,14 @@ import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
 import { prisma } from "@/lib/db/client";
+import { decodeImageDataUrl, MAX_IMAGE_BYTES } from "@/lib/uploads";
 import { withApiLog } from "@/lib/api-log";
 
-const PutSchema = z.object({
-  images: z.array(z.string().min(1)).max(10),
-});
+const MAX_ADMIN_IMAGES = 10;
 
-const DATA_URL_RE = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/;
-const EXT_MAP: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+const PutSchema = z.object({
+  images: z.array(z.string().min(1)).max(MAX_ADMIN_IMAGES),
+});
 
 // PUT /api/admin/billboards/[id]/images — editor+
 async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -27,10 +27,9 @@ async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: 
   const rl = adminApiRateLimit(getClientIp(req));
   if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
 
-  // Bound the body before reading it: up to 10 images at ~5 MB each, base64 is
-  // ~1.37× — 80 MB is a generous ceiling. Stops a huge payload from being
-  // buffered into memory just to be rejected later.
-  const MAX_BODY = 80 * 1024 * 1024;
+  // Bound the body before reading it, so a huge payload is refused rather than
+  // buffered into memory just to be rejected later. Base64 inflates by ~4/3.
+  const MAX_BODY = Math.ceil(MAX_ADMIN_IMAGES * MAX_IMAGE_BYTES * 1.4) + 64 * 1024;
   if (Number(req.headers.get("content-length")) > MAX_BODY) {
     return NextResponse.json({ error: "حجم درخواست بیش از حد مجاز است" }, { status: 413 });
   }
@@ -55,33 +54,36 @@ async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: 
   const dir = join(process.cwd(), "public", "uploads", "billboards", String(id));
   await mkdir(dir, { recursive: true });
 
+  // The payload mixes two kinds of entry: URLs already on the record (kept
+  // untouched) and newly picked files as data URLs (validated, then written).
   const finalUrls: string[] = [];
   const ts = Date.now();
 
   for (let i = 0; i < parsed.data.images.length; i++) {
     const src = parsed.data.images[i];
-    const match = DATA_URL_RE.exec(src);
-    if (match) {
-      // New image as base64 data URL — write to filesystem
-      const mime = match[1];
-      const ext = EXT_MAP[mime] ?? "jpg";
-      const filename = `${ts}-${i}.${ext}`;
-      const buffer = Buffer.from(match[2], "base64");
-      if (buffer.length > 5 * 1024 * 1024) {
-        return NextResponse.json({ error: `تصویر ${i + 1} بزرگ‌تر از ۵MB است` }, { status: 400 });
-      }
-      await writeFile(join(dir, filename), buffer);
-      finalUrls.push(`/uploads/billboards/${id}/${filename}`);
-    } else if (src.startsWith("/") || src.startsWith("http")) {
-      // Already a saved URL — keep as-is
-      finalUrls.push(src);
+
+    if (src.startsWith("/") || src.startsWith("http")) {
+      finalUrls.push(src);        // already saved — keep as-is
+      continue;
     }
-    // Silently skip invalid entries
+
+    // Same validation as the public listing upload: type is decided by the
+    // file's magic bytes, not by what the client declared. See lib/uploads.ts.
+    const decoded = decodeImageDataUrl(src, i);
+    if (!decoded.ok) {
+      return NextResponse.json({ error: decoded.error }, { status: 400 });
+    }
+    const filename = `${ts}-${i}.${decoded.image.ext}`;
+    await writeFile(join(dir, filename), decoded.image.buffer);
+    finalUrls.push(`/uploads/billboards/${id}/${filename}`);
   }
 
+  // `hasImages` is a denormalised flag: it is the first key of the default
+  // ordering on every public listing and drives the analytics coverage count,
+  // so it has to move with `images` or the two drift apart.
   const updated = await prisma.billboard.update({
     where: { id },
-    data:  { images: finalUrls },
+    data:  { images: finalUrls, hasImages: finalUrls.length > 0 },
     select: { id: true, images: true },
   });
 

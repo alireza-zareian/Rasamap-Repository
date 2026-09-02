@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
+import { publishedOnly } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 import { withApiLog } from "@/lib/api-log";
 
@@ -17,7 +18,7 @@ async function GETHandler(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "پارامتر نامعتبر" }, { status: 400 });
 
   const baseWhere = {
-    status: { not: "pending" as const },
+    status: publishedOnly,
     ...(parsed.data.city ? { city: parsed.data.city } : {}),
   };
 
@@ -36,7 +37,7 @@ async function GETHandler(req: NextRequest) {
     }),
     prisma.billboard.groupBy({
       by: ["city"], _count: { id: true },
-      where: { status: { not: "pending" } },
+      where: { status: publishedOnly },
       orderBy: { _count: { id: "desc" } }, take: 60,
     }),
     prisma.billboard.aggregate({
@@ -47,7 +48,10 @@ async function GETHandler(req: NextRequest) {
     prisma.billboard.count({ where: { ...baseWhere, price: { gte: 50, lt: 150 } } }),
     prisma.billboard.count({ where: { ...baseWhere, price: { gte: 150, lt: 300 } } }),
     prisma.billboard.count({ where: { ...baseWhere, price: { gte: 300 } } }),
-    prisma.billboard.count({ where: { ...baseWhere, images: { not: "[]" } } }),
+    // `hasImages`, not a comparison against the `images` JSON column: a Json
+    // `not` filter does not match a stringified array in SQLite, so that form
+    // silently counted every row.
+    prisma.billboard.count({ where: { ...baseWhere, hasImages: true } }),
     prisma.billboard.count({ where: { ...baseWhere, lat: { not: null } } }),
   ]);
 

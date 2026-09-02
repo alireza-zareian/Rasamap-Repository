@@ -7,9 +7,9 @@ import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { withApiLog } from "@/lib/api-log";
 
 async function GETHandler(req: NextRequest) {
-  // ── Auth guard ──
+  // ── Auth guard ── (role "user" is a customer, not an admin — see proxy.ts)
   const session = await getSession();
-  if (!session) {
+  if (!session || session.role === "user") {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }
 

@@ -30,11 +30,13 @@ export function QualityPanel({ billboards, onFix }: Props) {
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><ShieldCheck size={16} /> کنترل کیفیت</div>
         <div style={{ display: "flex", gap: 8 }}>
           {warnings.filter(w => w.sev === "high").length > 0 && <Badge text={`${warnings.filter(w => w.sev === "high").length} بحرانی`} color="#ef4444" bg="rgba(239,68,68,0.1)" />}
-          <Badge text={`${warnings.length} مورد`} color={warnings.length > 0 ? "#f59e0b" : C.green} bg={warnings.length > 0 ? "rgba(245,158,11,0.1)" : "rgba(34,197,94,0.1)"} />
+          <Badge text={`${warnings.length} از ${billboards.length} رکورد بررسی‌شده`} color={warnings.length > 0 ? "#f59e0b" : C.green} bg={warnings.length > 0 ? "rgba(245,158,11,0.1)" : "rgba(34,197,94,0.1)"} />
         </div>
       </div>
       <div style={{ fontSize: "0.75rem", color: C.muted, lineHeight: 1.9, marginBottom: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}>
         این فهرست هر بار از روی همان داده‌های زندهٔ بیلبوردها ساخته می‌شود؛ جای ذخیره‌شده‌ای ندارد.
+        بررسی روی {billboards.length} رکوردی انجام می‌شود که همین حالا در این پنل بارگذاری شده‌اند، نه روی کل جدول؛
+        شمارش کل رکوردهای بدون تصویر و بدون مختصات در تب «نمای کلی» است.
         یک رکورد وقتی «مورد کیفیت» می‌شود که یکی از این نبودها را داشته باشد: مختصات نداشتن،
         تصویر نداشتن، آدرس کوتاه‌تر از ۵ نویسه، قیمت کمتر از ۱، یا مختصاتی که بیرون محدودهٔ ایران بیفتد.
         شدت هم از روی شمار همین ایرادها تعیین می‌شود: سه ایراد یا بیشتر «بحرانی»، دو ایراد «متوسط»،
