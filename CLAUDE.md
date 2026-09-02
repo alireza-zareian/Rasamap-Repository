@@ -111,7 +111,10 @@ as a shortcut or a gap — it is the framework's recommended pattern and the fas
 ## Read When Relevant (not always)
 
 - `docs/architecture.md` — the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API
-- `docs/api.md` — full HTTP API reference (~23 endpoints, method / auth / params)
+- `docs/api.md` — full HTTP API reference (~28 endpoints, method / auth / params)
+- `docs/engineering-decisions.md` — 16 decision records + milestone log (the "what we built and why" spine; §7a = why no Docker/ELK yet, §16 = SMS built-but-dormant)
+- `docs/presentation-prep.md` — checklist for building the thesis document / defense: screenshots to take, live checks, talking points, doc map
+- `docs/self-assessment.md` — internal rubric score (A−) with honest weak spots
 - `docs/project-reference.md` — file map, data flow, schema, auth, types, phase roadmap, stubs, known issues
 - `docs/api-patterns.md` — exact API route pattern + admin pattern template
 - `PLAN.md` · `docs/AUDIT.md` · `PRE_DEPLOY_CHECKLIST.md` · `RUNBOOK.md` — production-readiness triage and ops

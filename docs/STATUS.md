@@ -312,11 +312,17 @@ npm run db:studio        # Prisma Studio
 - **SMS (خاموش):** `engineering-decisions §16` — آداپتر کاوه‌نگار + `otp_codes` + `/api/auth/otp/{send,verify}` + صفحه `/reset-password` + پیامک خوش‌آمد. تا `KAVENEGAR_API_KEY` خالی باشد بی‌اثر.
 - **کارایی:** فهرست بیلبورد ادمین حالا در DB فیلتر/مرتب/صفحه‌بندی می‌شود (نه بارگذاری ۳۵۴۵ ردیف). آمار «خوشه هم‌مکان» از O(n²) به O(n). lint تمیز (۰ هشدار).
 
-### پیشنهادها برای قبل از ارائه
-- `npm run db:dedupe -- --apply` → حذف ۱۷ رکورد تکراری واقعی (اختیاری، برگشت‌پذیر با re-seed).
-- تست مرورگری روی گوشی: تب کاربران، جریان رزرو با تاریخ فردا، جریان `/reset-password`.
-- `LOG_DIR=./logs` در `.env` برای ثبت فایل لاگ در روز ارائه.
-- اسکرین‌شات‌های README (اختیاری).
+### قبل از ارائه — چک‌لیست کامل در `docs/presentation-prep.md`
+
+انجام‌شده:
+- ✅ `npm run db:dedupe -- --apply` → ۱۷ رکورد تکراری واقعی حذف شد (۳۵۴۹ → ۳۵۳۲). بکاپ در `backups/dev-*-pre-dedupe.db`.
+- ✅ `LOG_DIR="./logs"` به `.env` اضافه شد — از این به بعد `logs/app.log` چرخشی هم نوشته می‌شود.
+- ✅ ارزیابی داخلی: `docs/self-assessment.md` (نمره‌ی A−، با نقاط ضعف صادقانه).
+
+مانده برای روز ساخت داکیومنت (نیاز به حضور تو):
+- اسکرین‌شات‌ها — لیست دقیق صفحات و حالت‌ها در `docs/presentation-prep.md` §۱.
+- تست مرورگری روی گوشی — `docs/presentation-prep.md` §۲.
+- مونتاژ فصل «چه ساختیم و چرا» از `docs/engineering-decisions.md` — `docs/presentation-prep.md` §۴.
 
 ---
 
