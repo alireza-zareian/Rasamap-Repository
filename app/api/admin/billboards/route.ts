@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
-import type { Billboard } from "@/lib/types";
-import { getAllBillboards, createBillboard } from "@/lib/db/billboards";
+import { getAdminBillboardPage, createBillboard } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
@@ -70,32 +69,20 @@ async function GETHandler(req: NextRequest) {
     return NextResponse.json({ error: "Invalid status parameter" }, { status: 400 });
   }
 
-  // ── Filter ──
-  const qLower = q.toLowerCase();
-  let items: Billboard[] = await getAllBillboards();
-  if (q)      items = items.filter(b => b.name.toLowerCase().includes(qLower) || (b.location ?? "").toLowerCase().includes(qLower));
-  if (city)   items = items.filter(b => b.city === city);
-  if (type)   items = items.filter(b => b.type === type);
-  if (status) items = items.filter(b => b.status === status);
-
-  // ── Sort ──
-  items.sort((a, b) => {
-    let av: number | string = 0;
-    let bv: number | string = 0;
-    if (sortKey === "id")    { av = a.id;    bv = b.id; }
-    if (sortKey === "price") { av = a.price; bv = b.price; }
-    if (sortKey === "name")  { av = a.name;  bv = b.name; }
-    if (sortKey === "city")  { av = a.city;  bv = b.city; }
-    const dir = sortDir === "desc" ? -1 : 1;
-    return av < bv ? -dir : av > bv ? dir : 0;
+  // ── Filter + sort + paginate in the DB ──
+  const { items, total, pages } = await getAdminBillboardPage({
+    q: q || undefined,
+    city: city || undefined,
+    type: type || undefined,
+    status: status || undefined,
+    sortKey: sortKey as "id" | "price" | "name" | "city",
+    sortDir: sortDir as "asc" | "desc",
+    page,
+    limit,
   });
 
-  const total = items.length;
-  const pages = Math.ceil(total / limit);
-  const slice = items.slice((page - 1) * limit, page * limit);
-
   return NextResponse.json(
-    { items: slice, total, pages, page },
+    { items, total, pages, page },
     {
       headers: {
         "X-RateLimit-Remaining": rl.remaining.toString(),

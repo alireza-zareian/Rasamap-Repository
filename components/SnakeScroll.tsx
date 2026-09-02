@@ -139,6 +139,8 @@ export default function SnakeScroll({ scrollContainerRef }: Props) {
       const el = getEl();
       if (el) el.removeEventListener("scroll", onScroll as EventListener);
     };
+  // Runs once on mount; the scroll target is resolved lazily via getEl().
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

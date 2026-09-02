@@ -103,6 +103,43 @@ export async function getFilteredBillboards(
   return { items: rows.map(fromRow), total };
 }
 
+// Admin table listing — filter, sort and paginate in the DB (not by loading
+// every row and slicing in JS).
+export interface AdminBillboardQuery {
+  q?: string;
+  city?: string;
+  type?: string;
+  status?: string;
+  sortKey: "id" | "price" | "name" | "city";
+  sortDir: "asc" | "desc";
+  page: number;
+  limit: number;
+}
+
+export async function getAdminBillboardPage(
+  p: AdminBillboardQuery,
+): Promise<{ items: Billboard[]; total: number; pages: number }> {
+  const where: Prisma.BillboardWhereInput = {};
+  if (p.city)   where.city   = p.city;
+  if (p.type)   where.type   = p.type;
+  if (p.status) where.status = p.status;
+  if (p.q) {
+    where.OR = [
+      { name:     { contains: p.q } },
+      { location: { contains: p.q } },
+    ];
+  }
+
+  const orderBy: Prisma.BillboardOrderByWithRelationInput = { [p.sortKey]: p.sortDir };
+
+  const [rows, total] = await Promise.all([
+    prisma.billboard.findMany({ where, orderBy, skip: (p.page - 1) * p.limit, take: p.limit }),
+    prisma.billboard.count({ where }),
+  ]);
+
+  return { items: rows.map(fromRow), total, pages: Math.max(1, Math.ceil(total / p.limit)) };
+}
+
 export async function getBillboardById(id: number): Promise<Billboard | null> {
   const row = await prisma.billboard.findUnique({ where: { id } });
   return row ? fromRow(row) : null;
@@ -141,14 +178,34 @@ function slugify(name: string, suffix: string): string {
     .toLowerCase() + "-" + suffix;
 }
 
+// Fields shared by every freshly-created billboard row (manual create or a
+// public listing): derived prices, the zeroed traffic block, and the neutral
+// defaults for columns the creator doesn't set.
+function newBillboardDefaults(name: string, monthly: number) {
+  return {
+    slug: slugify(name, Date.now().toString(36)),
+    age: 0,
+    price: monthly,
+    priceWeekly: Math.round(monthly / 4),
+    priceQuarterly: Math.round(monthly * 3 * 0.9),
+    priceYearly: Math.round(monthly * 12 * 0.8),
+    traffic: { daily: 0, peakHour: "08:00", congestionLevel: 5, pedestrian: 0, estimatedViews: 0, viewabilityScore: 0 },
+    mapX: 50,
+    mapY: 50,
+    icon: "🏙️",
+    images: [] as string[],
+    features: [] as string[],
+    nearbyLandmarks: [] as string[],
+    rating: 0,
+    reviewCount: 0,
+  };
+}
+
 export async function createBillboard(data: BillboardCreateInput): Promise<Billboard> {
-  const suffix = Date.now().toString(36);
-  const slug = slugify(data.name, suffix);
-  const monthly = data.price;
   const row = await prisma.billboard.create({
     data: {
+      ...newBillboardDefaults(data.name, data.price),
       name: data.name,
-      slug,
       location: data.location,
       region: data.city,
       city: data.city,
@@ -157,25 +214,11 @@ export async function createBillboard(data: BillboardCreateInput): Promise<Billb
       width: data.width,
       height: data.height,
       faces: data.faces,
-      age: 0,
-      price: monthly,
-      priceWeekly: Math.round(monthly / 4),
-      priceQuarterly: Math.round(monthly * 3 * 0.9),
-      priceYearly: Math.round(monthly * 12 * 0.8),
-      traffic: { daily: 0, peakHour: "08:00", congestionLevel: 5, pedestrian: 0, estimatedViews: 0, viewabilityScore: 0 },
-      mapX: 50,
-      mapY: 50,
       lat: data.lat ?? null,
       lng: data.lng ?? null,
-      icon: "🏙️",
-      images: [],
       agency: data.agency,
       phone: data.phone,
       description: data.description,
-      features: [],
-      nearbyLandmarks: [],
-      rating: 0,
-      reviewCount: 0,
       source: "manual",
     },
   });
@@ -197,39 +240,22 @@ export interface ListingCreateInput {
 }
 
 export async function createListing(data: ListingCreateInput): Promise<Billboard> {
-  const suffix = Date.now().toString(36);
-  const slug = slugify(data.name, suffix);
-  const monthly = data.price;
   const row = await prisma.billboard.create({
     data: {
-      name:           data.name,
-      slug,
-      location:       data.location || data.city,
-      region:         data.region || data.city,
-      city:           data.city,
-      type:           data.type,
-      status:         "pending",
-      width:          data.width,
-      height:         data.height,
-      faces:          data.faces,
-      age:            0,
-      price:          monthly,
-      priceWeekly:    Math.round(monthly / 4),
-      priceQuarterly: Math.round(monthly * 3 * 0.9),
-      priceYearly:    Math.round(monthly * 12 * 0.8),
-      traffic:        { daily: 0, peakHour: "08:00", congestionLevel: 5, pedestrian: 0, estimatedViews: 0, viewabilityScore: 0 },
-      mapX:           50,
-      mapY:           50,
-      icon:           "🏙️",
-      images:         [],
-      agency:         "مالک مستقیم",
-      phone:          data.phone,
-      description:    data.desc,
-      features:       [],
-      nearbyLandmarks:[],
-      rating:         0,
-      reviewCount:    0,
-      source:         "listing",
+      ...newBillboardDefaults(data.name, data.price),
+      name:        data.name,
+      location:    data.location || data.city,
+      region:      data.region || data.city,
+      city:        data.city,
+      type:        data.type,
+      status:      "pending",
+      width:       data.width,
+      height:      data.height,
+      faces:       data.faces,
+      agency:      "مالک مستقیم",
+      phone:       data.phone,
+      description: data.desc,
+      source:      "listing",
     },
   });
   return fromRow(row);

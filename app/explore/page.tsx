@@ -175,11 +175,14 @@ export default function ExplorePage() {
   }, []);
 
   // Fetch when filtersLoaded (initial) or page changes. fetchBillboards sets
-  // loading/error state — expected for a data-fetch effect.
+  // loading/error state — expected for a data-fetch effect. `filters` is read
+  // but intentionally not a dep: filter changes are handled by the debounced
+  // effect below, this one only reacts to pagination.
   useEffect(() => {
     if (!filtersLoaded) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchBillboards(filters, page);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersLoaded, page]);
 
   // Save filters + debounced fetch when filters change

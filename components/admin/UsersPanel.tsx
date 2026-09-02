@@ -52,15 +52,16 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-      {isSA && <AdminAccounts currentUser={currentUser} />}
+      {isSA && <AdminAccounts />}
       <CustomersSection />
     </div>
   );
 }
 
 // ── Admin accounts (super_admin only) ──────────────────────────────
-
-function AdminAccounts({ currentUser }: { currentUser: SessionUser }) {
+// The caller's identity comes back from the API as `currentId` (used to lock
+// the row for your own account) — no prop needed.
+function AdminAccounts() {
   const [rows, setRows] = useState<AdminRow[]>([]);
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
