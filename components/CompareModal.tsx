@@ -1,5 +1,6 @@
 "use client";
 import { Billboard, typeLabels } from "@/lib/types";
+import { TypeIcon } from "@/components/TypeIcon";
 
 interface Props {
   items: Billboard[];
@@ -40,7 +41,7 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
   };
 
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(6,10,18,0.9)",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:500,background:"rgba(6,10,18,0.9)",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div onClick={e=>e.stopPropagation()} style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:16,width:"100%",maxWidth:680,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 32px 80px rgba(0,0,0,0.8)",animation:"fadeIn 0.25s ease"}}>
 
         <div style={{padding:"18px 22px 14px",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -49,11 +50,11 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
         </div>
 
         {/* Header row */}
-        <div style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",gap:0,padding:"14px 22px",borderBottom:"1px solid var(--border)"}}>
+        <div className="cmp-grid" style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",overflowX:"hidden",gap:0,padding:"14px 22px",borderBottom:"1px solid var(--border)"}}>
           <div/>
           {[a,b].map(board=>(
             <div key={board.id} style={{textAlign:"center",padding:"0 8px"}}>
-              <div style={{fontSize:"2rem",marginBottom:4}}>{board.icon}</div>
+              <div style={{marginBottom:4,display:"flex",justifyContent:"center",color:"var(--text-muted)"}}><TypeIcon type={board.type} size={30} /></div>
               <div style={{fontSize:"0.8rem",fontWeight:700,lineHeight:1.4}}>{board.name.substring(0,30)}...</div>
               <div style={{fontSize:"0.7rem",color:"var(--text-muted)",marginTop:2}}>{board.region}</div>
             </div>
@@ -63,7 +64,7 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
         {/* Rows */}
         <div style={{padding:"8px 22px"}}>
           {rows.map(row=>(
-            <div key={row[0]} style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",borderBottom:"1px solid var(--border)",padding:"8px 0",alignItems:"center"}}>
+            <div key={row[0]} className="cmp-grid" style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",overflowX:"hidden",borderBottom:"1px solid var(--border)",padding:"8px 0",alignItems:"center"}}>
               <div style={{fontSize:"0.75rem",color:"var(--text-muted)"}}>{row[0]}</div>
               {[a,b].map(board=>{
                 const isBetter = row[2] && better(row, board);
@@ -82,7 +83,7 @@ export default function CompareModal({ items, onClose, onBook }: Props) {
         </div>
 
         {/* Footer */}
-        <div style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",gap:8,padding:"14px 22px",borderTop:"1px solid var(--border)"}}>
+        <div className="cmp-grid" style={{display:"grid",gridTemplateColumns:"minmax(84px,150px) 1fr 1fr",overflowX:"hidden",gap:8,padding:"14px 22px",borderTop:"1px solid var(--border)"}}>
           <div/>
           {[a,b].map(board=>(
             <button key={board.id} onClick={()=>{onBook(board);onClose();}} disabled={board.status!=="available"} style={{background:board.status==="available"?"var(--accent)":"var(--border)",border:"none",color:board.status==="available"?"#fff":"var(--text-muted)",fontFamily:"inherit",fontSize:"0.8rem",fontWeight:700,padding:"9px 0",borderRadius:8,cursor:board.status==="available"?"pointer":"not-allowed"}}>

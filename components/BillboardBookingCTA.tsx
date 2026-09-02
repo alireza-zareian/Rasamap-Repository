@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Billboard } from "@/lib/types";
+import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import BookingModal from "./BookingModal";
 
 interface Props {
@@ -9,12 +11,23 @@ interface Props {
 
 export default function BillboardBookingCTA({ billboard }: Props) {
   const [open, setOpen] = useState(false);
+  const { user, loading } = useCurrentUser();
+  const router = useRouter();
   const available = billboard.status === "available";
+
+  const onBookClick = () => {
+    if (!available || loading) return;
+    if (!user) {
+      router.push(`/login?next=${encodeURIComponent(`/billboard/${billboard.slug}`)}`);
+      return;
+    }
+    setOpen(true);
+  };
 
   return (
     <>
       <button
-        onClick={() => available && setOpen(true)}
+        onClick={onBookClick}
         disabled={billboard.status === "inactive"}
         style={{
           display: "block", width: "100%", textAlign: "center",
@@ -27,7 +40,9 @@ export default function BillboardBookingCTA({ billboard }: Props) {
           fontFamily: "inherit",
         }}
       >
-        {available ? "رزرو این رسانه" : billboard.status === "inactive" ? "غیرفعال" : "مشاهده در جستجو"}
+        {available
+          ? (user || loading ? "رزرو این رسانه" : "برای رزرو وارد شوید")
+          : billboard.status === "inactive" ? "غیرفعال" : "مشاهده در جستجو"}
       </button>
       {open && (
         <BookingModal

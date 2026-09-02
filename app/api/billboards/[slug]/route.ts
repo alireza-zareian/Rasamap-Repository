@@ -45,12 +45,15 @@ async function getHandler(req: NextRequest, { params }: { params: Promise<{ slug
   }
 
   try {
-    const billboard = await getBillboardBySlug(parsed.data);
-    if (!billboard) {
+    const full = await getBillboardBySlug(parsed.data);
+    if (!full) {
       return NextResponse.json({ error: "رسانه یافت نشد" }, { status: 404 });
     }
+    // Owner/agency phone is never in a public response — see
+    // GET /api/billboards/[slug]/contact (signed-in only). JSON.stringify drops
+    // the undefined value, so no `phone` key ships.
     return NextResponse.json(
-      { billboard },
+      { billboard: { ...full, phone: undefined } },
       { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } },
     );
   } catch (err) {

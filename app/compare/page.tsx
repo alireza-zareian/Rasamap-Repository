@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import CompareModal from "@/components/CompareModal";
+import { TypeIcon } from "@/components/TypeIcon";
 import Link from "next/link";
 import type { Billboard } from "@/lib/types";
 import { Scale, X, ArrowLeft } from "lucide-react";
@@ -72,7 +73,9 @@ export default function ComparePage() {
                     <img src={thumb} alt={b.name} style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
                   )}
                   {!thumb && (
-                    <div style={{ width: "100%", height: 80, background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: "1.5rem" }}>🏙</div>
+                    <div style={{ width: "100%", height: 80, background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
+                      <TypeIcon type={b.type} size={30} />
+                    </div>
                   )}
                   <div style={{ padding: "12px 14px 14px" }}>
                     <button onClick={() => remove(b.id)} title="حذف از مقایسه" style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.55)", border: "none", borderRadius: 6, width: 24, height: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>

@@ -303,7 +303,7 @@ button, a, input, select, label,
      reorder so it reads: header+gallery -> booking + map -> description ->
      reviews. `display: contents` lets .detail-head / .detail-body reorder
      against .detail-side even though they're nested inside .detail-main. */
-  .detail-grid { display: flex !important; flex-direction: column !important; }
+  .detail-grid { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
   .detail-main { display: contents; }
   .detail-head { order: 1; }
   .detail-side { order: 2; }
@@ -324,6 +324,9 @@ button, a, input, select, label,
      phones (4 big blurred layers + a scroll-parallax transform). Drop it on
      mobile — the body keeps its dot-grid texture. */
   .bg-decor { display: none !important; }
+
+  /* Compare modal: narrower label column so the two value columns fit. */
+  .cmp-grid { grid-template-columns: 78px 1fr 1fr !important; }
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────── */

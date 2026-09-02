@@ -73,8 +73,12 @@ async function getHandler(req: NextRequest) {
     const { items, total } = await getFilteredBillboards({ ...rest, cityIn });
     const limit = parsed.data.limit ?? 24;
     const page  = parsed.data.page  ?? 1;
+    // Owner/agency phone is never in a public response — see
+    // GET /api/billboards/[slug]/contact (signed-in only). JSON.stringify drops
+    // the undefined value, so no `phone` key ships.
+    const publicItems = items.map((b) => ({ ...b, phone: undefined }));
     return NextResponse.json(
-      { items, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) },
+      { items: publicItems, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) },
       { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } },
     );
   } catch (err) {

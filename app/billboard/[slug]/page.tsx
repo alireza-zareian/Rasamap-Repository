@@ -10,6 +10,7 @@ import TrafficMeter from "@/components/TrafficMeter";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import BillboardBookingCTA from "@/components/BillboardBookingCTA";
+import BillboardContact from "@/components/BillboardContact";
 
 const TYPE_LABEL: Record<string, string> = {
   billboard: "بیلبورد", digital: "دیجیتال", bridge: "پل عابر", station: "ایستگاه", vehicle: "وسیله نقلیه",
@@ -206,22 +207,10 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                   ← بازگشت به جستجو
                 </Link>
 
-                {/* Contact info */}
-                {(b.phone && b.phone !== "—" && b.phone.trim()) ? (
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-                    <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginBottom: 6 }}>
-                      تماس با {b.agency && b.agency !== "اجاره‌دهنده مستقیم" ? b.agency : "آگهی‌دهنده"}
-                    </div>
-                    <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(34,197,94,0.08)", border: "1.5px solid rgba(34,197,94,0.3)", borderRadius: 10, padding: "9px 12px", textDecoration: "none", color: "#22c55e", fontWeight: 700, fontSize: "0.95rem", direction: "ltr", letterSpacing: "0.03em" }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.59A16 16 0 0 0 15.41 16l1.42-1.42a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                      {b.phone}
-                    </a>
-                  </div>
-                ) : b.agency ? (
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>آژانس: <span style={{ color: "var(--text-main)" }}>{b.agency}</span></div>
-                  </div>
-                ) : null}
+                {/* Contact info — the phone number is fetched from an authed
+                    endpoint only when a signed-in user asks for it; it is never
+                    embedded in the page. */}
+                <BillboardContact hasPhone={!!(b.phone && b.phone !== "—" && b.phone.trim())} agency={b.agency} slug={b.slug} />
               </div>
 
               {/* Source badge */}
