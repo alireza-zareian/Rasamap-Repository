@@ -245,6 +245,30 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                   referrerPolicy="no-referrer-when-downgrade"
                   title="موقعیت بیلبورد"
                 />
+                {/* The embed is Google's, so it only appears if Google is reachable
+                    from the visitor's connection — which on an Iranian mobile line
+                    it often is not. A failed frame is not something the page can
+                    detect (a cross-origin iframe reports load either way, and the
+                    browser paints its own opaque error page over anything placed
+                    behind it), so the way out is stated underneath instead of
+                    conditionally: the coordinates, and a link that opens in
+                    whatever map app the phone already has. */}
+                <div style={{ padding: "9px 14px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                    مختصات:
+                    <span style={{ direction: "ltr", display: "inline-block", marginRight: 5, color: "var(--text-main)", fontFamily: "monospace", fontSize: "0.72rem" }}>
+                      {b.lat.toFixed(5)}, {b.lng.toFixed(5)}
+                    </span>
+                  </span>
+                  <a
+                    href={`https://www.google.com/maps?q=${b.lat},${b.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none", border: "1px solid rgba(59,123,245,0.28)", borderRadius: 7, padding: "4px 11px", display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}
+                  >
+                    باز کردن در برنامهٔ نقشه <ExternalLink size={10} />
+                  </a>
+                </div>
               </div>
             )}
           </div>
