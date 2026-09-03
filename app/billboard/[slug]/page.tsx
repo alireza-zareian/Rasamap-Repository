@@ -259,7 +259,14 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                      fetching up front; the vertically scrolling lists elsewhere
                      keep their lazy loading. */
                   allowFullScreen
-                  referrerPolicy="no-referrer-when-downgrade"
+                  /* no-referrer, not the default. The page is served over plain
+                     http on a LAN address during a demo, so the old policy handed
+                     Google a referrer of http://192.168.x.x:3000/billboard/... —
+                     a private host it has no reason to trust, and the one input
+                     that differs between the laptop (localhost) and the phone.
+                     Sending none removes the variable, and the embed does not
+                     need it. */
+                  referrerPolicy="no-referrer"
                   title="موقعیت بیلبورد"
                 />
                 {/* The embed is Google's, so it only appears if Google is reachable

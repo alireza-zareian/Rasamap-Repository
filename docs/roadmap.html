@@ -2011,6 +2011,24 @@ sequenceDiagram
   <details class="fold">
     <summary>دورهٔ ۶ — آماده‌سازی ارائه<span class="tag">۲ گام · چک‌لیست روز دفاع و پاسخ‌های آمادهٔ داور</span></summary>
     <div class="foldbody"><div class="phases">
+  <!-- ─── MOB3 — sticky theme, harsh rate limit, map referrer ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">MOB3</div>
+      <div class="ph-title"><h3>تمِ چسبیده، سقفِ درخواستِ بی‌رحم، و رفرِرِ نقشه</h3><p>سه ایراد از تستِ واقعی روی گوشی</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تم روی گوشی هنوز تیره بود، با اینکه پیش‌فرض روشن شده بود:</strong> کد قبلی در <b>هر رندر</b> مقدار تم را در <code>localStorage</code> می‌نوشت — یعنی هر کسی که در دورانِ پیش‌فرضِ تیره یک بار سایت را باز کرده بود، «dark» رویش ذخیره شده بود، حتی اگر هیچ‌وقت انتخابش نکرده بود. عوض‌کردنِ پیش‌فرض هیچ اثری روی آن دستگاه‌ها نداشت چون مقدارِ ذخیره‌شده برنده می‌شد. <b>کلید نسخه‌دار شد</b> (<code>rasamap-theme-v2</code>) تا همهٔ آن مقادیر بازنشسته شوند، و از این به بعد <b>فقط با زدنِ دکمه</b> چیزی ذخیره می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سقفِ درخواستِ صفحه‌ها برای آدم واقعی زیادی تنگ بود:</strong> ۹۰ بازدید در دقیقه با <b>قفلِ ۵ دقیقه‌ای</b>. یعنی یک بار رد شدن، پنج دقیقه بیرون ماندن — و در یک دمو که چند نفر روی یک اتصال‌اند یا توسعه‌دهنده در حال تست است، به‌راحتی اتفاق می‌افتد. حالا <b>۳۰۰ در دقیقه با قفلِ ۱ دقیقه‌ای</b>: کسی که رد شود یک دقیقه صبر می‌کند و آزاد است، ولی خزنده‌ای که دنبال هزاران رکورد است همچنان می‌ماند — که همان چیزی است که اهمیت دارد (§۲۰)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نقشه: <code>referrerPolicy</code> به <code>no-referrer</code> تغییر کرد.</strong> صفحه در دمو روی <code>http</code> و یک آدرسِ محلی سرو می‌شود، پس سیاستِ قبلی به گوگل رفرِری از جنسِ <code>http://192.168.x.x:3000/…</code> می‌داد — یک میزبانِ خصوصی که دلیلی برای اعتماد به آن ندارد، و <b>تنها ورودی‌ای که بین لپ‌تاپ و گوشی فرق دارد</b>. embed به رفرِر نیازی ندارد، پس این متغیر حذف شد</div></div>
+      </div>
+      <div class="warn-box"><b>آنچه هنوز از دستِ کد خارج است:</b> نمایشِ نقشه در نهایت به در دسترس بودنِ <b>گوگل</b> از اتصالِ بازدیدکننده وابسته است. <code>loading="lazy"</code> از قبل برداشته شده و در HTMLِ سرو‌شده وجود ندارد، پس قاب همیشه بی‌درنگ درخواست می‌شود. تنها راهِ قطعی، جایگزینیِ ارائه‌دهنده با یک سرویسِ داخلی است (نشان) که به کلیدِ API نیاز دارد و هنوز در <code>.env</code> وجود ندارد — تصمیمش با صاحبِ پروژه است (MAP-D).</div>
+      <div class="proof"><b>تأیید:</b> در HTMLِ سرو‌شده <code>data-theme="light"</code> و کلیدِ تازهٔ تم در باندل. ۹۵ درخواستِ پشت‌سرهم به صفحهٔ جزئیات: <b>۰ خطا</b> (پیش از این از درخواستِ ۹۱ به بعد ۴۲۹ می‌گرفت). <code>referrerPolicy="no-referrer"</code> در قاب، و <code>loading="lazy"</code> در کلِ صفحه صفر مورد. ۹۷ تست، ۹۶ سبز.</div>
+    </div>
+  </div>
+
 <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>

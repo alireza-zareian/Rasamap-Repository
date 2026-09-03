@@ -86,13 +86,20 @@ export async function proxy(req: NextRequest) {
 
   // ── Anti-scraping: per-IP budget on catalogue pages ──
   // The HTML pages carry the same records as the API, so limiting only the API
-  // would leave the cheaper door open. 90/min is far above human browsing
-  // (a person opens a handful of listings a minute) and far below a crawler.
+  // would leave the cheaper door open.
+  //
+  // The first numbers here were too harsh for real use: 90 page loads a minute
+  // sounds generous until a demo has several people on one connection, or the
+  // developer is reloading while testing — and the five-minute lockout meant a
+  // single overshoot cost far more than the minute it was measuring. A person
+  // who trips this is told to wait a minute, and after a minute they are free.
+  // A crawler pulling thousands of records still cannot get past 300/min, which
+  // is the part that matters.
   if (!isSearchBot && CATALOGUE_PAGE.test(pathname)) {
     const rl = checkRateLimit(`catalogue_page:${getClientIp(req)}`, {
       windowMs: 60 * 1000,
-      maxRequests: 90,
-      lockoutMs: 5 * 60 * 1000,
+      maxRequests: 300,
+      lockoutMs: 60 * 1000,
     });
     if (!rl.allowed) {
       return tooManyRequests(Math.max(1, Math.ceil(((rl.lockedUntil ?? rl.resetAt) - Date.now()) / 1000)));
