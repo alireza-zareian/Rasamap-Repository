@@ -28,6 +28,8 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import unquote
 
+from image_utils import existing_variant, save_optimized
+
 try:
     import requests
     from bs4 import BeautifulSoup
@@ -161,19 +163,19 @@ def download_image(
     if not url:
         return []
     try:
+        stem = f"{listing_id}_0"
+        have = existing_variant(existing_files, stem)
+        if have:  # already downloaded on a previous run, any extension
+            return [f"{IMAGE_WEB_PREFIX}/{have}"]
         ext = os.path.splitext(url.split("?")[0].rstrip("/"))[-1] or ".jpg"
         if ext.lower() not in (".jpg", ".jpeg", ".png", ".webp"):
             ext = ".jpg"
-        fname = f"{listing_id}_0{ext}"
-        fpath = IMAGE_DIR / fname
-        if fname not in existing_files:
-            resp = _fetch(session, url, timeout=10, max_retries=2, stream=True)
-            resp.raise_for_status()
-            with open(fpath, "wb") as f:
-                for chunk in resp.iter_content(8192):
-                    f.write(chunk)
-            existing_files.add(fname)
-            time.sleep(random.uniform(0.3, 0.7))
+        resp = _fetch(session, url, timeout=10, max_retries=2, stream=True)
+        resp.raise_for_status()
+        data = b"".join(resp.iter_content(8192))
+        fname = save_optimized(data, IMAGE_DIR / f"{stem}{ext}")  # opaque PNG -> JPEG
+        existing_files.add(fname)
+        time.sleep(random.uniform(0.3, 0.7))
         return [f"{IMAGE_WEB_PREFIX}/{fname}"]
     except Exception:
         return []

@@ -778,6 +778,13 @@ thumbnail (grids, carousels, admin panels) so a page decodes only the images
 actually on screen, and decoding happens off the main thread. The detail page's
 primary image stays eager — it is the LCP element.
 
+So the fix does not regress on the next scrape, the same rule runs at download
+time: `scraper/image_utils.py::save_optimized()` re-encodes an opaque PNG to
+JPEG as it is written, and `existing_variant()` lets a re-run recognise a file
+it already has under either extension. All three scrapers plus the two
+`fix_*_images.py` repair scripts go through it. The one-off
+`scripts/optimize-images.py` remains for the assets scraped before this.
+
 ---
 
 ## Milestone log (outputs, not diffs)

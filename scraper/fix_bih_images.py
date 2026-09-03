@@ -21,6 +21,8 @@ try:
 except ImportError:
     print("pip install requests"); sys.exit(1)
 
+from image_utils import existing_variant, save_optimized
+
 BASE_URL         = "https://billboardiha.com"
 IMAGE_DIR        = Path(__file__).parent.parent / "public" / "images" / "scraped"
 IMAGE_WEB_PREFIX = "/images/scraped"
@@ -37,36 +39,36 @@ SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
 
-def try_download(url: str, fpath: Path) -> bool:
+def try_download(url: str, fpath: Path) -> str | None:
+    """Fetch `url`; on success write it (opaque PNG -> JPEG) and return the
+    final filename, else None."""
     try:
         resp = SESSION.get(url, timeout=10, stream=True)
         if resp.status_code != 200:
-            return False
+            return None
         data = resp.content
         if len(data) < MIN_IMAGE_BYTES:
-            return False
-        fpath.write_bytes(data)
-        return True
+            return None
+        return save_optimized(data, fpath)
     except Exception:
-        return False
+        return None
 
 
 def attempt_image(raw_id: str, uid: str, existing_files: set) -> str | None:
     """Try known URL formats for raw_id. Return web path on success, None otherwise."""
+    have = existing_variant(existing_files, f"{uid}_0")
+    if have:
+        return f"{IMAGE_WEB_PREFIX}/{have}"
     first_part = raw_id.split("-")[0] if "-" in raw_id else raw_id
     ids_to_try = list(dict.fromkeys([raw_id, first_part]))
     for rid in ids_to_try:
         for ext in (".jpg", ".png", ".jpeg"):
-            fname = f"{uid}_0{ext}"
-            fpath = IMAGE_DIR / fname
-            web_path = f"{IMAGE_WEB_PREFIX}/{fname}"
-            if fname in existing_files:
-                return web_path
             url = f"{BASE_URL}/_container/billboard/{rid}/main{ext}"
-            if try_download(url, fpath):
-                existing_files.add(fname)
+            final = try_download(url, IMAGE_DIR / f"{uid}_0{ext}")
+            if final:
+                existing_files.add(final)
                 time.sleep(random.uniform(0.15, 0.35))
-                return web_path
+                return f"{IMAGE_WEB_PREFIX}/{final}"
     return None
 
 

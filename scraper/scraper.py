@@ -27,6 +27,8 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
+from image_utils import existing_variant, save_optimized
+
 # ── Try imports gracefully ──────────────────────────────────────
 try:
     import requests
@@ -339,7 +341,8 @@ def infer_type(title: str, desc: str = "") -> str:
 
 def download_images(urls: list[str], listing_id: str, existing_files: set[str]) -> list[str]:
     """
-    Downloads listing photos into /public/images/scraped/.
+    Downloads listing photos into /public/images/scraped/. Opaque PNGs are
+    re-encoded to JPEG on write — see scraper/image_utils.py.
     existing_files: pre-built set of filenames already on disk — avoids
     a stat() syscall per image on every scraper run.
     """
@@ -348,21 +351,22 @@ def download_images(urls: list[str], listing_id: str, existing_files: set[str]) 
         if not url:
             continue
         try:
+            stem = f"{listing_id}_{i}"
+            have = existing_variant(existing_files, stem)
+            if have:  # already downloaded on a previous run, any extension
+                saved.append(f"{IMAGE_WEB_PREFIX}/{have}")
+                continue
             ext = os.path.splitext(urlparse(url).path)[1] or ".jpg"
             if ext.lower() not in (".jpg", ".jpeg", ".png", ".webp"):
                 ext = ".jpg"
-            fname = f"{listing_id}_{i}{ext}"
-            fpath = IMAGE_DIR / fname
-            if fname not in existing_files:  # O(1) set lookup
-                resp = fetch_with_retry(requests, "GET", url, headers=_stealth_headers(), timeout=10, stream=True, max_retries=2)
-                resp.raise_for_status()
-                data = resp.content
-                if len(data) < 10_000:
-                    continue  # placeholder / logo image — discard
-                with open(fpath, "wb") as f:
-                    f.write(data)
-                existing_files.add(fname)
-                time.sleep(random.uniform(0.3, 0.8))
+            resp = fetch_with_retry(requests, "GET", url, headers=_stealth_headers(), timeout=10, stream=True, max_retries=2)
+            resp.raise_for_status()
+            data = resp.content
+            if len(data) < 10_000:
+                continue  # placeholder / logo image — discard
+            fname = save_optimized(data, IMAGE_DIR / f"{stem}{ext}")
+            existing_files.add(fname)
+            time.sleep(random.uniform(0.3, 0.8))
             saved.append(f"{IMAGE_WEB_PREFIX}/{fname}")
         except Exception:
             continue

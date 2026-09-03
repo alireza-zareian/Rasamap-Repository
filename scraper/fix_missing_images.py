@@ -28,6 +28,8 @@ except ImportError:
     print("pip install requests")
     sys.exit(1)
 
+from image_utils import existing_variant, save_optimized
+
 # ── Config ───────────────────────────────────────────────────────────────────
 BASE_URL          = "https://billboardiha.com"
 IMAGE_DIR         = Path(__file__).parent.parent / "public" / "images" / "scraped"
@@ -56,15 +58,14 @@ def make_uid(raw_id: str) -> str:
 def try_download(raw_id: str, uid: str, existing_files: set[str], dry_run: bool) -> list[str]:
     """Try to download main.jpg for a listing. Returns list of saved web paths."""
     img_url = f"{BASE_URL}/_container/billboard/{raw_id}/main.jpg"
-    fname   = f"{uid}_0.jpg"
-    fpath   = IMAGE_DIR / fname
-    web_path = f"{IMAGE_WEB_PREFIX}/{fname}"
+    stem    = f"{uid}_0"
 
-    if fname in existing_files:
-        return [web_path]   # already on disk
+    have = existing_variant(existing_files, stem)
+    if have:
+        return [f"{IMAGE_WEB_PREFIX}/{have}"]   # already on disk, any extension
 
     if dry_run:
-        return [f"[dry-run] {web_path}"]
+        return [f"[dry-run] {IMAGE_WEB_PREFIX}/{stem}.jpg"]
 
     try:
         resp = requests.get(img_url, headers=HEADERS, timeout=10)
@@ -72,11 +73,10 @@ def try_download(raw_id: str, uid: str, existing_files: set[str], dry_run: bool)
         data = resp.content
         if len(data) < MIN_IMAGE_BYTES:
             return []   # placeholder
-        with open(fpath, "wb") as f:
-            f.write(data)
+        fname = save_optimized(data, IMAGE_DIR / f"{stem}.jpg")  # opaque PNG -> JPEG
         existing_files.add(fname)
         time.sleep(random.uniform(SLEEP_MIN, SLEEP_MAX))
-        return [web_path]
+        return [f"{IMAGE_WEB_PREFIX}/{fname}"]
     except Exception as e:
         print(f"    [WARN] {raw_id}: {e}")
         return []

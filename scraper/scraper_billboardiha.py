@@ -41,6 +41,8 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
+from image_utils import existing_variant, save_optimized
+
 try:
     import requests
     from bs4 import BeautifulSoup
@@ -185,28 +187,29 @@ def download_images(urls: list[str], listing_id: str, existing_files: set[str]) 
         if not url:
             continue
         try:
+            stem = f"{listing_id}_{i}"
+            have = existing_variant(existing_files, stem)
+            if have:  # already downloaded on a previous run, any extension
+                saved.append(f"{IMAGE_WEB_PREFIX}/{have}")
+                continue
+
             ext = os.path.splitext(urlparse(url).path)[1] or ".jpg"
             if ext.lower() not in (".jpg", ".jpeg", ".png", ".webp"):
                 ext = ".jpg"
-            fname = f"{listing_id}_{i}{ext}"
-            fpath = IMAGE_DIR / fname
-            web_path = f"{IMAGE_WEB_PREFIX}/{fname}"
 
-            if fname not in existing_files:
-                if _USE_STEALTH:
-                    resp = _fetch_with_retry(requests, "GET", url, headers=HEADERS, timeout=10, stream=True, max_retries=2)
-                else:
-                    resp = requests.get(url, headers=HEADERS, timeout=10, stream=True)
-                resp.raise_for_status()
-                data = resp.content
-                if len(data) < MIN_IMAGE_BYTES:
-                    continue  # placeholder — discard without saving
-                with open(fpath, "wb") as f:
-                    f.write(data)
-                existing_files.add(fname)
-                time.sleep(random.uniform(0.2, 0.5))
+            if _USE_STEALTH:
+                resp = _fetch_with_retry(requests, "GET", url, headers=HEADERS, timeout=10, stream=True, max_retries=2)
+            else:
+                resp = requests.get(url, headers=HEADERS, timeout=10, stream=True)
+            resp.raise_for_status()
+            data = resp.content
+            if len(data) < MIN_IMAGE_BYTES:
+                continue  # placeholder — discard without saving
+            fname = save_optimized(data, IMAGE_DIR / f"{stem}{ext}")  # opaque PNG -> JPEG
+            existing_files.add(fname)
+            time.sleep(random.uniform(0.2, 0.5))
 
-            saved.append(web_path)
+            saved.append(f"{IMAGE_WEB_PREFIX}/{fname}")
         except Exception:
             continue  # one bad image shouldn't kill the whole listing
     return saved
