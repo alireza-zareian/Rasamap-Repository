@@ -809,7 +809,7 @@ test("a rejected listing is unreachable, not merely absent from search", async (
   const name = "بیلبورد رد شده آزمایشی";
   const id = await submitListing(userToken, name);
   const decision = await api(`/api/admin/listings/${id}/decision`, {
-    method: "POST", token: adminToken, body: { decision: "reject" },
+    method: "POST", token: adminToken, body: { decision: "reject", note: "تصاویر با مکان اعلام‌شده هم‌خوانی ندارد." },
   });
   assert.equal(decision.status, 200);
   // "rejected", not "inactive": inactive is a public status describing a real
@@ -823,6 +823,84 @@ test("a rejected listing is unreachable, not merely absent from search", async (
   const admin = await api(`/api/admin/billboards/${id}`, { token: adminToken });
   const slug = admin.json.billboard.slug;
   assert.equal((await api(`/api/billboards/${slug}`)).status, 404, "must not be readable by URL");
+});
+
+test("rejecting or sending a listing back for revision requires a note for the submitter", async () => {
+  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  const id = await submitListing(userToken, "بیلبورد بدون توضیح آزمایشی");
+
+  for (const decision of ["reject", "revision"]) {
+    const res = await api(`/api/admin/listings/${id}/decision`, {
+      method: "POST", token: adminToken, body: { decision },
+    });
+    assert.equal(res.status, 400, `${decision} without a note must be refused`);
+  }
+});
+
+test("a revision request parks the listing in needs_revision and the submitter can edit and resend it", async () => {
+  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  const id = await submitListing(userToken, "بیلبورد نیازمند اصلاح آزمایشی");
+
+  const sent = await api(`/api/admin/listings/${id}/decision`, {
+    method: "POST", token: adminToken,
+    body: { decision: "revision", note: "لطفاً ابعاد دقیق سازه را اصلاح کنید." },
+  });
+  assert.equal(sent.status, 200, JSON.stringify(sent.json));
+  assert.equal(sent.json.listing.status, "needs_revision");
+
+  // Not publicly reachable while it waits on the submitter.
+  const admin = await api(`/api/admin/billboards/${id}`, { token: adminToken });
+  const slug = admin.json.billboard.slug;
+  assert.equal((await api(`/api/billboards/${slug}`)).status, 404, "must not be readable by URL");
+
+  // The submitter sees the admin's note and the needs_revision state on their
+  // own dashboard feed.
+  const mine = await api("/api/listings", { token: userToken });
+  const row = mine.json.listings.find(l => l.id === id);
+  assert.equal(row.status, "needs_revision");
+  assert.equal(row.reviewNote, "لطفاً ابعاد دقیق سازه را اصلاح کنید.");
+
+  // The submitter fixes it and resends — the row re-enters the queue as pending
+  // and the review note is cleared.
+  const resubmit = await api(`/api/listings/${id}`, {
+    method: "PATCH", token: userToken,
+    body: { name: "بیلبورد نیازمند اصلاح آزمایشی", phone: "09120000000", type: "billboard", city: "تهران", region: "۱", location: "خیابان تست اصلاح‌شده", width: 10, height: 5, faces: 2, price: 60, plan: "free", images: [] },
+  });
+  assert.equal(resubmit.status, 200, JSON.stringify(resubmit.json));
+  assert.equal(resubmit.json.listing.status, "pending");
+  assert.equal(resubmit.json.listing.reviewNote, null);
+
+  const back = await api(`/api/admin/billboards/${id}`, { token: adminToken });
+  assert.equal(back.json.billboard.status, "pending");
+  assert.equal(back.json.billboard.location, "خیابان تست اصلاح‌شده");
+
+  // A second resubmit is refused — the row is no longer in needs_revision.
+  const again = await api(`/api/listings/${id}`, {
+    method: "PATCH", token: userToken,
+    body: { name: "بیلبورد نیازمند اصلاح آزمایشی", phone: "09120000000", type: "billboard", city: "تهران", region: "۱", location: "خیابان تست", width: 10, height: 5, faces: 2, price: 60, plan: "free", images: [] },
+  });
+  assert.equal(again.status, 409);
+});
+
+test("only the account that submitted a listing may resubmit it", async () => {
+  const owner    = await mintSession({ userId: "1", role: "user" });
+  const stranger = await mintSession({ userId: "2", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  const id = await submitListing(owner, "بیلبورد مالکیت آزمایشی");
+  await api(`/api/admin/listings/${id}/decision`, {
+    method: "POST", token: adminToken, body: { decision: "revision", note: "اصلاح شود." },
+  });
+
+  const res = await api(`/api/listings/${id}`, {
+    method: "PATCH", token: stranger,
+    body: { name: "بیلبورد مالکیت آزمایشی", phone: "09120000000", type: "billboard", city: "تهران", region: "۱", location: "خیابان تست", width: 10, height: 5, faces: 2, price: 60, plan: "free", images: [] },
+  });
+  assert.equal(res.status, 404);
 });
 
 test("an editor may read the approval queue but not decide (403)", async () => {

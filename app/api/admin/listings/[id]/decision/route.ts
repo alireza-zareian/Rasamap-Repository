@@ -11,7 +11,7 @@ import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
 import { withApiLog } from "@/lib/api-log";
 
 /**
- * POST /api/admin/listings/[id]/decision — approve or reject a submission.
+ * POST /api/admin/listings/[id]/decision — decide on a submission.
  *
  * The one place the listing state machine is enforced:
  *
@@ -20,15 +20,36 @@ import { withApiLog } from "@/lib/api-log";
  *                                 (admin confirms the transfer by hand; there
  *                                  is no payment gateway — see §17 of
  *                                  docs/engineering-decisions.md)
- *   either           --reject---> rejected  (never publicly reachable)
+ *   either           --reject----> rejected        (never publicly reachable)
+ *   either           --revision--> needs_revision  (submitter edits & resends)
+ *
+ * `note` is the admin's message to the submitter, shown on their dashboard. It
+ * is required for `reject` and `revision` (a bare refusal helps no one) and
+ * optional for `approve`. It is stored on the row and cleared when the
+ * submitter resubmits a `needs_revision` listing.
  *
  * Only rows still awaiting a decision are accepted, so a second click cannot
  * re-approve a live listing or silently re-grant a paid promotion.
  */
 const BodySchema = z.object({
-  decision: z.enum(["approve", "reject"]),
-  note:     z.string().max(300).optional(),
-});
+  decision: z.enum(["approve", "reject", "revision"]),
+  note:     z.string().trim().max(1000).optional(),
+}).refine(
+  d => d.decision === "approve" || !!d.note,
+  { message: "برای رد کردن یا درخواست اصلاح، نوشتن توضیح برای فرستنده الزامی است", path: ["note"] },
+);
+
+const STATUS_BY_DECISION = {
+  approve:  "available",
+  reject:   "rejected",
+  revision: "needs_revision",
+} as const;
+
+const AUDIT_ACTION_BY_DECISION = {
+  approve:  "listing_approved",
+  reject:   "listing_rejected",
+  revision: "listing_revision_requested",
+} as const;
 
 async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -75,7 +96,9 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
     );
   }
 
-  const approve = parsed.data.decision === "approve";
+  const decision = parsed.data.decision;
+  const note = parsed.data.note?.trim() || null;
+  const approve = decision === "approve";
   // A featured slot is granted only here, on an approval of a row that actually
   // asked and paid for one — never from the submitted plan alone.
   const grantFeatured = approve && existing.plan === "featured";
@@ -83,15 +106,18 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
   const updated = await prisma.billboard.update({
     where: { id },
     data: {
-      status:   approve ? "available" : "rejected",
-      featured: grantFeatured,
+      status:     STATUS_BY_DECISION[decision],
+      featured:   grantFeatured,
+      // On approve with no note this clears any earlier feedback; on reject or
+      // revision it carries the admin's message to the submitter's dashboard.
+      reviewNote: note,
     },
     select: { id: true, name: true, status: true, plan: true, featured: true },
   });
 
   const actorId = Number.parseInt(session.userId, 10);
   await persistAudit({
-    action: approve ? "listing_approved" : "listing_rejected",
+    action: AUDIT_ACTION_BY_DECISION[decision],
     severity: "warn",
     adminId: Number.isNaN(actorId) ? null : actorId,
     userEmail: session.email,
@@ -104,7 +130,7 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
       plan: existing.plan,
       featuredGranted: grantFeatured,
       submittedById: existing.submittedById,
-      ...(parsed.data.note ? { note: parsed.data.note } : {}),
+      ...(note ? { note } : {}),
     },
   });
 

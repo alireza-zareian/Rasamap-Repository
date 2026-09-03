@@ -132,6 +132,12 @@ model Billboard {
   submittedById Int?
   submittedBy   User? @relation(fields: [submittedById], references: [id])
 
+  // An admin's written feedback to the submitter, shown on their dashboard.
+  // Required when a submission is rejected or sent back for revision
+  // (status "needs_revision"); optional on approval. Cleared when the user
+  // edits and resubmits the listing.
+  reviewNote String?
+
   // Monetisation. `plan` is what the submitter asked for; `featured` is what an
   // admin actually granted after confirming payment. Keeping them apart means a
   // requested-but-unpaid plan can never promote a listing on its own.

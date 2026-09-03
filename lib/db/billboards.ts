@@ -67,7 +67,7 @@ export interface BillboardFilterParams {
  * public read may return it. Exported so the stats, analytics and sitemap
  * queries share one definition instead of each repeating a literal.
  */
-export const UNPUBLISHED_STATUSES = ["pending", "awaiting_payment", "rejected"];
+export const UNPUBLISHED_STATUSES = ["pending", "awaiting_payment", "rejected", "needs_revision"];
 
 /** Prisma filter for "only rows the public may see". */
 export const publishedOnly = { notIn: UNPUBLISHED_STATUSES };
@@ -332,7 +332,13 @@ export async function createListing(data: ListingCreateInput): Promise<Billboard
   return fromRow(row);
 }
 
-/** A submitter's own listings, in any state — powers the user dashboard. */
+/**
+ * A submitter's own listings, in any state — powers the user dashboard.
+ *
+ * The full editable field set is returned (not just the summary) so a listing
+ * an admin sent back for revision can be edited in place on the dashboard
+ * without a second round-trip. `reviewNote` carries the admin's feedback.
+ */
 export async function getListingsForUser(userId: number) {
   return prisma.billboard.findMany({
     where:   { submittedById: userId },
@@ -341,8 +347,80 @@ export async function getListingsForUser(userId: number) {
     select: {
       id: true, slug: true, name: true, city: true, type: true, price: true,
       status: true, plan: true, featured: true, images: true, createdAt: true,
+      reviewNote: true, description: true, phone: true, region: true,
+      location: true, width: true, height: true, faces: true,
     },
   });
+}
+
+export interface ListingResubmitInput {
+  name:     string;
+  desc:     string;
+  phone:    string;
+  type:     string;
+  city:     string;
+  region:   string;
+  location: string;
+  width:    number;
+  height:   number;
+  faces:    number;
+  price:    number;
+  plan:     ListingPlan;
+  images:   string[];       // already-resolved public URLs (kept + newly saved)
+}
+
+/**
+ * A submitter's edit of a listing an admin sent back ("needs_revision").
+ *
+ * Ownership and state are re-checked here, not just in the route: only the
+ * account that submitted the row, and only while it is still in
+ * `needs_revision`, may resubmit. The row re-enters the queue at its plan's
+ * initial status, `featured` drops back to false (a new review), and the
+ * review note is cleared. Returns null if the row is not the caller's or not
+ * in that state. A name/city clash with the caller's other listings surfaces
+ * as a Prisma P2002 for the route to translate.
+ */
+export async function resubmitListing(
+  id: number,
+  userId: number,
+  data: ListingResubmitInput,
+): Promise<Billboard | null> {
+  const existing = await prisma.billboard.findUnique({
+    where:  { id },
+    select: { submittedById: true, status: true },
+  });
+  if (!existing || existing.submittedById !== userId || existing.status !== "needs_revision") {
+    return null;
+  }
+
+  const monthly = data.price;
+  const row = await prisma.billboard.update({
+    where: { id },
+    data: {
+      name:           data.name,
+      location:       data.location || data.city,
+      region:         data.region || data.city,
+      city:           data.city,
+      type:           data.type,
+      status:         initialListingStatus(data.plan),
+      plan:           data.plan,
+      featured:       false,
+      width:          data.width,
+      height:         data.height,
+      area:           data.width * data.height,
+      faces:          data.faces,
+      phone:          data.phone,
+      description:    data.desc,
+      price:          monthly,
+      priceWeekly:    Math.round(monthly / 4),
+      priceQuarterly: Math.round(monthly * 3 * 0.9),
+      priceYearly:    Math.round(monthly * 12 * 0.8),
+      images:         data.images,
+      hasImages:      data.images.length > 0,
+      reviewNote:     null,
+    },
+  });
+  return fromRow(row);
 }
 
 export interface BillboardUpdateInput {

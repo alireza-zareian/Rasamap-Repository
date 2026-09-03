@@ -10,7 +10,7 @@ import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
 import { withApiLog } from "@/lib/api-log";
 
 const QuerySchema = z.object({
-  status: z.enum(["pending", "awaiting_payment", ""]).optional().default(""),
+  status: z.enum(["pending", "awaiting_payment", "needs_revision", ""]).optional().default(""),
   page:   z.coerce.number().int().min(1).max(1000).optional().default(1),
   limit:  z.coerce.number().int().min(1).max(50).optional().default(20),
 });
@@ -55,7 +55,7 @@ async function GETHandler(req: NextRequest) {
         id: true, name: true, city: true, region: true, location: true,
         type: true, price: true, width: true, height: true, faces: true,
         status: true, plan: true, featured: true, images: true,
-        description: true, phone: true, createdAt: true,
+        description: true, phone: true, createdAt: true, reviewNote: true,
         submittedBy: { select: { id: true, name: true, phone: true } },
       },
     }),

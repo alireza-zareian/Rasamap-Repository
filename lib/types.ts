@@ -11,16 +11,17 @@
 export type BillboardType = "billboard" | "digital" | "bridge" | "station" | "vehicle";
 // The last three are pipeline states, not descriptions of a live media item.
 // A submission through /list-media is stored as "pending" (or
-// "awaiting_payment" when a paid plan was chosen) and becomes "rejected" if an
-// admin turns it down; none of the three is ever returned by a public read —
-// search, stats, sitemap, detail page.
+// "awaiting_payment" when a paid plan was chosen). An admin decision moves it
+// to "rejected" (turned down for good), "needs_revision" (sent back for the
+// submitter to edit and resubmit) or a published state. None of the pipeline
+// states is ever returned by a public read — search, stats, sitemap, detail.
 //
 // "rejected" is deliberately separate from "inactive": inactive describes a
 // real media item that is not currently operating and stays publicly visible,
 // while a rejected submission was turned down and must not be reachable at all.
 export type BillboardStatus =
   | "available" | "busy" | "reserved" | "inactive"
-  | "pending" | "awaiting_payment" | "rejected";
+  | "pending" | "awaiting_payment" | "rejected" | "needs_revision";
 export type SortOption = "price_asc" | "price_desc" | "traffic_desc" | "area_desc";
 
 export interface TrafficData {
@@ -98,6 +99,7 @@ const STATUS_LABELS = {
   pending:          "در انتظار تأیید",
   awaiting_payment: "در انتظار پرداخت",
   rejected:         "رد شده",
+  needs_revision:   "نیاز به اصلاح",
 } satisfies Record<BillboardStatus, string>;
 
 export const statusLabels: Record<string, string> = STATUS_LABELS;

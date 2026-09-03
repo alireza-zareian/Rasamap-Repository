@@ -134,7 +134,18 @@ async function GETHandler() {
         plan: r.plan,
         featured: r.featured,
         image: (r.images as string[])?.[0] ?? null,
+        images: (r.images as string[]) ?? [],
         createdAt: r.createdAt,
+        // Carried so a "needs_revision" row can be edited in place on the
+        // dashboard — see EditListingModal.
+        reviewNote: r.reviewNote,
+        description: r.description,
+        phone: r.phone,
+        region: r.region,
+        location: r.location,
+        width: r.width,
+        height: r.height,
+        faces: r.faces,
       })),
     },
     { headers: { "Cache-Control": "no-store" } },

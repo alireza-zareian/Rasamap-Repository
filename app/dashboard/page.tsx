@@ -6,8 +6,11 @@ import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import { statusLabels, planLabels } from "@/lib/types";
+import EditListingModal, { type EditableListing } from "@/components/EditListingModal";
 
 // One of the user's own submissions, in whatever state the review left it.
+// The editable fields are carried too so a "needs_revision" listing can be
+// fixed in place without a second fetch.
 interface Listing {
   id: number;
   slug: string;
@@ -20,6 +23,15 @@ interface Listing {
   featured: boolean;
   image: string | null;
   createdAt: string;
+  reviewNote: string | null;
+  description: string;
+  phone: string;
+  region: string;
+  location: string;
+  width: number;
+  height: number;
+  faces: number;
+  images: string[];
 }
 
 const STATUS_COLOR: Record<string, [string, string]> = {
@@ -30,6 +42,7 @@ const STATUS_COLOR: Record<string, [string, string]> = {
   reserved:         ["#8b5cf6", "rgba(139,92,246,0.12)"],
   inactive:         ["var(--text-muted)", "rgba(148,163,184,0.12)"],
   rejected:         ["#ef4444", "rgba(239,68,68,0.12)"],
+  needs_revision:   ["#f97316", "rgba(249,115,22,0.12)"],
 };
 // What the submitter should do next, per state — a status badge alone doesn't
 // tell someone whether the ball is in their court.
@@ -38,6 +51,7 @@ const STATUS_HINT: Record<string, string> = {
   awaiting_payment: "برای فعال شدن پلن ویژه، هزینه را واریز کنید و رسید را برای پشتیبانی بفرستید.",
   available:        "آگهی شما منتشر شده و در جستجو دیده می‌شود.",
   rejected:         "این آگهی تأیید نشد. برای پیگیری با پشتیبانی تماس بگیرید.",
+  needs_revision:   "کارشناس از شما خواسته آگهی را اصلاح کنید. توضیح زیر را بخوانید، آگهی را ویرایش کنید و دوباره بفرستید.",
 };
 const TYPE_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   billboard: Megaphone, digital: Monitor, bridge: Milestone, station: Train, vehicle: Bus,
@@ -60,6 +74,8 @@ export default function Dashboard() {
   const [user, setUser] = useState<{ name: string; phone: string } | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  // The "needs_revision" listing currently open in the edit-and-resubmit modal.
+  const [editing, setEditing] = useState<Listing | null>(null);
 
   // Profile edit state
   const [editName, setEditName]               = useState("");
@@ -232,6 +248,21 @@ export default function Dashboard() {
                             {STATUS_HINT[l.status]}
                           </div>
                         )}
+                        {l.reviewNote && (l.status === "needs_revision" || l.status === "rejected") && (
+                          <div style={{ borderTop: "1px solid var(--border)", padding: "10px 14px", fontSize: "0.74rem", color: "#f97316", lineHeight: 1.8, background: "rgba(249,115,22,0.06)" }}>
+                            <span style={{ fontWeight: 700 }}>پیام کارشناس رسامپ:</span> {l.reviewNote}
+                          </div>
+                        )}
+                        {l.status === "needs_revision" && (
+                          <div style={{ borderTop: "1px solid var(--border)", padding: "10px 14px" }}>
+                            <button
+                              onClick={() => setEditing(l)}
+                              style={{ background: "var(--accent)", color: "#fff", border: "none", fontFamily: "inherit", fontSize: "0.78rem", fontWeight: 700, padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}
+                            >
+                              ویرایش و ارسال مجدد
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -276,6 +307,17 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {editing && (
+        <EditListingModal
+          listing={editing as EditableListing}
+          onClose={() => setEditing(null)}
+          onSaved={(updated) => {
+            setListings(prev => prev.map(l => (l.id === (updated.id as number) ? { ...l, ...(updated as Partial<Listing>) } : l)));
+            setEditing(null);
+          }}
+        />
+      )}
 
       <Footer />
     </div>

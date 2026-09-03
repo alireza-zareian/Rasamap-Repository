@@ -18,6 +18,8 @@ export type AuditAction =
   | "billboard_delete"
   | "listing_approved"
   | "listing_rejected"
+  | "listing_revision_requested"
+  | "listing_resubmitted"
   | "admin_access"
   | "admin_user_create"
   | "admin_user_update"

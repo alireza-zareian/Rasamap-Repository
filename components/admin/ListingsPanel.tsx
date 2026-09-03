@@ -4,7 +4,7 @@ import { C, STATUS_LABEL } from "./constants";
 import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";
 import { planLabels } from "@/lib/types";
-import { ClipboardCheck, Check, X, Sparkles, ImageOff } from "lucide-react";
+import { ClipboardCheck, Check, X, Sparkles, ImageOff, PencilLine } from "lucide-react";
 
 interface Listing {
   id: number;
@@ -24,12 +24,16 @@ interface Listing {
   description: string;
   phone: string;
   createdAt: string;
+  reviewNote: string | null;
   submittedBy: { id: number; name: string; phone: string } | null;
 }
+
+type Decision = "approve" | "reject" | "revision";
 
 const STATUS_TONE: Record<string, [string, string]> = {
   pending:          ["#f59e0b", "rgba(245,158,11,0.12)"],
   awaiting_payment: ["#8b5cf6", "rgba(139,92,246,0.12)"],
+  needs_revision:   ["#f97316", "rgba(249,115,22,0.12)"],
 };
 
 /**
@@ -47,6 +51,8 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [lightbox, setLightbox] = useState<string | null>(null);
+  // Per-listing message to the submitter. Required for "reject" and "revision".
+  const [notes, setNotes] = useState<Record<number, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,19 +71,25 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
-  const decide = async (id: number, decision: "approve" | "reject") => {
+  const decide = async (id: number, decision: Decision) => {
     if (busyId) return;                       // one decision in flight at a time
+    const note = (notes[id] ?? "").trim();
+    if (decision !== "approve" && !note) {
+      setError("برای «رد» یا «نیاز به اصلاح» باید توضیحی برای فرستنده بنویسید.");
+      return;
+    }
     setBusyId(id); setError("");
     try {
       const res = await fetch(`/api/admin/listings/${id}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision }),
+        body: JSON.stringify({ decision, note: note || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "خطا در ثبت تصمیم"); return; }
       // The row has left the queue — drop it rather than refetching everything.
       setListings(prev => prev.filter(l => l.id !== id));
+      setNotes(prev => { const next = { ...prev }; delete next[id]; return next; });
     } catch {
       setError("خطای شبکه");
     } finally {
@@ -95,6 +107,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
           <option value="">همه در انتظار</option>
           <option value="pending">در انتظار تأیید</option>
           <option value="awaiting_payment">در انتظار پرداخت</option>
+          <option value="needs_revision">نیاز به اصلاح</option>
         </select>
       </div>
 
@@ -104,6 +117,10 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
         آگهی با پلن <b>ویژه</b> در وضعیت «در انتظار پرداخت» است: پس از دریافت وجه،
         با زدن «تأیید و انتشار» هم منتشر می‌شود و هم نشان ویژه می‌گیرد.
         درگاه پرداخت آنلاین نداریم؛ تأیید مالی دستی و توسط ادمین انجام می‌شود.
+        <br />
+        سه تصمیم ممکن است: <b>تأیید و انتشار</b> (توضیح اختیاری)، <b>نیاز به اصلاح</b>
+        (آگهی به فرستنده برمی‌گردد تا ویرایش و دوباره ارسال کند) و <b>رد</b>.
+        برای «نیاز به اصلاح» و «رد» نوشتن توضیح برای فرستنده الزامی است.
       </div>
 
       {error && (
@@ -156,6 +173,21 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                         {l.description.slice(0, 400)}
                       </div>
                     )}
+                    {l.reviewNote && (
+                      <div style={{ fontSize: "0.72rem", color: "#f97316", marginTop: 8, lineHeight: 1.8, background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.25)", borderRadius: 8, padding: "8px 10px" }}>
+                        توضیح قبلی برای فرستنده: {l.reviewNote}
+                      </div>
+                    )}
+                    {canDecide && (
+                      <textarea
+                        value={notes[l.id] ?? ""}
+                        onChange={e => setNotes(prev => ({ ...prev, [l.id]: e.target.value }))}
+                        rows={2}
+                        maxLength={1000}
+                        placeholder="توضیح برای فرستنده (برای «نیاز به اصلاح» و «رد» الزامی، برای «تأیید» اختیاری)"
+                        style={{ width: "100%", marginTop: 8, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.75rem", lineHeight: 1.8, padding: "8px 10px", borderRadius: 8, outline: "none", resize: "vertical" }}
+                      />
+                    )}
                   </div>
 
                   {canDecide && (
@@ -164,6 +196,10 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                         style={{ background: busy ? C.border : C.green, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: busy ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                         {l.plan === "featured" ? <Sparkles size={13} /> : <Check size={13} />}
                         {busy ? "..." : l.plan === "featured" ? "تأیید پرداخت و انتشار" : "تأیید و انتشار"}
+                      </button>
+                      <button onClick={() => decide(l.id, "revision")} disabled={busy}
+                        style={{ background: "none", border: "1px solid rgba(249,115,22,0.5)", color: "#f97316", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: busy ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                        <PencilLine size={13} /> نیاز به اصلاح
                       </button>
                       <button onClick={() => decide(l.id, "reject")} disabled={busy}
                         style={{ background: "none", border: `1px solid ${C.border}`, color: "#ef4444", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: busy ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
