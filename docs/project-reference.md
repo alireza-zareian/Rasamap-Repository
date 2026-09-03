@@ -79,12 +79,14 @@ Domain types + `typeLabels` live in `lib/types.ts` (data-free — safe to import
 
 ## DB Schema (Prisma 7 + SQLite)
 
-Models: `Owner`, `User`, `Billboard`, `Reservation`, `Admin`, `AuditLog`
+Models: `Owner`, `User`, `Admin`, `Billboard`, `Review`, `ContactRequest`, `IdempotencyKey`, `OtpCode`, `AuditLog`
+(`Reservation` was removed in the 2026-09-02 review — see §17 of `engineering-decisions.md`.)
 
 Key decisions:
 - `Billboard.id`: `Int @id @default(autoincrement())` — explicit IDs can be inserted during seed
 - Arrays (`images`, `features`, `nearbyLandmarks`) and `TrafficData`: stored as `Json` — Prisma returns pre-parsed (no `JSON.parse` needed)
 - `Admin` table backs admin login; `AuditLog` (`audit_logs`) stores durable admin-action records (see persistAudit)
+- `ContactRequest` (`contact_requests`) is the lead table: one row per (billboard, user) that asked for the owner's phone, unique on the pair, with an atomic `count` for repeats and a `new | contacted | closed` follow-up state (§23)
 
 Prisma 7 adapter pattern:
 ```ts

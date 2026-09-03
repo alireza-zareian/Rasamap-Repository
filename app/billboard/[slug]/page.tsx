@@ -40,7 +40,8 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
 
   // The owner/agency phone must never reach the client (it would end up in the
   // page HTML / RSC payload). Keep only whether one exists; the number itself
-  // is served by GET /api/billboards/[slug]/contact to signed-in users.
+  // is served by POST /api/billboards/[slug]/contact to signed-in users, on
+  // an explicit click, which also records the lead (§23).
   const phoneAvailable = !!(raw.phone && raw.phone !== "—" && raw.phone.trim());
   const b = { ...raw, phone: "" };
 

@@ -258,8 +258,8 @@ body {
           <div class="step-num">5</div>
           <div class="step-content">
             <div class="step-title">دیدن اطلاعات تماس صاحب رسانه</div>
-            <div class="step-sub">انتخاب بیلبورد ← صفحه جزئیات ← «برای دیدن اطلاعات تماس وارد شوید» ← شماره از endpoint احراز‌هویت‌شده می‌آید، نه از HTML صفحه</div>
-            <div class="step-badge"><span class="chip chip-orange">GET /api/billboards/[slug]/contact</span><span class="chip chip-green">signed-in only</span></div>
+            <div class="step-sub">انتخاب بیلبورد ← صفحه جزئیات ← «برای دیدن اطلاعات تماس وارد شوید» ← بعد از ورود، دکمهٔ «نمایش شمارهٔ تماس» ← شماره از endpoint احراز‌هویت‌شده می‌آید، نه از HTML صفحه. همین کلیک در جدول سرنخ‌ها ثبت می‌شود — در پنل مدیریت، تب «سرنخ‌ها»، قابل دیدن است</div>
+            <div class="step-badge"><span class="chip chip-orange">POST /api/billboards/[slug]/contact</span><span class="chip chip-green">signed-in only</span><span class="chip chip-orange">GET /api/admin/leads</span></div>
           </div>
         </div>
 

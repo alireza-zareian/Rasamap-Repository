@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Billboard } from "@/lib/types";
 import type { AdminStats } from "@/lib/admin/types";
 import type { UserRole } from "@/lib/auth/session";
-import { LayoutDashboard, ClipboardList, ClipboardCheck, ShieldCheck, Bot, Users, ScrollText, Plus, Lock, Trash2, AlertTriangle, MapPin, CheckCircle2, ImageOff, Sparkles, Copy } from "lucide-react";
+import { LayoutDashboard, ClipboardList, ClipboardCheck, Handshake, ShieldCheck, Bot, Users, ScrollText, Plus, Lock, Trash2, AlertTriangle, MapPin, CheckCircle2, ImageOff, Sparkles, Copy } from "lucide-react";
 import { C, TYPE_LABEL, STATUS_LABEL, ROLE_LABEL, ROLE_COLOR } from "@/components/admin/constants";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Badge, StatCard, BarRow } from "@/components/admin/Badge";
@@ -18,8 +18,9 @@ import { UsersPanel } from "@/components/admin/UsersPanel";
 import { AuditPanel } from "@/components/admin/AuditPanel";
 import { CreateModal } from "@/components/admin/CreateModal";
 import { ListingsPanel } from "@/components/admin/ListingsPanel";
+import { LeadsPanel } from "@/components/admin/LeadsPanel";
 
-type Tab = "overview" | "billboards" | "listings" | "quality" | "scraper" | "users" | "audit";
+type Tab = "overview" | "billboards" | "listings" | "leads" | "quality" | "scraper" | "users" | "audit";
 interface SessionUser { id: string; name: string; role: UserRole; email: string; }
 
 export default function AdminDashboard() {
@@ -126,6 +127,7 @@ export default function AdminDashboard() {
     ["نمای کلی", "overview", LayoutDashboard],
     ["بیلبوردها", "billboards", ClipboardList],
     ["تأیید آگهی‌ها", "listings", ClipboardCheck],
+    ["سرنخ‌ها", "leads", Handshake],
     ["کیفیت", "quality", ShieldCheck],
     ["اسکرپر", "scraper", Bot],
     ["کاربران", "users", Users],
@@ -283,6 +285,12 @@ export default function AdminDashboard() {
           {tab === "listings" && (
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
               <ListingsPanel canDecide={canManage} />
+            </div>
+          )}
+
+          {tab === "leads" && (
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
+              <LeadsPanel canEdit={canEdit} />
             </div>
           )}
 

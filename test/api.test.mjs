@@ -121,16 +121,112 @@ test("GET /api/billboards/[slug] never includes the owner phone", async () => {
   assert.equal(json.billboard.phone, undefined);
 });
 
-test("GET /api/billboards/[slug]/contact is 401 without a session", async () => {
-  const { status } = await api("/api/billboards/valiasr-tower/contact");
+test("POST /api/billboards/[slug]/contact is 401 without a session", async () => {
+  const { status } = await api("/api/billboards/valiasr-tower/contact", { method: "POST" });
   assert.equal(status, 401);
 });
 
-test("GET /api/billboards/[slug]/contact returns the phone to a signed-in user", async () => {
+test("POST /api/billboards/[slug]/contact returns the phone to a signed-in user", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
-  const { status, json } = await api("/api/billboards/valiasr-tower/contact", { token });
+  const { status, json } = await api("/api/billboards/valiasr-tower/contact", { method: "POST", token });
   assert.equal(status, 200);
   assert.equal(typeof json.phone, "string");
+});
+
+test("POST /api/billboards/[slug]/contact 404s on an unpublished listing", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status } = await api("/api/billboards/pending-listing/contact", { method: "POST", token });
+  assert.equal(status, 404);
+});
+
+// ── Leads (the mini-CRM) ───────────────────────────────────────
+// A reveal is the only demand signal Rasamap can observe, so the row it writes
+// is what the admin leads panel reads.
+
+test("revealing a phone records a lead the admin panel can see", async () => {
+  const userToken  = await mintSession({ userId: "2", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  await api("/api/billboards/mashhad-digital/contact", { method: "POST", token: userToken });
+
+  const { status, json } = await api("/api/admin/leads?limit=50", { token: adminToken });
+  assert.equal(status, 200);
+  const lead = json.leads.find(l => l.user?.id === 2 && l.billboard?.slug === "mashhad-digital");
+  assert.ok(lead, "the reveal did not produce a lead row");
+  assert.equal(lead.status, "new");
+});
+
+test("a second reveal by the same user increments the count instead of adding a row", async () => {
+  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+  const slug = "photo-board";
+
+  await api(`/api/billboards/${slug}/contact`, { method: "POST", token: userToken });
+  const first = await api("/api/admin/leads?limit=50", { token: adminToken });
+  const before = first.json.total;
+  const countBefore = first.json.leads.find(l => l.user?.id === 1 && l.billboard?.slug === slug).count;
+
+  await api(`/api/billboards/${slug}/contact`, { method: "POST", token: userToken });
+  const second = await api("/api/admin/leads?limit=50", { token: adminToken });
+
+  assert.equal(second.json.total, before, "a repeat reveal created a second lead row");
+  const countAfter = second.json.leads.find(l => l.user?.id === 1 && l.billboard?.slug === slug).count;
+  assert.equal(countAfter, countBefore + 1);
+});
+
+test("an admin session browsing a media page does not create a lead", async () => {
+  const adminToken = await mintSession({ role: "admin" });
+  const before = await api("/api/admin/leads?limit=1", { token: adminToken });
+  await api("/api/billboards/valiasr-tower/contact", { method: "POST", token: adminToken });
+  const after = await api("/api/admin/leads?limit=1", { token: adminToken });
+  assert.equal(after.json.total, before.json.total);
+});
+
+test("GET /api/admin/leads is 401 for a customer account", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const { status } = await api("/api/admin/leads", { token });
+  assert.equal(status, 401);
+});
+
+test("GET /api/admin/leads is 403 for a viewer", async () => {
+  const token = await mintSession({ role: "viewer" });
+  const { status } = await api("/api/admin/leads", { token });
+  assert.equal(status, 403);
+});
+
+test("PATCH /api/admin/leads/[id] moves the follow-up status and keeps a note", async () => {
+  const userToken  = await mintSession({ userId: "2", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+
+  await api("/api/billboards/valiasr-tower/contact", { method: "POST", token: userToken });
+  const list = await api("/api/admin/leads?limit=50", { token: adminToken });
+  const lead = list.json.leads.find(l => l.user?.id === 2 && l.billboard?.slug === "valiasr-tower");
+  assert.ok(lead);
+
+  const { status, json } = await api(`/api/admin/leads/${lead.id}`, {
+    method: "PATCH", token: adminToken, body: { status: "contacted", note: "تماس گرفته شد" },
+  });
+  assert.equal(status, 200);
+  assert.equal(json.lead.status, "contacted");
+  assert.equal(json.lead.note, "تماس گرفته شد");
+
+  const filtered = await api("/api/admin/leads?status=contacted&limit=50", { token: adminToken });
+  assert.ok(filtered.json.leads.some(l => l.id === lead.id));
+});
+
+test("PATCH /api/admin/leads/[id] rejects a status outside the allowlist", async () => {
+  const adminToken = await mintSession({ role: "admin" });
+  const list = await api("/api/admin/leads?limit=1", { token: adminToken });
+  const id = list.json.leads[0]?.id;
+  assert.ok(id, "no lead to patch");
+  const { status } = await api(`/api/admin/leads/${id}`, { method: "PATCH", token: adminToken, body: { status: "won" } });
+  assert.equal(status, 400);
+});
+
+test("PATCH /api/admin/leads/[id] is 404 for an unknown lead", async () => {
+  const adminToken = await mintSession({ role: "admin" });
+  const { status } = await api("/api/admin/leads/999999", { method: "PATCH", token: adminToken, body: { status: "closed" } });
+  assert.equal(status, 404);
 });
 
 test("GET /api/stats returns 200", async () => {

@@ -116,3 +116,20 @@ export const planLabels: Record<string, string> = {
   featured: "ویژه",
 };
 
+// ── Leads ──────────────────────────────────────────────────────
+// A lead is one account asking for one media owner's phone number. Since
+// Rasamap hands the deal off at that point, "contacted" and "closed" describe
+// the admin's own follow-up, not a state of the deal itself.
+export type LeadStatus = "new" | "contacted" | "closed";
+
+const LEAD_STATUS_LABELS = {
+  new:       "جدید",
+  contacted: "پیگیری شده",
+  closed:    "بسته شده",
+} satisfies Record<LeadStatus, string>;
+
+export const leadStatusLabels: Record<string, string> = LEAD_STATUS_LABELS;
+
+/** Allowlist for the admin PATCH, derived from the labels so they cannot drift. */
+export const LEAD_STATUSES = Object.keys(LEAD_STATUS_LABELS) as LeadStatus[];
+

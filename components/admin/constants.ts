@@ -56,6 +56,7 @@ export const AUDIT_ACTION: Record<string, { title: string; desc: string }> = {
   admin_user_create:       { title: "ساخت حساب مدیر",         desc: "یک حساب تازه برای تیم مدیریت ساخته شد." },
   admin_user_update:       { title: "ویرایش حساب مدیر",       desc: "نقش یا مشخصات یک حساب مدیریت عوض شد." },
   customer_update:         { title: "ویرایش حساب کاربر",      desc: "مشخصات حساب یک کاربر عادی توسط مدیر تغییر کرد." },
+  lead_update:             { title: "به‌روزرسانی سرنخ",       desc: "وضعیت پیگیری یا یادداشت یک درخواست تماس تغییر کرد." },
   customer_password_reset: { title: "بازنشانی رمز کاربر",     desc: "رمز عبور یک کاربر توسط مدیر از نو تنظیم شد." },
   password_reset_self:     { title: "تغییر رمز توسط خود کاربر", desc: "یک کاربر رمز عبور حساب خودش را عوض کرد." },
   otp_sent:                { title: "ارسال کد ورود",          desc: "یک کد یک‌بارمصرف برای ورود کاربر فرستاده شد." },

@@ -68,6 +68,7 @@ function billboard({ views = 7500, width = 12, height = 4, ...overrides } = {}) 
 
 async function main() {
   // Order matters: children before parents.
+  await prisma.contactRequest.deleteMany();
   await prisma.review.deleteMany();
   await prisma.idempotencyKey.deleteMany();
   await prisma.billboard.deleteMany();

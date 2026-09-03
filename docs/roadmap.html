@@ -1445,6 +1445,35 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
     </div>
   </div>
 
+  <!-- ─── CRM — lead capture ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">CRM</div>
+      <div class="ph-title"><h3>سرنخ‌ها — ثبت تقاضا به‌جای نصبِ یک CRM آماده</h3><p>Atomic CRM بررسی و رد شد؛ معادلِ لازمش داخل خودِ پروژه ساخته شد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>چرا Atomic CRM نصب نشد:</b> لایسنسش MIT و رایگان است، ولی بک‌اندش <b>Supabase</b> است
+        (Postgres + Auth + Storage + Edge Functions). یعنی یا حسابِ SaaS تحریمی و پولی، یا بالا آوردنِ
+        Supabase با Docker روی همان مک‌بوکِ بدون‌فنی که باید دمو را اجرا کند (§۲۲). ضمناً یک
+        <b>اپلیکیشن دوم</b> است: دیتابیس دوم، لاگین دوم، رابط انگلیسیِ LTR با Tailwind — مقابلِ فارسیِ RTL و
+        قانونِ inline-style این پروژه. مدلش هم contacts / companies / <b>deals</b> است و از بیلبورد چیزی نمی‌داند.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سؤال درست پرسیده شد:</strong> از سه کاری که یک CRM می‌کند، «قیف معامله» در رساماپ <b>موضوعیت ندارد</b> (رزرو نداریم — §۱۷)، «گردش‌کار تأیید با لاگ ممیزی» <b>از قبل ساخته شده بود</b>، و فقط <b>ثبت سرنخ</b> واقعاً خالی بود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حفره‌ی واقعی:</strong> دادنِ شمارهٔ صاحب رسانه آخرین چیزی است که پلتفرم می‌بیند — و هیچ‌جا ثبت نمی‌شد. یعنی محصول هیچ رکوردی از تقاضا نداشت: چه رسانه‌ای متقاضی دارد، از طرفِ چه کسی، چند بار</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>جدول <code>contact_requests</code>:</strong> یک ردیف به‌ازای هر (رسانه، حساب) با ایندکسِ یکتا روی همین جفت. درخواستِ دوباره <b>ردیف جدید نمی‌سازد</b>، شمارندهٔ <code>count</code> را اتمیک بالا می‌برد (§۸: تعریفِ تکراری در سطح دیتابیس، نه در کد)؛ مسابقهٔ دو کلیکِ همزمانِ اول با <code>P2002</code> گرفته و به همان increment تبدیل می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>GET</code> → <code>POST</code> شد و دکمهٔ صریح آمد:</strong> شماره قبلاً موقعِ باز شدنِ صفحه خودکار گرفته می‌شد — یعنی ثبتش «بازدید» بود نه «قصد تماس». حالا دکمهٔ «نمایش شمارهٔ تماس» است. GET قدیمی <b>حذف شد</b> نه اینکه کنارش بماند: یک مسیرِ دومِ بدونِ ثبت، کل رکورد را بی‌معنا می‌کرد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تب «سرنخ‌ها» در پنل مدیریت:</strong> <code>GET /api/admin/leads</code> و <code>PATCH /api/admin/leads/[id]</code> — وضعیت پیگیری <b>جدید → پیگیری شده → بسته شده</b> و یادداشت داخلی. همین‌قدر و نه بیشتر: این همان بخشِ CRMِ ماجراست</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>خرابیِ دفتردار نباید محصول را خراب کند:</strong> اگر نوشتنِ سرنخ شکست بخورد، شماره باز هم به کاربر داده می‌شود و خطا لاگ می‌شود (بلعیده نمی‌شود)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حریم خصوصی:</strong> بند ۶ صفحهٔ قوانین صریحاً می‌گوید این درخواست‌ها ثبت می‌شوند و فقط تیم مدیریت می‌بیند؛ یادداشتِ ادمین هرگز به کاربر نشان داده نمی‌شود؛ ردیفِ لاگِ <code>lead_update</code> فقط شناسه دارد — نه نام، نه شماره</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>آنچه آگاهانه نداریم:</strong> شرکت‌ها، ثبتِ ایمیل، کانبان، یادآور، import/export و پورتالِ صاحب رسانه. هیچ‌کدام در دایرکتوری‌ای با یک ادمین کاربری ندارد. حرفِ صادقانه برای دفاع: CRM ابزارِ <em>فروش</em> است و رساماپ فرایند فروش ندارد — سیگنالِ تقاضا دارد و حالا ثبتش می‌کند (§۲۳)</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> ۱۱ تست تازه سبز شد — ۴۰۱ بدون لاگین، بازگشتِ شماره، ۴۰۴ روی آگهیِ منتشرنشده، ساخته‌شدنِ سرنخ، <b>افزایشِ شمارنده به‌جای ردیف دوم</b>، سرنخ‌نساختن برای نشستِ ادمین، ۴۰۱ برای کاربر عادی و ۴۰۳ برای viewer روی پنل، تغییر وضعیت + یادداشت، ردِ وضعیتِ خارج از allowlist (۴۰۰) و ۴۰۴ سرنخِ ناموجود. <code>npx tsc --noEmit</code>، <code>npm run lint</code> و <code>npm run build</code> بدون خطا.</div>
+    </div>
+  </div>
+
   <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>

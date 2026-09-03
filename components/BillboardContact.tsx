@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { Phone } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 
 interface Props {
@@ -9,19 +10,43 @@ interface Props {
   slug: string;
 }
 
+/**
+ * The owner's phone number, revealed on request.
+ *
+ * The number used to be fetched as soon as the page mounted. It is now behind
+ * an explicit click, for two reasons: a render is not a statement of interest,
+ * and POST /api/billboards/[slug]/contact records the reveal as a lead — so
+ * what gets recorded has to be something the user actually chose to do.
+ */
 export default function BillboardContact({ hasPhone, agency, slug }: Props) {
   const { user, loading } = useCurrentUser();
   const [phone, setPhone] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const next = `/billboard/${slug}`;
   const agencyLabel = agency && agency !== "اجاره‌دهنده مستقیم" ? agency : "آگهی‌دهنده";
 
-  useEffect(() => {
-    if (!user || !hasPhone) return;
-    fetch(`/api/billboards/${slug}/contact`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setPhone(d?.phone ?? null))
-      .catch(() => setPhone(null));
-  }, [user, hasPhone, slug]);
+  const reveal = async () => {
+    if (busy || phone) return;                // one request in flight, once only
+    setBusy(true); setError("");
+    try {
+      const res = await fetch(`/api/billboards/${slug}/contact`, { method: "POST" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(data?.error ?? "دریافت شماره ممکن نشد");
+        return;
+      }
+      if (!data?.phone) {
+        setError("شمارهٔ تماسی برای این رسانه ثبت نشده است");
+        return;
+      }
+      setPhone(data.phone);
+    } catch {
+      setError("خطای شبکه — دوباره تلاش کنید");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (!hasPhone && !agency) return null;
 
@@ -49,7 +74,18 @@ export default function BillboardContact({ hasPhone, agency, slug }: Props) {
             </a>
           </>
         ) : (
-          <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>در حال دریافت شماره…</div>
+          <>
+            <button
+              onClick={reveal}
+              disabled={busy}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: busy ? "var(--bg-surface)" : "rgba(34,197,94,0.08)", border: `1.5px solid ${busy ? "var(--border)" : "rgba(34,197,94,0.3)"}`, borderRadius: 10, padding: "9px 12px", color: busy ? "var(--text-muted)" : "#22c55e", fontFamily: "inherit", fontWeight: 700, fontSize: "0.85rem", cursor: busy ? "default" : "pointer" }}
+            >
+              <Phone size={14} /> {busy ? "در حال دریافت…" : "نمایش شمارهٔ تماس"}
+            </button>
+            {error && (
+              <div style={{ fontSize: "0.7rem", color: "#ef4444", marginTop: 7, lineHeight: 1.8 }}>{error}</div>
+            )}
+          </>
         )
       ) : (
         <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>

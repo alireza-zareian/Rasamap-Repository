@@ -24,6 +24,7 @@ export type AuditAction =
   | "admin_user_create"
   | "admin_user_update"
   | "customer_update"
+  | "lead_update"
   | "customer_password_reset"
   | "password_reset_self"
   | "otp_sent"

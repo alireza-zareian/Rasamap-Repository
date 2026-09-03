@@ -38,8 +38,9 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
-  listings Billboard[]
-  reviews  Review[]
+  listings        Billboard[]
+  reviews         Review[]
+  contactRequests ContactRequest[]
 
   @@map("users")
 }
@@ -62,9 +63,9 @@ model Admin {
 // ── Billboard ──────────────────────────────────────────────────
 // Field-for-field mirror of the Billboard interface in lib/data.ts.
 model Billboard {
-  id      Int     @id @default(autoincrement())
-  name    String
-  slug    String  @unique
+  id       Int    @id @default(autoincrement())
+  name     String
+  slug     String @unique
   location String
   region   String
   city     String
@@ -105,17 +106,17 @@ model Billboard {
   lat  Float?
   lng  Float?
 
-  icon        String
-  hasImages   Boolean @default(false)
-  images      Json // string[]
-  allImages   Json? // string[] | null
-  agency      String
-  phone       String
-  description String
-  features         Json // string[]
-  nearbyLandmarks  Json // string[]
-  rating      Float
-  reviewCount Int
+  icon            String
+  hasImages       Boolean @default(false)
+  images          Json // string[]
+  allImages       Json? // string[] | null
+  agency          String
+  phone           String
+  description     String
+  features        Json // string[]
+  nearbyLandmarks Json // string[]
+  rating          Float
+  reviewCount     Int
 
   // Scraper-specific (optional — absent on static/legacy records)
   url           String?
@@ -147,7 +148,8 @@ model Billboard {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reviews Review[]
+  reviews         Review[]
+  contactRequests ContactRequest[]
 
   @@index([city])
   @@index([type])
@@ -200,7 +202,7 @@ model Review {
   userId      Int
   user        User      @relation(fields: [userId], references: [id])
 
-  rating  Int    // 1–5
+  rating  Int // 1–5
   comment String
 
   createdAt DateTime @default(now())
@@ -208,6 +210,41 @@ model Review {
   @@unique([billboardId, userId])
   @@index([billboardId])
   @@map("reviews")
+}
+
+// ── ContactRequest ─────────────────────────────────────────────
+// A lead. When a signed-in user asks for the owner's phone on a media page,
+// this row is created. Rasamap does not process the deal (see §17 of
+// docs/engineering-decisions.md), so the reveal is the last thing the platform
+// can observe — without this table the product has no record that demand
+// happened at all.
+//
+// One row per (media, account): a second reveal by the same person is the same
+// lead, not a new one. `count` and `lastRequestedAt` keep the repeat visible
+// without the table growing per click, and the unique index below is what makes
+// the get-or-create safe under concurrent clicks.
+model ContactRequest {
+  id          Int       @id @default(autoincrement())
+  billboardId Int
+  billboard   Billboard @relation(fields: [billboardId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Follow-up state, moved by an admin: new → contacted → closed. `note` is an
+  // internal admin memo — it is never shown to the user who made the request.
+  status String  @default("new")
+  note   String?
+
+  count           Int      @default(1)
+  lastRequestedAt DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([billboardId, userId])
+  @@index([status, lastRequestedAt])
+  @@index([billboardId])
+  @@index([userId])
+  @@map("contact_requests")
 }
 
 // ── OtpCode ────────────────────────────────────────────────────

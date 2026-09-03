@@ -787,6 +787,70 @@ it already has under either extension. All three scrapers plus the two
 
 ---
 
+## 23. A CRM, evaluated — and why the answer was 40 lines of schema, not a second application
+
+The question that started this was concrete: *Atomic CRM* (Marmelab, MIT) is a
+well-regarded open-source CRM on GitHub — should Rasamap adopt it?
+
+**It was rejected, on the stack, not on the quality.** Atomic CRM is a Vite SPA
+whose backend is **Supabase** (Postgres + GoTrue auth + storage + edge
+functions). Adopting it means one of two things: a Supabase account — a hosted
+SaaS this project has ruled out on principle and cannot reach from Iran without
+a workaround — or a self-hosted Supabase stack under Docker, on the fanless
+laptop that also has to run the demo (§22). Either way it is a *second*
+application, with a second database, a second auth system, an English LTR
+react-admin UI against this project's Persian RTL and inline-style rule, and a
+domain model of contacts / companies / **deals** that knows nothing about
+billboards. The integration cost is not the CRM; it is owning two systems.
+
+**Then the more useful question: does the product actually need one?** Three
+things a CRM does, checked against what is already here:
+
+| CRM capability | Rasamap |
+|---|---|
+| Deal pipeline | **Not applicable.** There is no booking and no deal to track — Rasamap is a directory, not a broker (§17). |
+| Approval workflow with an audit trail | **Already built.** `pending → awaiting_payment → published`, admin-decided, `listing_approved` in the audit log. |
+| Lead capture | **Missing.** This was the real gap. |
+
+The gap was specific. Handing over the owner's phone number is the last thing
+the platform can observe — after that the conversation leaves the site. That
+reveal was a `GET` that recorded nothing, so the product had no record that
+demand had ever happened: which media attract interest, from whom, how often.
+For a marketplace, that is the one number worth knowing.
+
+**What was built instead (the equivalent, in-stack):**
+
+- `contact_requests` — one row per (media, account), unique index on the pair.
+  A repeat reveal is the *same* lead, so it increments an atomic `count` and
+  moves `lastRequestedAt` rather than inserting a second row (§8: duplicates are
+  defined at the DB level, and `increment` is one `UPDATE`, so two simultaneous
+  clicks cannot both read 1 and both write 2). A first-click race that trips the
+  unique index is caught as `P2002` and retried as the increment.
+- `GET → POST /api/billboards/[slug]/contact`. The verb change is the point: the
+  number used to be fetched on mount, so a `GET` recorded page renders, not
+  interest. It is now behind an explicit **«نمایش شمارهٔ تماس»** button, and the
+  GET was removed rather than left alongside — a second, unrecorded path to the
+  same number would make the record meaningless.
+- `GET /api/admin/leads` + `PATCH /api/admin/leads/[id]` and a **سرنخ‌ها** tab:
+  the follow-up states `new → contacted → closed`, plus an internal memo. That
+  is the CRM part, and it is deliberately the whole CRM part.
+- The lead write cannot cost a user the number they asked for: it is wrapped so
+  a failure is logged and the phone still returns. Bookkeeping does not get to
+  break the product.
+
+**What is knowingly given up** versus a real CRM: no companies, no email
+capture, no kanban, no reminders, no import/export, no per-owner portal. None of
+them has a user in a directory with one admin. The honest framing for a defense
+is that a CRM is a *sales* tool, and Rasamap does not have a sales process — it
+has a demand signal, and now it records it.
+
+**Privacy.** The row stores who asked about what, so the terms page says so in
+plain Persian, the admin memo is marked internal and never shown to the user,
+and the audit entry for a status change carries ids only — no name, no phone
+(the logger's standing rule).
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |

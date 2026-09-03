@@ -38,7 +38,7 @@ async function getHandler(req: NextRequest, { params }: { params: Promise<{ slug
       return NextResponse.json({ error: "رسانه یافت نشد" }, { status: 404 });
     }
     // Owner/agency phone is never in a public response — see
-    // GET /api/billboards/[slug]/contact (signed-in only). JSON.stringify drops
+    // POST /api/billboards/[slug]/contact (signed-in only). JSON.stringify drops
     // the undefined value, so no `phone` key ships.
     return NextResponse.json(
       { billboard: { ...full, phone: undefined } },
