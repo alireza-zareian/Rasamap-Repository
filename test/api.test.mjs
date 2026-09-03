@@ -1017,6 +1017,41 @@ test("the approval queue is closed to a customer session and to anonymous caller
   assert.equal((await api("/api/admin/listings", { token: userToken })).status, 401);
 });
 
+// ── The session cookie must be storable by the client ────────────────
+// `Secure` used to be attached whenever NODE_ENV was "production", which
+// `next start` sets — including `npm run demo` on the laptop. A browser
+// discards a Secure cookie that arrives over plain HTTP, so a phone opening
+// the demo at http://<lan-ip> logged in and was instantly logged out again.
+// Chrome exempts http://localhost, which is why it never showed on the
+// developer's own machine.
+
+test("a login over plain HTTP does not mark the session cookie Secure", async () => {
+  // Register a fresh account rather than reusing a fixture: earlier tests in
+  // this file reset fixture passwords, and this test is about the cookie's
+  // flags, not about who owns it.
+  const phone = randomPhone();
+  const reg = await api("/api/auth/register", { method: "POST", body: { name: "Cookie Test", phone, password: "secret123" } });
+  assert.equal(reg.status, 200, JSON.stringify(reg.json));
+
+  const cookie = (reg.headers.getSetCookie?.() ?? []).join("; ");
+  assert.match(cookie, /rasamap_session=/);
+  assert.ok(!/;\s*Secure/i.test(cookie), `cookie was marked Secure over http and the browser would drop it: ${cookie}`);
+  assert.match(cookie, /HttpOnly/i);
+  assert.match(cookie, /SameSite=Strict/i);
+});
+
+test("a login behind an HTTPS proxy does mark the session cookie Secure", async () => {
+  const phone = randomPhone();
+  const reg = await api("/api/auth/register", {
+    method: "POST",
+    headers: { "x-forwarded-proto": "https" },
+    body: { name: "Cookie Test TLS", phone, password: "secret123" },
+  });
+  assert.equal(reg.status, 200, JSON.stringify(reg.json));
+  const cookie = (reg.headers.getSetCookie?.() ?? []).join("; ");
+  assert.match(cookie, /Secure/i);
+});
+
 // ── Hotlink protection on listing media ──────────────────────────────
 // The check must key off the host the browser actually used. It used to
 // compare against req.nextUrl.host, which under `next start` is the server's

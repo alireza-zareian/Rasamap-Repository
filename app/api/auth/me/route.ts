@@ -10,7 +10,7 @@ import { withApiLog } from "@/lib/api-log";
 const TWO_HOURS = 2 * 60 * 60; // seconds
 
 // GET /api/auth/me — return current user + sliding session refresh
-async function GETHandler() {
+async function GETHandler(req: NextRequest) {
   const session = await getSession();
   if (!session || session.role !== "user") {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
@@ -28,7 +28,7 @@ async function GETHandler() {
       role:   session.role,
       name:   session.name,
     });
-    res.headers.set("Set-Cookie", buildSessionCookieHeader(newToken));
+    res.headers.set("Set-Cookie", buildSessionCookieHeader(newToken, req));
   }
 
   return res;
@@ -105,7 +105,7 @@ async function PATCHHandler(req: NextRequest) {
   });
 
   const res = NextResponse.json({ user: { id: updated.id, name: updated.name, phone: updated.phone } });
-  res.headers.set("Set-Cookie", buildSessionCookieHeader(newToken));
+  res.headers.set("Set-Cookie", buildSessionCookieHeader(newToken, req));
   return res;
 }
 

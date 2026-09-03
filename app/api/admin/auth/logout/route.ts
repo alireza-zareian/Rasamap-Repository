@@ -16,7 +16,7 @@ async function POSTHandler(req: NextRequest) {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.headers.set("Set-Cookie", buildLogoutCookieHeader());
+  res.headers.set("Set-Cookie", buildLogoutCookieHeader(req));
   return res;
 }
 

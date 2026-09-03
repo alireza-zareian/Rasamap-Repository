@@ -142,7 +142,10 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
                     src={`https://maps.google.com/maps?q=${form.lat},${form.lng}&z=14&output=embed&hl=fa`}
                     width="100%" height="200"
                     style={{ display: "block", border: "none" }}
-                    loading="lazy"
+                    /* Not lazy: this preview only renders once coordinates are
+                       valid, and it exists so the admin can confirm the pin is
+                       in the right place. A frame that quietly waits for a
+                       scroll it may never get would defeat the point. */
                     title="پیش‌نمایش موقعیت"
                   />
                 </div>

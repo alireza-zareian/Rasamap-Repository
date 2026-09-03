@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/client";
 import { publishedOnly } from "@/lib/db/billboards";
+import { SITE_URL } from "@/lib/site-url";
 
 // Without this, Next prerenders the sitemap once at build time and serves that
 // snapshot forever: a listing approved after deploy would never be indexed, and
@@ -9,7 +10,7 @@ import { publishedOnly } from "@/lib/db/billboards";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://rasamap.ir";
+  const base = SITE_URL;
 
   const billboards = await prisma.billboard.findMany({
     where:  { status: publishedOnly },

@@ -1787,7 +1787,7 @@ sequenceDiagram
   </details>
 
   <details class="fold">
-    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۷ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ و بستن ایرادهای آخر</span></summary>
+    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۸ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ و بستن ایرادهای آخر</span></summary>
     <div class="foldbody"><div class="phases">
 <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
@@ -1932,6 +1932,32 @@ sequenceDiagram
         <div class="task done-t"><div class="tick">✓</div><div><strong>ایراد دوم (کوچک‌تر):</strong> <code>loading="lazy"</code> از عکس‌های کاروسل «رسانه‌های برتر» برداشته شد. آن کارت‌ها با <code>translateX</code> داخل <code>overflow:hidden</code> جابه‌جا می‌شوند، پس بیرون از ویوپورت‌اند و عکس lazy هرگز درخواست نمی‌شد — روی موبایل که فاصلهٔ پیش‌بارگذاری خیلی کمتر است، کاروسل کارتِ خالی نشان می‌داد. حداکثر ۱۲ عکس است و هر ۴ ثانیه یکی جلو می‌رود، پس همه‌شان تا کمتر از یک دقیقه لازم می‌شوند. <code>decoding="async"</code> ماند و <b>لیست‌های عمودیِ /explore دست‌نخورده‌اند</b></div></div>
       </div>
       <div class="proof"><b>تأیید:</b> ماتریسِ درخواست روی سرور production آزمایش شد — پیش از اصلاح: Referer با <code>127.0.0.1</code> ← <b>۴۰۳</b>، شبیه‌سازی گوشی روی IP شبکه ← <b>۴۰۳</b>؛ پس از اصلاح: هر دو <b>۲۰۰</b>، دامنهٔ واقعی پشت پراکسی <b>۲۰۰</b>، و hotlink از سایت دیگر همچنان <b>۴۰۳</b>. سه تست رگرسیون اضافه شد (۸۷ ← <b>۹۰ تست</b>). برای نقشه، صفحهٔ جزئیات در مرورگر واقعی دو بار رندر شد — یک بار با گوگلِ در دسترس (نقشه می‌آید) و یک بار با گوگلِ مسدودشده (کادر خطا می‌آید ولی مختصات و دکمهٔ خروج زیرش هست). <code>tsc</code>، <code>lint</code> و <code>build</code> بدون خطا.</div>
+    </div>
+  </div>
+
+
+<div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">MOB</div>
+      <div class="ph-title"><h3>جاروی کامل اپ: «روی لپ‌تاپ کار می‌کند، روی گوشی نه»</h3><p>شش ایراد از یک ریشه — همه‌شان با باز کردن سایت روی گوشی پیدا شدند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>ریشهٔ مشترکِ هر شش مورد:</b> کد، خاصیتی از <em>اتصال</em> را از روی <em>محیطی که در آن ساخته شده</em> حدس می‌زد.
+        مرورگرِ توسعه‌دهنده دو کار متفاوت می‌کند: به <code>localhost</code> می‌رود، و از loopback خودِ ماشین.
+        هر شش ایراد دقیقاً پشتِ همین دو تفاوت پنهان شده بودند.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>۱ · هیچ عکسی روی گوشی نمی‌آمد</strong> — گاردِ hotlink میزبانِ Referer را با <code>req.nextUrl.host</code> می‌سنجید که زیر <code>next start</code> نامِ میزبانِ خودِ سرور است. حالا با <code>X-Forwarded-Host</code>/<code>Host</code> سنجیده می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>۲ · کاروسل صفحهٔ اصلی کارت خالی نشان می‌داد</strong> — <code>loading="lazy"</code> روی عکس‌هایی که با <code>translateX</code> داخل <code>overflow:hidden</code> بیرون از ویوپورت‌اند و هیچ‌وقت درخواست نمی‌شدند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>۳ · نقشهٔ صفحهٔ جزئیات فقط بعد از ریلود می‌آمد</strong> — همان <code>lazy</code>، این بار روی iframe. <b>و همین ایراد در پنل ادمین هم بود:</b> پیش‌نمایش نقشه در مودالِ ویرایش هم lazy بود — ابزاری که ادمین با آن مختصات را تأیید می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>۴ · ورود روی گوشی کار نمی‌کرد</strong> (بزرگ‌ترین مورد) — کوکی نشست پرچم <code>Secure</code> می‌گرفت چون <code>NODE_ENV=production</code> بود، و <code>next start</code> همیشه آن را می‌گذارد. مرورگر کوکیِ Secure را روی <code>http</code> <b>دور می‌ریزد</b> — یعنی کاربر وارد می‌شد و بلافاصله بیرون بود. حالا پرچم از روی <b>خودِ اتصال</b> تعیین می‌شود (<code>x-forwarded-proto</code> یا پروتکل درخواست)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>۵ · دکمهٔ اشتراک‌گذاری هیچ کاری نمی‌کرد</strong> — <code>navigator.share</code> و <code>navigator.clipboard</code> فقط در «بستر امن» وجود دارند و <code>localhost</code> امن حساب می‌شود ولی <code>http://IP</code> نه. کد بدون گارد صدایشان می‌زد و خطا می‌داد. حالا <code>lib/clipboard.ts</code> اول API مدرن، بعد <code>execCommand</code> را امتحان می‌کند و <b>صادقانه</b> می‌گوید کپی شد یا نه. <b>همین ایراد در پنل ادمین هم بود:</b> دکمهٔ کپیِ رمزِ تازه‌ساخته‌شده «کپی شد» می‌گفت بدون اینکه کپی کرده باشد — و آن رمز فقط یک بار نمایش داده می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>۶ · پیش‌نمایش لینک در شبکه‌های اجتماعی به localhost اشاره می‌کرد</strong> — دو نامِ متغیر برای یک مفهوم (<code>NEXT_PUBLIC_BASE_URL</code> در sitemap و <code>NEXT_PUBLIC_SITE_URL</code> در متادیتا) با دو پیش‌فرضِ متفاوت و هیچ‌کدام تنظیم‌نشده. حالا یکی است: <code>lib/site-url.ts</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>آنچه عمداً دست‌نخورده ماند:</strong> <code>loading="lazy"</code> روی گرید و لیست‌های عمودیِ <code>/explore</code>، داشبورد، صف تأیید ادمین و نوار بندانگشتیِ گالری — آنجا کاربر اسکرول می‌کند و مرورگر عکس را می‌آورد؛ برداشتنش فقط پهنای‌باند تلف می‌کرد</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> ۹۲ تست (۹۱ سبز؛ تنها شکست، تستِ OTP که عمداً بیرون از production خاموش است) — <b>پنج تست رگرسیون تازه</b>: پرچم کوکی با و بدون <code>x-forwarded-proto</code>، و گاردِ hotlink روی میزبانِ غیر-localhost / از سایت بیگانه / بدون Referer. آزمونِ دستی روی سرور production: کوکی روی <code>http</code> بدون <code>Secure</code> و پشتِ پراکسیِ https با <code>Secure</code>؛ عکس روی IP شبکه ۲۰۰ و hotlink بیگانه ۴۰۳. <code>tsc</code>، <code>lint</code> و <code>build</code> بدون خطا. درسِ کامل در §۲۴.</div>
     </div>
   </div>
 

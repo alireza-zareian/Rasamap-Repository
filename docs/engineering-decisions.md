@@ -866,6 +866,50 @@ and the audit entry for a status change carries ids only — no name, no phone
 
 ---
 
+## 24. One bug class: "works on the developer's machine"
+
+Opening the finished site on a phone on the same Wi-Fi turned up a family of
+faults that had been invisible for months, because every one of them is masked
+by the two things a developer's browser does differently: it visits
+`localhost`, and it visits over the machine's own loopback.
+
+| Symptom on a phone | Cause | Why the laptop never showed it |
+|---|---|---|
+| No photo loads anywhere | Hotlink guard compared the Referer against `req.nextUrl.host`, which under `next start` is the server's bind hostname | On the laptop the host really *is* `localhost`, so the comparison passed |
+| Carousel shows empty cards | `loading="lazy"` on photos moved by `translateX` inside `overflow:hidden` — never in the viewport, never fetched | Desktop Chrome uses a far larger lazy pre-load distance |
+| Map appears only after a reload | `loading="lazy"` on the map iframe, just below the fold | A reload restores the scroll position, which puts the frame in view at parse time |
+| Login succeeds, then the user is logged out | The session cookie carried `Secure`, keyed off `NODE_ENV === "production"`, which `next start` sets — and a browser discards a `Secure` cookie that arrives over HTTP | Chrome treats `http://localhost` as a trustworthy origin and keeps the cookie |
+| Share button does nothing at all | `navigator.share` and `navigator.clipboard` exist only in a secure context; the code called `clipboard.writeText` unguarded and it threw | `localhost` *is* a secure context |
+| Social previews point at localhost | Two env names for one idea — `NEXT_PUBLIC_BASE_URL` in the sitemap, `NEXT_PUBLIC_SITE_URL` in `metadataBase` — neither set, with different fallbacks | The developer is the one person for whom `http://localhost:3000` resolves |
+
+**The single rule underneath all six:** *never infer a property of the
+connection from the environment the code was built for.* Whether the request is
+secure, which host the client used, how far the viewport reaches — these are
+facts about **this** request, and every one of them is available on the request
+itself. `NODE_ENV`, `nextUrl.host` and "it looked fine when I scrolled" are
+substitutes that agree with reality only on the machine that wrote the code.
+
+Concretely: `Secure` is now set from `x-forwarded-proto` / the request
+protocol; the hotlink check reads `X-Forwarded-Host` / `Host`; the two base-URL
+variables became one (`lib/site-url.ts`); clipboard access goes through
+`lib/clipboard.ts`, which falls back to `execCommand` and reports honestly
+whether it worked; and `loading="lazy"` was removed from the two places where
+the element can never enter the viewport on its own, and deliberately kept
+everywhere the user scrolls vertically.
+
+Five regression tests pin the two that are testable from the API: the cookie's
+flags with and without `x-forwarded-proto`, and the hotlink guard under a
+non-localhost host, from a foreign site, and with no Referer at all.
+
+**Worth saying in a defense:** the class matters more than the six instances.
+A local development environment is not a small version of production — it is a
+*different* environment, and the differences cluster exactly where security
+decisions are made (origin, transport, secure context). Testing on a second
+device on the same network found in one evening what months of local work had
+not.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |

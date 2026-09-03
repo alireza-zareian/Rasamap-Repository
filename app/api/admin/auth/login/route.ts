@@ -90,7 +90,7 @@ async function POSTHandler(req: NextRequest) {
   });
 
   const res = NextResponse.json({ ok: true, user: { id: user.id, name: user.name, role: user.role } });
-  res.headers.set("Set-Cookie", buildSessionCookieHeader(token));
+  res.headers.set("Set-Cookie", buildSessionCookieHeader(token, req));
   return res;
 }
 

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { copyText } from "@/lib/clipboard";
 import { C } from "./constants";
 import { Badge } from "./Badge";
 import { User, X, AlertTriangle, KeyRound, Check, Copy } from "lucide-react";
@@ -139,7 +140,13 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
                 <div style={{ color: C.muted, marginBottom: 6 }}>رمز جدید ساخته شد. همین حالا به کاربر بدهید — دیگر نمایش داده نمی‌شود.</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <code style={{ flex: 1, direction: "ltr", textAlign: "left", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", fontSize: "0.9rem", letterSpacing: 1 }}>{newPassword}</code>
-                  <button onClick={() => { navigator.clipboard?.writeText(newPassword); setCopied(true); }} style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, borderRadius: 6, padding: "6px 8px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  {/* The generated password is shown once, so a copy button that lies is
+                      worse than none: navigator.clipboard is undefined outside a
+                      secure context (an admin opening the panel over http on the
+                      local network), and the old code claimed "copied" regardless.
+                      copyText() falls back to execCommand and reports the truth. */}
+                  <button onClick={async () => setCopied(await copyText(newPassword))}
+                    title={copied ? "کپی شد" : "کپی رمز — اگر مرورگر اجازه ندهد، رمز را دستی از کادر کناری بردارید"} style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, borderRadius: 6, padding: "6px 8px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
                     {copied ? <Check size={12} /> : <Copy size={12} />}
                   </button>
                 </div>

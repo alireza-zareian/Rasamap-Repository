@@ -62,27 +62,46 @@ export async function getSessionFromRequest(req: NextRequest): Promise<SessionPa
   return verifySession(token);
 }
 
-/** Write session cookie — called after successful login */
-export function buildSessionCookieHeader(token: string): string {
-  const flags = [
-    `${SESSION_COOKIE}=${token}`,
-    `Max-Age=${MAX_AGE_SECS}`,
+/**
+ * Is this request actually travelling over HTTPS?
+ *
+ * `Secure` used to be attached whenever NODE_ENV was "production" — which
+ * `next start` sets, including for `npm run demo` on the laptop. A browser
+ * refuses to store a `Secure` cookie received over plain HTTP, so a phone
+ * opening the demo at `http://<lan-ip>` logged in successfully and was
+ * immediately logged out again: the cookie was thrown away on arrival. It went
+ * unnoticed because Chrome treats `http://localhost` as a trustworthy origin
+ * and keeps the cookie there.
+ *
+ * The flag belongs on the property it actually describes — the transport — so
+ * it is set when the connection is HTTPS (directly, or as reported by the
+ * terminating proxy) and omitted when it is not, where it would only prevent
+ * the cookie from being stored without protecting anything.
+ */
+export function isSecureRequest(req?: NextRequest): boolean {
+  if (!req) return process.env.NODE_ENV === "production";
+  const forwarded = req.headers.get("x-forwarded-proto");
+  if (forwarded) return forwarded.split(",")[0].trim().toLowerCase() === "https";
+  return req.nextUrl.protocol === "https:";
+}
+
+function cookieFlags(value: string, maxAge: number, req?: NextRequest): string {
+  return [
+    `${SESSION_COOKIE}=${value}`,
+    `Max-Age=${maxAge}`,
     "Path=/",
     "HttpOnly",
     "SameSite=Strict",
-    ...(process.env.NODE_ENV === "production" ? ["Secure"] : []),
-  ];
-  return flags.join("; ");
+    ...(isSecureRequest(req) ? ["Secure"] : []),
+  ].join("; ");
+}
+
+/** Write session cookie — called after successful login */
+export function buildSessionCookieHeader(token: string, req?: NextRequest): string {
+  return cookieFlags(token, MAX_AGE_SECS, req);
 }
 
 /** Expire the session cookie (secure logout) */
-export function buildLogoutCookieHeader(): string {
-  return [
-    `${SESSION_COOKIE}=`,
-    "Max-Age=0",
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Strict",
-    ...(process.env.NODE_ENV === "production" ? ["Secure"] : []),
-  ].join("; ");
+export function buildLogoutCookieHeader(req?: NextRequest): string {
+  return cookieFlags("", 0, req);
 }

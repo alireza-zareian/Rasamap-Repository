@@ -56,7 +56,7 @@ async function POSTHandler(req: NextRequest) {
   void sendSms(phone, "به رسامپ خوش آمدید. حساب کاربری شما با موفقیت ساخته شد.");
 
   const res = NextResponse.json({ ok: true, user: { id: user.id, name: user.name, phone: user.phone } });
-  res.headers.set("Set-Cookie", buildSessionCookieHeader(token));
+  res.headers.set("Set-Cookie", buildSessionCookieHeader(token, req));
   return res;
 }
 
