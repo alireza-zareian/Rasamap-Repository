@@ -1,5 +1,27 @@
 # Presentation & thesis-document prep
 
+> # 🔴 ⛔ RULE ZERO — read this before anything else on this page
+>
+> ## On demo day, start the site with `npm run demo`. **Never** `npm run dev`.
+>
+> | Mode | CPU for a first visit to 10 routes |
+> |---|---|
+> | `npm run dev` | **9.7 s** |
+> | `npm run demo` (`next build && next start`) | **0.1 s** |
+>
+> ### ~97× less CPU.
+>
+> The demo runs on the author's fanless MacBook Air. In `dev` mode, clicking
+> through pages and the admin panel makes the laptop hot and loud — during the
+> defense. `next build` does the compiling once, ahead of time. Build it
+> **before** the session starts, not while the examiners are watching.
+>
+> **[agent] This belongs in the thesis document**, with the number and the
+> reason — it is a defensible engineering decision, not a footnote. Full write-up:
+> `docs/engineering-decisions.md` §22 (and §22a for the image-weight half).
+>
+> **[user action] Run `npm run demo` and leave it running before the defense begins.**
+
 > For the day the thesis document / defense slides get built. A fresh agent
 > should read this top to bottom, then walk the user through the parts marked
 > **[user action]** (screenshots, live checks) and do the parts marked

@@ -3,6 +3,15 @@
 One page. Written while calm, for use when not. Rasamap = Next.js 16 + SQLite/Prisma,
 single process, single DB file.
 
+> ## 🔴 Start it with `npm run demo` — never `npm run dev`
+>
+> `npm run demo` = `next build && next start`. Measured: **9.7 s CPU (`dev`) vs
+> 0.1 s (`start`)** for a first visit to ten routes — **~97×**. Idle production
+> server: 0.16 s CPU per 10 s, 121 MB RSS. `dev` compiles each route on first
+> click and watches 6710 files; on a fanless laptop that is the difference
+> between cool and hot. Use `dev` only while editing code.
+> Details: `docs/engineering-decisions.md` §22.
+
 ## If the site is down or broken — check in this order
 
 1. **Is the process running?**

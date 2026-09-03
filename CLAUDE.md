@@ -29,9 +29,20 @@ Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Pris
 ## Dev Commands
 
 ```bash
-npm run dev | build | lint
+npm run demo    # ← build + start. USE THIS to view or demo the site.
+npm run dev     # ONLY while writing code (hot-reload). 97× more CPU.
+npm run build | lint
 npm run db:migrate | db:seed | db:studio | db:dedupe | db:backfill-coords
 ```
+
+> **🔴 Standing rule — say this out loud to the user whenever it is relevant.**
+> `npm run dev` costs **9.7 s of CPU** for a first visit to ten routes;
+> `npm run demo` costs **0.1 s** — measured on this project (§22 of
+> `docs/engineering-decisions.md`). The demo runs on a fanless MacBook Air, so
+> `dev` mode is what makes the laptop hot. The user *knows* this and still
+> forgets it — **remind them** when they are browsing or presenting rather than
+> coding. Any report, article or thesis text generated from this repo must carry
+> the rule and the 97× figure.
 
 Required env: `DATABASE_URL` · `AUTH_SECRET` · `ADMIN_EMAIL` · `ADMIN_PASSWORD_HASH` · `ADMIN_NAME` · `NESHAN_API_KEY`
 

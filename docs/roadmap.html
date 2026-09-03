@@ -199,6 +199,33 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
 
 <div class="wrap">
 
+<!-- ══ RULE ZERO — the rule that keeps getting forgotten ══ -->
+<div style="margin:0 0 20px; padding:18px 20px; border-radius:14px;
+            background:var(--red-dim); border:2px solid var(--red);">
+  <div style="font-size:19px; font-weight:900; color:var(--red); margin-bottom:10px;">
+    ⛔ برای دیدن یا ارائه‌ی سایت، <u>هرگز</u> <code>npm run dev</code> نزن
+  </div>
+  <div style="font-size:26px; font-weight:900; color:var(--green); margin-bottom:12px; letter-spacing:.5px;">
+    npm run demo
+  </div>
+  <div style="font-size:14px; line-height:2; color:var(--text);">
+    اندازه‌گیریِ واقعی روی همین پروژه — اولین بازدید از ۱۰ صفحه:
+    <b style="color:var(--red)">dev = ۹.۷ ثانیه CPU</b> در برابر
+    <b style="color:var(--green)">demo = ۰.۱ ثانیه CPU</b> →
+    <b style="color:var(--red); font-size:17px">۹۷ برابر فشارِ کمتر.</b><br>
+    <b>چرا:</b> حالت <code>dev</code> هر صفحه را لحظه‌ی کلیک از صفر کامپایل می‌کند و
+    ۶۷۱۰ فایل را watch می‌کند. روی مک‌بوک ایرِ بدونِ فن، همین باعثِ داغ‌شدنِ لپ‌تاپ
+    وسطِ جلسه‌ی دفاع می‌شود. <code>dev</code> فقط برای کدنویسی با hot-reload.
+  </div>
+  <div style="margin-top:12px; padding:10px 14px; border-radius:10px;
+              background:var(--card2); border:1px solid var(--red-mid); font-size:13.5px; line-height:1.95;">
+    📝 <b style="color:var(--red)">به ایجنتی که مقاله / گزارش / پایان‌نامه را می‌نویسد:</b>
+    این نکته باید در متن بیاید و به خواننده <b>تأکید</b> شود — هم عددِ ۹۷ برابر، هم دلیلش.
+    یک تصمیمِ مهندسیِ قابل‌دفاع است، نه جزئیاتِ اجرایی.
+    شرح کامل: <code>docs/engineering-decisions.md</code> §۲۲ و §۲۲a.
+  </div>
+</div>
+
 <!-- HERO -->
 <div class="hero">
   <div class="hero-top">
@@ -1182,6 +1209,55 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
         <div class="task todo-t"><div class="tick"></div><div>Cluster pins هنگام zoom-out</div></div>
         <div class="task todo-t"><div class="tick"></div><div>Filter pills بالای صفحه: بیلبورد | پل | LED | استرابورد</div></div>
       </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U11</div>
+      <div class="ph-title"><h3>پرداخت بصری محیطی</h3><p>هاله‌های موضعی، هاور کارت‌ها، بافت گرین، بوردر گرادیانی — روی سیستم توکن فعلی</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>کلاس‌های قابل‌استفاده مجدد در <code>globals.css</code>: <code>.grain-overlay</code>، <code>.section-halo</code>، <code>.gradient-frame</code>، <code>.btn-sheen</code> — همه با گارد <code>prefers-reduced-motion</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>لایه گرین ثابت (~۲٪) در <code>layout.tsx</code> — بافت روی پنل‌های تخت، بدون افت خوانایی، پایین‌تر از مودال‌ها</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>BillboardCard: هاور — بالا‌آمدن ۴px + سایه + بوردر روشن در حالت گرید، هاور ملایم در حالت لیست، <code>.gradient-frame</code> روی کارت «ویژه». (هایلایت دنبال‌کنندهٔ موس بعداً حذف شد — دیده نمی‌شد و رندر اضافه داشت.)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>.section-halo</code> روی تیتر بخش‌های لندینگ (انواع رسانه، چطور کار می‌کنه، تجربه مشتریان، CTA)، هیرو درباره، تیتر تماس</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>.gradient-frame</code> روی باکس جستجوی هیرو لندینگ + اینپوت جستجوی explore + کارت ویزارد ثبت رسانه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>.btn-sheen</code> روی CTAهای اصلی (لندینگ ×۳ + دکمهٔ «ثبت نهایی» list-media)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>شدت همهٔ افکت‌ها ~۱.۷× بالا رفت (گرین ۰.۰۲۲→۰.۰۴۵، هالو ۰.۱۶→۰.۳۰، قاب ۱→۱.۵px، برق ۰.۲۸→۰.۴۵) — قبلاً محو بود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پرفورمنس اسکرول:</strong> <code>BackgroundPattern</code> — حذف لیسنر <code>scroll</code> و <code>mousemove</code>؛ پیچک‌ها یک‌بار موقع mount کشیده می‌شن، اوربها با کی‌فریم CSS حرکت می‌کنن (بدون کار per-frame). پارالاکس موس کلاً حذف شد.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>لندینگ:</strong> <code>scrollY</code> state (رندر کل صفحه در هر فریم اسکرول) → بولینِ <code>scrolled</code> با آستانهٔ ۶۰px (۲ رندر کل). حذف پارالاکس ترنسفورم هیرو.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>لوگوی هدر لندینگ: کل بلوک (علامت R + «رسامپ») داخل <code>&lt;Link href="/"&gt;</code> — کلیک روی R هم به صفحهٔ اصلی می‌رود (Topbar و Footer از قبل درست بودند)</div></div>
+      </div>
+      <div class="proof">✓ <code>npm run lint</code> و <code>npm run build</code> بدون خطا. dev server: <code>/</code>، <code>/explore</code>، <code>/about</code>، <code>/contact</code>، <code>/compare</code> همه ۲۰۰، بدون خطای runtime، کلاس‌های تزئینی و <code>&lt;a href="/"&gt;</code> دور علامت R در HTML خروجی حاضر. هیچ لیسنر <code>scroll</code>/<code>mousemove</code> سراسری باقی نمانده جز آستانهٔ هدر لندینگ. الهام از spotlight-card اسکیل 21st، پیاده‌سازی دستی با inline style + کی‌فریم CSS (بدون کلاس Tailwind).</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U12</div>
+      <div class="ph-title"><h3>پرفورمنس و حرارت لپ‌تاپ</h3><p>چرا موقع چرخیدن در سایت مک‌بوک داغ می‌شد — و چه چیزی حلش کرد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>ریشه‌ی مشکل، کدِ پروژه نبود — حالتِ <code>dev</code> بود.</b>
+        اندازه‌گیری‌شده: اولین بازدید از ۱۰ صفحه → <code>npm run dev</code> = ۹.۷ ثانیه CPU،
+        <code>npm run demo</code> = ۰.۱ ثانیه CPU. <b>۹۷ برابر.</b>
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>اسکریپت <code>npm run demo</code></strong> اضافه شد (<code>next build &amp;&amp; next start</code>) تا دستورِ درست یک کلمه باشد و فراموش نشود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>عکس‌ها:</strong> ۱۳۳۲ عکسِ PNG کاملاً مات → JPEG پیش‌رونده به‌صورت آفلاین با Pillow: <b>۴۹۳MB → ۶۴MB (۸۷٪ کمتر)</b>. ابعاد دست‌نخورده (۵۰۰×۵۰۰)، RMSE = ۲.۳۷ از ۲۵۵ (زیرِ آستانه‌ی ادراک)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>۲۳۱ عکسِ PNG که <strong>واقعاً شفافیت دارند دست‌نخورده ماندند</strong> — JPEG کانالِ آلفا ندارد و آن نواحی سیاه می‌شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>مسیرها از روی یک <strong>نقشه‌ی صریحِ فایل‌به‌فایل</strong> بازنویسی شد (نه replace کورِ <code>.png</code>→<code>.jpg</code>) — در دیتابیس و در JSON دانه‌ی seed، تا re-seed مسیرهای قدیمی را برنگرداند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بارِ عکسِ یک صفحه‌ی explore: <b>۴.۰۰MB → ۱.۰۹MB</b> (میانگین هر عکس ۱۷۶KB → ۴۹KB)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>loading="lazy"</code> + <code>decoding="async"</code> روی تمام تصاویرِ بندانگشتی (گرید، کاروسل، داشبورد، مقایسه، پنل ادمین). عکسِ اصلیِ صفحه‌ی جزئیات عمداً eager ماند چون عنصرِ LCP است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>انیمیشن‌های تزئینی با <code>visibilitychange</code> وقتی تب دیده نمی‌شود <strong>pause</strong> می‌شوند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>اسکریپتِ مهاجرت: <code>scripts/optimize-images.py</code> — کاملاً آفلاین (بدون هیچ سرویسِ خارجی)، برگشت‌پذیر؛ حذفِ نسخه‌های اصلی یک مرحله‌ی جدا و صریح است</div></div>
+      </div>
+      <div class="proof">✓ <code>npm run lint</code> و <code>npm run build</code> بدون خطا. در حالت production همه‌ی صفحه‌ها ۲۰۰، <b>۰ عکسِ گم‌شده</b> از ۳۵۳۶ رکورد، عکسِ تبدیل‌شده با <code>image/jpeg</code> و PNGهای شفافِ باقی‌مانده با <code>image/png</code> سِرو می‌شوند. بکاپِ دیتابیس و JSONها پیش از مهاجرت در <code>backups/pre-image-optim-*</code>.</div>
     </div>
   </div>
 

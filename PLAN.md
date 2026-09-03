@@ -1,5 +1,16 @@
 # PLAN — Production Readiness Triage
 
+> ## 🔴 ⛔ Non-negotiable: view and demo the site with `npm run demo`, not `npm run dev`
+>
+> Measured on this project — first visit to ten routes: **`dev` 9.7 s CPU vs
+> `start` 0.1 s CPU (~97×)**. The demo runs on the author's fanless MacBook Air;
+> `dev` mode is what makes it hot mid-defense. `npm run demo` = `next build &&
+> next start`. Keep `dev` for code-writing only.
+> Rationale and the image-weight half: `docs/engineering-decisions.md` §22 / §22a.
+>
+> **Any agent producing a report or thesis text from this repo must repeat this
+> rule to the reader, with the number.**
+
 > Generated from `PRODUCTION_AUDIT.md`. Scope filter: bachelor capstone, ~5 days to
 > demo, solo dev, Iran (no paid SaaS), local/private-server demo. Priority beats
 > completeness.

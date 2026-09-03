@@ -700,6 +700,71 @@ recomputes it whenever width or height changes.
 
 ---
 
+## 22. Running the demo: `next start`, never `next dev`
+
+> **This section must survive into the thesis document.** It is the one
+> operational rule the author keeps forgetting, and it is measurable, so it
+> defends well.
+
+The demo runs on the author's own fanless MacBook Air, not a rented server.
+Browsing the site while `next dev` was running made the laptop hot enough to be
+distracting. The cause is not the application — it is the development server.
+
+Measured on this project, cost of a first visit to ten routes:
+
+| Mode | CPU consumed |
+|------|--------------|
+| `npm run dev` | **9.7 s** |
+| `npm run demo` (`next build && next start`) | **0.1 s** |
+
+**~97× less CPU.** Idle, the production server costs 0.16 s of CPU per 10 s and
+holds 121 MB RSS.
+
+`next dev` keeps the Turbopack compiler resident and builds each route from
+scratch the first time it is requested — so *clicking around* is exactly the
+worst-case workload. It also watches all 6710 project files (4173 of them in
+`public/`) for hot-reload, ships React unminified with every development
+warning, and double-renders components under strict mode. `next build` pays all
+of that once, ahead of time.
+
+`npm run demo` was added to `package.json` so the correct command is a single
+word and there is nothing to remember or get wrong. `next dev` remains the right
+tool while writing code — its cost buys hot-reload, which a demo does not need.
+
+### 22a. Image weight: PNG was the wrong container for photographs
+
+The scrapers saved listing photos as PNG. PNG is lossless and meant for
+graphics; for a 500×500 photograph it costs roughly 7× the bytes of a visually
+identical JPEG. The result was 1563 PNGs totalling **565 MB**, and **4.0 MB of
+image bytes on a single 24-card `/explore` page** — paid twice, once on the wire
+and once in the browser's image decoder, which is the other half of the heat.
+
+`scripts/optimize-images.py` re-encodes them offline with Pillow (no network, no
+external service — a hard constraint in Iran). Three rules keep it lossless in
+every way a user can perceive:
+
+1. **Dimensions never change.** Only the container changes, so the detail-page
+   lightbox is pixel-for-pixel as large as before.
+2. **PNGs that actually use transparency are left alone.** JPEG has no alpha
+   channel. Of 1563 files, 1332 had a fully-opaque alpha channel and were
+   converted; the 231 with real transparency stayed PNG.
+3. **References are rewritten from an explicit per-file map**, not a blanket
+   `.png` → `.jpg` replace, so the surviving PNGs keep resolving. Both the DB
+   rows and the seed JSON are updated, so re-seeding cannot reintroduce the old
+   paths.
+
+Result: **493 MB → 64 MB (87% smaller)** at quality 85, measured pixel RMSE 2.37
+of 255 — below the threshold of perception. One `/explore` page went from
+**4.0 MB to 1.09 MB**. Deletion of the superseded originals is a separate
+`--delete-originals` run, so the migration stays reversible until verified.
+
+Alongside this, `loading="lazy"` + `decoding="async"` were added to every
+thumbnail (grids, carousels, admin panels) so a page decodes only the images
+actually on screen, and decoding happens off the main thread. The detail page's
+primary image stays eager — it is the LCP element.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -729,3 +794,6 @@ recomputes it whenever width or height changes.
 | 2026-09-02 | **Final review — correctness** | Timing-attack padding hash was not a valid bcrypt hash (0 ms vs 250 ms — enumeration by stopwatch); analytics reported 100% image coverage instead of 57%; `hasImages` drifted on admin image edits; unapproved listings were readable by URL; both catalogue sorts ordered by the wrong column (§21). All fixed, each with a regression test. |
 | 2026-09-02 | **Final review — honesty** | Fake scraper panel (canned log lines, hardcoded "45 processed") replaced with a read-only status view fed by real counts. Listing photo upload made real and hardened (§19). Ratings now recomputed from the reviews table. |
 | 2026-09-02 | **Final review — anti-scraping** | Bot UAs blocked on pages as well as the API, per-IP page budget, hotlink protection, page cap 100 → 48, dead bulk `pins` endpoint and unused Leaflet dependencies removed (§20). |
+| 2026-09-02 | **Performance — demo mode** | §22 — measured `next dev` at 9.7 s CPU vs `next start` at 0.1 s for the same ten routes (~97×). Added `npm run demo`. Red-flagged in README, `docs/STATUS.md`, `docs/final-review-notes.md`, `docs/presentation-prep.md`, `RUNBOOK.md`, `PLAN.md`, `CLAUDE.md` and `docs/roadmap.html` because it is the rule most easily forgotten. |
+| 2026-09-02 | **Performance — image weight** | §22a — 1332 fully-opaque PNGs re-encoded to progressive JPEG offline (Pillow): 493 MB → 64 MB (87%), RMSE 2.37/255, dimensions unchanged, 231 transparent PNGs untouched, references rewritten from an explicit map in both DB and seed JSON. `/explore` page image weight 4.0 MB → 1.09 MB. `loading="lazy"` + `decoding="async"` on every thumbnail. |
+| 2026-09-02 | **Performance — always-on animation** | Cursor-parallax and scroll-linked SVG redraw removed from `BackgroundPattern` (vines now draw once on mount); landing page stopped re-rendering on every scroll frame (continuous `scrollY` state → one `scrolled` boolean at a 60 px threshold); decorative animation pauses via `visibilitychange` while the tab is hidden. |
