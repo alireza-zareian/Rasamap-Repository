@@ -1,7 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/auth/session";
-import { getClientIp } from "@/lib/auth/client-ip";
-import { checkRateLimit } from "@/lib/auth/rate-limit";
 
 const ADMIN_PAGE_PATTERN = /^\/admin(\/|$)/;
 const ADMIN_API_PATTERN  = /^\/api\/admin(\/|$)/;
@@ -20,7 +18,12 @@ const PROTECTED_ASSET = /^\/(images\/scraped|uploads)\//;
 // Headless/automation UAs — blocked before any route handler runs. This is a
 // speed bump, not a wall: a scraper only has to change one header to get past
 // it. The per-IP budgets below are what actually make bulk copying expensive.
-const BLOCK_UA = /python-requests|scrapy|wget\/|curl\/\d|go-http-client|java\/|headlesschrome|phantomjs|htmlunit|selenium|playwright|puppeteer|node-fetch|axios|okhttp|apache-httpclient|libwww|lwp-|colly|httpx/i;
+// `okhttp` is deliberately absent from this list. It is the HTTP client inside
+// a great many Android apps, so it shows up in in-app browsers and link
+// previews — a reviewer opening the demo link from a messaging app would have
+// been met with a 403 and no explanation. The tools left here are ones no
+// person browses with.
+const BLOCK_UA = /python-requests|scrapy|wget\/|curl\/\d|go-http-client|java\/|headlesschrome|phantomjs|htmlunit|selenium|playwright|puppeteer|node-fetch|axios|apache-httpclient|libwww|lwp-|colly|httpx/i;
 
 // Search-engine crawlers we deliberately let through: the site needs to be
 // findable, and blocking them would cost more than the scraping they enable.
@@ -34,13 +37,6 @@ function addSecurityHeaders(res: NextResponse, isAdmin = false): NextResponse {
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   if (isAdmin) res.headers.set("X-Robots-Tag", "noindex, nofollow");
   return res;
-}
-
-function tooManyRequests(retryAfterSecs: number): NextResponse {
-  return NextResponse.json(
-    { error: "درخواست‌های بیش از حد مجاز — کمی صبر کنید" },
-    { status: 429, headers: { "Retry-After": String(retryAfterSecs) } },
-  );
 }
 
 export async function proxy(req: NextRequest) {
@@ -84,27 +80,21 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  // ── Anti-scraping: per-IP budget on catalogue pages ──
-  // The HTML pages carry the same records as the API, so limiting only the API
-  // would leave the cheaper door open.
+  // No per-IP budget on catalogue *pages*, deliberately. There used to be one,
+  // and it was a mistake in both directions.
   //
-  // The first numbers here were too harsh for real use: 90 page loads a minute
-  // sounds generous until a demo has several people on one connection, or the
-  // developer is reloading while testing — and the five-minute lockout meant a
-  // single overshoot cost far more than the minute it was measuring. A person
-  // who trips this is told to wait a minute, and after a minute they are free.
-  // A crawler pulling thousands of records still cannot get past 300/min, which
-  // is the part that matters.
-  if (!isSearchBot && CATALOGUE_PAGE.test(pathname)) {
-    const rl = checkRateLimit(`catalogue_page:${getClientIp(req)}`, {
-      windowMs: 60 * 1000,
-      maxRequests: 300,
-      lockoutMs: 60 * 1000,
-    });
-    if (!rl.allowed) {
-      return tooManyRequests(Math.max(1, Math.ceil(((rl.lockedUntil ?? rl.resetAt) - Date.now()) / 1000)));
-    }
-  }
+  // It did not stop a scraper: anyone serious rotates addresses, and the thing
+  // actually worth protecting — the owner's phone number — is behind a session
+  // and is never in a page's HTML at all. What it did stop was people. Several
+  // visitors behind one university or office NAT share a single address, so a
+  // demo where a reviewer, a phone and a laptop all browse at once spends one
+  // budget between them; and a person who reloads a few times too often was met
+  // with a refusal, which no ordinary site does.
+  //
+  // What still guards the data is the part that costs a human nothing: the
+  // page cap of 48 records, the owner phone behind a session, hotlink
+  // protection on the media, and rate limits on the endpoints that write or
+  // authenticate. See §20.
 
   const isAdminPage = ADMIN_PAGE_PATTERN.test(pathname);
   const isAdminApi  = ADMIN_API_PATTERN.test(pathname);

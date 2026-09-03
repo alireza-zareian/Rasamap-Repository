@@ -112,7 +112,8 @@ export function loginRateLimit(ip: string): RateLimitResult {
 export function adminApiRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`admin_api:${ip}`, {
     windowMs:    60 * 1000,
-    maxRequests: 120,
+    maxRequests: 600,
+    lockoutMs:   0,
   });
 }
 
@@ -144,8 +145,8 @@ export function resetUserLoginAttempts(ip: string): void {
 export function userApiRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`user_api:${ip}`, {
     windowMs:    60 * 1000,
-    maxRequests: 60,
-    lockoutMs:   2 * 60 * 1000,
+    maxRequests: 300,
+    lockoutMs:   0,
   });
 }
 
@@ -195,7 +196,11 @@ export function otpVerifyRateLimit(phone: string): RateLimitResult {
 export function publicApiRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`public_api:${ip}`, {
     windowMs:    60 * 1000,
-    maxRequests: 60,
-    lockoutMs:   10 * 60 * 1000,
+    maxRequests: 600,
+    // No lockout. A read endpoint that punishes past the window it measures
+    // turns a burst of curiosity into ten minutes of a broken site, and a
+    // shared address (one office, one campus Wi-Fi) spends this budget between
+    // everyone behind it. The window alone is enough to bound the cost.
+    lockoutMs:   0,
   });
 }

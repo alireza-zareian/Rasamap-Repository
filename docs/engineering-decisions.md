@@ -695,6 +695,43 @@ nobody can find is worse than one that can be copied slowly.
 
 ---
 
+### 20a. Revision — the page-view limit was the wrong tool
+
+The first version of §20 put a per-IP budget on catalogue *pages*: 90 a minute,
+then a five-minute lockout. Testing on a real phone showed it was wrong in both
+directions.
+
+It did not stop a scraper. Anyone serious rotates addresses, and the thing worth
+protecting — the owner's phone number — is behind a session and never appears in
+a page's HTML at all. The pages it guarded carry what the paginated API already
+serves, capped at 48 records a call.
+
+It did stop people. Several visitors behind one NAT — a university, an office,
+a demo where a reviewer, a phone and a laptop all browse at once — share a
+single address and spend one budget between them. A person who reloaded a few
+times was refused, which no ordinary site does, and the five-minute lockout cost
+far more than the minute it was measuring. Every retry re-armed it.
+
+The limit was removed, and the read limits behind it were re-cut: public reads
+600/min, signed-in reads 300/min, admin panel 600/min, and **no lockout on any
+of them** — a read endpoint that punishes past the window it measures turns a
+burst of curiosity into a broken site. Auth and write limits are untouched:
+login 5 per 15 minutes, registration 5 an hour, OTP 3 per 10 minutes, each with
+its lockout. That is where a limit earns its cost.
+
+What still guards the data costs a human nothing: the 48-record page cap, the
+owner phone behind a session, hotlink protection on the media, bot user-agent
+blocking, and the write/auth limits above. `okhttp` came off the blocked-agent
+list — it is the HTTP client inside many Android apps, so a reviewer opening the
+demo link from a messaging app would have hit a 403 with no explanation.
+
+Verified after the change: 700 consecutive requests across the detail page, the
+catalogue, the public API and the landing page — zero refusals; a scraper agent
+still 403, a foreign hotlink still 403, `limit=100` still 400, the admin API
+still 401, and the login lockout still fires on the eleventh wrong password.
+
+---
+
 ## 21. Denormalising the two sort keys
 
 **Decision.** `Billboard.estimatedViews` and `Billboard.area` are stored

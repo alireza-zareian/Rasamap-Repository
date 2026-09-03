@@ -718,21 +718,33 @@ test("customer routes are 403 for role 'viewer'", async () => {
 
 // ── Rate limiting ────────────────────────────────────────────────
 
-test("a rate-limited listing POST returns 429 with a Retry-After header", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
+// Rate limiting now lives where it belongs — on the endpoints that write or
+// authenticate, not on reading pages. Registration is one of the tight ones and
+// is meant to stay tight: five per hour from one address.
+test("a rate-limited write returns 429 with a Retry-After header", async () => {
   const ip = uniqueIp();
   let got429 = null;
-  for (let i = 0; i < 65 && !got429; i++) {
-    const res = await api("/api/listings", {
+  for (let i = 0; i < 8 && !got429; i++) {
+    const res = await api("/api/auth/register", {
       method: "POST",
-      token,
       ip,
-      body: { name: `بیلبورد نرخ ${i}`, phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 30 },
+      body: { name: `کاربر نرخ ${i}`, phone: `0913${String(1000000 + i).slice(0, 7)}`, password: "secret123" },
     });
     if (res.status === 429) got429 = res;
   }
-  assert.ok(got429, "expected a 429 within 65 rapid requests");
+  assert.ok(got429, "expected a 429 within 8 rapid registrations from one address");
   assert.ok(Number(got429.headers.get("Retry-After")) > 0);
+});
+
+test("reading is not rate limited the way writing is", async () => {
+  // The catalogue used to refuse a visitor who reloaded too often, which no
+  // ordinary site does and which a shared address made easy to hit. 120 reads
+  // from one address in a row must all succeed.
+  const ip = uniqueIp();
+  for (let i = 0; i < 120; i++) {
+    const res = await api("/api/billboards?limit=12", { ip });
+    assert.equal(res.status, 200, `read ${i + 1} was refused with ${res.status}`);
+  }
 });
 
 // ── Reviews ─────────────────────────────────────────────────────────

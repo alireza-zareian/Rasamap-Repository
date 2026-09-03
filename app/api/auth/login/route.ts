@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/client";
@@ -17,7 +18,9 @@ async function POSTHandler(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = userLoginRateLimit(ip);
   if (!rl.allowed) {
-    return NextResponse.json({ error: "تعداد تلاش‌ها بیش از حد مجاز است. لطفاً بعداً امتحان کنید." }, { status: 429 });
+    // The shared helper adds Retry-After and says how many minutes to wait —
+    // these lock for a quarter of an hour or more, so "try later" is not enough.
+    return rateLimited(rl, { endpoint: "auth/login", ip });
   }
 
   let body: unknown;

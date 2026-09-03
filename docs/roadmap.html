@@ -2029,6 +2029,29 @@ sequenceDiagram
     </div>
   </div>
 
+  <!-- ─── RL — rate limiting, re-thought ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">RL</div>
+      <div class="ph-title"><h3>سقفِ درخواست، از نو</h3><p>محدودیت روی خواندن غلط بود — نه خزنده را می‌گرفت، نه به آدم رحم می‌کرد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>اشتباهِ استراتژیک:</b> سقفِ بازدیدِ صفحه <b>خزنده را نمی‌گرفت</b> (هر خزندهٔ جدی آی‌پی عوض می‌کند، و چیزِ باارزش — شمارهٔ مالک — اصلاً در HTML صفحه نیست)، ولی <b>آدم را می‌گرفت</b>: چند نفر پشت یک NAT (دانشگاه، اداره، یا همین دمو با گوشی و لپ‌تاپ) یک سهمیه را با هم خرج می‌کنند، و کسی که چند بار رفرش کند جواب رد می‌گیرد — کاری که هیچ سایت معمولی نمی‌کند.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سقفِ بازدیدِ صفحه کاملاً حذف شد</strong> — با کدِ مرده‌اش (<code>tooManyRequests</code> و دو import)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سقف‌های خواندن بازتعریف شد و <u>قفلشان برداشته شد</u>:</strong> API عمومی ۶۰ → <b>۶۰۰</b> در دقیقه، API کاربر ۶۰ → <b>۳۰۰</b>، پنل ادمین ۱۲۰ → <b>۶۰۰</b>. قفلِ ۱۰ دقیقه‌ای، ۲ دقیقه‌ای و ۱۵ دقیقه‌ای همه صفر شد — پنجره به‌تنهایی هزینه را محدود می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سقفِ نوشتن و ورود دست‌نخورده ماند:</strong> ورود ۵ در ۱۵ دقیقه، ثبت‌نام ۵ در ساعت، OTP ۳ در ۱۰ دقیقه — <b>اینجا</b> جای محدودیت است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>okhttp</code> از فهرست UAهای مسدود درآمد</strong> — کلاینتِ HTTPِ داخلِ خیلی از اپ‌های اندروید است، پس داورى که لینک را از داخل پیام‌رسان باز کند ۴۰۳ می‌گرفت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>۴۲۹های ورود و ثبت‌نام حالا <code>Retry-After</code> دارند</strong> و می‌گویند «حدود N دقیقه دیگر» — قبلاً فقط «بعداً امتحان کنید» بود، در حالی که قفلشان ۱۵ دقیقه تا یک ساعت است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تستِ قدیمیِ ۴۲۹ به سقفی منتقل شد که <b>عمداً</b> تنگ است (ثبت‌نام)، و یک تستِ تازه اضافه شد: <b>۱۲۰ خواندنِ پیاپی از یک آی‌پی باید همه ۲۰۰ باشند</b></div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> <b>۷۰۰ درخواستِ پیاپی</b> روی صفحهٔ جزئیات (۲۵۰)، صفحهٔ جستجو (۱۵۰)، API عمومی (۲۰۰) و صفحهٔ اصلی (۱۰۰) → <b>صفر خطا</b>. و امنیتِ واقعی سرِ جایش: UA خزنده ۴۰۳، hotlink بیگانه ۴۰۳، <code>limit=100</code> ۴۰۰، API ادمین بدون نشست ۴۰۱، شمارهٔ مالک صفر مورد در پاسخ عمومی، و قفلِ حدسِ رمز در یازدهمین تلاش. ۹۸ تست، ۹۷ سبز. §۲۰a در سند تصمیم‌ها.</div>
+    </div>
+  </div>
+
 <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>
