@@ -132,7 +132,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                       </div>
                     ) : l.images.slice(0, 3).map((src, i) => (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img key={i} src={src} alt="" onClick={() => setLightbox(src)}
+                      <img key={i} src={src} alt="" loading="lazy" decoding="async" onClick={() => setLightbox(src)}
                         style={{ width: 84, height: 84, objectFit: "cover", borderRadius: 8, border: `1px solid ${C.border}`, cursor: "zoom-in" }} />
                     ))}
                   </div>

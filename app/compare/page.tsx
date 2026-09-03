@@ -70,7 +70,7 @@ export default function ComparePage() {
                 <div key={b.id} style={{ background: "var(--bg-surface)", border: `1px solid ${compareList.indexOf(b) < 2 ? "var(--accent)" : "var(--border)"}`, borderRadius: 12, overflow: "hidden", position: "relative" }}>
                   {thumb && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={thumb} alt={b.name} style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
+                    <img src={thumb} alt={b.name} loading="lazy" decoding="async" style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
                   )}
                   {!thumb && (
                     <div style={{ width: "100%", height: 80, background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>

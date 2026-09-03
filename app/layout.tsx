@@ -35,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <BackgroundPattern />
+          <div className="grain-overlay" aria-hidden="true" />
           {children}
         </ThemeProvider>
       </body>

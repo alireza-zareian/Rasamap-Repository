@@ -67,28 +67,34 @@ export default function BillboardCard({
   const statusColor = b.status === "available" ? "var(--green-accent)" : b.status === "busy" ? "var(--red)" : "var(--accent-warm)";
   const statusLabel = `● ${statusLabels[b.status] ?? b.status}`;
   const [imgError, setImgError] = useState(false);
+  // Hover lift/shadow only — 2 renders per hover, nothing on mousemove.
+  const [hovered, setHovered] = useState(false);
   const showImage = !!(b.images && b.images.length > 0) && !imgError;
   const views = b.traffic?.estimatedViews ?? 0;
 
   // ── List mode: compact horizontal card ──────────────────────────
   if (listMode) {
     return (
-      <div style={{
-        margin: "6px 0",
-        borderRadius: 10,
-        background: "var(--bg-surface)",
-        border: `1px solid ${isSelected ? "var(--accent)" : isCompared ? "var(--accent-warm)" : "var(--border)"}`,
-        cursor: "default",
-        transition: "border-color 0.18s ease, box-shadow 0.18s ease",
-        overflow: "hidden",
-        display: "flex",
-        boxShadow: isSelected ? "0 0 0 2px var(--accent)" : "none",
-      }}>
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          margin: "6px 0",
+          borderRadius: 10,
+          background: "var(--bg-surface)",
+          border: `1px solid ${isSelected ? "var(--accent)" : isCompared ? "var(--accent-warm)" : hovered ? "var(--border-hi)" : "var(--border)"}`,
+          cursor: "default",
+          transition: "border-color 0.18s ease, box-shadow 0.18s ease",
+          overflow: "hidden",
+          display: "flex",
+          boxShadow: isSelected ? "0 0 0 2px var(--accent)" : hovered ? "0 6px 20px rgba(0,0,0,0.28)" : "none",
+        }}>
         {/* Square thumb */}
         <div style={{ width: 88, height: 88, flexShrink: 0, position: "relative", background: "var(--bg-card)", overflow: "hidden" }}>
           {showImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={b.images[0]} alt={b.name} onError={() => setImgError(true)}
+              loading="lazy" decoding="async"
               style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
             <NoImagePlaceholder type={b.type} />
@@ -129,15 +135,25 @@ export default function BillboardCard({
 
   // ── Grid mode: full card ─────────────────────────────────────────
   return (
-    <div style={{
-      borderRadius: 12,
-      background: "var(--bg-surface)",
-      border: `1px solid ${isSelected ? "var(--accent)" : isCompared ? "var(--accent-warm)" : "var(--border)"}`,
-      cursor: "default",
-      transition: "border-color 0.22s ease, box-shadow 0.22s ease",
-      boxShadow: isSelected ? "0 0 0 2px var(--accent), 0 4px 24px var(--accent-glow)" : "none",
-      overflow: "hidden",
-    }}>
+    <div
+      className={b.featured ? "gradient-frame" : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        borderRadius: 12,
+        background: "var(--bg-surface)",
+        border: `1px solid ${isSelected ? "var(--accent)" : isCompared ? "var(--accent-warm)" : hovered ? "var(--border-hi)" : "var(--border)"}`,
+        cursor: "default",
+        transition: "border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease",
+        transform: hovered && !isSelected ? "translateY(-4px)" : "translateY(0)",
+        boxShadow: isSelected
+          ? "0 0 0 2px var(--accent), 0 4px 24px var(--accent-glow)"
+          : hovered
+            ? "0 12px 32px rgba(0,0,0,0.38), 0 4px 18px var(--accent-glow)"
+            : "none",
+        overflow: "hidden",
+      }}>
       {/* Square image area */}
       <div style={{
         position: "relative",
@@ -148,6 +164,7 @@ export default function BillboardCard({
         {showImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={b.images[0]} alt={b.name}
+            loading="lazy" decoding="async"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
             onError={() => setImgError(true)} />
         ) : (

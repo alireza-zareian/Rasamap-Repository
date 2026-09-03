@@ -82,7 +82,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
                 style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 8, display: "flex", flexDirection: "column", gap: 6, alignItems: "center", cursor: "grab" }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" onClick={e => { e.stopPropagation(); setLightbox(src); }} style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 6, cursor: "zoom-in" }} loading="lazy" />
+                <img src={src} alt="" loading="lazy" decoding="async" onClick={e => { e.stopPropagation(); setLightbox(src); }} style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 6, cursor: "zoom-in" }} />
                 {i === 0 && <Badge text="اصلی" color={C.green} bg="rgba(34,197,94,0.12)" />}
                 <div style={{ display: "flex", gap: 4 }}>
                   {i > 0 && <button title="انتقال به بالا" onClick={() => setImages(p => { const a = [...p]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; return a; })} style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "none", color: C.muted, cursor: "pointer", display: "inline-flex", alignItems: "center" }}><ArrowUp size={12} /></button>}

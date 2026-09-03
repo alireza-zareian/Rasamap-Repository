@@ -41,7 +41,7 @@ export default function BillboardGallery({ images, name }: Props) {
         onClick={() => setLightbox(true)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={images[active]} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <img src={images[active]} alt={name} decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         {images.length > 1 && (
           <div style={{ position: "absolute", bottom: 12, left: 12, background: "rgba(0,0,0,0.55)", borderRadius: 20, padding: "3px 12px", fontSize: "0.72rem", color: "#fff", backdropFilter: "blur(4px)" }}>
             {active + 1} / {images.length}
@@ -60,7 +60,7 @@ export default function BillboardGallery({ images, name }: Props) {
               style={{ flexShrink: 0, width: 72, height: 52, borderRadius: 9, overflow: "hidden", border: i === active ? "2px solid var(--accent)" : "2px solid var(--border)", padding: 0, cursor: "pointer", background: "var(--bg-surface)" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <img src={src} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </button>
           ))}
         </div>

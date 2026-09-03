@@ -53,7 +53,7 @@ export default async function AboutPage() {
       <Topbar />
 
       {/* Hero */}
-      <section style={{ maxWidth: 800, margin: "0 auto", padding: "100px 24px 60px", textAlign: "center" }}>
+      <section className="section-halo" style={{ maxWidth: 800, margin: "0 auto", padding: "100px 24px 60px", textAlign: "center" }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(59,123,245,0.1)", border: "1px solid rgba(59,123,245,0.25)", borderRadius: 99, padding: "5px 16px", fontSize: "0.72rem", color: "var(--accent)", fontWeight: 700, marginBottom: 24 }}>
           پروژه دانشگاهی
         </div>

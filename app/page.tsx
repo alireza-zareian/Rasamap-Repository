@@ -30,7 +30,7 @@ interface SiteStats { total: number; cityCount: number; byType: Record<string, n
 export default function LandingPage() {
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("تهران");
-  const [scrollY, setScrollY] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
   const [billboards, setBillboards] = useState<Billboard[]>([]);
   const [galIdx, setGalIdx] = useState(0);
   const [siteStats, setSiteStats] = useState<SiteStats | null>(null);
@@ -40,8 +40,14 @@ export default function LandingPage() {
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
+    // Only care whether we're past the header threshold — flips state twice
+    // total, not on every scroll frame.
+    const onScroll = () => setScrolled(prev => {
+      const next = window.scrollY > 60;
+      return next === prev ? prev : next;
+    });
     window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -71,9 +77,8 @@ export default function LandingPage() {
   };
 
   const typeCounts = (t: BillboardType) => siteStats?.byType[t] ?? null;
-  const parallax = scrollY * 0.25;
 
-  const headerBg = scrollY > 60
+  const headerBg = scrolled
     ? (dark ? "rgba(10,14,26,0.97)" : "rgba(240,242,248,0.97)")
     : "transparent";
 
@@ -81,11 +86,11 @@ export default function LandingPage() {
     <div style={{ fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)", background: "var(--bg-deep)", minHeight: "100vh" }}>
 
       {/* ── Fixed header — logo + auth only ── */}
-      <header style={{ position: "fixed", top: 0, right: 0, left: 0, zIndex: 100, background: headerBg, backdropFilter: scrollY > 60 ? "blur(16px)" : "none", borderBottom: scrollY > 60 ? "1px solid var(--border)" : "none", transition: "all 0.35s", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", height: 64 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <header style={{ position: "fixed", top: 0, right: 0, left: 0, zIndex: 100, background: headerBg, backdropFilter: scrolled ? "blur(16px)" : "none", borderBottom: scrolled ? "1px solid var(--border)" : "none", transition: "all 0.35s", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", height: 64 }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--text-main)" }}>
           <div style={{ width: 36, height: 36, background: "var(--accent)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1.1rem", boxShadow: "0 0 14px rgba(59,123,245,0.4)" }}>R</div>
           <span className="logo-shimmer" style={{ fontSize: "1.15rem", fontWeight: 800, letterSpacing: "-0.2px" }}>رسامپ</span>
-        </div>
+        </Link>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button onClick={toggle} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
             {dark ? <Sun size={16} /> : <Moon size={16} />}
@@ -100,14 +105,14 @@ export default function LandingPage() {
           ) : user === null ? (
             <Link href="/login" style={{ border: "1px solid var(--border)", color: "var(--text-main)", padding: "7px 16px", borderRadius: 8, textDecoration: "none", fontSize: "0.82rem" }}>ورود</Link>
           ) : null}
-          <Link href="/explore" style={{ background: "var(--accent)", color: "#fff", padding: "7px 18px", borderRadius: 8, textDecoration: "none", fontSize: "0.82rem", fontWeight: 700, boxShadow: "0 2px 12px rgba(59,123,245,0.35)" }}>شروع رایگان</Link>
+          <Link href="/explore" className="btn-sheen" style={{ background: "var(--accent)", color: "#fff", padding: "7px 18px", borderRadius: 8, textDecoration: "none", fontSize: "0.82rem", fontWeight: 700, boxShadow: "0 2px 12px rgba(59,123,245,0.35)" }}>شروع رایگان</Link>
         </div>
       </header>
 
       {/* ── Hero — compact ── */}
       <section style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", paddingTop: 64 }}>
-        {/* Parallax background */}
-        <div style={{ position: "absolute", inset: 0, transform: `translateY(${parallax}px)` }}>
+        {/* Static background — no scroll-linked transform */}
+        <div style={{ position: "absolute", inset: 0 }}>
           <div style={{ position: "absolute", inset: 0, background: dark ? "linear-gradient(135deg, #0A0E1A 0%, #0f1829 50%, #0A0E1A 100%)" : "linear-gradient(135deg, #E8EBF4 0%, #F0F2F8 50%, #E8EBF4 100%)" }} />
           <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.18 }} viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice">
             {Array.from({ length: 12 }, (_, i) => <line key={`h${i}`} x1="0" y1={i * 80} x2="1400" y2={i * 80} stroke="#3B7BF5" strokeWidth="0.5" />)}
@@ -142,7 +147,7 @@ export default function LandingPage() {
           </div>
 
           {/* Compact search bar */}
-          <div style={{ background: dark ? "rgba(17,24,39,0.92)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px 10px", display: "flex", gap: 6, alignItems: "center", marginBottom: 10, backdropFilter: "blur(16px)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+          <div className="gradient-frame" style={{ background: dark ? "rgba(17,24,39,0.92)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px 10px", display: "flex", gap: 6, alignItems: "center", marginBottom: 10, backdropFilter: "blur(16px)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
             <select value={city} onChange={e => setCity(e.target.value)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.82rem", padding: "7px 10px", borderRadius: 7, outline: "none", flexShrink: 0 }}>
               {cities.map(c => <option key={c}>{c}</option>)}
             </select>
@@ -153,7 +158,7 @@ export default function LandingPage() {
               onKeyDown={e => e.key === "Enter" && (window.location.href = `/explore?search=${encodeURIComponent(search)}&city=${encodeURIComponent(city)}`)}
               style={{ flex: 1, background: "none", border: "none", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", outline: "none", minWidth: 0 }}
             />
-            <Link href={`/explore?search=${encodeURIComponent(search)}&city=${encodeURIComponent(city)}`} style={{ background: "var(--accent)", color: "#fff", border: "none", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, boxShadow: "0 2px 10px rgba(59,123,245,0.4)", display: "flex", alignItems: "center", gap: 5 }}>
+            <Link href={`/explore?search=${encodeURIComponent(search)}&city=${encodeURIComponent(city)}`} className="btn-sheen" style={{ background: "var(--accent)", color: "#fff", border: "none", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, boxShadow: "0 2px 10px rgba(59,123,245,0.4)", display: "flex", alignItems: "center", gap: 5 }}>
               <Search size={14} /> جستجو
             </Link>
           </div>
@@ -210,7 +215,7 @@ export default function LandingPage() {
                       style={{ flexShrink: 0, width: 280, borderRadius: 16, overflow: "hidden", display: "block", textDecoration: "none", position: "relative", aspectRatio: "1/1", background: "var(--bg-card)", boxShadow: "0 8px 32px rgba(0,0,0,0.22)", border: "1px solid var(--border)" }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={b.images[0]} alt={b.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={b.images[0]} alt={b.name} loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(5,10,22,0.9) 0%, rgba(5,10,22,0.25) 50%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: 0, right: 0, left: 0, padding: "16px 14px 18px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 5 }}>
@@ -277,7 +282,7 @@ export default function LandingPage() {
       {/* ── Media types ── */}
       <section id="types" style={{ padding: "80px 28px" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div className="section-halo" style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ fontSize: "0.75rem", color: "var(--accent)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>انواع رسانه</div>
             <h2 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: 12 }}>هر نوع رسانه‌ای که نیاز داری</h2>
           </div>
@@ -299,7 +304,7 @@ export default function LandingPage() {
       {/* ── How it works ── */}
       <section id="how" style={{ padding: "80px 28px", background: "var(--bg-card)", borderTop: "1px solid var(--border)" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 52 }}>
+          <div className="section-halo" style={{ textAlign: "center", marginBottom: 52 }}>
             <div style={{ fontSize: "0.75rem", color: "var(--accent)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>چطور کار میکنه؟</div>
             <h2 style={{ fontSize: "2rem", fontWeight: 800 }}>سه قدم تا اکران تبلیغ</h2>
           </div>
@@ -321,7 +326,7 @@ export default function LandingPage() {
       {/* ── Testimonials ── */}
       <section style={{ padding: "80px 28px" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div className="section-halo" style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ fontSize: "0.75rem", color: "var(--accent)", fontWeight: 700, letterSpacing: 2, marginBottom: 12 }}>تجربه مشتریان</div>
             <h2 style={{ fontSize: "2rem", fontWeight: 800 }}>آن‌ها از رسامپ استفاده کردند</h2>
           </div>
@@ -360,11 +365,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section style={{ padding: "100px 28px", textAlign: "center" }}>
+      <section className="section-halo" style={{ padding: "100px 28px", textAlign: "center" }}>
         <h2 style={{ fontSize: "2.2rem", fontWeight: 900, marginBottom: 16 }}>آماده‌ای شروع کنی؟</h2>
         <p style={{ color: "var(--text-muted)", marginBottom: 36, fontSize: "0.95rem" }}>بیش از {siteStats ? toFa(siteStats.total) : "۳۵۰۰"} رسانه منتظرته — رایگان شروع کن</p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/explore" style={{ background: "var(--accent)", color: "#fff", padding: "14px 36px", borderRadius: 10, textDecoration: "none", fontWeight: 700, fontSize: "1rem", boxShadow: "0 4px 24px rgba(59,123,245,0.4)", display: "inline-flex", alignItems: "center", gap: 8 }}><Map size={18} /> ورود به پلتفرم</Link>
+          <Link href="/explore" className="btn-sheen" style={{ background: "var(--accent)", color: "#fff", padding: "14px 36px", borderRadius: 10, textDecoration: "none", fontWeight: 700, fontSize: "1rem", boxShadow: "0 4px 24px rgba(59,123,245,0.4)", display: "inline-flex", alignItems: "center", gap: 8 }}><Map size={18} /> ورود به پلتفرم</Link>
           <Link href="/list-media" style={{ border: "1px solid var(--border)", color: "var(--text-main)", padding: "14px 36px", borderRadius: 10, textDecoration: "none", fontSize: "0.95rem" }}>ثبت رسانه شما</Link>
         </div>
       </section>

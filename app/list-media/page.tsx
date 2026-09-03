@@ -294,7 +294,7 @@ export default function ListMediaPage() {
           ))}
         </div>
 
-        <div style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}}>
+        <div className="gradient-frame" style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}}>
           <div style={{padding:"20px 22px 16px",borderBottom:"1px solid var(--border)"}}>
             <div style={{fontSize:"1rem",fontWeight:700}}>{steps[step]}</div>
           </div>
@@ -313,6 +313,7 @@ export default function ListMediaPage() {
                 <button
                   onClick={step===SUBMIT_STEP ? handleSubmit : goNext}
                   disabled={submitting}
+                  className="btn-sheen"
                   style={{background:submitting?"var(--border)":"var(--accent)",border:"none",color:"#fff",fontFamily:"inherit",fontSize:"0.85rem",fontWeight:700,padding:"9px 24px",borderRadius:8,cursor:submitting?"not-allowed":"pointer",flex:2,opacity:submitting?0.7:1,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}}>
                   {submitting ? "در حال ارسال..." : step===SUBMIT_STEP ? <><Check size={15} /> ثبت نهایی</> : <>بعدی <ArrowLeft size={14} /></>}
                 </button>

@@ -39,11 +39,13 @@ export default function ContactPage() {
       <Topbar />
 
       <main style={{ maxWidth: 680, margin: "0 auto", padding: "96px 20px 40px" }}>
-        <h1 style={{ fontSize: "2rem", fontWeight: 900, marginBottom: 8 }}>تماس با ما</h1>
-        <div style={{ width: 48, height: 4, background: "var(--accent)", borderRadius: 2, marginBottom: 16 }} />
-        <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginBottom: 40, lineHeight: 1.8 }}>
-          رسامپ یک پروژه دانشگاهی است. برای سوال، پیشنهاد، یا همکاری از کانال‌های زیر تماس بگیرید.
-        </p>
+        <div className="section-halo">
+          <h1 style={{ fontSize: "2rem", fontWeight: 900, marginBottom: 8 }}>تماس با ما</h1>
+          <div style={{ width: 48, height: 4, background: "var(--accent)", borderRadius: 2, marginBottom: 16 }} />
+          <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginBottom: 40, lineHeight: 1.8 }}>
+            رسامپ یک پروژه دانشگاهی است. برای سوال، پیشنهاد، یا همکاری از کانال‌های زیر تماس بگیرید.
+          </p>
+        </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 40 }}>
           {contacts.map(c => (

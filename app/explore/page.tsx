@@ -268,7 +268,7 @@ export default function ExplorePage() {
             </div>
 
             {/* Search input */}
-            <div style={{
+            <div className="gradient-frame" style={{
               display: "flex", alignItems: "center", gap: 10,
               background: "var(--bg-surface)", border: "1px solid var(--border)",
               borderRadius: 10, padding: "10px 14px", marginBottom: 12,
@@ -390,6 +390,7 @@ export default function ExplorePage() {
                   <img
                     src={showcase[showcaseIdx].images[0]}
                     alt={showcase[showcaseIdx].name}
+                    decoding="async"
                     style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                   />
                   {/* Dark gradient for text legibility — always dark since image fills entirely */}
