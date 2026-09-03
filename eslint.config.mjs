@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Third-party bundles shipped beside the HTML docs so they open offline.
+    // Linting a 3 MB minified file is pointless and exhausts the Node heap.
+    "docs/vendor/**",
   ]),
 ]);
 

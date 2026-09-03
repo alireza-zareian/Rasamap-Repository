@@ -214,8 +214,18 @@ export default function LandingPage() {
                       href={`/billboard/${b.slug}`}
                       style={{ flexShrink: 0, width: 280, borderRadius: 16, overflow: "hidden", display: "block", textDecoration: "none", position: "relative", aspectRatio: "1/1", background: "var(--bg-card)", boxShadow: "0 8px 32px rgba(0,0,0,0.22)", border: "1px solid var(--border)" }}
                     >
+                      {/* No loading="lazy" here on purpose. These cards live in a
+                          strip that is moved by translateX inside overflow:hidden,
+                          so every card past the first is outside the viewport and a
+                          lazy image would not be fetched — and on a phone, where the
+                          lazy pre-load distance is much smaller than on desktop, that
+                          left the carousel showing empty cards as it advanced. The
+                          strip is at most 12 photos and auto-advances every 4s, so
+                          all of them are needed inside a minute anyway. decoding
+                          stays async: it costs nothing and keeps decode off the main
+                          thread. Vertically scrolling lists keep their lazy loading. */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={b.images[0]} alt={b.name} loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={b.images[0]} alt={b.name} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(5,10,22,0.9) 0%, rgba(5,10,22,0.25) 50%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: 0, right: 0, left: 0, padding: "16px 14px 18px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 5 }}>

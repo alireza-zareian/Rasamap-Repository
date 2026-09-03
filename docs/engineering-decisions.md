@@ -674,6 +674,21 @@ is defensible is removing the *cheap* paths and making the expensive one slow:
 - The user-agent blocklist is a speed bump, not a wall, and is documented as
   such. The rate limits are what actually cost an attacker something.
 
+**A bug this created, and the rule it taught.** The hotlink check compared the
+Referer's host against `req.nextUrl.host`. Under `next start` that is the
+server's own bind hostname — `localhost:3000` — whatever host the client
+actually asked for. So every visitor who did not type "localhost" was sending a
+perfectly same-origin Referer that failed the comparison and got **403 on every
+photo**: a phone on the same Wi-Fi saw a site with no images at all, and a real
+deployment behind a domain would have done the same. The laptop looked fine,
+which is exactly why it survived review for a while.
+
+The fix is to compare against the host the *browser* used — `X-Forwarded-Host`,
+else `Host` — never a value the framework derived. Three tests now pin it: a
+same-origin Referer under a non-localhost host is allowed, a foreign Referer is
+refused, and a missing Referer is allowed. The general rule: **an origin check
+must read the origin the client asserted, not one the server reconstructed.**
+
 **The tension.** Every measure above trades away discoverability. Googlebot and
 friends are explicitly exempted and the sitemap is kept, because a marketplace
 nobody can find is worse than one that can be copied slowly.

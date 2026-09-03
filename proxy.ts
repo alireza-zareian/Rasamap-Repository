@@ -60,9 +60,21 @@ export async function proxy(req: NextRequest) {
   if (PROTECTED_ASSET.test(pathname)) {
     const referer = req.headers.get("referer");
     if (referer) {
+      // Compare against the host the *browser* actually used, which is the
+      // Host header (or X-Forwarded-Host behind a proxy) — never
+      // `req.nextUrl.host`. Under `next start` that one is the server's own
+      // bind hostname ("localhost:3000") no matter what the client asked for,
+      // so every visitor arriving by LAN IP or by domain name was serving a
+      // same-origin Referer that did not match, and got 403 on every photo.
+      // That is how the site looked image-less on a phone on the same Wi-Fi
+      // while it looked fine on the laptop.
+      const expected = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? req.nextUrl.host)
+        .split(",")[0]
+        .trim()
+        .toLowerCase();
       let sameOrigin = false;
       try {
-        sameOrigin = new URL(referer).host === req.nextUrl.host;
+        sameOrigin = new URL(referer).host.toLowerCase() === expected;
       } catch {
         sameOrigin = false; // unparseable Referer — treat as foreign
       }

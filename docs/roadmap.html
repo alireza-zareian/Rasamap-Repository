@@ -1787,7 +1787,7 @@ sequenceDiagram
   </details>
 
   <details class="fold">
-    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۶ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ و بستن ایرادهای آخر</span></summary>
+    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۷ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ و بستن ایرادهای آخر</span></summary>
     <div class="foldbody"><div class="phases">
 <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
@@ -1911,6 +1911,29 @@ sequenceDiagram
       <div class="proof"><b>تأیید:</b> ۸۷ تست روی سرورِ production در <b>۱۱ ثانیه</b> (۸۶ سبز؛ تنها شکست، تستِ echo کدِ OTP که عمداً بیرون از production کار می‌کند). آزمونِ زنده روی بیلد production: همهٔ صفحه‌ها ۲۰۰، صفحاتِ محافظت‌شده ۳۰۷، UA ربات ۴۰۳، گوگل‌بات ۲۰۰، <code>limit=100</code> ← ۴۰۰، slug بد ← ۴۰۰، آگهیِ منتشرنشده ← ۴۰۴، API ادمین بدون نشست ← ۴۰۱، شمارهٔ مالک در هیچ پاسخ عمومی نیست. سلامتِ دیتابیس: ۳۵۳۶ ردیف، ۰ ناهماهنگیِ <code>hasImages</code>، ۰ کلید خارجیِ یتیم، ۰ وضعیتِ خارج از allowlist.</div>
     </div>
   </div>
+<div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">FIX</div>
+      <div class="ph-title"><h3>عکس‌ها روی گوشی اصلاً لود نمی‌شدند</h3><p>محافظت hotlink، درخواست‌های هم‌مبدأ را هم رد می‌کرد — مگر از localhost</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>نشانه:</b> سایت را با <code>npm run demo</code> بالا می‌آوردی، با گوشی روی همان وای‌فای وصل می‌شدی،
+        صفحه‌ها می‌آمدند ولی <b>هیچ عکسی لود نمی‌شد</b> — و روی لپ‌تاپ همه‌چیز درست بود.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ریشه:</strong> بررسی hotlink در <code>proxy.ts</code> میزبانِ داخل <code>Referer</code> را با <code>req.nextUrl.host</code> مقایسه می‌کرد. اما <code>nextUrl.host</code> زیرِ <code>next start</code> همیشه <b>نامِ میزبانِ خودِ سرور</b> است (<code>localhost:3000</code>)، هرچه کلاینت خواسته باشد. پس بازدیدکننده‌ای که با <b>IP شبکه</b> یا با <b>نام دامنه</b> می‌آمد، یک Referer کاملاً هم‌مبدأ می‌فرستاد که در مقایسه رد می‌شد و <b>روی هر عکس ۴۰۳</b> می‌گرفت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>چرا زودتر پیدا نشد:</strong> روی خودِ لپ‌تاپ آدرس <code>localhost</code> است و مقایسه جواب می‌داد. باگ فقط از بیرونِ همان ماشین دیده می‌شد — و در استقرار واقعی روی دامنه هم دقیقاً همین اتفاق می‌افتاد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>اصلاح:</strong> مقایسه با میزبانی که <b>خودِ مرورگر</b> استفاده کرده — <code>X-Forwarded-Host</code> و در نبودش <code>Host</code> — نه مقداری که فریم‌ورک بازسازی کرده. محافظت ضد hotlink دست‌نخورده ماند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>درسِ قابل نقل در مقاله:</strong> یک بررسیِ مبدأ باید مبدأیی را بخواند که <b>کلاینت اعلام کرده</b>، نه چیزی که سرور از روی تنظیمات خودش ساخته است (§۲۰)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ایراد دوم (کوچک‌تر):</strong> <code>loading="lazy"</code> از عکس‌های کاروسل «رسانه‌های برتر» برداشته شد. آن کارت‌ها با <code>translateX</code> داخل <code>overflow:hidden</code> جابه‌جا می‌شوند، پس بیرون از ویوپورت‌اند و عکس lazy هرگز درخواست نمی‌شد — روی موبایل که فاصلهٔ پیش‌بارگذاری خیلی کمتر است، کاروسل کارتِ خالی نشان می‌داد. حداکثر ۱۲ عکس است و هر ۴ ثانیه یکی جلو می‌رود، پس همه‌شان تا کمتر از یک دقیقه لازم می‌شوند. <code>decoding="async"</code> ماند و <b>لیست‌های عمودیِ /explore دست‌نخورده‌اند</b></div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> ماتریسِ درخواست روی سرور production آزمایش شد — پیش از اصلاح: Referer با <code>127.0.0.1</code> ← <b>۴۰۳</b>، شبیه‌سازی گوشی روی IP شبکه ← <b>۴۰۳</b>؛ پس از اصلاح: هر دو <b>۲۰۰</b>، دامنهٔ واقعی پشت پراکسی <b>۲۰۰</b>، و hotlink از سایت دیگر همچنان <b>۴۰۳</b>. سه تست رگرسیون اضافه شد (۸۷ ← <b>۹۰ تست</b>). <code>tsc</code>، <code>lint</code> و <code>build</code> بدون خطا.</div>
+    </div>
+  </div>
+
+
     </div></div>
   </details>
 

@@ -1017,6 +1017,36 @@ test("the approval queue is closed to a customer session and to anonymous caller
   assert.equal((await api("/api/admin/listings", { token: userToken })).status, 401);
 });
 
+// ── Hotlink protection on listing media ──────────────────────────────
+// The check must key off the host the browser actually used. It used to
+// compare against req.nextUrl.host, which under `next start` is the server's
+// own bind hostname whatever the client asked for — so every visitor who
+// arrived by LAN IP or by domain name got 403 on every photo, and the site
+// looked image-less on a phone while it looked fine on the laptop.
+
+const ASSET = "/images/scraped/does-not-exist.jpg";
+
+test("a photo request carrying this host's own Referer is not blocked", async () => {
+  const { status } = await api(ASSET, {
+    headers: { "x-forwarded-host": "rasamap.ir", referer: "https://rasamap.ir/explore" },
+  });
+  assert.notEqual(status, 403, "same-origin photo request was rejected as a hotlink");
+});
+
+test("a photo request from another site is still blocked", async () => {
+  const { status } = await api(ASSET, {
+    headers: { "x-forwarded-host": "rasamap.ir", referer: "https://clone.example/steal" },
+  });
+  assert.equal(status, 403);
+});
+
+test("a photo request with no Referer at all is allowed", async () => {
+  // Direct navigation and some mobile browsers send none; refusing those
+  // breaks real users for no gain.
+  const { status } = await api(ASSET);
+  assert.notEqual(status, 403);
+});
+
 // ── Login timing: the anti-enumeration padding must be real work ──────
 
 test("an unknown phone costs about as much as a wrong password (no timing oracle)", async () => {
