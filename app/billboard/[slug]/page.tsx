@@ -240,7 +240,14 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                   width="100%"
                   height="260"
                   style={{ display: "block", border: "none" }}
-                  loading="lazy"
+                  /* No loading="lazy". On a phone the map sits just below the
+                     fold, and Chrome on Android shrinks the lazy pre-load
+                     distance on a connection it judges slow — so the frame was
+                     never requested on a first view, and only appeared after a
+                     reload, which restores the scroll position and puts it in
+                     the viewport at parse time. One iframe on one page is worth
+                     fetching up front; the vertically scrolling lists elsewhere
+                     keep their lazy loading. */
                   allowFullScreen
                   referrerPolicy="no-referrer-when-downgrade"
                   title="موقعیت بیلبورد"
