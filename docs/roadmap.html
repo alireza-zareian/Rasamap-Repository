@@ -1427,6 +1427,27 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
     </div>
   </div>
 
+  <!-- ─── REV2 — listing revision loop ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">REV2</div>
+      <div class="ph-title"><h3>«نیاز به اصلاح» — راه برگشت برای آگهی‌ای که ایراد کوچک دارد</h3><p>تصمیم ادمین سه‌حالته شد؛ فرستنده آگهی را ویرایش و دوباره ارسال می‌کند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">صف تأیید فقط دو خروجی داشت: انتشار، یا ردِ کامل. آگهی‌ای که ایرادِ قابلِ رفع داشت (ابعاد اشتباه، عکس بد، جزئیاتِ ناقص) باید رد می‌شد — و رد یعنی پایانِ گفتگو، بدون راهِ برگشت برای فرستنده.</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تصمیم سوم: <code>revision</code></strong> — آگهی در وضعیت <code>needs_revision</code> با پیام کتبیِ کارشناس پارک می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نوشتن توضیح برای «رد» و «نیاز به اصلاح» الزامی شد</strong> — ردِ بی‌توضیح به درد هیچ‌کس نمی‌خورد. متن روی ستون <code>reviewNote</code> ذخیره می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ویرایش در جای خود:</strong> فرستنده پیام را در داشبورد می‌بیند، آگهی را با <code>PATCH /api/listings/[id]</code> اصلاح می‌کند و دوباره می‌فرستد؛ آگهی به صف برمی‌گردد، <code>featured</code> به false برمی‌گردد (سهمِ ویژه باید دوباره کسب شود) و یادداشت پاک می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>needs_revision</code> به <code>UNPUBLISHED_STATUSES</code> اضافه شد — آگهیِ در حالِ اصلاح در جستجو، آمار، نقشهٔ سایت و صفحهٔ جزئیات دیده نمی‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>گاردِ عکس:</strong> عکسِ «نگه‌داشته‌شده» باید یکی از عکس‌های فعلیِ همین آگهی باشد، نه هر رشته‌ای که کلاینت بفرستد. مالکیت و وضعیت هم در لایهٔ داده دوباره بررسی می‌شود، نه فقط در روت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>دو رویداد تازه در لاگ: <code>listing_revision_requested</code> و <code>listing_resubmitted</code></div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> تست‌های API سبز — درخواست اصلاح، ویرایش و ارسال مجدد توسط فرستنده، و ردِ ویرایش توسط حسابِ دیگر. <code>docs/api.md</code> به‌روز شد (ردیف تصمیم + ردیف <code>PATCH /api/listings/[id]</code>).</div>
+    </div>
+  </div>
+
   <!-- ─── LOG — خواناتر شدن تب‌های لاگ و اسکرپر برای ادمین ─── -->
   <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
