@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { C } from "./constants";
+import { C, AUDIT_ACTION } from "./constants";
 import { Badge } from "./Badge";
 import { ScrollText } from "lucide-react";
 
@@ -66,22 +66,31 @@ export function AuditPanel() {
         <div style={{ textAlign: "center", color: C.muted, padding: 40 }}>هنوز رکوردی ثبت نشده</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {rows.map(row => (
-            <div key={String(row.id)} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0, maxWidth: "100%" }}>
-                <Badge text={row.severity.toUpperCase()} color={sevC[row.severity] ?? C.muted} bg={`${sevC[row.severity] ?? C.muted}18`} />
-                <span style={{ fontSize: "0.8rem", fontWeight: 600, fontFamily: "monospace", overflowWrap: "anywhere" }}>{row.action}</span>
-                {row.userEmail && <span style={{ fontSize: "0.75rem", color: C.muted, overflowWrap: "anywhere" }}>{row.userEmail}</span>}
-                {row.ip && <span style={{ fontSize: "0.72rem", color: C.muted }}>IP: {row.ip}</span>}
-                {view === "persisted" && row.details != null && (
-                  <span style={{ fontSize: "0.7rem", color: C.muted, fontFamily: "monospace", overflowWrap: "anywhere", minWidth: 0 }}>
-                    {typeof row.details === "string" ? row.details : JSON.stringify(row.details)}
-                  </span>
-                )}
+          {rows.map(row => {
+            const gloss = AUDIT_ACTION[row.action];
+            return (
+            <div key={String(row.id)} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5, minWidth: 0, maxWidth: "100%" }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
+                  <Badge text={row.severity.toUpperCase()} color={sevC[row.severity] ?? C.muted} bg={`${sevC[row.severity] ?? C.muted}18`} />
+                  <span style={{ fontSize: "0.82rem", fontWeight: 700 }}>{gloss?.title ?? row.action}</span>
+                  <span style={{ fontSize: "0.68rem", color: C.muted, fontFamily: "monospace", overflowWrap: "anywhere" }}>{row.action}</span>
+                </div>
+                {gloss && <div style={{ fontSize: "0.72rem", color: C.muted, lineHeight: 1.7 }}>{gloss.desc}</div>}
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
+                  {row.userEmail && <span style={{ fontSize: "0.75rem", color: C.muted, overflowWrap: "anywhere" }}>{row.userEmail}</span>}
+                  {row.ip && <span style={{ fontSize: "0.72rem", color: C.muted }}>IP: {row.ip}</span>}
+                  {view === "persisted" && row.details != null && (
+                    <span style={{ fontSize: "0.7rem", color: C.muted, fontFamily: "monospace", overflowWrap: "anywhere", minWidth: 0 }}>
+                      {typeof row.details === "string" ? row.details : JSON.stringify(row.details)}
+                    </span>
+                  )}
+                </div>
               </div>
               <div style={{ fontSize: "0.7rem", color: C.muted, flexShrink: 0 }}>{new Date(row.timestamp).toLocaleString("fa-IR")}</div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
