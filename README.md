@@ -215,7 +215,7 @@ npm install                    # postinstall هم Prisma Client را می‌سا
 cp .env.example .env           # مقادیر را پر کن (اسکریپت‌های مستقل `.env` را می‌خوانند، نه `.env.local`)
 npx prisma migrate deploy      # ساختِ پایگاه داده و جدول‌ها
 npm run db:seed                # داده‌ی اولیه (~۳۵۰۰ رسانه — `scraper/data/billboards.json` در ریپو هست)
-npm run dev                    # http://localhost:3000
+npm run demo                   # build + start → http://localhost:3000  (برای کدنویسی: npm run dev)
 ```
 
 متغیرهای لازم (نام‌ها در `.env.example`): `DATABASE_URL`، `AUTH_SECRET` (دستِ‌کم
@@ -226,11 +226,35 @@ npm run dev                    # http://localhost:3000
 برای تستِ دستی، حساب‌های آماده در
 [`docs/demo-accounts.md`](./docs/demo-accounts.md) هستند (‏`npm run db:seed:demo:full`).
 
+### چهار دستورِ اجرا — تفاوتشان
+
+«build» یک **حالتِ اجرا نیست، یک مرحله است**. حالتِ production همان `next start`
+است و چیزِ جداگانه‌ای ندارد.
+
+| دستور | معادلِ Next | چه می‌کند | سایت بالا می‌آید؟ | کِی |
+|---|---|---|---|---|
+| `npm run dev` | `next dev` | سرورِ توسعه: هر صفحه را لحظه‌ی کلیک از صفر کامپایل می‌کند، ۶۷۱۰ فایل را watch می‌کند، hot-reload دارد | ✅ | **فقط** هنگامِ کدنویسی |
+| `npm run build` | `next build` | فقط **می‌سازد** (خروجی در `.next/`)، بعد تمام می‌شود و به ترمینال برمی‌گردد | ❌ | یک‌بار پیش از `start`؛ یا برای اطمینان از نبودِ خطا |
+| `npm run start` | `next start` | سایت را از روی buildِ آماده اجرا می‌کند — **همین حالتِ production است** | ✅ | اجرای واقعی؛ اگر build از قبل هست ~۱ ثانیه بالا می‌آید |
+| `npm run demo` | `next build && next start` | همان دوتای بالا پشتِ سر هم | ✅ | ساده‌ترین راه؛ بعد از هر تغییرِ کد |
+
+فشارِ CPU: `dev` = ۹.۷ ثانیه در برابرِ `demo` = ۰.۱ ثانیه برای اولین بازدید از ۱۰
+صفحه (**~۹۷ برابر**). `start` و `demo` از نظرِ فشار **یکسان‌اند** — هر دو `next
+start` را اجرا می‌کنند؛ تنها تفاوت، مرحله‌ی buildِ اولیه است. شرح در
+[`docs/engineering-decisions.md`](./docs/engineering-decisions.md) §۲۲.
+
+```
+بارِ اول، یا بعد از تغییرِ کد:   npm run demo     (~۱۵ ثانیه، شاملِ build)
+دفعاتِ بعد، بدونِ تغییرِ کد:      npm run start    (~۱ ثانیه)
+```
+
 ### دستورها
 
 ```bash
-npm run dev                 # سرورِ توسعه
-npm run build               # باید بدونِ خطا پاس شود
+npm run demo                # build + start — برای دیدن یا ارائه‌ی سایت
+npm run start               # اجرا از روی buildِ موجود (حالتِ production)
+npm run dev                 # سرورِ توسعه — فقط هنگامِ کدنویسی
+npm run build               # فقط ساخت؛ باید بدونِ خطا پاس شود
 npm run lint
 npm test                    # سوییتِ آزمونِ API — ۳۷ آزمون
 npm run bench               # سنجشِ بار (سرورِ توسعه باید بالا باشد)

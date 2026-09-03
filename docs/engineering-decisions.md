@@ -731,6 +731,21 @@ of that once, ahead of time.
 word and there is nothing to remember or get wrong. `next dev` remains the right
 tool while writing code — its cost buys hot-reload, which a demo does not need.
 
+**The four commands, and how they relate.** "build" is a *step*, not a run
+mode; the production mode is `next start` and there is nothing else to it.
+
+| Command | Next equivalent | What it does | Serves the site? | When to use |
+|---------|-----------------|--------------|------------------|-------------|
+| `npm run dev` | `next dev` | Dev server: compiles each route from scratch on first request, watches 6710 files, hot-reload | yes | **only** while writing code |
+| `npm run build` | `next build` | Compiles into `.next/`, then exits to the shell | no | once before `start`; or to confirm a clean build |
+| `npm run start` | `next start` | Serves the site from an existing build — **this is production mode** | yes | real runs; boots in ~1 s if `.next/` already exists |
+| `npm run demo` | `next build && next start` | the two above, back to back | yes | simplest path; after any code change |
+
+`start` and `demo` are identical in cost — both run `next start`; the only
+difference is whether a build runs first. So: `npm run demo` on the first run or
+after changing code (~15 s, build included), `npm run start` on later runs
+without code changes (~1 s).
+
 ### 22a. Image weight: PNG was the wrong container for photographs
 
 The scrapers saved listing photos as PNG. PNG is lossless and meant for
