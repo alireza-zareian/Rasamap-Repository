@@ -73,9 +73,40 @@ body {
 @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes relatedScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-/* Related-media carousel on the billboard detail page. Marquee pauses while the
-   pointer is over it; with reduced motion the animation is off and the strip
-   becomes a plain horizontal scroller instead. */
+/* Marquees: the live ticker on the landing page and the related-media strip on
+   the billboard page. Both hold their list twice and slide -50% for a seamless
+   loop.
+
+   The *window* is what has to be LTR. The page is RTL, so a max-content strip
+   inside an RTL window is anchored to the window's right edge and overflows to
+   the left — there is nothing waiting to the right, so sliding left walked the
+   cards off and left the space empty with nothing arriving to replace them.
+   With the window laid out LTR the strip overflows to the right instead, so the
+   second copy sits there and slides in as the first leaves. Direction is handed
+   back to the cards, whose contents are Persian. (Setting this on the strip
+   rather than the window does not work: it reorders the items but leaves the
+   box anchored to the same edge.)
+
+   The window is also a real scroll container, so the strip can be dragged by
+   finger or trackpad; `.marquee-held` pauses the animation while a pointer is
+   down, and the pointer-over pause stays for the mouse. Under reduced motion
+   the animation is off and only the manual scrolling remains. */
+.ticker-window,
+.related-marquee {
+  direction: ltr;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.ticker-window::-webkit-scrollbar,
+.related-marquee::-webkit-scrollbar { display: none; }
+.ticker-strip,
+.related-strip { width: max-content; }
+.ticker-strip > *,
+.related-strip > * { direction: rtl; }
+.marquee-held .ticker-strip,
+.marquee-held .related-strip,
 .related-strip:hover { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   .related-strip { animation: none !important; }

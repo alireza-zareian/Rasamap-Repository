@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Billboard, BillboardType } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
+import SwipeMarquee from "@/components/SwipeMarquee";
 import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Phone, Monitor, Milestone, Train, Sun, Moon, User, Map, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 function toFa(n: number) {
@@ -135,13 +136,16 @@ export default function LandingPage() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: "10px 16px", marginBottom: 18 }}>
             <span className="shimmer-heading" style={{ fontSize: "clamp(1.15rem, 2.8vw, 1.65rem)", fontWeight: 900, letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>رسانه‌ات رو پیدا کن</span>
             <span style={{ color: "var(--border)", fontSize: "1.1rem", fontWeight: 300 }}>—</span>
-            {[
-              { label: "بیلبورد", color: "#3B7BF5" },
-              { label: "تلویزیون شهری", color: "#00D17A" },
-              { label: "عرشه پل", color: "#F5823B" },
-              { label: "ایستگاه مترو", color: "#a855f7" },
-            ].map(item => (
-              <span key={item.label} style={{ fontSize: "clamp(0.75rem, 1.7vw, 1rem)", fontWeight: 700, color: item.color, padding: "4px 12px", borderRadius: 20, background: `${item.color}14`, border: `1px solid ${item.color}32`, whiteSpace: "nowrap" }}>{item.label}</span>
+            {/* Each chip names a media type the catalogue can filter by, so it
+                links straight to that filter. Same look as before — a link with
+                the span's own styling, not a restyled button. */}
+            {([
+              { label: "بیلبورد",        type: "billboard", color: "#3B7BF5" },
+              { label: "تلویزیون شهری",  type: "digital",   color: "#00D17A" },
+              { label: "عرشه پل",        type: "bridge",    color: "#F5823B" },
+              { label: "ایستگاه مترو",   type: "station",   color: "#a855f7" },
+            ] as const).map(item => (
+              <Link key={item.label} href={`/explore?type=${item.type}`} title={`دیدن همهٔ ${item.label}‌ها`} style={{ fontSize: "clamp(0.75rem, 1.7vw, 1rem)", fontWeight: 700, color: item.color, padding: "4px 12px", borderRadius: 20, background: `${item.color}14`, border: `1px solid ${item.color}32`, whiteSpace: "nowrap", textDecoration: "none" }}>{item.label}</Link>
             ))}
             <span style={{ fontSize: "clamp(0.7rem, 1.4vw, 0.88rem)", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>— آنلاین، بدون واسطه</span>
           </div>
@@ -176,7 +180,7 @@ export default function LandingPage() {
               <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "var(--green-accent)", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
                 <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green-accent)", display: "inline-block", boxShadow: "0 0 5px var(--green-accent)" }} /> زنده
               </span>
-              <div style={{ flex: 1, overflow: "hidden" }}>
+              <SwipeMarquee className="ticker-window" style={{ flex: 1 }}>
                 <div className="ticker-strip" style={{ display: "flex", gap: 22, animation: "tickerScroll 22s linear infinite", whiteSpace: "nowrap" }}>
                   {[...billboards, ...billboards].map((b, i) => (
                     <a key={i} href={`/billboard/${b.slug}`} style={{ fontSize: "0.67rem", color: "var(--text-muted)", textDecoration: "none", flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
@@ -186,7 +190,7 @@ export default function LandingPage() {
                     </a>
                   ))}
                 </div>
-              </div>
+              </SwipeMarquee>
             </div>
           )}
         </div>

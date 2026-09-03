@@ -1965,6 +1965,30 @@ sequenceDiagram
 
 <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">MOB2</div>
+      <div class="ph-title"><h3>نوارِ خالی، کشیدن با انگشت، و لینک‌هایی که لینک نبودند</h3><p>سه ایرادِ کشف‌شده روی گوشیِ واقعی</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>باگِ اصلی — یک اشتباهِ RTL که فقط با چشم دیده می‌شد:</b> نوارِ «رسانه‌های مرتبط» بعد از چند ثانیه
+        خالی می‌شد؛ کارت‌ها می‌رفتند و چیزی جایشان نمی‌آمد. علت: صفحه راست‌به‌چپ است، پس نوارِ
+        <code>max-content</code> به لبهٔ <b>راستِ</b> قاب می‌چسبد و به <b>چپ</b> سرریز می‌کند — یعنی سمت راستِ
+        قاب هیچ ذخیره‌ای ندارد. انیمیشن هم نوار را به چپ می‌بَرد، پس کارت‌ها خارج می‌شدند و جایشان خالی می‌ماند.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>راه‌حل:</strong> <code>direction: ltr</code> روی <b>قاب</b> (نه روی خودِ نوار) تا نوار به راست سرریز کند و نسخهٔ دومِ لیست همان‌جا منتظر باشد؛ جهت به خودِ کارت‌ها برگردانده می‌شود چون محتوایشان فارسی است. <em>یک بار اشتباه روی خودِ نوار گذاشتمش — ترتیب آیتم‌ها عوض شد ولی جعبه هنوز به همان لبه چسبیده بود و نوار کاملاً خالی شد؛ با اسکرین‌شات در سه لحظهٔ انیمیشن معلوم شد</em></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تیکرِ صفحهٔ اصلی هم همین باگ را داشت</strong> و کسی ندیده بود — با همان قانون درست شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>کشیدن با انگشت:</strong> <code>components/SwipeMarquee.tsx</code> — قاب یک اسکرول‌کانتینرِ واقعی شد، پس کشیدن، اینرسی و کِشسانیِ خودِ سیستم‌عامل رایگان به دست می‌آید. تا وقتی انگشت پایین است انیمیشن مکث می‌کند و بعد از رها کردن از همان‌جا ادامه می‌دهد. <b>بدون حلقهٔ هر-فریمِ جاوااسکریپت</b> — حرکت همچنان با ترنسفورمِ GPU است (§۲۲)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>چیپ‌های هیرو زنده شدند:</strong> «بیلبورد / تلویزیون شهری / عرشه پل / ایستگاه مترو» <code>span</code> ساده بودند؛ حالا هرکدام به فیلترِ همان نوع می‌روند (<code>/explore?type=…</code>). ظاهر دست‌نخورده</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>بردکرامب:</strong> «خانه» و «جستجو» از قبل لینک <em>بودند</em>، ولی یک خط متنِ ۰.۷۸rem روی گوشی ناحیهٔ لمسِ ~۱۴ پیکسلی دارد — کمتر از نصفِ ۴۴ پیکسلی که انگشت لازم دارد. با padding بزرگ شد و با margin منفی از چیدمان کم شد، پس هیچ چیز تکان نخورد</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> صفحهٔ جزئیات در ویوپورتِ گوشی (۴۳۰px) در سه لحظهٔ انیمیشن رندر شد — قبل: یک کارت و بقیه خالی؛ بعد: نوار در هر سه لحظه پر و در حال ورودِ کارت‌های تازه. در HTMLِ سرو‌شده: چهار چیپ با <code>href="/explore?type=…"</code> و دو لینکِ بردکرامب با ناحیهٔ لمسِ بزرگ‌تر. فیلترِ واقعی هم آزموده شد: <code>type=bridge</code> → ۷۹۲ نتیجه. <code>tsc</code>، <code>lint</code> و <code>build</code> بدون خطا.</div>
+    </div>
+  </div>
+
+<div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">DET</div>
       <div class="ph-title"><h3>صفحهٔ جزئیات: نوارِ «رسانه‌های مرتبط» + تمِ پیش‌فرضِ روشن</h3><p>دو تغییرِ کوچکِ محصولی — کشف و تمِ اول</p></div>
       <div class="ph-badge done">✓ انجام شد</div>

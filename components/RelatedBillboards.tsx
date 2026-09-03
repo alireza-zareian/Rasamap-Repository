@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import type { Billboard } from "@/lib/types";
 import { typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
+import SwipeMarquee from "@/components/SwipeMarquee";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
 
@@ -31,10 +32,9 @@ export default function RelatedBillboards({ items }: { items: Billboard[] }) {
         </div>
       </div>
 
-      <div
+      <SwipeMarquee
         className="related-marquee"
         style={{
-          overflow: "hidden",
           maskImage: "linear-gradient(to left, transparent, #000 6%, #000 94%, transparent)",
           WebkitMaskImage: "linear-gradient(to left, transparent, #000 6%, #000 94%, transparent)",
         }}
@@ -91,7 +91,7 @@ export default function RelatedBillboards({ items }: { items: Billboard[] }) {
             );
           })}
         </div>
-      </div>
+      </SwipeMarquee>
     </section>
   );
 }

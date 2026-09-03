@@ -64,9 +64,13 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
 
       {/* Breadcrumb */}
       <div style={{ maxWidth: 1350, margin: "0 auto", padding: "80px 20px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "0.78rem", color: "var(--text-muted)" }}>
-        <Link href="/" style={{ color: "var(--text-muted)", textDecoration: "none" }}>خانه</Link>
+        {/* These were already links, but a 0.78rem line of text is a ~14px tap
+            target — under half the 44px a finger needs, so on a phone they read
+            as decoration. The padding grows the hit area and the negative margin
+            takes the growth back out of the layout, so nothing moves. */}
+        <Link href="/" style={{ color: "var(--text-muted)", textDecoration: "none", padding: "10px 6px", margin: "-10px -6px" }}>خانه</Link>
         <span>›</span>
-        <Link href="/explore" style={{ color: "var(--text-muted)", textDecoration: "none" }}>جستجو</Link>
+        <Link href="/explore" style={{ color: "var(--text-muted)", textDecoration: "none", padding: "10px 6px", margin: "-10px -6px" }}>جستجو</Link>
         <span>›</span>
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 240 }}>{b.name}</span>
       </div>
