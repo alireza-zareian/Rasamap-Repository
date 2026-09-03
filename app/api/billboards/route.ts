@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import { getFilteredBillboards } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
@@ -31,19 +32,7 @@ async function getHandler(req: NextRequest) {
   const ip = getClientIp(req);
 
   const rl = publicApiRateLimit(ip);
-  if (!rl.allowed) {
-    return NextResponse.json(
-      { error: "درخواست‌های بیش از حد مجاز — کمی صبر کنید" },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.ceil((rl.lockedUntil! - Date.now()) / 1000)),
-          "X-RateLimit-Limit": "60",
-          "X-RateLimit-Remaining": "0",
-        },
-      },
-    );
-  }
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "billboards", ip });
 
   const raw = Object.fromEntries(req.nextUrl.searchParams.entries());
   const parsed = querySchema.safeParse(raw);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
@@ -22,8 +23,9 @@ async function PATCHHandler(req: NextRequest, { params }: { params: Promise<{ id
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
 
-  const rl = adminApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = adminApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/users/[id]", ip });
 
   if (!hasPermission(session.role, "super_admin")) {
     return NextResponse.json({ error: "فقط سوپر ادمین می‌تواند کاربر را تغییر دهد" }, { status: 403 });
@@ -66,7 +68,7 @@ async function PATCHHandler(req: NextRequest, { params }: { params: Promise<{ id
     severity: "warn",
     adminId: Number.isNaN(actorId) ? null : actorId,
     userEmail: session.email,
-    ip: getClientIp(req),
+    ip,
     userAgent: req.headers.get("user-agent"),
     details: {
       targetAdminId: id,

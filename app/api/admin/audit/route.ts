@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { getSession } from "@/lib/auth/session";
 import { hasPermission } from "@/lib/auth/users";
 import { getRecentAuditLogs } from "@/lib/auth/audit";
@@ -17,10 +18,9 @@ async function GETHandler(req: NextRequest) {
     return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
   }
 
-  const rl = adminApiRateLimit(getClientIp(req));
-  if (!rl.allowed) {
-    return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
-  }
+  const ip = getClientIp(req);
+  const rl = adminApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/audit", ip });
 
   const logs = getRecentAuditLogs(200);
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { getAdminBillboardPage, createBillboard } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
@@ -37,10 +38,9 @@ async function GETHandler(req: NextRequest) {
   }
 
   // ── Rate limit ──
-  const rl = adminApiRateLimit(getClientIp(req));
-  if (!rl.allowed) {
-    return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
-  }
+  const ip = getClientIp(req);
+  const rl = adminApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/billboards", ip });
 
   // ── Validate & sanitize query params ──
   const sp = req.nextUrl.searchParams;
@@ -120,8 +120,9 @@ async function POSTHandler(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   if (!hasPermission(session.role, "editor")) return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
 
-  const rl = adminApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = adminApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/billboards", ip });
 
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }
@@ -139,7 +140,7 @@ async function POSTHandler(req: NextRequest) {
       action: "billboard_create",
       adminId: Number.isNaN(adminId) ? null : adminId,
       userEmail: session.email,
-      ip: getClientIp(req),
+      ip,
       userAgent: req.headers.get("user-agent"),
       details: { billboardId: billboard.id, name: billboard.name, type: billboard.type },
     });

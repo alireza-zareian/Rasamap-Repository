@@ -1238,6 +1238,7 @@ sequenceDiagram
         <div class="task todo-t"><div class="tick"></div><div>جدول <code>otp_codes (phone, code, expiresAt, used)</code> در Prisma schema</div></div>
         <div class="task todo-t"><div class="tick"></div><div>ساخت <code>POST /api/auth/otp/send</code> و <code>POST /api/auth/otp/verify</code></div></div>
         <div class="task todo-t"><div class="tick"></div><div>تغییر flow ثبت‌نام: شماره → OTP → رمز → ثبت‌نام</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>دیوارِ ورود روی جستجو (ضدِ اسکرپ) — برای مقاله ثبت شد، پیاده‌سازی نشد:</b> الان دسترسی به سایت <b>آزاد</b> است و هر کسی می‌تواند بدون حساب کارت‌ها را ببیند. وقتی OTP آماده شد، درست بعد از صفحهٔ اول: کاربر تا وارد صفحهٔ اصلی جستجو می‌شود یک پاپ‌آپ می‌آید که همان‌جا خودش را ثبت‌نام می‌کند (شماره → OTP). تا این کار انجام نشود، اجازهٔ دیدن کارت‌ها را ندارد. هدف: جلوگیری از اسکرپِ انبوهِ دادهٔ ما از روی صفحهٔ اول جستجو. <b>پیش‌نیاز:</b> OTP و سرویس پیامک که هنوز نداریم — تا آن موقع اجرا نمی‌شود.</div></div>
       </div>
     </div>
   </div>
@@ -2048,7 +2049,10 @@ sequenceDiagram
         <div class="task done-t"><div class="tick">✓</div><div><strong>۴۲۹های ورود و ثبت‌نام حالا <code>Retry-After</code> دارند</strong> و می‌گویند «حدود N دقیقه دیگر» — قبلاً فقط «بعداً امتحان کنید» بود، در حالی که قفلشان ۱۵ دقیقه تا یک ساعت است</div></div>
         <div class="task done-t"><div class="tick">✓</div><div>تستِ قدیمیِ ۴۲۹ به سقفی منتقل شد که <b>عمداً</b> تنگ است (ثبت‌نام)، و یک تستِ تازه اضافه شد: <b>۱۲۰ خواندنِ پیاپی از یک آی‌پی باید همه ۲۰۰ باشند</b></div></div>
       </div>
-      <div class="proof"><b>تأیید:</b> <b>۷۰۰ درخواستِ پیاپی</b> روی صفحهٔ جزئیات (۲۵۰)، صفحهٔ جستجو (۱۵۰)، API عمومی (۲۰۰) و صفحهٔ اصلی (۱۰۰) → <b>صفر خطا</b>. و امنیتِ واقعی سرِ جایش: UA خزنده ۴۰۳، hotlink بیگانه ۴۰۳، <code>limit=100</code> ۴۰۰، API ادمین بدون نشست ۴۰۱، شمارهٔ مالک صفر مورد در پاسخ عمومی، و قفلِ حدسِ رمز در یازدهمین تلاش. ۹۸ تست، ۹۷ سبز. §۲۰a در سند تصمیم‌ها.</div>
+      <div class="task done-t"><div class="tick">✓</div><div><strong>یکدست‌سازی — هر ۴۲۹ از یک مسیر:</strong> ۱۸ نسخهٔ دست‌سازِ پاسخِ ۴۲۹ در ۱۵ فایل به کمک‌تابعِ مشترکِ <code>rateLimited()</code> تبدیل شد. با این کار سه ایرادِ پنهان هم رفت: هدرِ <code>X-RateLimit-Limit: 60</code> که از سقفِ ۶۰۰ جا مانده بود، دو روتی که اصلاً <code>Retry-After</code> نمی‌فرستادند، و یک نسخهٔ تکراری از نوشتنِ لاگِ ممیزی در روتِ ورودِ ادمین. حالا هر ۲۸ روت یک شکل دارند: <code>const ip</code> ← <code>const rl</code> ← <code>if (!rl.allowed) return rateLimited(...)</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>Retry-After</code> راست‌گو شد:</strong> با برداشتنِ قفل، <code>lockedUntil</code> دیگر ست نمی‌شود، پس به‌جای «۱ ثانیه» زمانِ واقعیِ پایانِ پنجره را می‌دهد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>قانون ۱۰ در <code>AGENTS.md</code>:</strong> «کد را برای کسی که هرگز ندیده‌ ‌است خوانا بگذار» — یک راه برای هر کار (نه چهار تا)، حذفِ چیزی که تغییرِ تو یتیمش کرده، عددِ hardcode ممنوع، کامنت بگوید <em>چرا</em>. به‌علاوهٔ یک <b>گاردِ خودکار</b>: هیچ فایلی جز خودِ کمک‌تابع حق ندارد <code>status: 429</code> بنویسد</div></div>
+        <div class="proof"><b>تأیید:</b> <b>۷۰۰ درخواستِ پیاپی</b> روی صفحهٔ جزئیات (۲۵۰)، صفحهٔ جستجو (۱۵۰)، API عمومی (۲۰۰) و صفحهٔ اصلی (۱۰۰) → <b>صفر خطا</b>. و امنیتِ واقعی سرِ جایش: UA خزنده ۴۰۳، hotlink بیگانه ۴۰۳، <code>limit=100</code> ۴۰۰، API ادمین بدون نشست ۴۰۱، شمارهٔ مالک صفر مورد در پاسخ عمومی، و قفلِ حدسِ رمز در یازدهمین تلاش. ۹۹ تست، ۹۸ سبز. §۲۰a در سند تصمیم‌ها.</div>
     </div>
   </div>
 
@@ -2409,7 +2413,7 @@ sequenceDiagram
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۲ شهریور ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۳ شهریور ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>

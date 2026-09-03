@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getSession, createSession, buildSessionCookieHeader } from "@/lib/auth/session";
@@ -49,8 +50,9 @@ async function PATCHHandler(req: NextRequest) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }
 
-  const rl = userApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = userApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "auth/me", ip });
 
   let body: unknown;
   try { body = await req.json(); } catch {

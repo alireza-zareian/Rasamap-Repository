@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import type { AdminStats } from "@/lib/admin/types";
 import { getAllBillboards } from "@/lib/db/billboards";
 import { getSession } from "@/lib/auth/session";
@@ -14,10 +15,9 @@ async function GETHandler(req: NextRequest) {
   }
 
   // ── Rate limit ──
-  const rl = adminApiRateLimit(getClientIp(req));
-  if (!rl.allowed) {
-    return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
-  }
+  const ip = getClientIp(req);
+  const rl = adminApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/billboards/stats", ip });
 
   const all = await getAllBillboards();
   const now = Date.now();

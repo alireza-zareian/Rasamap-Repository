@@ -32,6 +32,10 @@ Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Pris
    `localhost` conveniences do not exist — see rule 9 in `AGENTS.md` and §24
 9. `loading="lazy"` only on what the user can scroll to — never on carousel/marquee cards or
    an `<iframe>`; infinite animations join the `html.page-hidden` pause list in `globals.css`
+10. Leave the file more readable than you found it: reuse the helper that already
+    exists instead of hand-rolling a fourth variant, delete what your change
+    orphans (lint names it), never hardcode a number that duplicates a real one,
+    and write comments that say *why*. See rule 10 in `AGENTS.md`
 
 ## Dev Commands
 

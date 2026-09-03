@@ -5,6 +5,7 @@ import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
 import { loginRateLimit, resetLoginAttempts } from "@/lib/auth/rate-limit";
 import { auditLog } from "@/lib/auth/audit";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { withApiLog } from "@/lib/api-log";
 
 const LoginSchema = z.object({
@@ -17,26 +18,9 @@ async function POSTHandler(req: NextRequest) {
 
   // ── Rate limiting ──
   const rl = loginRateLimit(ip);
-  if (!rl.allowed) {
-    const retryAfter = rl.lockedUntil
-      ? Math.ceil((rl.lockedUntil - Date.now()) / 1000)
-      : 900;
-    auditLog("rate_limit_hit", "warn", {
-      ip,
-      details: { endpoint: "login", retryAfter },
-    });
-    return NextResponse.json(
-      { error: "تعداد تلاش‌های ورود بیش از حد مجاز است. لطفاً بعداً دوباره امتحان کنید." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": retryAfter.toString(),
-          "X-RateLimit-Limit": "5",
-          "X-RateLimit-Remaining": "0",
-        },
-      }
-    );
-  }
+  // The shared helper writes the audit row and the Retry-After header itself,
+  // so this route no longer keeps its own copy of either.
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/auth/login", ip });
 
   // ── Parse & validate body ──
   let body: unknown;

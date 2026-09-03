@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
 import { getBillboardBySlug } from "@/lib/db/billboards";
 import { prisma } from "@/lib/db/client";
@@ -33,10 +34,9 @@ async function postHandler(req: NextRequest, { params }: { params: Promise<{ slu
   }
 
   // 2. Rate limit
-  const rl = userApiRateLimit(getClientIp(req));
-  if (!rl.allowed) {
-    return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
-  }
+  const ip = getClientIp(req);
+  const rl = userApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "billboards/[slug]/contact", ip });
 
   // 3. Zod
   const { slug } = await params;

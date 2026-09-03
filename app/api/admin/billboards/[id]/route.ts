@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import { BILLBOARD_STATUSES } from "@/lib/types";
 import { getSession } from "@/lib/auth/session";
@@ -23,8 +24,9 @@ function authGuard(session: Awaited<ReturnType<typeof getSession>>, req: NextReq
   if (!session || session.role === "user") {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }
-  const rl = adminApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = adminApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/billboards/[id]", ip });
   return null;
 }
 

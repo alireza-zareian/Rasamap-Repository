@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
@@ -20,8 +21,9 @@ const ReviewSchema = z.object({
 
 // GET /api/reviews?billboardId=X — public
 async function GETHandler(req: NextRequest) {
-  const rl = userApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = userApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "reviews", ip });
 
   const billboardId = parseInt(req.nextUrl.searchParams.get("billboardId") ?? "", 10);
   if (isNaN(billboardId)) return NextResponse.json({ error: "billboardId الزامی است" }, { status: 400 });
@@ -49,8 +51,9 @@ async function POSTHandler(req: NextRequest) {
   }
 
   // 2. Rate limit
-  const rl = userApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = userApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "reviews", ip });
 
   // 3. Zod
   let body: unknown;

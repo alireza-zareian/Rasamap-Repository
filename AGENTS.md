@@ -138,3 +138,31 @@ opened from another device at `http://<lan-ip>:3000`?** Secure context, cookie f
 origin checks, absolute URLs and anything deferred until it is "visible" all answer
 differently there. Six real bugs came from this one habit — the full list and the
 reasoning are in §24 of `docs/engineering-decisions.md`.
+
+---
+
+**10. Leave the code readable by a person who has never seen it**
+
+Every change lands in a file someone else will open cold — a reviewer, an
+examiner, the author six months from now. A patch that works but leaves the file
+harder to read than it found it has not finished.
+
+- **One way to do a thing, not four.** Before hand-rolling a response, a guard,
+  a label or a date format, look for the helper that already exists
+  (`rateLimited`, `serverError`, `statusLabels`, `copyText`, `SITE_URL`). Four
+  spellings of the same 429 is how numbers go stale in three of them.
+- **Delete what your change orphans.** An import nothing uses, a helper nothing
+  calls, a constant nothing reads — remove it in the same commit that stranded
+  it. `npm run lint` names them; do not ship past its warnings.
+- **A hardcoded number that duplicates a real one will drift.** `"X-RateLimit-Limit": "60"`
+  outlived the limit it described. Read the value, or do not send it.
+- **Comments say *why*, never *what*.** The code says what. A comment earns its
+  place by recording the reason, the measurement, or the bug that forced the
+  shape — the things the next reader cannot recover from the code alone.
+- **Match the file you are in.** Its naming, its comment density, its idiom. A
+  change that reads as a graft is a change that will be misread.
+- **No half-done anything.** No TODO placeholder, no dead branch, no commented
+  -out alternative, no "temporary" flag. If it is not finished, it does not land.
+
+The test: could someone who has never opened this repository read the file
+top to bottom and follow it? If the honest answer is no, the change is not done.

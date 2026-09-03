@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
 import { publishedOnly } from "@/lib/db/billboards";
@@ -11,8 +12,9 @@ const Schema = z.object({
 });
 
 async function GETHandler(req: NextRequest) {
-  const rl = publicApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = publicApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "analytics", ip });
 
   const parsed = Schema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
   if (!parsed.success) return NextResponse.json({ error: "پارامتر نامعتبر" }, { status: 400 });

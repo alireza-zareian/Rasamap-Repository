@@ -1102,6 +1102,19 @@ test("guard: no iframe is lazily loaded", () => {
   }
 });
 
+test("guard: every 429 goes through the shared helper", () => {
+  // Four hand-rolled copies of one response is how "X-RateLimit-Limit: 60"
+  // outlived a limit that had become 600, and how two of them forgot
+  // Retry-After entirely. One path, one place to fix.
+  for (const [file, src] of sourceFiles()) {
+    if (file.endsWith("lib/api-rate-limit.ts")) continue;
+    assert.ok(
+      !/status:\s*429/.test(src),
+      `${file}: build the 429 with rateLimited() from lib/api-rate-limit.ts — it sets Retry-After, says how long to wait in Persian, and writes the audit row.`,
+    );
+  }
+});
+
 test("guard: every infinite marquee pauses with the tab", () => {
   const css = readFileSync("app/globals.css", "utf8");
   const paused = css.slice(css.indexOf("html.page-hidden"));

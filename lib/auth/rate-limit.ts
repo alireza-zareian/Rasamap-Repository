@@ -90,7 +90,11 @@ export function checkRateLimit(key: string, opts: RateLimitOptions): RateLimitRe
   w.count++;
 
   if (w.count > opts.maxRequests) {
-    w.lockedUntil = now + lockoutMs;
+    // With no lockout the caller is free again when the window rolls over, so
+    // `lockedUntil` stays unset and `retryAfterSeconds` falls back to `resetAt`
+    // — otherwise it would answer "1 second" while the window still had most of
+    // a minute left on it.
+    if (lockoutMs > 0) w.lockedUntil = now + lockoutMs;
     store.set(key, w);
     return { allowed: false, remaining: 0, resetAt: w.resetAt, lockedUntil: w.lockedUntil, justLocked: true };
   }

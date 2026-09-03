@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { prisma } from "@/lib/db/client";
 import { publishedOnly } from "@/lib/db/billboards";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
@@ -8,8 +9,9 @@ import { withApiLog } from "@/lib/api-log";
 export const revalidate = 3600; // cache 1 hour
 
 async function getHandler(req: NextRequest) {
-  const rl = publicApiRateLimit(getClientIp(req));
-  if (!rl.allowed) return NextResponse.json({ error: "درخواست‌های زیادی ارسال شده است" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = publicApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "stats", ip });
   const [total, typeCounts, cityCounts, trafficRows] = await Promise.all([
     prisma.billboard.count({ where: { status: publishedOnly } }),
     prisma.billboard.groupBy({
