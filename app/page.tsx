@@ -177,7 +177,7 @@ export default function LandingPage() {
                 <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green-accent)", display: "inline-block", boxShadow: "0 0 5px var(--green-accent)" }} /> زنده
               </span>
               <div style={{ flex: 1, overflow: "hidden" }}>
-                <div style={{ display: "flex", gap: 22, animation: "tickerScroll 22s linear infinite", whiteSpace: "nowrap" }}>
+                <div className="ticker-strip" style={{ display: "flex", gap: 22, animation: "tickerScroll 22s linear infinite", whiteSpace: "nowrap" }}>
                   {[...billboards, ...billboards].map((b, i) => (
                     <a key={i} href={`/billboard/${b.slug}`} style={{ fontSize: "0.67rem", color: "var(--text-muted)", textDecoration: "none", flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
                       <span style={{ color: "var(--accent-warm)", fontWeight: 700 }}>{b.price}M</span>

@@ -1787,7 +1787,7 @@ sequenceDiagram
   </details>
 
   <details class="fold">
-    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۸ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ و بستن ایرادهای آخر</span></summary>
+    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۹ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ، رسانه‌های مرتبط و بستن ایرادهای آخر</span></summary>
     <div class="foldbody"><div class="phases">
 <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
@@ -1955,9 +1955,28 @@ sequenceDiagram
         <div class="task done-t"><div class="tick">✓</div><div><strong>۴ · ورود روی گوشی کار نمی‌کرد</strong> (بزرگ‌ترین مورد) — کوکی نشست پرچم <code>Secure</code> می‌گرفت چون <code>NODE_ENV=production</code> بود، و <code>next start</code> همیشه آن را می‌گذارد. مرورگر کوکیِ Secure را روی <code>http</code> <b>دور می‌ریزد</b> — یعنی کاربر وارد می‌شد و بلافاصله بیرون بود. حالا پرچم از روی <b>خودِ اتصال</b> تعیین می‌شود (<code>x-forwarded-proto</code> یا پروتکل درخواست)</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>۵ · دکمهٔ اشتراک‌گذاری هیچ کاری نمی‌کرد</strong> — <code>navigator.share</code> و <code>navigator.clipboard</code> فقط در «بستر امن» وجود دارند و <code>localhost</code> امن حساب می‌شود ولی <code>http://IP</code> نه. کد بدون گارد صدایشان می‌زد و خطا می‌داد. حالا <code>lib/clipboard.ts</code> اول API مدرن، بعد <code>execCommand</code> را امتحان می‌کند و <b>صادقانه</b> می‌گوید کپی شد یا نه. <b>همین ایراد در پنل ادمین هم بود:</b> دکمهٔ کپیِ رمزِ تازه‌ساخته‌شده «کپی شد» می‌گفت بدون اینکه کپی کرده باشد — و آن رمز فقط یک بار نمایش داده می‌شود</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>۶ · پیش‌نمایش لینک در شبکه‌های اجتماعی به localhost اشاره می‌کرد</strong> — دو نامِ متغیر برای یک مفهوم (<code>NEXT_PUBLIC_BASE_URL</code> در sitemap و <code>NEXT_PUBLIC_SITE_URL</code> در متادیتا) با دو پیش‌فرضِ متفاوت و هیچ‌کدام تنظیم‌نشده. حالا یکی است: <code>lib/site-url.ts</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>جلوگیری از تکرار — قانون + گاردِ خودکار:</strong> قانون ۹ در <code>AGENTS.md</code> و بندهای ۸ و ۹ در <code>CLAUDE.md</code> نوشته شد (شکلِ ممنوع کنارِ شکلِ درست)، و <b>پنج گاردِ خودکار</b> در مجموعه تست اضافه شد که اگر کسی دوباره همان الگو را بنویسد بیلد قرمز می‌شود: پرچم <code>Secure</code> از روی <code>NODE_ENV</code>، مقایسه با <code>req.nextUrl.host</code>، <code>navigator.clipboard</code>ِ بدون گارد، <code>iframe</code>ِ lazy، و انیمیشن بی‌نهایتی که در فهرست توقفِ تب نیست. گاردها با <b>برگرداندنِ عمدیِ یکی از باگ‌ها</b> راستی‌آزمایی شدند و قرمز شدند</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>آنچه عمداً دست‌نخورده ماند:</strong> <code>loading="lazy"</code> روی گرید و لیست‌های عمودیِ <code>/explore</code>، داشبورد، صف تأیید ادمین و نوار بندانگشتیِ گالری — آنجا کاربر اسکرول می‌کند و مرورگر عکس را می‌آورد؛ برداشتنش فقط پهنای‌باند تلف می‌کرد</div></div>
       </div>
-      <div class="proof"><b>تأیید:</b> ۹۲ تست (۹۱ سبز؛ تنها شکست، تستِ OTP که عمداً بیرون از production خاموش است) — <b>پنج تست رگرسیون تازه</b>: پرچم کوکی با و بدون <code>x-forwarded-proto</code>، و گاردِ hotlink روی میزبانِ غیر-localhost / از سایت بیگانه / بدون Referer. آزمونِ دستی روی سرور production: کوکی روی <code>http</code> بدون <code>Secure</code> و پشتِ پراکسیِ https با <code>Secure</code>؛ عکس روی IP شبکه ۲۰۰ و hotlink بیگانه ۴۰۳. <code>tsc</code>، <code>lint</code> و <code>build</code> بدون خطا. درسِ کامل در §۲۴.</div>
+      <div class="proof"><b>تأیید:</b> ۹۷ تست (۹۶ سبز؛ تنها شکست، تستِ OTP که عمداً بیرون از production خاموش است) — <b>پنج تست رگرسیون تازه</b>: پرچم کوکی با و بدون <code>x-forwarded-proto</code>، و گاردِ hotlink روی میزبانِ غیر-localhost / از سایت بیگانه / بدون Referer. آزمونِ دستی روی سرور production: کوکی روی <code>http</code> بدون <code>Secure</code> و پشتِ پراکسیِ https با <code>Secure</code>؛ عکس روی IP شبکه ۲۰۰ و hotlink بیگانه ۴۰۳. <code>tsc</code>، <code>lint</code> و <code>build</code> بدون خطا. درسِ کامل در §۲۴.</div>
+    </div>
+  </div>
+
+
+<div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">DET</div>
+      <div class="ph-title"><h3>صفحهٔ جزئیات: نوارِ «رسانه‌های مرتبط» + تمِ پیش‌فرضِ روشن</h3><p>دو تغییرِ کوچکِ محصولی — کشف و تمِ اول</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نوارِ رسانه‌های مرتبط، تهِ صفحهٔ بیلبورد</strong> — <code>getRelatedBillboards()</code> در <code>lib/db/billboards.ts</code>: اول آگهی‌های همان <code>region</code>، بعد همان <code>type</code> تا سقفِ ۱۲ تا؛ فقط منتشرشده‌ها، خودِ رکورد کنار گذاشته می‌شود، ترتیب <code>featured › hasImages › estimatedViews</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>کامپوننت سرورِ <code>RelatedBillboards.tsx</code> — نوارِ خودحرکت با همان مکانیزمِ تیکرِ زندهٔ صفحهٔ اصلی (لیست دوبار، <code>@keyframes relatedScroll</code> با <code>translateX(-50%)</code>، بدون JS). با hover مکث می‌کند و زیرِ <code>prefers-reduced-motion</code> انیمیشن خاموش و نوار به اسکرولِ افقیِ دستی تبدیل می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>شمارهٔ صاحبِ رسانه از هر کارتِ مرتبط هم <b>حذف</b> می‌شود — این رکوردها هم در payloadِ RSC به کلاینت می‌روند، دقیقاً مثلِ رکوردِ اصلیِ صفحه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تمِ پیش‌فرضِ سایت روشن شد</strong> — <code>data-theme="light"</code> و <code>colorScheme:"light"</code> در <code>app/layout.tsx</code> (+ متاtag‌ها و <code>viewport</code>)، پیش‌فرضِ <code>ThemeProvider</code> و context در <code>lib/theme.tsx</code> از <code>dark</code> به <code>light</code>. توکن‌های تیرهٔ <code>:root</code> به‌عنوانِ حالتِ <code>data-theme="dark"</code> می‌مانند؛ دکمهٔ تعویض و انتخابِ ذخیره‌شدهٔ کاربر بعد از mount کار می‌کنند</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> <code>lint</code> و <code>build</code> بدون خطا. سرور روی بیلدِ تازه: <code>/billboard/&lt;slug&gt;</code> با ۲۰۰ برمی‌گردد، تیترِ «رسانه‌های مرتبط»، کلاسِ <code>related-strip</code> و انیمیشنِ <code>relatedScroll</code> در HTML هست، ۱۲ لینکِ یکتای <code>/billboard/…</code> در نوار؛ <code>data-theme="light"</code> روی صفحهٔ اصلی و صفحهٔ جزئیات هر دو رندر می‌شود.</div>
     </div>
   </div>
 

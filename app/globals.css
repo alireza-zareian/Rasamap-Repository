@@ -452,6 +452,8 @@ html.page-hidden .bg-orb-3,
 html.page-hidden .bg-orb-4,
 html.page-hidden .shimmer-heading,
 html.page-hidden .logo-shimmer,
+html.page-hidden .ticker-strip,
+html.page-hidden .related-strip,
 html.page-hidden .skeleton {
   animation-play-state: paused !important;
 }

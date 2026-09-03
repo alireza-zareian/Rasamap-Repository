@@ -97,3 +97,44 @@ Any HTML report / slide / summary you produce for the thesis reviewers must incl
 (adapted to the report's tone). "Why doesn't every page call the API?" is the first
 question a Next.js app draws in a defense. Never present the Server-Component-reads-the-DB
 path as a shortcut or a gap — it is the framework's recommended pattern and the faster choice.
+
+---
+
+**9. Never infer a property of the *connection* from the environment you built in**
+
+This project is opened from more than one machine. The demo is served with `npm run demo`
+on a laptop and browsed **from a phone on the same Wi-Fi at `http://<lan-ip>:3000`** — a
+reviewer scans a QR code and connects from their own device. Later it goes on a real
+domain over HTTPS. Your browser, on `localhost` over loopback, is the one environment where
+every mistake in this class is invisible.
+
+```
+❌  ...(process.env.NODE_ENV === "production" ? ["Secure"] : [])   // cookie dropped over http
+✅  ...(isSecureRequest(req) ? ["Secure"] : [])                     // reads x-forwarded-proto / protocol
+
+❌  new URL(referer).host === req.nextUrl.host   // nextUrl.host is the server's bind name
+✅  new URL(referer).host === (req.headers.get("x-forwarded-host") ?? req.headers.get("host"))
+
+❌  await navigator.clipboard.writeText(x)       // undefined outside a secure context — throws
+✅  await copyText(x)                            // lib/clipboard.ts, with an execCommand fallback
+
+❌  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+✅  SITE_URL                                     // lib/site-url.ts — one name, one fallback
+```
+
+**`loading="lazy"` belongs only on things the user can scroll to.** On an element that
+cannot enter the viewport on its own — a card in a `translateX` carousel or a CSS marquee
+inside `overflow:hidden`, an `<iframe>` below the fold — the image is simply never
+requested, and mobile Chrome shrinks the pre-load distance far below the desktop value, so
+the laptop keeps looking fine. Keep it on vertical grids and lists; leave it off carousels,
+marquees and map frames.
+
+**Infinite CSS animations must pause with the tab.** Add the class to the
+`html.page-hidden` list in `globals.css`, or a backgrounded tab keeps waking the GPU on a
+fanless laptop (§22).
+
+Before you call a change done, ask one question: **would this still work if the site were
+opened from another device at `http://<lan-ip>:3000`?** Secure context, cookie flags,
+origin checks, absolute URLs and anything deferred until it is "visible" all answer
+differently there. Six real bugs came from this one habit — the full list and the
+reasoning are in §24 of `docs/engineering-decisions.md`.

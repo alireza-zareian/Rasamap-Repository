@@ -901,6 +901,16 @@ Five regression tests pin the two that are testable from the API: the cookie's
 flags with and without `x-forwarded-proto`, and the hotlink guard under a
 non-localhost host, from a foreign site, and with no Referer at all.
 
+**Making it stick.** Prose alone does not stop the next contributor — or the next
+agent — from writing the same line again, so the rule is enforced two ways.
+`AGENTS.md` rule 9 states it with the banned form beside the correct one, and
+five *source guards* in the test suite fail the build when the pattern
+reappears: a cookie `Secure` flag keyed off `NODE_ENV`, an origin check against
+`req.nextUrl.host`, a bare `navigator.clipboard`, a lazily loaded `<iframe>`,
+and an infinite marquee missing from the `html.page-hidden` pause list. They
+were verified the only way a guard can be: by putting one of the bugs back and
+watching the suite go red.
+
 **Worth saying in a defense:** the class matters more than the six instances.
 A local development environment is not a small version of production — it is a
 *different* environment, and the differences cluster exactly where security

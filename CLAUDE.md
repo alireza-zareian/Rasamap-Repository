@@ -25,6 +25,13 @@ Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Pris
 5. Sort/filter values: always check against allowlists before use in queries
 6. Auth failures: generic error messages only (no user enumeration)
 7. Every admin route: session check → rate limit → Zod → business logic (in that order)
+8. Never read the *connection* off the build environment: cookie `Secure` comes from
+   `isSecureRequest(req)` not `NODE_ENV`, origin checks read `X-Forwarded-Host`/`Host` not
+   `nextUrl.host`, clipboard goes through `lib/clipboard.ts`, public URLs through
+   `lib/site-url.ts`. The demo is browsed from a phone at `http://<lan-ip>:3000`, where
+   `localhost` conveniences do not exist — see rule 9 in `AGENTS.md` and §24
+9. `loading="lazy"` only on what the user can scroll to — never on carousel/marquee cards or
+   an `<iframe>`; infinite animations join the `html.page-hidden` pause list in `globals.css`
 
 ## Dev Commands
 

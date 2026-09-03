@@ -6,6 +6,8 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
@@ -1015,6 +1017,88 @@ test("the approval queue is closed to a customer session and to anonymous caller
   assert.equal((await api("/api/admin/listings")).status, 401);
   const userToken = await mintSession({ userId: "1", role: "user" });
   assert.equal((await api("/api/admin/listings", { token: userToken })).status, 401);
+});
+
+// ── Source guards: the "works on the developer's machine" class ──────
+// Prose in AGENTS.md tells the next contributor what not to write; these fail
+// the build when someone writes it anyway. Every pattern below shipped once and
+// was invisible on localhost. See §24 of docs/engineering-decisions.md.
+
+/** Comments explain these patterns; only real code should trip the guards. */
+function stripComments(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "")               // block and JSDoc comments
+    .split("\n")
+    .filter(l => !/^\s*(\/\/|\*)/.test(l))            // whole-line // and * continuations
+    .join("\n");
+}
+
+function sourceFiles() {
+  const out = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (/\.(ts|tsx)$/.test(e.name)) out.push([full, stripComments(readFileSync(full, "utf8"))]);
+    }
+  };
+  for (const d of ["app", "components", "lib"]) walk(d);
+  out.push(["proxy.ts", stripComments(readFileSync("proxy.ts", "utf8"))]);
+  return out;
+}
+
+test("guard: the cookie Secure flag is not keyed off NODE_ENV", () => {
+  const src = stripComments(readFileSync("lib/auth/session.ts", "utf8"));
+  assert.ok(src.includes("isSecureRequest"), "session.ts must derive Secure from the request");
+  assert.ok(
+    !/NODE_ENV[^\n]*\?\s*\[\s*"Secure"/.test(src),
+    'Secure must come from the transport, not from NODE_ENV — `next start` sets production even for the local demo, and a browser drops a Secure cookie sent over http',
+  );
+});
+
+test("guard: an origin check never compares against req.nextUrl.host", () => {
+  for (const [file, src] of sourceFiles()) {
+    const offending = src
+      .split("\n")
+      .filter(l => !l.trimStart().startsWith("//") && !l.trimStart().startsWith("*"))
+      .filter(l => /===\s*req\.nextUrl\.host|req\.nextUrl\.host\s*===/.test(l));
+    assert.equal(
+      offending.length, 0,
+      `${file}: nextUrl.host is the server's own bind hostname under \`next start\`, so it never matches a visitor who arrived by LAN IP or domain. Compare against X-Forwarded-Host / Host.`,
+    );
+  }
+});
+
+test("guard: clipboard access goes through lib/clipboard.ts", () => {
+  for (const [file, src] of sourceFiles()) {
+    if (file.endsWith("lib/clipboard.ts")) continue;
+    assert.ok(
+      !/navigator\.clipboard\s*[.?]/.test(src),
+      `${file}: navigator.clipboard is undefined outside a secure context (a phone on http://<lan-ip>). Use copyText() from lib/clipboard.ts.`,
+    );
+  }
+});
+
+test("guard: no iframe is lazily loaded", () => {
+  for (const [file, src] of sourceFiles()) {
+    for (const tag of src.match(/<iframe[\s\S]*?\/>/g) ?? []) {
+      assert.ok(
+        !/loading=["']lazy["']/.test(tag),
+        `${file}: a lazy <iframe> below the fold is never requested on a phone — it only appeared after a reload restored the scroll position.`,
+      );
+    }
+  }
+});
+
+test("guard: every infinite marquee pauses with the tab", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const paused = css.slice(css.indexOf("html.page-hidden"));
+  for (const cls of ["ticker-strip", "related-strip"]) {
+    assert.ok(
+      paused.includes(cls),
+      `.${cls} animates forever; add it to the html.page-hidden list in globals.css so a backgrounded tab stops waking the GPU (§22).`,
+    );
+  }
 });
 
 // ── The session cookie must be storable by the client ────────────────
