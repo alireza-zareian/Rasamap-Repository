@@ -379,23 +379,22 @@ export interface ListingResubmitInput {
  * review note is cleared. Returns null if the row is not the caller's or not
  * in that state. A name/city clash with the caller's other listings surfaces
  * as a Prisma P2002 for the route to translate.
+ *
+ * Those two conditions live in the WHERE of a single `updateMany`, not in a
+ * separate read followed by a write: a bare check-then-write would let two
+ * simultaneous resubmits both pass the check and both write (§8 of
+ * docs/engineering-decisions.md). `count === 0` means the guard rejected it —
+ * the row was not the caller's, or another request had already moved it out of
+ * `needs_revision`.
  */
 export async function resubmitListing(
   id: number,
   userId: number,
   data: ListingResubmitInput,
 ): Promise<Billboard | null> {
-  const existing = await prisma.billboard.findUnique({
-    where:  { id },
-    select: { submittedById: true, status: true },
-  });
-  if (!existing || existing.submittedById !== userId || existing.status !== "needs_revision") {
-    return null;
-  }
-
   const monthly = data.price;
-  const row = await prisma.billboard.update({
-    where: { id },
+  const { count } = await prisma.billboard.updateMany({
+    where: { id, submittedById: userId, status: "needs_revision" },
     data: {
       name:           data.name,
       location:       data.location || data.city,
@@ -420,7 +419,10 @@ export async function resubmitListing(
       reviewNote:     null,
     },
   });
-  return fromRow(row);
+  if (count === 0) return null;
+
+  const row = await prisma.billboard.findUnique({ where: { id } });
+  return row ? fromRow(row) : null;
 }
 
 export interface BillboardUpdateInput {
