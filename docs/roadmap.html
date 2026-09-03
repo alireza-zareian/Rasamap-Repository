@@ -1,402 +1,930 @@
-<title>Rasamap · ۱۰ روز تا ارائه</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>رسامپ — سند فنی پروژه</title>
 
+<!-- Everything this file needs is beside it in docs/vendor/, so it opens with
+     no internet connection: the font, and the diagram engine. -->
+<script src="vendor/mermaid.min.js"></script>
 <style>
-:root {
-  --bg: #0f1218;
-  --bg2: #131922;
-  --card: #181f2e;
-  --card2: #1e2840;
-  --border: #263044;
-  --border-hi: #384d6a;
-  --green: #22c55e; --green-dim: #22c55e18; --green-mid: #22c55e44;
-  --amber: #f59e0b; --amber-dim: #f59e0b18; --amber-mid: #f59e0b44;
-  --indigo: #818cf8; --indigo-dim: #818cf818; --indigo-mid: #818cf844;
-  --red: #ef4444; --red-dim: #ef444418; --red-mid: #ef444444;
-  --cyan: #38bdf8; --cyan-dim: #38bdf818;
-  --muted: #94a3b8; --muted2: #4b5a70; --text: #dde6f5;
+@font-face{font-family:'Vazirmatn';src:url('vendor/vazirmatn-arabic-wght-normal.woff2') format('woff2-variations');font-weight:100 900;font-display:swap;unicode-range:U+0600-06FF,U+200C-200E,U+2010-2011,U+FB50-FDFF,U+FE70-FEFF;}
+@font-face{font-family:'Vazirmatn';src:url('vendor/vazirmatn-latin-wght-normal.woff2') format('woff2-variations');font-weight:100 900;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215;}
+
+:root{
+  --bg:#F4F5F8;
+  --paper:#FFFFFF;
+  --paper2:#FAFBFC;
+  --ink:#151A23;
+  --ink2:#3D4655;
+  --muted:#6B7484;
+  --muted2:#9AA2B1;
+  --line:#E2E5EB;
+  --line2:#CDD3DC;
+
+  --brand:#2F6BE0;
+  --brand-dim:#2F6BE00F;
+  --brand-mid:#2F6BE033;
+
+  --green:#0E8F5D;  --green-dim:#0E8F5D0F;  --green-mid:#0E8F5D33;
+  --amber:#B57209;  --amber-dim:#B572090F;  --amber-mid:#B5720933;
+  --red:#C33A3A;    --red-dim:#C33A3A0F;    --red-mid:#C33A3A33;
+  --violet:#6247C4; --violet-dim:#6247C40F; --violet-mid:#6247C433;
+
+  --radius:14px;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Vazirmatn', system-ui, sans-serif;
-  line-height: 1.75;
-  direction: rtl;
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:78px;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Vazirmatn',system-ui,sans-serif;
+  line-height:1.95;
+  font-size:15px;
+  -webkit-font-smoothing:antialiased;
 }
-.wrap { max-width: 980px; margin: 0 auto; padding: 36px 20px 100px; }
-
-/* ─── HERO ─── */
-.hero {
-  background: linear-gradient(160deg, #1a2540 0%, #0f1218 60%);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 36px 36px 30px;
-  position: relative; overflow: hidden; margin-bottom: 28px;
+::selection{background:var(--brand);color:#fff;}
+a{color:var(--brand);}
+code{
+  font-family:var(--mono);direction:ltr;display:inline-block;
+  background:#EEF1F6;border:1px solid var(--line);border-radius:5px;
+  padding:0 5px;font-size:0.84em;color:#2A3546;
 }
-.hero::before {
-  content: ''; position: absolute; top: -80px; left: -80px;
-  width: 340px; height: 340px;
-  background: radial-gradient(circle, #f59e0b22 0%, transparent 70%);
-  pointer-events: none;
+b,strong{font-weight:700;color:var(--ink);}
+
+/* ── top bar ─────────────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:60;
+  background:rgba(255,255,255,0.9);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
 }
-.hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.hero-title h1 { font-size: clamp(22px, 4vw, 32px); font-weight: 800; line-height: 1.3; }
-.hero-title h1 b { color: var(--amber); }
-.hero-title p { color: var(--muted); font-size: 14.5px; margin-top: 6px; max-width: 480px; }
-
-.countdown {
-  display: flex; gap: 12px; align-items: center; flex-shrink: 0;
-  background: var(--amber-dim); border: 1px solid var(--amber-mid);
-  border-radius: 14px; padding: 14px 22px;
+.topbar-in{
+  max-width:1120px;margin:0 auto;padding:11px 22px;
+  display:flex;align-items:center;gap:16px;
 }
-.countdown .num { font-size: 48px; font-weight: 900; color: var(--amber); line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.countdown .label { font-size: 12px; color: var(--amber); font-weight: 600; }
+.logo{
+  width:30px;height:30px;border-radius:8px;background:var(--brand);
+  color:#fff;font-weight:900;font-size:15px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.topbar h1{font-size:14.5px;font-weight:800;white-space:nowrap;}
+.topbar h1 small{font-weight:400;color:var(--muted);font-size:12px;margin-right:6px;}
+.chapnav{display:flex;gap:3px;overflow-x:auto;margin-right:auto;scrollbar-width:none;}
+.chapnav::-webkit-scrollbar{display:none;}
+.chapnav a{
+  white-space:nowrap;font-size:12px;color:var(--muted);text-decoration:none;
+  padding:5px 10px;border-radius:8px;border:1px solid transparent;transition:.15s;
+}
+.chapnav a:hover{background:var(--paper2);border-color:var(--line);color:var(--ink);}
 
-.progress-row { margin-top: 26px; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
-.prog-item { text-align: center; padding: 10px 8px; border-radius: 12px; border: 1px solid var(--border); background: #ffffff06; }
-.prog-item .pnum { font-size: 22px; font-weight: 800; line-height: 1; }
-.prog-item .plabel { font-size: 11px; color: var(--muted); margin-top: 4px; }
-.prog-item.done-item .pnum { color: var(--green); }
-.prog-item.next-item .pnum { color: var(--amber); }
-.prog-item.defer-item .pnum { color: var(--indigo); }
+/* ── page shell ──────────────────────────────────────────── */
+main{max-width:1120px;margin:0 auto;padding:0 22px 80px;}
 
-/* ─── STATUS STRIP ─── */
-.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 28px; }
-.chip { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); font-size: 13px; font-weight: 500; transition: border-color .15s; }
-.chip:hover { border-color: var(--border-hi); }
-.chip .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.chip.done { border-color: var(--green-mid); background: var(--green-dim); }
-.chip.done .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
-.chip.done .clabel { color: var(--green); font-weight: 700; }
-.chip.next { border-color: var(--amber-mid); background: var(--amber-dim); }
-.chip.next .dot { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
-.chip.next .clabel { color: var(--amber); font-weight: 700; }
-.chip.defer { border-color: var(--indigo-mid); background: var(--indigo-dim); }
-.chip.defer .dot { background: var(--indigo); }
-.chip.defer .clabel { color: var(--indigo); }
-.chip.warn { border-color: var(--red-mid); background: var(--red-dim); }
-.chip.warn .dot { background: var(--red); }
-.chip.warn .clabel { color: var(--red); font-weight: 700; }
-.chip.todo .dot { background: var(--muted2); }
-.chip.todo .clabel { color: var(--muted); }
-.chip .ctext { flex: 1; min-width: 0; }
-.chip .clabel { display: block; font-size: 11px; }
-.chip .cdesc { font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ── cover ───────────────────────────────────────────────── */
+.cover{padding:64px 0 40px;border-bottom:1px solid var(--line);margin-bottom:8px;}
+.cover .kicker{
+  display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--green);
+  background:var(--green-dim);border:1px solid var(--green-mid);
+  padding:5px 13px;border-radius:100px;margin-bottom:20px;
+}
+.cover h2{font-size:clamp(26px,4.2vw,40px);font-weight:900;line-height:1.4;letter-spacing:-0.4px;}
+.cover h2 span{color:var(--brand);}
+.cover .lede{color:var(--ink2);font-size:16px;max-width:760px;margin-top:14px;}
+.numbers{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;margin-top:30px;}
+.nbox{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+.nbox .v{font-size:22px;font-weight:900;line-height:1.3;}
+.nbox .l{font-size:11.5px;color:var(--muted);}
+.nbox.b .v{color:var(--brand);} .nbox.g .v{color:var(--green);} .nbox.a .v{color:var(--amber);} .nbox.v_ .v{color:var(--violet);}
 
-/* ─── SECTION HEADER ─── */
-.sec-head { display: flex; align-items: center; gap: 12px; margin: 36px 0 16px; }
-.sec-head h2 { font-size: 17px; font-weight: 800; }
-.sec-head .line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+/* ── chapters ────────────────────────────────────────────── */
+.chapter{margin-top:56px;scroll-margin-top:78px;}
+.chapter > .chead{display:flex;align-items:flex-start;gap:14px;padding-bottom:14px;border-bottom:2px solid var(--ink);}
+.chapter > .chead .cn{
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;
+  color:#fff;background:var(--ink);border-radius:7px;padding:4px 9px;flex-shrink:0;margin-top:5px;
+}
+.chapter > .chead h3{font-size:24px;font-weight:800;line-height:1.5;}
+.chapter > .chead p{font-size:13.5px;color:var(--muted);font-weight:400;margin-top:2px;}
 
-/* ─── SPRINT TABLE ─── */
-.sprint { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-bottom: 28px; }
-.day { border-radius: 10px; padding: 10px 6px; text-align: center; border: 1px solid var(--border); background: var(--card); cursor: default; transition: transform .15s, box-shadow .15s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-.day:hover { transform: translateY(-2px); box-shadow: 0 8px 20px #0009; }
-.day .dnum { font-size: 18px; font-weight: 800; line-height: 1; }
-.day .dtag { font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 6px; letter-spacing: .02em; }
-.day .dicon { font-size: 16px; }
-.day.done-day { border-color: var(--green-mid); background: var(--green-dim); }
-.day.done-day .dnum { color: var(--green); }
-.day.done-day .dtag { background: #22c55e20; color: var(--green); }
-.day.phase7b { border-color: #fb923c44; background: #fb923c12; }
-.day.phase7b .dnum { color: #fb923c; }
-.day.phase7b .dtag { background: #fb923c20; color: #fb923c; }
-.day.phase8 { border-color: var(--green-mid); background: var(--green-dim); opacity:.6; }
-.day.phase8 .dnum { color: var(--green); }
-.day.phase8 .dtag { background: #22c55e20; color: var(--green); }
-.day.phase9 { border-color: var(--amber-mid); background: var(--amber-dim); opacity:.6; }
-.day.phase9 .dnum { color: var(--amber); }
-.day.phase9 .dtag { background: #f59e0b20; color: var(--amber); }
+.block{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-top:18px;}
+.block > h4{font-size:16px;font-weight:800;margin-bottom:10px;}
+.block > h4 + p{color:var(--ink2);}
+.block p + p{margin-top:12px;}
+.block p{color:var(--ink2);}
+.lead{font-size:15.5px;}
 
-/* ─── PHASE CARDS ─── */
-.phases { display: flex; flex-direction: column; gap: 14px; }
-.phase-card { border-radius: 16px; border: 1px solid var(--border); background: var(--card); overflow: hidden; transition: border-color .2s, box-shadow .2s; }
-.phase-card:hover { border-color: var(--border-hi); box-shadow: 0 10px 30px #0008; }
-.phase-card.is-done { border-color: var(--green-mid); }
-.phase-card.is-next { border-color: var(--amber-mid); }
-.phase-card.is-defer { border-color: var(--indigo-mid); }
-.ph-header { display: flex; align-items: center; gap: 16px; padding: 18px 22px; cursor: pointer; user-select: none; position: relative; }
-.ph-header::after { content: '›'; position: absolute; left: 22px; top: 50%; transform: translateY(-50%) rotate(90deg); color: var(--muted2); font-size: 18px; transition: transform .25s; }
-.phase-card.open .ph-header::after { transform: translateY(-50%) rotate(-90deg); }
-.ph-num { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #ffffff08; color: var(--muted); border: 1px solid var(--border); }
-.is-done .ph-num { background: var(--green-dim); color: var(--green); border-color: var(--green-mid); }
-.is-next .ph-num { background: var(--amber-dim); color: var(--amber); border-color: var(--amber-mid); }
-.is-defer .ph-num { background: var(--indigo-dim); color: var(--indigo); border-color: var(--indigo-mid); }
-.ph-title { flex: 1; }
-.ph-title h3 { font-size: 15px; font-weight: 700; }
-.ph-title p { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-.ph-badge { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 99px; letter-spacing: .03em; flex-shrink: 0; }
-.is-done .ph-badge { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-mid); }
-.is-next .ph-badge { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-mid); }
-.is-defer .ph-badge { background: var(--indigo-dim); color: var(--indigo); border: 1px solid var(--indigo-mid); }
-.ph-badge.todo { background: #ffffff08; color: var(--muted); border: 1px solid var(--border); }
-.ph-body { display: none; padding: 0 22px 20px; border-top: 1px solid var(--border); }
-.phase-card.open .ph-body { display: block; }
-.ph-body h4 { font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 16px 0 8px; }
+/* callouts */
+.note{border-radius:12px;padding:14px 17px;font-size:14px;line-height:1.9;margin-top:16px;border:1px solid;}
+.note.info{background:var(--brand-dim);border-color:var(--brand-mid);color:var(--ink2);}
+.note.warn{background:var(--amber-dim);border-color:var(--amber-mid);color:var(--ink2);}
+.note.good{background:var(--green-dim);border-color:var(--green-mid);color:var(--ink2);}
+.note.bad{background:var(--red-dim);border-color:var(--red-mid);color:var(--ink2);}
+.note.viol{background:var(--violet-dim);border-color:var(--violet-mid);color:var(--ink2);}
+.note .t{font-weight:800;color:var(--ink);display:block;margin-bottom:3px;}
 
-.task-list { display: flex; flex-direction: column; gap: 7px; }
-.task { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 9px; background: #ffffff05; border: 1px solid var(--border); font-size: 13.5px; }
-.task .tick { flex-shrink: 0; width: 16px; height: 16px; border-radius: 5px; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-.task.done-t .tick { background: var(--green-dim); border: 1px solid var(--green-mid); color: var(--green); }
-.task.todo-t .tick { background: #ffffff08; border: 1px solid var(--border); color: transparent; }
-.task.warn-t .tick { background: var(--red-dim); border: 1px solid var(--red-mid); color: var(--red); }
-.task.block-t { opacity: .55; }
-.task.block-t .tick { background: var(--indigo-dim); border: 1px solid var(--indigo-mid); color: var(--indigo); }
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:14px;display:block;overflow-x:auto;}
+.tbl thead th{
+  background:var(--paper2);color:var(--muted);font-weight:700;font-size:12px;
+  text-align:right;padding:9px 12px;border-bottom:1px solid var(--line2);white-space:nowrap;
+}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
 
-.proof { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--green-dim); border: 1px solid var(--green-mid); font-size: 13px; }
-.proof b { color: var(--green); }
-.note { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--amber-dim); border: 1px solid var(--amber-mid); font-size: 13px; color: var(--text); }
-.note b { color: var(--amber); }
-.warn-box { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--red-dim); border: 1px solid var(--red-mid); font-size: 13px; color: var(--text); }
-.warn-box b { color: var(--red); }
-.defer-note { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--indigo-dim); border: 1px solid var(--indigo-mid); font-size: 13px; }
-.defer-note b { color: var(--indigo); }
+/* diagram frame — light, printable */
+.dia{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px 14px;margin-top:18px;overflow-x:auto;
+}
+.dia .mermaid{display:flex;justify-content:center;min-width:520px;}
+.dia .cap{
+  text-align:center;font-size:12px;color:var(--muted);
+  margin-top:12px;padding-top:10px;border-top:1px dashed var(--line2);
+}
 
-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; background: #0009; border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--cyan); direction: ltr; display: inline-block; }
-.files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+/* two-column */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+@media(max-width:760px){.cols{grid-template-columns:1fr;}}
 
-.type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 10px; }
-.type-card { background: #ffffff06; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
-.type-card .ticon { font-size: 20px; margin-bottom: 4px; }
-.type-card .tname { font-weight: 700; color: var(--text); }
-.type-card .tcount { font-size: 12px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
-.type-card.has-data { border-color: var(--green-mid); background: var(--green-dim); }
+/* generic list */
+.ul{list-style:none;display:flex;flex-direction:column;gap:9px;margin-top:12px;}
+.ul li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink2);}
+.ul li .b{color:var(--brand);flex-shrink:0;font-weight:800;}
 
-/* ─── QUALITY BOX ─── */
-.quality-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-.qbox { border-radius: 14px; padding: 18px 20px; border: 1px solid var(--border); background: var(--card); }
-.qbox h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
-.qbox ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.qbox li { display: flex; gap: 8px; font-size: 13px; align-items: flex-start; }
-.qbox li span { flex-shrink: 0; font-size: 13px; }
-.qbox.good { border-color: var(--green-mid); }
-.qbox.good h3 { color: var(--green); }
-.qbox.bad { border-color: var(--red-mid); }
-.qbox.bad h3 { color: var(--red); }
+/* collapsible */
+details.fold{border:1px solid var(--line);border-radius:12px;background:var(--paper);margin-top:12px;overflow:hidden;}
+details.fold > summary{
+  cursor:pointer;list-style:none;padding:13px 17px;display:flex;align-items:center;gap:11px;
+  font-weight:700;font-size:14.5px;user-select:none;
+}
+details.fold > summary::-webkit-details-marker{display:none;}
+details.fold > summary::before{
+  content:"›";font-size:20px;color:var(--muted2);transition:transform .18s;
+  display:inline-block;flex-shrink:0;line-height:1;
+}
+details.fold[open] > summary::before{transform:rotate(90deg);}
+details.fold > summary:hover{background:var(--paper2);}
+details.fold .foldbody{padding:0 17px 17px;}
+details.fold > summary .tag{
+  margin-right:auto;font-size:11px;font-weight:600;color:var(--muted);
+  background:var(--paper2);border:1px solid var(--line);padding:2px 9px;border-radius:100px;
+}
 
-/* ─── DECISION BOX ─── */
-.decision { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 24px; margin-bottom: 14px; }
-.decision h3 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
-.decision ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.decision li { display: flex; gap: 8px; font-size: 13.5px; align-items: flex-start; }
-.decision li::before { content: '—'; color: var(--muted2); flex-shrink: 0; }
-
-footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
-
-@media (max-width: 640px) {
-  .sprint { grid-template-columns: repeat(5, 1fr); }
-  .quality-grid { grid-template-columns: 1fr; }
-  .countdown .num { font-size: 36px; }
-  .hero { padding: 24px 20px 22px; }
-  .ph-header { gap: 10px; padding: 14px 16px; }
-  .ph-body { padding: 0 16px 16px; }
+/* ── chapter 8: migrated history cards ──────────────────── */
+:root{
+  --text:#151A23; --card:#FFFFFF; --card2:#FAFBFC; --bg2:#FAFBFC;
+  --border:#E2E5EB; --border-hi:#CDD3DC;
+  --indigo:#6247C4; --indigo-dim:#6247C40F; --indigo-mid:#6247C433;
+  --cyan:#0E7490; --cyan-dim:#0E74900F;
+}
+.phases{display:flex;flex-direction:column;gap:9px;}
+.phase-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+.phase-card.is-done{border-color:var(--green-mid);}
+.phase-card.is-next{border-color:var(--amber-mid);}
+.phase-card.is-defer{border-color:var(--violet-mid);}
+.ph-header{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;}
+.ph-header:hover{background:var(--paper2);}
+.ph-num{width:36px;height:36px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:12.5px;font-weight:800;background:var(--paper2);
+  color:var(--muted);border:1px solid var(--line);}
+.is-done .ph-num{background:var(--green-dim);color:var(--green);border-color:var(--green-mid);}
+.is-next .ph-num{background:var(--amber-dim);color:var(--amber);border-color:var(--amber-mid);}
+.is-defer .ph-num{background:var(--violet-dim);color:var(--violet);border-color:var(--violet-mid);}
+.ph-title{flex:1;min-width:0;}
+.ph-title h3{font-size:14.5px;font-weight:700;line-height:1.6;}
+.ph-title p{font-size:12px;color:var(--muted);font-weight:400;line-height:1.7;}
+.ph-badge{font-size:11px;font-weight:700;padding:3px 11px;border-radius:100px;white-space:nowrap;
+  background:var(--paper2);border:1px solid var(--line);color:var(--muted);flex-shrink:0;}
+.ph-badge.done{background:var(--green-dim);border-color:var(--green-mid);color:var(--green);}
+.ph-badge.todo{background:var(--amber-dim);border-color:var(--amber-mid);color:var(--amber);}
+.ph-body{display:none;padding:2px 14px 15px;border-top:1px solid var(--line);}
+.phase-card.open .ph-body{display:block;}
+.task-list{display:flex;flex-direction:column;gap:7px;margin-top:12px;}
+.task{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--ink2);line-height:1.85;}
+.tick{width:17px;height:17px;border-radius:5px;flex-shrink:0;margin-top:4px;display:flex;
+  align-items:center;justify-content:center;font-size:11px;font-weight:800;
+  border:1px solid var(--line2);color:transparent;background:var(--paper2);}
+.done-t .tick{background:var(--green-dim);border-color:var(--green-mid);color:var(--green);}
+.proof{margin-top:13px;background:var(--green-dim);border:1px solid var(--green-mid);border-radius:10px;
+  padding:11px 14px;font-size:12.5px;color:var(--ink2);line-height:1.9;}
+.warn-box{margin-top:12px;background:var(--amber-dim);border:1px solid var(--amber-mid);border-radius:10px;
+  padding:11px 14px;font-size:13px;color:var(--ink2);line-height:1.9;}
+.phase-card .sec-head,.phase-card .strip{display:none;}
+@media print{
+  .topbar{position:static;}
+  details.fold,details.fold[open]{border-color:var(--line);}
+  details.fold > .foldbody{display:block !important;}
+  .phase-card .ph-body{display:block !important;}
 }
 </style>
+</head>
+<body>
 
-<div class="wrap">
-
-<!-- ══ RULE ZERO — the rule that keeps getting forgotten ══ -->
-<div style="margin:0 0 20px; padding:18px 20px; border-radius:14px;
-            background:var(--red-dim); border:2px solid var(--red);">
-  <div style="font-size:19px; font-weight:900; color:var(--red); margin-bottom:10px;">
-    ⛔ برای دیدن یا ارائه‌ی سایت، <u>هرگز</u> <code>npm run dev</code> نزن
-  </div>
-  <div style="font-size:26px; font-weight:900; color:var(--green); margin-bottom:12px; letter-spacing:.5px;">
-    npm run demo
-  </div>
-  <div style="font-size:14px; line-height:2; color:var(--text);">
-    اندازه‌گیریِ واقعی روی همین پروژه — اولین بازدید از ۱۰ صفحه:
-    <b style="color:var(--red)">dev = ۹.۷ ثانیه CPU</b> در برابر
-    <b style="color:var(--green)">demo = ۰.۱ ثانیه CPU</b> →
-    <b style="color:var(--red); font-size:17px">۹۷ برابر فشارِ کمتر.</b><br>
-    <b>چرا:</b> حالت <code>dev</code> هر صفحه را لحظه‌ی کلیک از صفر کامپایل می‌کند و
-    ۶۷۱۰ فایل را watch می‌کند. روی مک‌بوک ایرِ بدونِ فن، همین باعثِ داغ‌شدنِ لپ‌تاپ
-    وسطِ جلسه‌ی دفاع می‌شود. <code>dev</code> فقط برای کدنویسی با hot-reload.
-  </div>
-  <div style="margin-top:12px; padding:10px 14px; border-radius:10px;
-              background:var(--card2); border:1px solid var(--red-mid); font-size:13.5px; line-height:1.95;">
-    📝 <b style="color:var(--red)">به ایجنتی که مقاله / گزارش / پایان‌نامه را می‌نویسد:</b>
-    این نکته باید در متن بیاید و به خواننده <b>تأکید</b> شود — هم عددِ ۹۷ برابر، هم دلیلش.
-    یک تصمیمِ مهندسیِ قابل‌دفاع است، نه جزئیاتِ اجرایی.
-    شرح کامل: <code>docs/engineering-decisions.md</code> §۲۲ و §۲۲a.
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="logo">R</div>
+    <h1>رسامپ <small>سند فنی پروژه</small></h1>
+    <nav class="chapnav">
+      <a href="#c1">۱ نگاه کلی</a>
+      <a href="#c2">۲ معماری</a>
+      <a href="#c3">۳ مدل داده</a>
+      <a href="#c4">۴ جریان‌ها</a>
+      <a href="#c5">۵ نقشهٔ فایل‌ها</a>
+      <a href="#c6">۶ امنیت</a>
+      <a href="#c7">۷ کارایی</a>
+      <a href="#c8">۸ تاریخچه</a>
+      <a href="#c9">۹ محدودیت‌ها</a>
+      <a href="#c10">۱۰ نوشتن مستندات</a>
+      <a href="#c11">۱۱ مسیر یادگیری</a>
+    </nav>
   </div>
 </div>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-top">
-    <div class="hero-title">
-      <h1>Rasamap · <b id="days-left">۱۰</b> روز تا ارائه</h1>
-      <p>وضعیت واقعی پروژه بر اساس بررسی مستقیم کد و دیتابیس — نه حدس.</p>
+<main>
+
+<div class="cover">
+  <div class="kicker">✓ هر عدد و هر ادعای این سند از روی کد و دیتابیس واقعی پروژه استخراج شده</div>
+  <h2>رسامپ — بازار آنلاین <span>رسانه‌های محیطی</span> ایران</h2>
+  <p class="lede">
+    یک پلتفرم کامل برای پیدا کردن، مقایسه و اجارهٔ بیلبورد و رسانه‌های تبلیغاتی محیطی:
+    از خزندهٔ داده تا پنل مدیریت، با احراز هویت، پرداخت دستی، تحلیل بازار و ثبت تقاضا.
+    این سند نقشهٔ کاملِ آن است — معماری، مدل داده، جریان‌های کاربری، تاریخچهٔ ساخت و محدودیت‌ها.
+  </p>
+  <div class="numbers">
+    <div class="nbox b"><div class="v">۳۵۳۶</div><div class="l">رسانه در دیتابیس</div></div>
+    <div class="nbox"><div class="v">۱۰۱</div><div class="l">شهر</div></div>
+    <div class="nbox g"><div class="v">۸۷</div><div class="l">تست خودکار</div></div>
+    <div class="nbox"><div class="v">۳۱</div><div class="l">مسیر API</div></div>
+    <div class="nbox v_"><div class="v">۹</div><div class="l">جدول دیتابیس</div></div>
+    <div class="nbox a"><div class="v">۹۷ برابر</div><div class="l">کم‌مصرف‌تر در حالت دمو</div></div>
+  </div>
+</div>
+
+<!-- ════════ فصل ۱ ════════ -->
+<section class="chapter" id="c1">
+  <div class="chead">
+    <div class="cn">فصل ۱</div>
+    <div><h3>پروژه در یک نگاه</h3><p>مسئله چه بود، چه ساخته شد، و با چه ابزاری</p></div>
+  </div>
+
+  <div class="block">
+    <h4>مسئله</h4>
+    <p class="lead">
+      بازار تبلیغات محیطی ایران آنلاین نیست. کسی که می‌خواهد بیلبورد اجاره کند باید به آژانس‌ها زنگ بزند،
+      و هیچ جایی نمی‌تواند ببیند در یک شهر چه رسانه‌ای هست، کجاست، چقدر بزرگ است و چقدر می‌ارزد.
+      سایت‌های موجود (IRBillboard، Billboardiha) فهرست‌های ساده‌اند: بدون مقایسه، بدون تخمین بازدید،
+      اغلب بدون قیمت.
+    </p>
+    <p>
+      رسامپ این بازار را در یک جا جمع می‌کند: داده از پنج منبع جمع‌آوری و یکسان‌سازی می‌شود،
+      کاربر جستجو و فیلتر و مقایسه می‌کند، و برای گرفتن شمارهٔ صاحب رسانه باید حساب بسازد.
+      صاحبان رسانه هم می‌توانند خودشان آگهی ثبت کنند که بعد از بررسی کارشناس منتشر می‌شود.
+    </p>
+  </div>
+
+  <div class="block">
+    <h4>مدل کسب‌وکار — و چرا «رزرو آنلاین» عمداً وجود ندارد</h4>
+    <p>
+      رسامپ مالک هیچ بیلبوردی نیست، پس نمی‌تواند چیزی را که در اختیار ندارد بفروشد.
+      اگر دکمهٔ «رزرو» می‌گذاشتیم، تعهدی می‌دادیم که پشتوانه‌ای نداشت. به‌جایش:
+      خریدار شمارهٔ صاحب رسانه را می‌گیرد و معامله بیرون از پلتفرم انجام می‌شود؛
+      درآمد از سمتِ <b>آگهی‌دهنده</b> می‌آید — پلن ویژه که آگهی را بالای نتایج می‌برد.
+    </p>
+    <div class="note warn">
+      <span class="t">این یک نقطه‌قوت دفاعی است، نه یک کمبود</span>
+      داور احتمالاً می‌پرسد «چرا رزرو ندارید؟». پاسخ: یک واسطهٔ مالی شدن بدون قرارداد با
+      صاحبان رسانه و بدون درگاه پرداخت، وعدهٔ دروغ است. حذف زیرسیستم رزرو یک <b>تصمیم مهندسی
+      ثبت‌شده</b> است (§۱۷ در <code>docs/engineering-decisions.md</code>)، نه چیزی که از قلم افتاده باشد.
     </div>
-    <div class="countdown">
-      <div>
-        <div class="num" id="countdown-num">—</div>
-        <div class="label">روز مانده</div>
+  </div>
+
+  <div class="block">
+    <h4>پشتهٔ فناوری — هر لایه به زبان ساده</h4>
+    <table class="tbl">
+      <thead><tr><th>لایه</th><th>ابزار</th><th>یعنی چه</th></tr></thead>
+      <tbody>
+        <tr><td>چارچوب</td><td><code>Next.js 16</code> + <code>React 19</code></td><td>هم صفحه‌های سایت را می‌سازد، هم سرور API را. یک برنامه، نه دو تا.</td></tr>
+        <tr><td>زبان</td><td><code>TypeScript 5</code> (strict)</td><td>جاوااسکریپت با «نوع». اگر جایی رشته را جای عدد بگذاری، قبل از اجرا خطا می‌دهد.</td></tr>
+        <tr><td>دیتابیس</td><td><code>SQLite</code> + <code>Prisma 7</code></td><td>دیتابیس در یک فایل؛ Prisma واسطه‌ای است که به‌جای نوشتن SQL خام، با کد تایپ‌دار پرس‌وجو می‌کنی.</td></tr>
+        <tr><td>احراز هویت</td><td><code>JWT</code> (jose) + کوکی HttpOnly</td><td>یک بلیت امضاشده در کوکی‌ای که جاوااسکریپت مرورگر نمی‌تواند بخواند.</td></tr>
+        <tr><td>اعتبارسنجی</td><td><code>Zod</code></td><td>نگهبان درِ ورودی: هر داده‌ای که از بیرون می‌آید اول باید شکل درست را داشته باشد.</td></tr>
+        <tr><td>ظاهر</td><td>استایل inline + متغیرهای CSS</td><td>رنگ و اندازه کنار خودِ عنصر نوشته می‌شود؛ پالت مشترک در <code>globals.css</code>.</td></tr>
+        <tr><td>خزنده</td><td><code>Python</code> + Pillow</td><td>بخش جدا: داده و عکسِ رسانه‌ها را از پنج سایت جمع می‌کند و بهینه می‌سازد.</td></tr>
+      </tbody>
+    </table>
+    <div class="note info">
+      <span class="t">چرا SQLite و نه PostgreSQL؟</span>
+      چون داده‌ها در حد چند هزار ردیف است و یک نفر آن را اجرا می‌کند. Prisma لایهٔ واسط است،
+      پس مهاجرت به PostgreSQL بعداً یعنی عوض کردن دو خط تنظیمات و اجرای مهاجرت‌ها — نه بازنویسی کد.
+      این استدلال کامل در §۱۴ <code>engineering-decisions.md</code> آمده.
+    </div>
+  </div>
+</section>
+
+<!-- ════════ فصل ۲ ════════ -->
+<section class="chapter" id="c2">
+  <div class="chead">
+    <div class="cn">فصل ۲</div>
+    <div><h3>معماری — دو مسیر داده</h3><p>اولین سؤالی که یک اپ Next.js در جلسهٔ دفاع می‌سازد</p></div>
+  </div>
+
+  <div class="block">
+    <h4>سؤالی که حتماً پرسیده می‌شود: «چرا همهٔ صفحه‌ها API را صدا نمی‌زنند؟»</h4>
+    <p class="lead">
+      در رسامپ داده از <b>دو مسیر متفاوت</b> به کاربر می‌رسد، و این عمدی است:
+    </p>
+    <div class="cols">
+      <div class="note good">
+        <span class="t">مسیر ۱ — صفحه مستقیم از دیتابیس می‌خواند</span>
+        صفحه‌هایی مثل جزئیات بیلبورد یا صفحهٔ اصلی، روی <b>سرور</b> ساخته می‌شوند.
+        همان‌جا مستقیم از دیتابیس می‌خوانند و HTML آماده به مرورگر می‌رود.
+        بدون درخواست شبکهٔ اضافه، بدون حالت «در حال بارگذاری».
+      </div>
+      <div class="note info">
+        <span class="t">مسیر ۲ — مرورگر API را صدا می‌زند</span>
+        هرجا که کاربر <b>تعامل</b> دارد — فیلتر کردن، صفحهٔ بعد، ثبت نظر، گرفتن شماره —
+        مرورگر یک درخواست HTTP به <code>/api/…</code> می‌فرستد و فقط همان تکه را به‌روز می‌کند.
       </div>
     </div>
-  </div>
-  <div class="progress-row">
-    <div class="prog-item done-item">
-      <div class="pnum">۲۰+</div>
-      <div class="plabel">Phase تموم شده</div>
-    </div>
-    <div class="prog-item defer-item">
-      <div class="pnum">۴</div>
-      <div class="plabel">Deferred (MAP)</div>
-    </div>
-    <div class="prog-item next-item">
-      <div class="pnum">۲</div>
-      <div class="plabel">آماده‌سازی ارائه</div>
-    </div>
-    <div class="prog-item done-item">
-      <div class="pnum">۳۵۳۶</div>
-      <div class="plabel">بیلبورد در DB</div>
-    </div>
-    <div class="prog-item done-item">
-      <div class="pnum">A−</div>
-      <div class="plabel">سطح کد (review)</div>
+    <div class="note viol">
+      <span class="t">تشبیه رستوران</span>
+      مسیر ۱ مثل این است که <b>آشپز خودش غذا را روی میز بگذارد</b> — آشپزخانه و سالن یک ساختمان‌اند،
+      پس چرا پیک بگیریم؟ مسیر ۲ مثل سفارش گرفتنِ گارسون در وسط غذاست: مشتری چیز تازه‌ای می‌خواهد،
+      باید کسی برود و بیاورد.
+      <br><br>
+      <b>این میان‌بر یا نقص نیست.</b> این الگوی رسمی و توصیه‌شدهٔ خودِ Next.js است و از یک API جدا
+      (مثل معماری هدلسِ Django REST) سریع‌تر است، چون یک رفت‌وبرگشت شبکه کمتر دارد.
+      اگر داور بپرسد «پس API شما به چه درد می‌خورد؟» پاسخ: API برای تعامل، برای مصرف‌کنندهٔ بیرونی
+      و برای اپ موبایل آینده است — و همان API است که پنل مدیریت کاملاً روی آن کار می‌کند.
     </div>
   </div>
-</div>
 
-<!-- STATUS STRIP -->
-<div class="strip">
-  <div class="chip done">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">DB + API + Admin CRUD</span></div>
-  </div>
-  <div class="chip done">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">User Auth + Reservation API</span></div>
-  </div>
-  <div class="chip done">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">UI/UX بصری (U1–U9 کامل)</span></div>
-  </div>
-  <div class="chip done">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">Production Security (۱۵ fix)</span></div>
-  </div>
-  <div class="chip done">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">Scraper + تلفن + فرمول‌ها</span></div>
-  </div>
-  <div class="chip done">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">Reviews + Listings + Image upload</span></div>
-  </div>
-  <div class="chip done">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">✓ تموم شده</span><span class="cdesc">Sitemap + Robots + Error pages</span></div>
-  </div>
-  <div class="chip next" style="border-color:#7c3aed44; background:#7c3aed12">
-    <div class="dot" style="background:#a78bfa; box-shadow:0 0 8px #a78bfa"></div>
-    <div class="ctext"><span class="clabel" style="color:#a78bfa">✦ اولویت ۱ فعلی</span><span class="cdesc">آماده‌سازی ارائه (PREP + CMP)</span></div>
-  </div>
-  <div class="chip defer">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">⏸ Deferred</span><span class="cdesc">نقشه / Geolocation (MAP-A تا D)</span></div>
-  </div>
-  <div class="chip todo">
-    <div class="dot"></div>
-    <div class="ctext"><span class="clabel">⚪ Feature آینده</span><span class="cdesc">SMS / Payment / Map-First</span></div>
-  </div>
-</div>
+  <div class="dia"><div class="mermaid">
+flowchart TB
+    U["کاربر و مرورگر او"]
+    PX["نگهبان لبه<br/>proxy.ts"]
+    RSC["ساخت صفحه روی سرور<br/>Server Component"]
+    API["مسیرهای برنامه‌نویسی<br/>۳۱ مسیر"]
+    DAL["لایهٔ دسترسی داده<br/>یک نقطهٔ ورود به دیتابیس"]
+    DB[("دیتابیس")]
+    PY["خزندهٔ پایتون<br/>۵ منبع"]
+    FS[("پوشهٔ تصاویر")]
 
-<!-- SPRINT CALENDAR -->
-<div class="sec-head">
-  <h2>برنامه ۱۰ روزه</h2>
-  <div class="line"></div>
-</div>
-<div class="sprint">
-  <div class="day done-day"><div class="dicon">✓</div><div class="dnum">۱</div><div class="dtag">Admin CRUD</div></div>
-  <div class="day done-day"><div class="dicon">✓</div><div class="dnum">۲</div><div class="dtag">Admin CRUD</div></div>
-  <div class="day done-day"><div class="dicon">✓</div><div class="dnum">۳</div><div class="dtag">User Auth</div></div>
-  <div class="day done-day"><div class="dicon">✓</div><div class="dnum">۴</div><div class="dtag">User Auth</div></div>
-  <div class="day phase7b"><div class="dicon">📅</div><div class="dnum">۵</div><div class="dtag">Reservation</div></div>
-  <div class="day phase7b"><div class="dicon">📅</div><div class="dnum">۶</div><div class="dtag">Reservation</div></div>
-  <div class="day phase8"><div class="dicon">🛡️</div><div class="dnum">۷</div><div class="dtag">QA + Polish</div></div>
-  <div class="day phase9"><div class="dicon">🎯</div><div class="dnum">۸</div><div class="dtag">Demo Prep</div></div>
-  <div class="day phase9"><div class="dicon">🎯</div><div class="dnum">۹</div><div class="dtag">Demo Prep</div></div>
-  <div class="day phase9"><div class="dicon">🎓</div><div class="dnum">۱۰</div><div class="dtag">ارائه</div></div>
-</div>
+    U --> PX
+    PX -->|"مسیر ۱ · درخواست صفحه"| RSC
+    PX -->|"مسیر ۲ · تعامل کاربر"| API
+    RSC --> DAL
+    API --> DAL
+    DAL --> DB
+    RSC -->|"صفحهٔ آمادهٔ HTML"| U
+    API -->|"پاسخ JSON"| U
+    PY --> DB
+    PY --> FS
+    FS -->|"تصویر"| U
 
-<!-- CODE QUALITY REVIEW -->
-<div class="sec-head">
-  <h2>بررسی کیفیت کد — نتیجه review</h2>
-  <div class="line"></div>
-</div>
-<div class="quality-grid">
-  <div class="qbox good">
-    <h3>✅ نقاط قوت</h3>
-    <ul>
-      <li><span>🔐</span> JWT در HttpOnly + SameSite=Strict cookie (نه localStorage)</li>
-      <li><span>🔐</span> bcrypt cost 12 + timing-safe dummy hash (جلوگیری از user enumeration)</li>
-      <li><span>🔐</span> Rate limiting sliding window روی login و API</li>
-      <li><span>🔐</span> Zod validation روی تمام ورودی‌ها + allowlist برای sort/filter</li>
-      <li><span>🔐</span> RBAC با hierarchy: super_admin > admin > editor > viewer</li>
-      <li><span>🏗</span> ساختار فایل‌بندی حرفه‌ای: app / components / lib / prisma</li>
-      <li><span>🏗</span> Prisma singleton با hot-reload guard + explicit driver adapter</li>
-      <li><span>🏗</span> Query helpers جدا از route handlers (lib/db/billboards.ts)</li>
-      <li><span>🏗</span> TypeScript strict mode + type definitions مرکزی</li>
-      <li><span>🏗</span> Proxy (Next.js 16 Middleware) درست پیاده‌شده</li>
-    </ul>
+    classDef srv fill:#EDF3FF,stroke:#2F6BE0,color:#151A23
+    classDef sto fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
+    classDef ext fill:#F5F0FF,stroke:#6247C4,color:#151A23
+    classDef usr fill:#FFF8E8,stroke:#B57209,color:#151A23
+    class PX,RSC,API,DAL srv
+    class DB,FS sto
+    class PY ext
+    class U usr
+  </div><div class="cap">نمودار ۱ — هر دو مسیر از یک لایهٔ دسترسی داده رد می‌شوند، پس منطق تکراری نداریم</div></div>
+
+  <div class="block">
+    <h4>یک درخواست از کلیک تا پاسخ</h4>
+    <p>
+      این ترتیب در همهٔ مسیرهای مدیریتی <b>ثابت و غیرقابل‌جابه‌جایی</b> است. اگر جای دو مرحله عوض شود،
+      یک حفرهٔ امنیتی باز می‌شود: مثلاً اگر سقف درخواست قبل از احراز هویت بیاید، یک مهاجم بدون حساب
+      می‌تواند سهمیهٔ کاربران واقعی را تمام کند.
+    </p>
   </div>
-  <div class="qbox bad">
-    <h3>⚠ نقاط ضعف (وضعیت فعلی)</h3>
-    <ul>
-      <li><span>🔴</span> <strong>تست وجود ندارد</strong> — داور احتمالاً می‌پرسد «چطور مطمئنی چیزی نشکسته؟» — پاسخ آماده: end-to-end دستی + TypeScript strict</li>
-      <li><span>✅</span> <s>admin/page.tsx = 515 خط</s> — <strong>رفع شد:</strong> تقسیم به components/admin/ در Phase 8</li>
-      <li><span>🟡</span> lib/data.ts دو مسئولیت دارد — تصمیم: دست نزن (ریسک دارد)</li>
-      <li><span>✅</span> <s>app/error.tsx و app/not-found.tsx غایب</s> — <strong>رفع شد:</strong> هر دو اضافه شدند در Phase 8</li>
-      <li><span>🟡</span> dev.db در git است — قابل قبول برای thesis، نه production</li>
-      <li><span>✅</span> <s>dashboard hardcoded data</s> — <strong>رفع شد:</strong> به GET /api/reservations/my وصل شد</li>
-      <li><span>✅</span> <s>Security headers مرده بودند (addSecurityHeaders هرگز صدا زده نمی‌شد)</s> — <strong>رفع شد</strong> در Production Hardening</li>
-      <li><span>✅</span> <s>Admin GET role check نداشت</s> — <strong>رفع شد:</strong> session.role === "admin" اضافه شد</li>
-      <li><span>✅</span> <s>Reservation TOCTOU race condition</s> — <strong>رفع شد:</strong> prisma.$transaction() اضافه شد</li>
-      <li><span>🟡</span> نقشه (MAP): API Key Required error — deferred. VPN باید خاموش باشد.</li>
-    </ul>
+
+  <div class="dia"><div class="mermaid">
+flowchart TB
+    A["درخواست می‌رسد"] --> B{"ربات است؟<br/>proxy.ts"}
+    B -->|بله| X1["۴۰۳ رد"]
+    B -->|خیر| C{"نشست معتبر؟<br/>getSession"}
+    C -->|خیر| X2["۴۰۱ ورود لازم است"]
+    C -->|بله| D{"سقف درخواست<br/>rate limit"}
+    D -->|رد شده| X3["۴۲۹ تعداد زیاد"]
+    D -->|مجاز| E{"سطح دسترسی<br/>hasPermission"}
+    E -->|کافی نیست| X4["۴۰۳ دسترسی ندارید"]
+    E -->|کافی| F{"شکل داده درست؟<br/>Zod safeParse"}
+    F -->|خیر| X5["۴۰۰ داده نامعتبر"]
+    F -->|بله| G["منطق اصلی<br/>خواندن یا نوشتن در دیتابیس"]
+    G --> H["پاسخ + لاگ ممیزی"]
+
+    classDef ok fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
+    classDef err fill:#FBEDED,stroke:#C33A3A,color:#151A23
+    classDef q fill:#FFFFFF,stroke:#CDD3DC,color:#151A23
+    class A,G,H ok
+    class X1,X2,X3,X4,X5 err
+    class B,C,D,E,F q
+  </div><div class="cap">نمودار ۲ — ترتیب دروازه‌ها در هر مسیر مدیریتی: نشست ← سقف ← دسترسی ← اعتبارسنجی ← منطق</div></div>
+
+  <div class="note warn">
+    <span class="t">پیام خطا هیچ‌وقت جزئیات داخلی را لو نمی‌دهد</span>
+    کاربر یک جملهٔ فارسی می‌بیند و یک «کد پیگیری» کوتاه. مسیر فایل، پرس‌وجوی SQL، نسخهٔ کتابخانه
+    و ردِ پشتهٔ خطا فقط در لاگ سرور می‌روند. برای خطاهای ورود هم پیام همیشه یکسان است تا نشود
+    فهمید کدام شماره در سیستم ثبت شده است.
   </div>
-</div>
-<div class="decision" style="border-color:#22c55e44; background: #22c55e08; margin-bottom:28px">
-  <h3 style="color:var(--green)">قضاوت کلی: A− برای thesis ✓</h3>
-  <ul>
-    <li>پیاده‌سازی امنیت برای یه پروژه اول غیرعادی قوی است — اکثر thesis‌ها auth درستی ندارند.</li>
-    <li>admin/page.tsx تقسیم شد + error.tsx اضافه شد + dashboard به DB وصل شد — نقاط ضعف اصلی رفع شدند.</li>
-    <li>داور احتمالاً بیشتر از هر چیز دیگری روی security story و data flow focus می‌کند.</li>
-  </ul>
-</div>
+</section>
 
-<!-- DECISIONS -->
-<div class="sec-head">
-  <h2>تصمیم‌های ثابت (دست نزن)</h2>
-  <div class="line"></div>
-</div>
-<div class="decision" style="margin-bottom:28px">
-  <ul>
-    <li>Scraper/آدرس در loop می‌افتد — deferred تا بعد از ارائه.</li>
-    <li>نوع رسانه: فیلتر UI در Explore موجود است. داده scraper اکثراً «billboard» است — مشکل داده است نه UI.</li>
-    <li>Guest checkout نه — Reservation نیاز به حساب کاربری دارد (تصمیم Phase 2).</li>
-    <li>SQLite برای این مقیاس کافی است — تغییر DB در این روزها ممنوع.</li>
-    <li>id های عددی بیلبوردها ثابت می‌مانند (RealMap.tsx و CompareBar به آنها وابسته‌اند).</li>
-    <li>lib/data.ts دست نزن — فقط type definitions از آن import می‌شود، static data بلا‌استفاده است ولی حذفش ریسک دارد.</li>
-  </ul>
-</div>
+<!-- ════════ فصل ۳ ════════ -->
+<section class="chapter" id="c3">
+  <div class="chead">
+    <div class="cn">فصل ۳</div>
+    <div><h3>مدل داده (ERD)</h3><p>نُه جدول، و اینکه هرکدام چه چیزی را نگه می‌دارند</p></div>
+  </div>
 
-<!-- PHASE CARDS -->
-<div class="sec-head">
-  <h2>جزئیات هر Phase</h2>
-  <div class="line"></div>
-</div>
-<div class="phases">
+  <div class="dia"><div class="mermaid">
+erDiagram
+    OWNERS ||--o{ BILLBOARDS : "مالک است"
+    USERS  ||--o{ BILLBOARDS : "ثبت کرده"
+    USERS  ||--o{ REVIEWS : "نوشته"
+    BILLBOARDS ||--o{ REVIEWS : "دارد"
+    USERS  ||--o{ CONTACT_REQUESTS : "خواسته"
+    BILLBOARDS ||--o{ CONTACT_REQUESTS : "برایش"
+    ADMINS ||--o{ AUDIT_LOGS : "انجام داده"
 
-  <!-- Phase 3: DB -->
-  <div class="phase-card is-done">
+    OWNERS {
+        int id PK
+        str name
+        str phone
+        str company
+    }
+    USERS {
+        int id PK
+        str name
+        str phone UK
+        str pwdHash
+    }
+    ADMINS {
+        int id PK
+        str email UK
+        str role
+        bool active
+    }
+    BILLBOARDS {
+        int id PK
+        str slug UK
+        str name
+        str city
+        str type
+        str status
+        int price
+        int area
+        int views
+        json traffic
+        json images
+        f64 lat
+        f64 lng
+        str plan
+        bool featured
+        str note
+        int ownerId FK
+        int submitBy FK
+    }
+    REVIEWS {
+        int id PK
+        int boardId FK
+        int userId FK
+        int rating
+        str comment
+    }
+    CONTACT_REQUESTS {
+        int id PK
+        int boardId FK
+        int userId FK
+        str status
+        int count
+        str note
+    }
+    IDEMPOTENCY_KEYS {
+        str key PK
+        int userId
+        str endpoint
+        int status
+        json response
+    }
+    OTP_CODES {
+        int id PK
+        str phone
+        str codeHash
+        date expiresAt
+        int attempts
+    }
+    AUDIT_LOGS {
+        int id PK
+        str action
+        str severity
+        str email
+        str ip
+        json details
+    }
+  </div><div class="cap">نمودار ۳ — رابطه‌ها طبق <code>prisma/schema.prisma</code>. برای خوانایی، نام و نوعِ چند ستون خلاصه نوشته شده: <code>pwdHash</code>=passwordHash · <code>views</code>=estimatedViews · <code>submitBy</code>=submittedById · <code>boardId</code>=billboardId · <code>note</code> در billboards=reviewNote · str=string · f64=float</div></div>
+
+  <div class="block">
+    <h4>هر جدول برای چیست</h4>
+    <table class="tbl">
+      <thead><tr><th>جدول</th><th>نقش</th><th>نکتهٔ طراحی</th></tr></thead>
+      <tbody>
+        <tr><td>billboards</td><td>قلب پروژه — هر رسانهٔ تبلیغاتی یک ردیف</td><td>دو ستون <code>area</code> و <code>estimatedViews</code> عمداً تکراری‌اند: SQLite نمی‌تواند روی نتیجهٔ یک محاسبه یا داخل JSON ایندکس بزند، پس مقدارِ آماده در ستون خودش نگه داشته می‌شود.</td></tr>
+        <tr><td>users</td><td>حساب کاربران عادی</td><td>شمارهٔ موبایل نقش نام کاربری را دارد و یکتاست. رمز فقط به‌صورت هش bcrypt نگه داشته می‌شود و هیچ‌وقت قابل خواندن نیست.</td></tr>
+        <tr><td>admins</td><td>حساب‌های تیم مدیریت</td><td>چهار نقش پلکانی. نقش پایین‌تر هرگز نمی‌تواند کار نقش بالاتر را انجام دهد.</td></tr>
+        <tr><td>reviews</td><td>امتیاز و نظر</td><td>قید یکتا روی (رسانه، کاربر) — یک حساب نمی‌تواند امتیاز یک رسانه را با نظرهای تکراری بالا ببرد.</td></tr>
+        <tr><td>contact_requests</td><td>سرنخ: چه کسی شمارهٔ چه رسانه‌ای را خواسته</td><td>یکتا روی همان جفت؛ درخواست دوباره ردیف جدید نمی‌سازد، شمارنده را بالا می‌برد.</td></tr>
+        <tr><td>idempotency_keys</td><td>جلوگیری از ثبت دوبارهٔ یک آگهی</td><td>اگر کاربر دکمه را دوبار بزند یا اینترنت قطع و وصل شود، پاسخِ ذخیره‌شده برگردانده می‌شود نه ردیف دوم.</td></tr>
+        <tr><td>otp_codes</td><td>کد یک‌بارمصرف بازیابی رمز</td><td>خودِ کد ذخیره نمی‌شود، فقط هش آن. عمر کوتاه، مصرف یک‌بار، سقف تلاش.</td></tr>
+        <tr><td>audit_logs</td><td>ردِ کارهای حساس مدیریت</td><td>چه کسی، کی، از چه IP، چه کاری کرد. برای پاسخ به «اگر ادمینی اشتباه کند چه؟»</td></tr>
+        <tr><td>owners</td><td>آژانس/مالک رسانه</td><td>از دادهٔ خزیده‌شده پر می‌شود.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ════════ فصل ۴ ════════ -->
+<section class="chapter" id="c4">
+  <div class="chead">
+    <div class="cn">فصل ۴</div>
+    <div><h3>جریان‌های کاربری</h3><p>پنج مسیر اصلی — هر پیکان یک درخواست واقعی در کد است</p></div>
+  </div>
+
+  <details class="fold" open>
+    <summary>۴.۱ — ثبت‌نام و ورود کاربر <span class="tag">accounts</span></summary>
+    <div class="foldbody">
+      <p>
+        ورود با شمارهٔ موبایل و رمز. رمز با bcrypt (هزینهٔ ۱۲) هش می‌شود و نشست یک
+        <b>JWT امضاشده</b> در کوکی HttpOnly است — یعنی جاوااسکریپت صفحه اصلاً نمی‌تواند آن را بخواند،
+        پس یک حملهٔ XSS هم نمی‌تواند بلیت ورود را بدزدد.
+      </p>
+      <div class="note warn">
+        <span class="t">جزئیاتی که ارزش گفتن در دفاع را دارد</span>
+        وقتی شماره‌ای در سیستم نیست، سرور باز هم یک هش bcrypt واقعی را مقایسه می‌کند و بعد خطا می‌دهد.
+        چرا؟ چون اگر این کار را نکند، پاسخ برای «شمارهٔ ناموجود» چند صد میلی‌ثانیه سریع‌تر می‌آید و
+        مهاجم فقط با کرنومتر می‌فهمد کدام شماره ثبت شده است. این باگ واقعاً در پروژه پیدا شد و تستی
+        دارد که زمان پاسخ را می‌سنجد.
+      </div>
+      <div class="dia"><div class="mermaid">
+sequenceDiagram
+    actor U as کاربر
+    participant B as مرورگر
+    participant P as proxy.ts
+    participant A as API احراز هویت
+    participant D as دیتابیس
+
+    U->>B: شماره و رمز
+    B->>P: POST /api/auth/login
+    P->>A: عبور داده می‌شود
+    A->>A: سقف درخواست برای این IP
+    A->>D: پیدا کردن کاربر با شماره
+    alt کاربر وجود دارد
+        D-->>A: ردیف کاربر
+        A->>A: bcrypt.compare(رمز, هش)
+    else کاربر وجود ندارد
+        A->>A: مقایسه با هش ساختگی<br/>تا زمان پاسخ یکسان بماند
+    end
+    A-->>B: 200 + کوکی HttpOnly (JWT)
+    B-->>U: ورود موفق
+  </div><div class="cap">نمودار ۴ — ورود؛ شاخهٔ «کاربر وجود ندارد» عمداً همان‌قدر وقت می‌گیرد</div></div>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>۴.۲ — ثبت آگهی توسط صاحب رسانه تا انتشار <span class="tag">مهم‌ترین جریان پروژه</span></summary>
+    <div class="foldbody">
+      <p>
+        این کامل‌ترین جریان پروژه است و سه چیز را با هم نشان می‌دهد: آپلود فایل، ماشین حالت،
+        و کنترل همزمانی.
+      </p>
+      <div class="dia"><div class="mermaid">
+sequenceDiagram
+    actor O as صاحب رسانه
+    participant B as مرورگر
+    participant API as POST /api/listings
+    participant FS as دیسک (public/uploads)
+    participant D as دیتابیس
+    actor AD as کارشناس (ادمین)
+
+    O->>B: پر کردن فرم ۵ مرحله‌ای + عکس
+    B->>API: ارسال با هدر Idempotency-Key
+    API->>API: بررسی نشست، سقف، Zod
+    API->>API: تشخیص نوع فایل از magic bytes<br/>نه از ادعای مرورگر
+    API->>FS: ذخیره در مسیر غیرقابل‌حدس /uuid/
+    API->>D: ساخت ردیف با وضعیت pending<br/>(یا awaiting_payment برای پلن ویژه)
+    Note over API,D: ایندکس یکتای جزئی روی (فرستنده، نام، شهر)<br/>دو کلیک همزمان = یک ردیف
+    API-->>B: 201 ثبت شد
+    B-->>O: «آگهی در انتظار بررسی است»
+
+    AD->>D: باز کردن تب «تأیید آگهی‌ها»
+    alt تأیید
+        AD->>D: status = available + featured اگر پرداخت شده
+    else نیاز به اصلاح
+        AD->>D: status = needs_revision + پیام کارشناس
+        D-->>O: پیام در داشبورد
+        O->>API: PATCH /api/listings/:id — اصلاح و ارسال دوباره
+        API->>D: بازگشت به صف بررسی
+    else رد
+        AD->>D: status = rejected
+    end
+    Note over D: تا وقتی منتشر نشده،<br/>در جستجو، آمار، نقشهٔ سایت و صفحهٔ جزئیات دیده نمی‌شود
+  </div><div class="cap">نمودار ۵ — چرخهٔ کامل ثبت آگهی، با هر سه تصمیم ادمین</div></div>
+      <div class="note good">
+        <span class="t">سه گاردی که در این جریان ارزش نشان دادن دارند</span>
+        <b>۱)</b> نوع فایل از بایت‌های اول خودِ فایل تشخیص داده می‌شود، پس یک فایل اجرایی که اسمش
+        <code>.png</code> است رد می‌شود.
+        <b>۲)</b> هدر <code>Idempotency-Key</code> به‌علاوهٔ یک ایندکس یکتا در دیتابیس، دوبار ثبت شدن را
+        غیرممکن می‌کند — تستی دارد که ده درخواست همزمان می‌فرستد و انتظار دارد دقیقاً یک ردیف ساخته شود.
+        <b>۳)</b> نشان «ویژه» فقط با تأیید دستی ادمین داده می‌شود، نه با انتخاب پلن — یعنی کسی نمی‌تواند
+        بدون پرداخت، آگهی‌اش را بالای نتایج ببرد.
+      </div>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>۴.۳ — ماشین حالتِ یک آگهی <span class="tag">flowchart</span></summary>
+    <div class="foldbody">
+      <div class="dia"><div class="mermaid">
+stateDiagram-v2
+    direction LR
+    [*] --> pending: ثبت با پلن رایگان
+    [*] --> awaiting_payment: ثبت با پلن ویژه
+    awaiting_payment --> available: تأیید پرداخت توسط ادمین<br/>+ نشان ویژه
+    pending --> available: تأیید کارشناس
+    pending --> needs_revision: نیاز به اصلاح + پیام
+    awaiting_payment --> needs_revision: نیاز به اصلاح + پیام
+    needs_revision --> pending: فرستنده اصلاح و دوباره ارسال کرد
+    needs_revision --> awaiting_payment: اصلاح، با پلن ویژه
+    pending --> rejected: رد نهایی
+    awaiting_payment --> rejected: رد نهایی
+    available --> busy: در حال استفاده
+    available --> inactive: موقتاً غیرفعال
+    rejected --> [*]
+
+    note right of available
+      فقط این سه وضعیت عمومی‌اند
+      available / busy / inactive
+    end note
+  </div><div class="cap">نمودار ۶ — تنها جایی که این انتقال‌ها مجاز است، مسیر تصمیم ادمین است</div></div>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>۴.۴ — گرفتن شمارهٔ صاحب رسانه و ثبت سرنخ <span class="tag">CRM</span></summary>
+    <div class="foldbody">
+      <p>
+        دادن شمارهٔ صاحب رسانه آخرین چیزی است که پلتفرم می‌بیند — بعد از آن گفتگو از سایت بیرون می‌رود.
+        پس همین کلیک، تنها سیگنالِ تقاضایی است که می‌شود ثبت کرد.
+      </p>
+      <div class="dia"><div class="mermaid">
+sequenceDiagram
+    actor U as خریدار
+    participant B as مرورگر
+    participant API as POST /api/billboards/:slug/contact
+    participant D as دیتابیس
+    actor AD as ادمین
+
+    U->>B: باز کردن صفحهٔ رسانه
+    Note over B: شماره در HTML صفحه نیست<br/>حتی برای کاربر واردشده
+    U->>B: کلیک روی «نمایش شمارهٔ تماس»
+    B->>API: درخواست POST (نه GET)
+    API->>API: نشست لازم است — مهمان ۴۰۱ می‌گیرد
+    API->>D: get-or-create سرنخ (رسانه، کاربر)
+    alt اولین بار
+        D-->>API: ردیف تازه، وضعیت «جدید»
+    else دفعهٔ بعد
+        D-->>API: همان ردیف، شمارنده +۱
+    end
+    API-->>B: شمارهٔ تماس
+    B-->>U: نمایش شماره
+
+    AD->>D: تب «سرنخ‌ها»
+    AD->>D: جدید ← پیگیری‌شده ← بسته‌شده + یادداشت داخلی
+  </div><div class="cap">نمودار ۷ — چرا POST و نه GET: یک GET با هر بار رندر شدن صفحه اجرا می‌شد و «بازدید» را ثبت می‌کرد، نه «قصد تماس»</div></div>
+      <div class="note info">
+        <span class="t">این پاسخِ پروژه به سؤال «CRM دارید؟» است</span>
+        یک CRM آمادهٔ متن‌باز (Atomic CRM) بررسی شد و <b>رد شد</b>: بک‌اندش Supabase است — یعنی یا
+        سرویس ابری پولی و تحریمی، یا یک پشتهٔ Docker جدا روی همان لپ‌تاپی که باید دمو را اجرا کند؛
+        ضمناً یک اپلیکیشن دوم با لاگین دوم و مدل داده‌ای که از بیلبورد چیزی نمی‌داند.
+        چیزی که واقعاً کم بود «ثبت سرنخ» بود، و آن یک جدول است. استدلال کامل: §۲۳.
+      </div>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>۴.۵ — بازیابی رمز با کد یک‌بارمصرف <span class="tag">OTP</span></summary>
+    <div class="foldbody">
+      <div class="dia"><div class="mermaid">
+sequenceDiagram
+    actor U as کاربر
+    participant API as API بازیابی
+    participant D as دیتابیس
+    participant SMS as سرویس پیامک
+
+    U->>API: POST /api/auth/otp/send { شماره }
+    API->>API: سقف درخواست — هم برای IP هم برای شماره
+    API->>D: ذخیرهٔ هشِ کد + زمان انقضا
+    Note over D: خودِ کد هیچ‌جا ذخیره نمی‌شود
+    API->>SMS: ارسال کد
+    Note over SMS: در نبود کلید سرویس،<br/>حالت خواب: کد فقط لاگ می‌شود
+    API-->>U: «کد ارسال شد» (پاسخ یکسان، چه شماره باشد چه نباشد)
+
+    U->>API: POST /api/auth/otp/verify { شماره، کد، رمز جدید }
+    API->>D: مقایسهٔ هش + بررسی انقضا + شمارندهٔ تلاش
+    alt معتبر
+        API->>D: رمز جدید (bcrypt) + مصرف‌شدن کد
+        API-->>U: 200 موفق
+    else نامعتبر یا منقضی
+        API->>D: تلاش +۱
+        API-->>U: خطای عمومی
+    end
+  </div><div class="cap">نمودار ۸ — سرویس پیامک ساخته شده ولی خاموش است؛ دلیلش در §۱۶ ثبت شده</div></div>
+    </div>
+  </details>
+</section>
+
+<!-- ════════ فصل ۵ ════════ -->
+<section class="chapter" id="c5">
+  <div class="chead">
+    <div class="cn">فصل ۵</div>
+    <div><h3>نقشهٔ فایل‌ها</h3><p>اگر استاد پرسید «این کجا کار می‌کند؟» — این جدول جواب است</p></div>
+  </div>
+
+  <div class="note warn">
+    <span class="t">این فصل را قبل از جلسه یک بار بخوان</span>
+    لازم نیست کد را حفظ کنی. کافی است بدانی هر چیزی <b>کجاست</b>، تا وقتی سؤال شد بتوانی همان فایل
+    را باز کنی و رویش حرف بزنی. سؤال «این را کجا نوشتی؟» شایع‌ترین سؤال داور است.
+  </div>
+
+  <div class="block">
+    <h4>ساختار کلی پوشه‌ها</h4>
+    <table class="tbl">
+      <thead><tr><th>مسیر</th><th>چه چیزی آنجاست</th></tr></thead>
+      <tbody>
+        <tr><td>app/</td><td>هم صفحه‌های سایت، هم API. هر پوشه یک آدرس است: <code>app/explore/page.tsx</code> یعنی صفحهٔ <code>/explore</code>.</td></tr>
+        <tr><td>app/api/</td><td>۳۱ مسیر API. هر پوشه یک <code>route.ts</code> دارد که متدهای GET/POST/PATCH/DELETE را صادر می‌کند.</td></tr>
+        <tr><td>components/</td><td>تکه‌های قابل‌استفادهٔ مجدد رابط کاربری: کارت رسانه، نوار بالا، مودال مقایسه، گالری عکس…</td></tr>
+        <tr><td>components/admin/</td><td>پنل مدیریت — هر تب یک فایل.</td></tr>
+        <tr><td>lib/</td><td>منطق مشترک: دیتابیس، احراز هویت، لاگ، آپلود، اعتبارسنجی محیط.</td></tr>
+        <tr><td>prisma/</td><td>تعریف جدول‌ها (<code>schema.prisma</code>)، مهاجرت‌ها و اسکریپت پرکردن اولیه.</td></tr>
+        <tr><td>scraper/</td><td>خزندهٔ Python — جدا از سایت، فقط برای جمع‌آوری داده.</td></tr>
+        <tr><td>test/</td><td>۸۷ تست API، بدون هیچ کتابخانهٔ تست بیرونی.</td></tr>
+        <tr><td>docs/</td><td>همین سند و بقیهٔ مستندات.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="block">
+    <h4>«اگر داور این را پرسید، این فایل را باز کن»</h4>
+    <table class="tbl">
+      <thead><tr><th>سؤال احتمالی</th><th>فایل</th></tr></thead>
+      <tbody>
+        <tr><td>جدول‌ها را چطور تعریف کردی؟</td><td><code>prisma/schema.prisma</code></td></tr>
+        <tr><td>پرس‌وجوها و فیلترها کجاست؟</td><td><code>lib/db/billboards.ts</code></td></tr>
+        <tr><td>ورود و نشست چطور کار می‌کند؟</td><td><code>lib/auth/session.ts</code> · <code>app/api/auth/login/route.ts</code></td></tr>
+        <tr><td>سطح دسترسی ادمین‌ها؟</td><td><code>lib/auth/users.ts</code> (تابع <code>hasPermission</code>)</td></tr>
+        <tr><td>جلوی درخواست بیش از حد را چطور گرفتی؟</td><td><code>lib/auth/rate-limit.ts</code></td></tr>
+        <tr><td>ورودی‌ها را چطور اعتبارسنجی می‌کنی؟</td><td>بالای هر <code>route.ts</code> — الگوی <code>Zod .safeParse()</code></td></tr>
+        <tr><td>آپلود عکس امن است؟</td><td><code>lib/uploads.ts</code> (تشخیص از magic bytes)</td></tr>
+        <tr><td>خطاها را چه می‌کنی؟</td><td><code>lib/api-error.ts</code> · <code>app/error.tsx</code> · <code>app/global-error.tsx</code></td></tr>
+        <tr><td>لاگ و ممیزی؟</td><td><code>lib/logger.ts</code> · <code>lib/auth/audit.ts</code></td></tr>
+        <tr><td>نگهبان لبه / بلاک ربات؟</td><td><code>proxy.ts</code> در ریشهٔ پروژه</td></tr>
+        <tr><td>صفحهٔ اصلی / جستجو / جزئیات؟</td><td><code>app/page.tsx</code> · <code>app/explore/page.tsx</code> · <code>app/billboard/[slug]/page.tsx</code></td></tr>
+        <tr><td>پنل مدیریت؟</td><td><code>app/admin/page.tsx</code> + <code>components/admin/*</code></td></tr>
+        <tr><td>خزنده چطور کار می‌کند؟</td><td><code>scraper/scraper.py</code> و دو خزندهٔ اختصاصی کنارش</td></tr>
+        <tr><td>تست‌ها؟</td><td><code>test/api.test.mjs</code> — با <code>npm test</code> اجرا می‌شود</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ════════ فصل ۶ ════════ -->
+<section class="chapter" id="c6">
+  <div class="chead">
+    <div class="cn">فصل ۶</div>
+    <div><h3>امنیت</h3><p>لایه‌به‌لایه — و اینکه هر لایه جلوی چه حمله‌ای را می‌گیرد</p></div>
+  </div>
+
+  <div class="block">
+    <table class="tbl">
+      <thead><tr><th>لایه</th><th>چه کاری می‌کند</th><th>جلوی چه چیزی را می‌گیرد</th></tr></thead>
+      <tbody>
+        <tr><td>نشست</td><td>JWT امضاشده در کوکی HttpOnly + SameSite=Strict + Secure</td><td>دزدیده شدن بلیت ورود با XSS؛ ارسال درخواست از سایت دیگر (CSRF)</td></tr>
+        <tr><td>رمز عبور</td><td>bcrypt با هزینهٔ ۱۲</td><td>اگر دیتابیس لو برود، رمزها قابل بازیابی نیستند</td></tr>
+        <tr><td>شمارش کاربر</td><td>پاسخ و <b>زمان پاسخ</b> برای شمارهٔ ناموجود و رمز غلط یکسان است</td><td>فهمیدن اینکه چه شماره‌هایی در سیستم ثبت‌اند</td></tr>
+        <tr><td>سقف درخواست</td><td>پنجرهٔ لغزان روی IP، با کلید جدا برای ثبت‌نام و ورود</td><td>حملهٔ حدس رمز؛ اسپم ثبت‌نام که ورودِ بقیه را قفل کند</td></tr>
+        <tr><td>سطح دسترسی</td><td>چهار نقش پلکانی، بررسی‌شده در <b>هر</b> مسیر مدیریتی</td><td>یک «بیننده» که بخواهد آگهی منتشر کند</td></tr>
+        <tr><td>اعتبارسنجی</td><td>Zod با <code>safeParse</code> روی تمام ورودی‌ها</td><td>ورودی بدشکل، تزریق، پرکردن حافظه با داده بزرگ</td></tr>
+        <tr><td>مرتب‌سازی و فیلتر</td><td>مقدار ورودی همیشه با فهرست مجاز مقایسه می‌شود</td><td>دستکاری پرس‌وجو از طریق پارامتر</td></tr>
+        <tr><td>آپلود</td><td>تشخیص نوع از magic bytes، نام فایل ساختهٔ سرور، مسیر غیرقابل‌حدس</td><td>آپلود فایل اجرایی با پسوند جعلی</td></tr>
+        <tr><td>حریم شماره</td><td>شمارهٔ صاحب رسانه در هیچ پاسخ عمومی و در HTML صفحه نیست</td><td>برداشت انبوه شماره‌ها با خزنده</td></tr>
+        <tr><td>ضد کپی‌برداری</td><td>بلاک UA ربات‌ها روی صفحه‌ها، سقف صفحه، محافظت hotlink تصاویر</td><td>کپی شدن کل دیتابیس توسط رقیب — گوگل‌بات عمداً استثناست</td></tr>
+        <tr><td>پیام خطا</td><td>متن عمومی فارسی + کد پیگیری؛ جزئیات فقط در لاگ</td><td>لو رفتن مسیر فایل، نسخه، ساختار دیتابیس</td></tr>
+        <tr><td>ممیزی</td><td>هر کار حساس مدیریت در جدول لاگ ثبت می‌شود</td><td>«چه کسی این آگهی را تأیید کرد؟» بی‌پاسخ نماند</td></tr>
+        <tr><td>پیکربندی</td><td>متغیرهای محیطی موقع بالا آمدن سرور بررسی می‌شوند و نبودشان یعنی توقف</td><td>بالا آمدن سرور با کلید امنیتی خالی</td></tr>
+      </tbody>
+    </table>
+    <div class="note good">
+      <span class="t">تأیید عملی</span>
+      روی بیلد production آزمایش شد: UA ربات ۴۰۳ · گوگل‌بات ۲۰۰ · API مدیریت بدون نشست ۴۰۱ ·
+      درخواست شماره بدون ورود ۴۰۱ · آگهی منتشرنشده ۴۰۴ · <code>limit=100</code> رد شد ·
+      شمارهٔ مالک در پاسخ عمومی وجود ندارد.
+    </div>
+  </div>
+</section>
+
+<!-- ════════ فصل ۷ ════════ -->
+<section class="chapter" id="c7">
+  <div class="chead">
+    <div class="cn">فصل ۷</div>
+    <div><h3>کارایی</h3><p>سه اندازه‌گیری واقعی روی همین پروژه</p></div>
+  </div>
+
+  <div class="block">
+    <h4>۱ — حالت توسعه در برابر حالت اجرا: ۹۷ برابر</h4>
+    <p>
+      لپ‌تاپِ بدون فنِ توسعه‌دهنده موقع کار با سایت داغ می‌شد. علت، کدِ پروژه نبود — حالت اجرا بود.
+    </p>
+    <table class="tbl">
+      <thead><tr><th>حالت</th><th>CPU مصرفی برای اولین بازدید از ۱۰ صفحه</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm run dev</code></td><td><b style="color:var(--red)">۹.۷ ثانیه</b></td></tr>
+        <tr><td><code>npm run demo</code></td><td><b style="color:var(--green)">۰.۱ ثانیه</b></td></tr>
+      </tbody>
+    </table>
+    <div class="note bad">
+      <span class="t">قانون همیشگی — روز ارائه فراموش نشود</span>
+      برای دیدن یا نمایش سایت همیشه <code>npm run demo</code>. حالت <code>dev</code> فقط موقع
+      <b>نوشتن کد</b> است. علت: <code>dev</code> کامپایلر را روشن نگه می‌دارد، هر صفحه را در
+      اولین بازدید از صفر می‌سازد، ۶۷۱۰ فایل پروژه را برای تغییر می‌پاید و React را بدون
+      فشرده‌سازی می‌فرستد. <code>build</code> همهٔ این هزینه را یک بار از قبل می‌پردازد.
+      <br><br>
+      شاهد تازه: همان مجموعهٔ ۸۷ تست در حالت <code>dev</code> بارها پنج‌دقیقه‌ای قفل می‌کرد
+      (لپ‌تاپ به swap افتاده بود) و روی سرور production در <b>۱۱ ثانیه</b> تمام شد.
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>۲ — وزن تصاویر: ۸۷٪ کمتر</h4>
+    <p>
+      ۱۳۳۲ عکسِ PNGِ کاملاً مات به JPEG پیش‌رونده تبدیل شدند: <b>۴۹۳ مگابایت → ۶۴ مگابایت</b>،
+      بدون تغییر ابعاد و با اختلاف دیداریِ زیرِ آستانهٔ ادراک انسان.
+      ۲۳۱ عکسی که واقعاً شفافیت داشتند دست‌نخورده ماندند، چون JPEG کانال آلفا ندارد و آن نواحی سیاه می‌شد.
+      بارِ تصویرِ یک صفحهٔ جستجو از <b>۴.۰ مگابایت به ۱.۱ مگابایت</b> رسید.
+      همین قانون داخل خودِ خزنده هم گذاشته شد تا اسکرپ بعدی دوباره فایل سنگین نسازد.
+    </p>
+  </div>
+
+  <div class="block">
+    <h4>۳ — ایندکس‌ها و دو ستون عمداً تکراری</h4>
+    <p>
+      روی ستون‌هایی که واقعاً فیلتر و مرتب می‌شوند ایندکس ترکیبی گذاشته شده. دو مورد خاص:
+      «بیشترین بازدید» و «بزرگ‌ترین سطح» قابل مرتب‌سازی نبودند، چون یکی داخل یک ستون JSON بود و
+      دیگری حاصل ضرب دو ستون. هر دو به ستون مستقلِ ایندکس‌دار تبدیل شدند و موقع هر تغییر اندازه
+      دوباره محاسبه می‌شوند.
+    </p>
+    <div class="note info">
+      <span class="t">درسِ قابل نقل در مقاله</span>
+      این یک نمونهٔ کلاسیک <b>denormalization</b> است: کمی تکرارِ داده را می‌پذیری تا پرس‌وجو
+      بتواند از ایندکس استفاده کند. بهایش این است که باید تضمین کنی نسخهٔ تکراری هیچ‌وقت
+      از اصل عقب نماند — که اینجا با نوشتن هر دو در یک تراکنش انجام می‌شود.
+    </div>
+  </div>
+</section>
+
+<!-- ════════ فصل ۸ ════════
+     MAINTENANCE — where a new work item goes.
+     Each era below is a <details class="fold"> whose body holds a stack of
+     <div class="phase-card"> blocks. To log finished work, add a card to the
+     LAST era fold, following the shape of the ones already there:
+       .ph-num (code) · .ph-title h3+p · .ph-badge done · .ph-body with a
+       .task-list of .task.done-t rows and one .proof box saying how it was
+       verified. Then bump the date in the footer.
+     Diagrams are mermaid blocks (<div class="mermaid">) rendered by
+     vendor/mermaid.min.js — no internet needed. Keep the light palette. -->
+
+<section class="chapter" id="c8">
+  <div class="chead">
+    <div class="cn">فصل ۸</div>
+    <div><h3>تاریخچهٔ ساخت</h3><p>۵۸ گام کار، دسته‌بندی‌شده در شش دوره — روی هر دوره کلیک کن تا باز شود</p></div>
+  </div>
+
+  <div class="note info">
+    <span class="t">چطور بخوانیدش</span>
+    این فصل، لاگِ واقعی ساختِ پروژه است و به‌ترتیب زمانی نوشته شده. هر کارت یک گام است:
+    عنوان، فهرست کارهای انجام‌شده، و یک جعبهٔ <b>«تأیید»</b> که می‌گوید چطور راستی‌آزمایی شد.
+    برای نوشتن مقاله، از هر دوره یک پاراگراف بردارید — نه همهٔ کارت‌ها را.
+  </div>
+  <details class="fold">
+    <summary>دورهٔ ۱ — پایه‌گذاری<span class="tag">۸ گام · از دیتابیس خالی تا یک سایت کارکننده با ورود کاربر</span></summary>
+    <div class="foldbody"><div class="phases">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num">۳</div>
       <div class="ph-title"><h3>ساخت دیتابیس + Migration</h3><p>Prisma Schema، Seed، Data Access Layer</p></div>
@@ -417,9 +945,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- Phase 4: Public API -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num">۴</div>
       <div class="ph-title"><h3>اتصال صفحات عمومی به DB</h3><p>Public API + Explore + Landing از DB می‌خوانند</p></div>
@@ -438,9 +964,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="files"><code>app/api/billboards/route.ts</code><code>app/explore/page.tsx</code><code>app/page.tsx</code></div>
     </div>
   </div>
-
-  <!-- Phase 5: Scraper - DEFERRED -->
-  <div class="phase-card is-defer">
+<div class="phase-card is-defer">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num">۵</div>
       <div class="ph-title"><h3>بازسازی Scraper Pipeline</h3><p>Cross-source Dedup، تشخیص نوع رسانه، آدرس‌دهی</p></div>
@@ -457,9 +981,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- Phase 6: Admin CRUD — DONE -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num">۶</div>
       <div class="ph-title"><h3>Admin CRUD واقعی</h3><p>PUT / DELETE بیلبوردها — ویرایش و حذف از DB</p></div>
@@ -483,9 +1005,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- Phase 7a: User Auth — DONE -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num">۷a</div>
       <div class="ph-title"><h3>ثبت‌نام / ورود کاربر</h3><p>User Auth API — register، login، logout، session guard</p></div>
@@ -508,9 +1028,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- Phase 7b: Reservation — DONE -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num">۷b</div>
       <div class="ph-title"><h3>رزرو واقعی (Reservation API)</h3><p>BookingModal → DB — روز ۵ و ۶</p></div>
@@ -532,9 +1050,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- Phase 8: QA + Polish -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num">۸</div>
       <div class="ph-title"><h3>QA + Polish</h3><p>Error handling، صفحات خطا، تست دستی flow کامل، pagination</p></div>
@@ -554,9 +1070,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> curl end-to-end: register → login → reserve → dashboard — همه ۲۸۰۸ billboard از DB. Admin 401 guard تأیید. Build ✓ 25 صفحه بدون error.</div>
     </div>
   </div>
-
-  <!-- Phase 9: Demo Prep -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num">۹</div>
       <div class="ph-title"><h3>آماده‌سازی Demo (روز ۸ و ۹)</h3><p>Script ارائه + Seed data قابل‌نمایش + پاسخ سؤالات داور</p></div>
@@ -582,71 +1096,13 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> فایل <code>docs/demo-script.html</code> ساخته شد — ۵ مرحله کامل با توضیحات داور + راهنمای credentials. seed-demo.ts موجود است (npm run db:seed:demo).</div>
     </div>
   </div>
+    </div></div>
+  </details>
 
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- FULL AUDIT — بازبینی جامع پروژه                               -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<div class="sec-head" style="margin-top:48px">
-  <h2>بازبینی جامع — کمبودها نسبت به سایت‌های واقعی</h2>
-  <div class="line"></div>
-</div>
-<div class="decision" style="border-color:#60a5fa44; background:#60a5fa08; margin-bottom:20px; font-size:0.82rem">
-  مقایسه با نمونه‌های ایرانی مشابه (billboardiha.com، تبلیغات محیطی Divar، و استانداردهای marketplace).
-  اولویت‌بندی از ریشه‌ای‌ترین (معماری) تا سطحی‌ترین (فیچر).
-</div>
-
-<!-- ★ PRIORITY REORDER NOTICE -->
-<div class="warn-box" style="border-color:#818cf844; background:#818cf80a; margin-bottom:20px">
-  <b style="color:#818cf8">📌 جهت‌گیری جدید — اولویت اجرایی تغییر کرد</b>
-  <p style="margin-top:8px; font-size:0.83rem; line-height:1.9">
-    بخش‌های معماری (A)، امنیت (S)، و کیفیت کد (Q) اکثراً تکمیل شده‌اند.
-    قبل از ادامه با فیچرهای باقیمانده، اولویت اجرایی به <b>بهبود جدی کیفیت بصری و UX</b> تغییر یافت.<br>
-    پالت نارنجی/مشکی فعلی قابل جایگزینی است. هدف: سایتی که در ارائه حرفه‌ای به نظر برسد.<br>
-    <b>ترتیب اجرا:</b> UI/UX ✦ → فیچرهای باقی‌مانده → ★ تحقیق نقشه (deferred)
-  </p>
-</div>
-
-<!-- ★ NEW: PRIORITY 0 — UI/UX VISUAL AUDIT (comes before everything else) -->
-<div class="sec-head" style="margin-top:12px">
-  <h2 style="font-size:13px; color: #a78bfa">✦ اولویت اجرایی جدید — بهبود بصری و UI/UX</h2>
-  <div class="line"></div>
-</div>
-<div class="phases" style="margin-bottom:8px">
-
-  <!-- UX0: Visual Audit — DONE -->
-  <div class="phase-card is-done">
-    <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:12px; background:#7c3aed22; color:#a78bfa; border-color:#7c3aed44">UX0</div>
-      <div class="ph-title"><h3>بررسی بصری و انتخاب مسیر طراحی</h3><p>Audit کامل فرانت‌اند، تعریف design system جدید، انتخاب skill مناسب</p></div>
-      <div class="ph-badge done">✓ انجام شد</div>
-    </div>
-    <div class="ph-body">
-      <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div>بررسی بصری هر صفحه: Landing، Explore (list + map)، Billboard detail، Dashboard، Admin — مستندسازی ضعف‌های typography، spacing، hierarchy، رنگ</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>تحلیل design system فعلی: CSS custom properties در <code>globals.css</code> (پالت نارنجی/مشکی)، component‌های مشترک، الگوهای inline style</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>بررسی skills موجود در Claude Code برای UI/UX — skill رسمی <code>artifact-design</code> بارگذاری شد و برای تولید گزارش بصری استفاده شد</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>تعریف پالت رنگ جدید: نارنجی جایگزین شد با آبی-تیره (#3B7BF5) + عنبری (#F5A623) — توکن‌های CSS آماده شد</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>نقشه تغییرات: U1 (توکن‌ها) → U2 (کامپوننت‌ها) → U3 (صفحات) — مستندسازی شد</div></div>
-      </div>
-      <div class="proof">
-        <b>تأیید شده:</b> گزارش بصری UX0 به عنوان artifact منتشر شد (claude.ai/code/artifact/37b3b939) — شامل: ضعف‌های ۶ کامپوننت، مقایسه توکن‌های فعلی/پیشنهادی، CSS آماده، نقشه تغییر U1→U2→U3.
-        پالت انتخاب‌شده: accent آبی (#3B7BF5)، warm عنبری (#F5A623)، shadow scale جدید اضافه شد.
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- TIER 1: Architecture -->
-<div class="sec-head" style="margin-top:12px">
-  <h2 style="font-size:13px; color: var(--red)">🔴 اولویت ۱ — معماری (ریشه‌ای‌ترین)</h2>
-  <div class="line"></div>
-</div>
-<div class="phases" style="margin-bottom:8px">
-
-  <div class="phase-card is-done">
+  <details class="fold">
+    <summary>دورهٔ ۲ — بدهی فنی و رفع ایراد<span class="tag">۲۰ گام · ممیزی کامل کد و بستن ۲۰ ایرادِ کارکردی، امنیتی و کیفی</span></summary>
+    <div class="foldbody"><div class="phases">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">A1</div>
       <div class="ph-title"><h3>همه ۲۸۰۸ رکورد به کلاینت می‌رود</h3><p>GET /api/billboards یک JSON بزرگ برمی‌گرداند — بدون pagination، بدون فیلتر سرور</p></div>
@@ -662,8 +1118,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — 25 صفحه. API حالا ۲۴ رکورد برمی‌گرداند نه ۲۸۰۸.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">A2</div>
       <div class="ph-title"><h3>list-media فرم بدون API</h3><p>ثبت رسانه توسط صاحب رسانه — UI کامل است، backend ندارد</p></div>
@@ -678,8 +1133,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — 28 صفحه. <code>POST /api/listings</code> در route list تأیید شد.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">A3</div>
       <div class="ph-title"><h3>ImageManager بدون backend</h3><p>ادمین می‌تواند تصویر انتخاب کند ولی دکمه ذخیره alert می‌دهد</p></div>
@@ -693,8 +1147,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — 29 صفحه. <code>PUT /api/admin/billboards/[id]/images</code> در route list تأیید شد.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">A4</div>
       <div class="ph-title"><h3>BookingModal اطلاعات اضافه جمع می‌کند ولی نمی‌فرستد</h3><p>نام، شرکت، تلفن در فرم هستند ولی به API نمی‌رسند</p></div>
@@ -708,8 +1161,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ فرم رزرو حالا فقط اطلاعات ضروری را جمع می‌کند — مشکل داده گم‌شده رفع شد.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">A5</div>
       <div class="ph-title"><h3>Admin مدیریت رزروها ندارد</h3><p>کاربران رزرو می‌کنند ولی admin هیچ panel برای تأیید/رد رزرو ندارد</p></div>
@@ -725,17 +1177,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — 28 صفحه. <code>GET /api/admin/reservations</code> و <code>PATCH /api/admin/reservations/[id]</code> در route list تأیید شد.</div>
     </div>
   </div>
-
-</div>
-
-<!-- TIER 2: Security -->
-<div class="sec-head" style="margin-top:20px">
-  <h2 style="font-size:13px; color: var(--amber)">🟡 اولویت ۲ — امنیت</h2>
-  <div class="line"></div>
-</div>
-<div class="phases" style="margin-bottom:8px">
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">S1</div>
       <div class="ph-title"><h3>Register و Login rate limit key یکسان دارند</h3><p>اسپم registration باعث lock شدن login آدرس IP می‌شود</p></div>
@@ -749,8 +1191,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق. rate limit keys حالا مجزا هستند.</div>
     </div>
   </div>
-
-  <div class="phase-card" style="border-color: var(--amber-mid)">
+<div class="phase-card" style="border-color: var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">S2</div>
       <div class="ph-title"><h3>فقط یک Admin از env var — بدون multi-admin</h3><p>Admin DB table وجود دارد ولی استفاده نمی‌شود — password rotation بدون redeploy ممکن نیست</p></div>
@@ -765,8 +1206,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق. Admin login از DB می‌خواند. مدیریت چند-ادمین از پنل سوپر ادمین کار می‌کند — تست: gate سوپر ادمین، ساخت + تغییر نقش + audit، ایمیل تکراری ۴۰۹، منع تغییر حساب خود ۴۰۹.</div>
     </div>
   </div>
-
-  <div class="phase-card" style="border-color: var(--amber-mid)">
+<div class="phase-card" style="border-color: var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">S3</div>
       <div class="ph-title"><h3>Rate limiter in-memory — multi-instance کار نمی‌کند</h3><p>هر process یک store جداگانه دارد — با pm2 cluster یا serverless بی‌اثر می‌شود</p></div>
@@ -783,8 +1223,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <div class="phase-card" style="border-color: var(--amber-mid)">
+<div class="phase-card" style="border-color: var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">S4</div>
       <div class="ph-title"><h3>OTP ندارد — ثبت‌نام با شماره تأیید نشده</h3><p>هر کسی می‌تواند با هر شماره‌ای ثبت‌نام کند بدون تأیید SMS</p></div>
@@ -802,8 +1241,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">S5</div>
       <div class="ph-title"><h3>Session refresh / sliding window ندارد</h3><p>JWT 8 ساعته — منقضی شد، logout اجباری — بدون silent refresh</p></div>
@@ -816,17 +1254,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ کاربر فعال دیگر logout اجباری نمی‌شود.</div>
     </div>
   </div>
-
-</div>
-
-<!-- TIER 3: Code Quality -->
-<div class="sec-head" style="margin-top:20px">
-  <h2 style="font-size:13px; color: var(--blue, #60a5fa)">🔵 اولویت ۳ — کیفیت کد</h2>
-  <div class="line"></div>
-</div>
-<div class="phases" style="margin-bottom:8px">
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">Q1</div>
       <div class="ph-title"><h3>کامنت‌های outdated و فازمحور در کد production</h3><p>lib/db/billboards.ts هنوز می‌گوید "Not wired into any page yet"</p></div>
@@ -841,8 +1269,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ build موفق — هیچ Phase reference stale در هیچ فایل باقی نماند.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">Q2</div>
       <div class="ph-title"><h3>پیام‌های خطا نیمی انگلیسی، نیمی فارسی</h3><p>کاربر فارسی ممکن است "Unauthorized" یا "Invalid JSON" ببیند</p></div>
@@ -855,8 +1282,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ grep تأیید کرد — هیچ "Unauthorized"/"Too many requests"/"Invalid ID" در API routes باقی نماند.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">Q3</div>
       <div class="ph-title"><h3>console.log در audit.ts — leak اطلاعات به stdout</h3><p>audit events به stderr/stdout می‌روند — در production log aggregator می‌خواند</p></div>
@@ -869,8 +1295,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ stack trace/DB path در production به stdout leak نمی‌کند.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">Q4</div>
       <div class="ph-title"><h3>billboard/[slug]/page.tsx — font link inline در component</h3><p>&lt;link rel="stylesheet"&gt; داخل JSX — باید در layout.tsx باشد</p></div>
@@ -883,17 +1308,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ HTML تمیزتر، بدون درخواست font اضافه.</div>
     </div>
   </div>
-
-</div>
-
-<!-- TIER 4: Feature Gaps -->
-<div class="sec-head" style="margin-top:20px">
-  <h2 style="font-size:13px; color: var(--muted)">⚪ اولویت ۴ — فیچرهای غایب نسبت به رقبا</h2>
-  <div class="line"></div>
-</div>
-<div class="phases" style="margin-bottom:8px">
-
-  <div class="phase-card">
+<div class="phase-card">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F1</div>
       <div class="ph-title"><h3>بازیابی رمز / فراموشی رمز</h3><p>کاربری که رمز فراموش کرده هیچ راهی ندارد</p></div>
@@ -906,8 +1321,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <div class="phase-card">
+<div class="phase-card">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F2</div>
       <div class="ph-title"><h3>اعلان SMS/ایمیل بعد از رزرو</h3><p>کاربر رزرو می‌کند، هیچ notification نمی‌رسد — باید تماس تلفنی منتظر بماند</p></div>
@@ -920,8 +1334,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F3</div>
       <div class="ph-title"><h3>پروفایل کاربر قابل ویرایش نیست</h3><p>Dashboard فقط read-only — نام و شماره قابل تغییر نیستند</p></div>
@@ -935,8 +1348,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق. کاربر می‌تواند نام و رمز خود را از داشبورد تغییر دهد.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F4</div>
       <div class="ph-title"><h3>sitemap.xml وجود ندارد</h3><p>فقط robots.ts هست — موتور جستجو صفحات بیلبوردها را index نمی‌کند</p></div>
@@ -949,8 +1361,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ <code>/sitemap.xml</code> در route list تأیید شد — ۲۸۰۸ billboard + ۴ صفحه اصلی.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F5</div>
       <div class="ph-title"><h3>سیستم امتیاز و نظر</h3><p>rating و reviewCount در DB هستند ولی هیچ UI/API برای نوشتن review وجود ندارد</p></div>
@@ -966,8 +1377,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> Build موفق ۳۳ صفحه — <code>/api/reviews</code> در route list تأیید شد. کاربران با رزرو confirmed می‌توانند نظر ثبت کنند؛ بقیه پیام راهنما می‌بینند.</div>
     </div>
   </div>
-
-  <div class="phase-card">
+<div class="phase-card">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F6</div>
       <div class="ph-title"><h3>پرداخت آنلاین</h3><p>رزرو "pending" می‌ماند — هیچ flow پرداختی وجود ندارد</p></div>
@@ -981,13 +1391,35 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
+    </div></div>
+  </details>
 
-  <h2 style="font-size:13px; color: #a78bfa; margin-top:28px">🎨 اولویت ۱ (فعلی) — طراحی UI/UX ✦</h2>
-  <p style="font-size:0.8rem; color:var(--muted); margin:6px 0 12px">بهبود جدی کیفیت بصری و UX — اولویت اجرایی اصلی.</p>
-
-  <div class="phase-card is-done">
+  <details class="fold">
+    <summary>دورهٔ ۳ — طراحی و تجربهٔ کاربری<span class="tag">۱۴ گام · از یک رابط خام تا یک محصولِ قابل‌ارائه — ۱۴ گام</span></summary>
+    <div class="foldbody"><div class="phases">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:11px; background:#7c3aed22; color:#a78bfa; border-color:#7c3aed44">UX-B</div>
+      <div class="ph-num" style="font-size:12px; background:#7c3aed22; color:#6247C4; border-color:#7c3aed44">UX0</div>
+      <div class="ph-title"><h3>بررسی بصری و انتخاب مسیر طراحی</h3><p>Audit کامل فرانت‌اند، تعریف design system جدید، انتخاب skill مناسب</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>بررسی بصری هر صفحه: Landing، Explore (list + map)، Billboard detail، Dashboard، Admin — مستندسازی ضعف‌های typography، spacing، hierarchy، رنگ</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تحلیل design system فعلی: CSS custom properties در <code>globals.css</code> (پالت نارنجی/مشکی)، component‌های مشترک، الگوهای inline style</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بررسی skills موجود در Claude Code برای UI/UX — skill رسمی <code>artifact-design</code> بارگذاری شد و برای تولید گزارش بصری استفاده شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>تعریف پالت رنگ جدید: نارنجی جایگزین شد با آبی-تیره (#3B7BF5) + عنبری (#F5A623) — توکن‌های CSS آماده شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>نقشه تغییرات: U1 (توکن‌ها) → U2 (کامپوننت‌ها) → U3 (صفحات) — مستندسازی شد</div></div>
+      </div>
+      <div class="proof">
+        <b>تأیید شده:</b> گزارش بصری UX0 به عنوان artifact منتشر شد (claude.ai/code/artifact/37b3b939) — شامل: ضعف‌های ۶ کامپوننت، مقایسه توکن‌های فعلی/پیشنهادی، CSS آماده، نقشه تغییر U1→U2→U3.
+        پالت انتخاب‌شده: accent آبی (#3B7BF5)، warm عنبری (#F5A623)، shadow scale جدید اضافه شد.
+      </div>
+    </div>
+  </div>
+<div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:11px; background:#7c3aed22; color:#6247C4; border-color:#7c3aed44">UX-B</div>
       <div class="ph-title"><h3>پالت جدید + پس‌زمینه متحرک (ایتریشن ۲)</h3><p>vine پیچک‌مانند با scroll، orb های واضح‌تر، سبز در UI</p></div>
       <div class="ph-badge done">✓ انجام شد</div>
     </div>
@@ -1004,8 +1436,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — پالت، vine پیچک با scroll-draw، orb‌ها، و بهینه‌سازی اسکرول همه فعال. scroll wildcard transition حذف شد؛ BackgroundPattern اکنون با RAF throttled اجرا می‌شود.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U1</div>
       <div class="ph-title"><h3>بازطراحی صفحه اصلی (Landing Page)</h3><p>hero section ضعیف، CTA مبهم، hierarchy بصری ندارد</p></div>
@@ -1021,8 +1452,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — 30 صفحه. <code>/api/stats</code> در route list تأیید شد. type counts و city count از DB واقعی.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U2</div>
       <div class="ph-title"><h3>بهبود صفحه Explore / اتصال صفحات ناقص</h3><p>فیلترها، اتصال لندینگ → explore، صفحه‌های تحلیل و مقایسه</p></div>
@@ -1046,8 +1476,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> Build موفق ۳۲ صفحه — /analytics و /compare در route list تأیید شدند. Topbar tabs به landing/explore و /analytics و /compare لینک می‌کنند. URL params از لندینگ به explore منتقل می‌شوند.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U3</div>
       <div class="ph-title"><h3>صفحه جزئیات بیلبورد</h3><p>gallery تصاویر، specs بهتر، social share</p></div>
@@ -1062,8 +1491,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — 29 صفحه. <code>BillboardGallery</code> و <code>ShareButton</code> در components اضافه شدند.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U4</div>
       <div class="ph-title"><h3>Polish لندینگ / کارت / فوتر — صفحات ناقص</h3><p>ادغام دکمه‌های BillboardCard، تیکر زنده، کاروسل لندینگ، فوتر کامل، صفحات /about /contact /terms</p></div>
@@ -1094,20 +1522,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> Build موفق — TypeScript clean. Hero centered full-width با گالری sliding زیر آن. Header nav links حذف شد.</div>
     </div>
   </div>
-
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- ★ U5-U10 — UI/UX UPGRADE PHASES                               -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<div class="sec-head" style="margin-top:48px">
-  <h2>★ فازهای UI/UX پیشرفته</h2>
-  <div class="line"></div>
-</div>
-
-<div class="phases">
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U5</div>
       <div class="ph-title"><h3>تصویر انسانی و اعتمادسازی</h3><p>اضافه کردن حضور انسانی واقعی، testimonials، و badge اعتماد</p></div>
@@ -1123,8 +1538,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — TypeScript clean. لندینگ با testimonials و brands bar. about page کامل بازنویسی شد.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U6</div>
       <div class="ph-title"><h3>کاهش حس AI / میکرو-انیمیشن</h3><p>گرم‌تر کردن طراحی، hover effects، رفع رنگ سایه لوگو</p></div>
@@ -1139,8 +1553,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — BillboardCard hover scale فعال. سایه لوگو آبی.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U7</div>
       <div class="ph-title"><h3>رفع باگ‌های UX-Breaking</h3><p>مشکلاتی که مستقیماً کاربر را از سایت خارج می‌کنند</p></div>
@@ -1157,8 +1570,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — TypeScript clean. همه مشکلات UX-Breaking برطرف شدند.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U8</div>
       <div class="ph-title"><h3>پالیش داشبورد و پروفایل</h3><p>آواتار کاربر، آیکون‌های درست، empty state بهتر</p></div>
@@ -1175,8 +1587,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — TypeScript clean. داشبورد حالا thumbnail، link و avatar دارد.</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U9</div>
       <div class="ph-title"><h3>ریسپانسیو / موبایل</h3><p>78% کاربران ایرانی موبایل — breakpoints درست</p></div>
@@ -1193,8 +1604,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ Build موفق — TypeScript clean. CSS media queries در globals.css اضافه شدند.</div>
     </div>
   </div>
-
-  <div class="phase-card">
+<div class="phase-card">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U10</div>
       <div class="ph-title"><h3>Map-First Explore</h3><p>تجربه AdQuick/Blip-like — نقشه به عنوان default view</p></div>
@@ -1211,8 +1621,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U11</div>
       <div class="ph-title"><h3>پرداخت بصری محیطی</h3><p>هاله‌های موضعی، هاور کارت‌ها، بافت گرین، بوردر گرادیانی — روی سیستم توکن فعلی</p></div>
@@ -1234,8 +1643,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ <code>npm run lint</code> و <code>npm run build</code> بدون خطا. dev server: <code>/</code>، <code>/explore</code>، <code>/about</code>، <code>/contact</code>، <code>/compare</code> همه ۲۰۰، بدون خطای runtime، کلاس‌های تزئینی و <code>&lt;a href="/"&gt;</code> دور علامت R در HTML خروجی حاضر. هیچ لیسنر <code>scroll</code>/<code>mousemove</code> سراسری باقی نمانده جز آستانهٔ هدر لندینگ. الهام از spotlight-card اسکیل 21st، پیاده‌سازی دستی با inline style + کی‌فریم CSS (بدون کلاس Tailwind).</div>
     </div>
   </div>
-
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">U12</div>
       <div class="ph-title"><h3>پرفورمنس و حرارت لپ‌تاپ</h3><p>چرا موقع چرخیدن در سایت مک‌بوک داغ می‌شد — و چه چیزی حلش کرد</p></div>
@@ -1262,9 +1670,13 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ <code>npm run lint</code> و <code>npm run build</code> بدون خطا. در حالت production همه‌ی صفحه‌ها ۲۰۰، <b>۰ عکسِ گم‌شده</b> از ۳۵۳۶ رکورد، عکسِ تبدیل‌شده با <code>image/jpeg</code> و PNGهای شفافِ باقی‌مانده با <code>image/png</code> سِرو می‌شوند. بکاپِ دیتابیس و JSONها پیش از مهاجرت در <code>backups/pre-image-optim-*</code>.</div>
     </div>
   </div>
+    </div></div>
+  </details>
 
-  <!-- ─── SEC — Production Security Hardening ─── -->
-  <div class="phase-card is-done">
+  <details class="fold">
+    <summary>دورهٔ ۴ — سخت‌سازی و خزنده<span class="tag">۴ گام · امنیت production، کارایی، و دو نسل بازنویسی خزنده</span></summary>
+    <div class="foldbody"><div class="phases">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:11px">SEC</div>
       <div class="ph-title"><h3>Production Security Hardening</h3><p>۱۵ باگ امنیتی و کیفیتی — API routes، proxy، auth، rate limit</p></div>
@@ -1291,9 +1703,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ TypeScript clean — <code>npx tsc --noEmit</code> بدون خطا. همه fix ها verified.</div>
     </div>
   </div>
-
-  <!-- ─── PERF — Performance Hardening ─── -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:11px">PERF</div>
       <div class="ph-title"><h3>Performance Hardening — استانداردهای ۲۰۲۶</h3><p>WAL mode، composite indexes، font preload، cache tune</p></div>
@@ -1316,9 +1726,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- ─── SCR — Scraper v2 ─── -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:11px">SCR</div>
       <div class="ph-title"><h3>Scraper v2 — شماره تلفن + فرمول علمی</h3><p>استخراج تلفن از ۵ منبع + جایگزینی کامل random با فرمول</p></div>
@@ -1336,9 +1744,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof">✓ phone در field DB ذخیره می‌شود — صفحه جزئیات بیلبورد نمایش می‌دهد.</div>
     </div>
   </div>
-
-  <!-- ─── SCR3 — Scraper v3: Image Fix + UI ─── -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">SCR3</div>
       <div class="ph-title"><h3>Scraper v3 — اصلاح عکس‌ها + UI بیلبورد</h3><p>direct URL image extraction + RTL fix + TrafficMeter redesign</p></div>
@@ -1377,11 +1783,13 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
       <div class="proof">✓ DB: 3545 رکورد، کارت‌ها با Lucide icon، showcase explore بدون هاله، carousel لندینگ multi-card مربعی، scraper پیش‌فرض incremental.</div>
     </div>
-  </div>
+    </div></div>
+  </details>
 
-  <!-- ─── PREP — آماده‌سازی نهایی ─── -->
-  <!-- ─── REV — بازبینی نهایی مهندسی ─── -->
-  <div class="phase-card is-done">
+  <details class="fold">
+    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۶ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ و بستن ایرادهای آخر</span></summary>
+    <div class="foldbody"><div class="phases">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">REV</div>
       <div class="ph-title"><h3>بازبینی نهایی صفر تا صد + تغییر مدل کسب‌وکار</h3><p>مرور کامل کد، حذف زیرسیستم رزرو، مسیر درآمدی سمت آگهی‌دهنده، سخت‌سازی ضد کپی‌برداری</p></div>
@@ -1408,46 +1816,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> ۷۵ تست سبز (<code>npm test</code>) — از ۵۷ تست قبلی؛ <code>npx tsc --noEmit</code> بدون خطا؛ <code>npm run lint</code> بدون هشدار؛ <code>npm run build</code> موفق. آزمون دستی روی سرور واقعی: UA ربات ۴۰۳، گوگل‌بات ۲۰۰، hotlink خارجی ۴۰۳، آگهی pending از API و صفحه ۴۰۴، <code>limit=100</code> → ۴۰۰، فایل جعلیِ PNG رد شد، ثبت آگهی ویژه → <code>awaiting_payment</code> → تأیید ادمین → منتشر + <code>featured</code>، تأیید دوباره ۴۰۹، ردیف <code>listing_approved</code> در لاگ ماندگار. تست زمان‌سنجی لاگین با برگرداندن عمدی باگ راستی‌آزمایی شد (قرمز شد).</div>
     </div>
   </div>
-
-  <!-- ─── BRD — Favicon / visual identity ─── -->
-  <div class="phase-card is-done">
-    <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:10px">BRD</div>
-      <div class="ph-title"><h3>فاویکون — نشانِ «R» در زبانه‌ی مرورگر</h3><p>حذفِ آیکونِ پیش‌فرضِ Next.js و نشستنِ لوگوی خودِ رسامپ</p></div>
-      <div class="ph-badge done">✓ انجام شد</div>
-    </div>
-    <div class="ph-body">
-      <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div><strong>آیکونِ پیش‌فرضِ Next.js حذف شد:</strong> <code>app/favicon.ico</code> از روزِ اولِ پروژه همان لوگوی Next بود — یعنی زبانه‌ی مرورگر و بوکمارک‌ها نامِ رسامپ را با نشانِ فریم‌ورک نشان می‌داد</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>نشانِ «R»</strong> — همان لوگوی <code>components/Topbar.tsx</code>: مربعِ گِردگوشه با <code>--accent</code> (<code>#3B7BF5</code>) و حرفِ R سفید</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><code>app/icon.svg</code> — برداری، پس در هر اندازه‌ای تیز است (<code>&lt;link rel="icon" type="image/svg+xml"&gt;</code>). حرف R یک <code>path</code> است نه متن، چون فاویکونِ SVG فونتِ سایت را بار نمی‌کند</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><code>app/favicon.ico</code> — نسخه‌ی رستری چندسایزی (۱۶ تا ۲۵۶) برای مرورگرهایی که SVG را قبول ندارند و برای <code>/favicon.ico</code> که مرورگر خودش می‌خواهد</div></div>
-      </div>
-      <div class="proof">✓ <code>npm run build</code> موفق؛ در HTMLِ خروجی هر دو تگ ساخته می‌شود: <code>&lt;link rel="icon" href="/icon.svg…" type="image/svg+xml" sizes="any"&gt;</code> و <code>&lt;link rel="icon" href="/favicon.ico…" type="image/x-icon"&gt;</code>. خوانایی در ۱۶px چشمی بررسی شد.</div>
-    </div>
-  </div>
-
-  <!-- ─── FRZ — pre-freeze hardening ─── -->
-  <div class="phase-card is-done">
-    <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:10px">FRZ</div>
-      <div class="ph-title"><h3>مرور نهایی پیش از فریز پروژه</h3><p>سه ایرادِ باقی‌مانده بسته شد و اعدادِ داکیومنت‌ها با واقعیت هم‌خوان شد</p></div>
-      <div class="ph-badge done">✓ انجام شد</div>
-    </div>
-    <div class="ph-body">
-      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">یک مرور سرتاسری پیش از نوشتنِ مقاله و متوقف‌کردنِ تغییرات: قوانینِ خودِ پروژه، سطحِ API، امنیت، سلامتِ داده و صحتِ اعدادِ داکیومنت‌ها.</p>
-      <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div><strong>مسابقهٔ همزمانی در ارسال مجدد بسته شد:</strong> <code>resubmitListing</code> اول مالکیت و وضعیت را می‌خواند و بعد می‌نوشت. حالا هر دو شرط داخلِ <code>WHERE</code> یک <code>updateMany</code> هستند و <code>count === 0</code> یعنی گارد رد کرده — همان چیزی که §۸ می‌خواهد: «هرگز چک کن سپس بنویس»</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong><code>app/global-error.tsx</code> اضافه شد:</strong> <code>error.tsx</code> داخلِ layout رندر می‌شود، پس اگر خودِ layout ریشه بترکد چیزی برای گرفتنش نیست و کاربر صفحهٔ پیش‌فرضِ انگلیسیِ Next را می‌دید. این فایل به globals.css و فونت هم تکیه نمی‌کند (رنگ‌ها literal، فونت با fallback سیستمی) چون همان چیزی که layout را شکسته ممکن است این‌ها را هم شکسته باشد</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>جدول <code>idempotency_keys</code> دیگر بی‌نهایت رشد نمی‌کند:</strong> هرسِ فرصت‌طلبانهٔ ردیف‌های قدیمی‌تر از ۲۴ ساعت، دقیقاً مثل کدهای OTP. کلید برای جذبِ دابل‌کلیک و retry است — چند ثانیه‌ای — پس یک روز نگه‌داشتن سخاوتمندانه است</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>اعدادِ داکیومنت‌ها اصلاح شد</strong> (مهم‌ترین برای مقاله): <code>final-review-notes.md</code> §۹ → تست ۷۵ به <b>۸۷</b>، migration ۹ به <b>۱۲</b>، مسیر API ۲۷ به <b>۳۱ فایل روت / ۳۹ متد</b>؛ <code>demo-guide</code> و <code>demo-script</code> و نوارِ بالای همین صفحه → <b>۲۸۰۸ به ۳۵۳۶ رسانه</b>، <b>۸۷ به ۱۰۱ شهر</b>، تهران <b>۸۹۸ به ۶۷۸</b></div></div>
-      </div>
-      <div class="proof"><b>تأیید:</b> ۸۷ تست روی سرورِ production در <b>۱۱ ثانیه</b> (۸۶ سبز؛ تنها شکست، تستِ echo کدِ OTP که عمداً بیرون از production کار می‌کند). آزمونِ زنده روی بیلد production: همهٔ صفحه‌ها ۲۰۰، صفحاتِ محافظت‌شده ۳۰۷، UA ربات ۴۰۳، گوگل‌بات ۲۰۰، <code>limit=100</code> ← ۴۰۰، slug بد ← ۴۰۰، آگهیِ منتشرنشده ← ۴۰۴، API ادمین بدون نشست ← ۴۰۱، شمارهٔ مالک در هیچ پاسخ عمومی نیست. سلامتِ دیتابیس: ۳۵۳۶ ردیف، ۰ ناهماهنگیِ <code>hasImages</code>، ۰ کلید خارجیِ یتیم، ۰ وضعیتِ خارج از allowlist.</div>
-    </div>
-  </div>
-
-  <!-- ─── REV2 — listing revision loop ─── -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">REV2</div>
       <div class="ph-title"><h3>«نیاز به اصلاح» — راه برگشت برای آگهی‌ای که ایراد کوچک دارد</h3><p>تصمیم ادمین سه‌حالته شد؛ فرستنده آگهی را ویرایش و دوباره ارسال می‌کند</p></div>
@@ -1466,9 +1835,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> تست‌های API سبز — درخواست اصلاح، ویرایش و ارسال مجدد توسط فرستنده، و ردِ ویرایش توسط حسابِ دیگر. <code>docs/api.md</code> به‌روز شد (ردیف تصمیم + ردیف <code>PATCH /api/listings/[id]</code>).</div>
     </div>
   </div>
-
-  <!-- ─── LOG — خواناتر شدن تب‌های لاگ و اسکرپر برای ادمین ─── -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">LOG</div>
       <div class="ph-title"><h3>تب‌های «لاگ» و «اسکرپر» برای ادمینِ غیرفنی خواناتر شد</h3><p>توضیح فارسی پای هر لاگ + بازطراحی بصری پنل اسکرپر (بدون تغییر عملکرد)</p></div>
@@ -1484,9 +1851,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> <code>npm run build</code> موفق؛ <code>npm run lint</code> روی سه فایل تغییرکرده بدون هشدار. خطاهای مستقلِ <code>tsc</code> (<code>reviewNote</code> / <code>contactRequest</code>) از کار در جریانِ دیگری روی پروژه است و ربطی به این تغییر ندارد.</div>
     </div>
   </div>
-
-  <!-- ─── CRM — lead capture ─── -->
-  <div class="phase-card is-done">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">CRM</div>
       <div class="ph-title"><h3>سرنخ‌ها — ثبت تقاضا به‌جای نصبِ یک CRM آماده</h3><p>Atomic CRM بررسی و رد شد؛ معادلِ لازمش داخل خودِ پروژه ساخته شد</p></div>
@@ -1513,8 +1878,46 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof"><b>تأیید:</b> ۱۱ تست تازه سبز شد — ۴۰۱ بدون لاگین، بازگشتِ شماره، ۴۰۴ روی آگهیِ منتشرنشده، ساخته‌شدنِ سرنخ، <b>افزایشِ شمارنده به‌جای ردیف دوم</b>، سرنخ‌نساختن برای نشستِ ادمین، ۴۰۱ برای کاربر عادی و ۴۰۳ برای viewer روی پنل، تغییر وضعیت + یادداشت، ردِ وضعیتِ خارج از allowlist (۴۰۰) و ۴۰۴ سرنخِ ناموجود. <code>npx tsc --noEmit</code>، <code>npm run lint</code> و <code>npm run build</code> بدون خطا.</div>
     </div>
   </div>
+<div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">BRD</div>
+      <div class="ph-title"><h3>فاویکون — نشانِ «R» در زبانه‌ی مرورگر</h3><p>حذفِ آیکونِ پیش‌فرضِ Next.js و نشستنِ لوگوی خودِ رسامپ</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>آیکونِ پیش‌فرضِ Next.js حذف شد:</strong> <code>app/favicon.ico</code> از روزِ اولِ پروژه همان لوگوی Next بود — یعنی زبانه‌ی مرورگر و بوکمارک‌ها نامِ رسامپ را با نشانِ فریم‌ورک نشان می‌داد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نشانِ «R»</strong> — همان لوگوی <code>components/Topbar.tsx</code>: مربعِ گِردگوشه با <code>--accent</code> (<code>#3B7BF5</code>) و حرفِ R سفید</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/icon.svg</code> — برداری، پس در هر اندازه‌ای تیز است (<code>&lt;link rel="icon" type="image/svg+xml"&gt;</code>). حرف R یک <code>path</code> است نه متن، چون فاویکونِ SVG فونتِ سایت را بار نمی‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/favicon.ico</code> — نسخه‌ی رستری چندسایزی (۱۶ تا ۲۵۶) برای مرورگرهایی که SVG را قبول ندارند و برای <code>/favicon.ico</code> که مرورگر خودش می‌خواهد</div></div>
+      </div>
+      <div class="proof">✓ <code>npm run build</code> موفق؛ در HTMLِ خروجی هر دو تگ ساخته می‌شود: <code>&lt;link rel="icon" href="/icon.svg…" type="image/svg+xml" sizes="any"&gt;</code> و <code>&lt;link rel="icon" href="/favicon.ico…" type="image/x-icon"&gt;</code>. خوانایی در ۱۶px چشمی بررسی شد.</div>
+    </div>
+  </div>
+<div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">FRZ</div>
+      <div class="ph-title"><h3>مرور نهایی پیش از فریز پروژه</h3><p>سه ایرادِ باقی‌مانده بسته شد و اعدادِ داکیومنت‌ها با واقعیت هم‌خوان شد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">یک مرور سرتاسری پیش از نوشتنِ مقاله و متوقف‌کردنِ تغییرات: قوانینِ خودِ پروژه، سطحِ API، امنیت، سلامتِ داده و صحتِ اعدادِ داکیومنت‌ها.</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مسابقهٔ همزمانی در ارسال مجدد بسته شد:</strong> <code>resubmitListing</code> اول مالکیت و وضعیت را می‌خواند و بعد می‌نوشت. حالا هر دو شرط داخلِ <code>WHERE</code> یک <code>updateMany</code> هستند و <code>count === 0</code> یعنی گارد رد کرده — همان چیزی که §۸ می‌خواهد: «هرگز چک کن سپس بنویس»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>app/global-error.tsx</code> اضافه شد:</strong> <code>error.tsx</code> داخلِ layout رندر می‌شود، پس اگر خودِ layout ریشه بترکد چیزی برای گرفتنش نیست و کاربر صفحهٔ پیش‌فرضِ انگلیسیِ Next را می‌دید. این فایل به globals.css و فونت هم تکیه نمی‌کند (رنگ‌ها literal، فونت با fallback سیستمی) چون همان چیزی که layout را شکسته ممکن است این‌ها را هم شکسته باشد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>جدول <code>idempotency_keys</code> دیگر بی‌نهایت رشد نمی‌کند:</strong> هرسِ فرصت‌طلبانهٔ ردیف‌های قدیمی‌تر از ۲۴ ساعت، دقیقاً مثل کدهای OTP. کلید برای جذبِ دابل‌کلیک و retry است — چند ثانیه‌ای — پس یک روز نگه‌داشتن سخاوتمندانه است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>اعدادِ داکیومنت‌ها اصلاح شد</strong> (مهم‌ترین برای مقاله): <code>final-review-notes.md</code> §۹ → تست ۷۵ به <b>۸۷</b>، migration ۹ به <b>۱۲</b>، مسیر API ۲۷ به <b>۳۱ فایل روت / ۳۹ متد</b>؛ <code>demo-guide</code> و <code>demo-script</code> و نوارِ بالای همین صفحه → <b>۲۸۰۸ به ۳۵۳۶ رسانه</b>، <b>۸۷ به ۱۰۱ شهر</b>، تهران <b>۸۹۸ به ۶۷۸</b></div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> ۸۷ تست روی سرورِ production در <b>۱۱ ثانیه</b> (۸۶ سبز؛ تنها شکست، تستِ echo کدِ OTP که عمداً بیرون از production کار می‌کند). آزمونِ زنده روی بیلد production: همهٔ صفحه‌ها ۲۰۰، صفحاتِ محافظت‌شده ۳۰۷، UA ربات ۴۰۳، گوگل‌بات ۲۰۰، <code>limit=100</code> ← ۴۰۰، slug بد ← ۴۰۰، آگهیِ منتشرنشده ← ۴۰۴، API ادمین بدون نشست ← ۴۰۱، شمارهٔ مالک در هیچ پاسخ عمومی نیست. سلامتِ دیتابیس: ۳۵۳۶ ردیف، ۰ ناهماهنگیِ <code>hasImages</code>، ۰ کلید خارجیِ یتیم، ۰ وضعیتِ خارج از allowlist.</div>
+    </div>
+  </div>
+    </div></div>
+  </details>
 
-  <div class="phase-card is-next open">
+  <details class="fold">
+    <summary>دورهٔ ۶ — آماده‌سازی ارائه<span class="tag">۲ گام · چک‌لیست روز دفاع و پاسخ‌های آمادهٔ داور</span></summary>
+    <div class="foldbody"><div class="phases">
+<div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>
       <div class="ph-title"><h3>آماده‌سازی نهایی ارائه به استاد</h3><p>چک‌لیست کامل قبل از ارائه — چند روز دیگر</p></div>
@@ -1538,9 +1941,7 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- ─── CMP — برتری رقابتی ─── -->
-  <div class="phase-card is-next">
+<div class="phase-card is-next">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">CMP</div>
       <div class="ph-title"><h3>برتری رقابتی — پاسخ‌های آماده داور</h3><p>رسامپ vs IRBillboard vs Billboardiha — ۷ بُعد</p></div>
@@ -1560,33 +1961,21 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       <div class="proof" style="background:var(--amber-dim); border-color:var(--amber-mid); color:var(--text)">رسامپ در ساختار فنی و قابلیت‌ها از رقبا پیشتاز است — با این صداقت که برخی داده‌ها heuristic هستند و همه صاحبان رسانه هنوز به پلتفرم متصل نشده‌اند. این محدودیت‌ها ذاتی مرحله MVP است، نه نقص طراحی.</div>
     </div>
   </div>
+    </div></div>
+  </details>
 
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- ★ MAP / GEOLOCATION — DEFERRED HIGH-PRIORITY INVESTIGATION     -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<div class="sec-head" style="margin-top:48px">
-  <h2 style="color:#f87171">★ نقشه / Geolocation — تحقیق معوق با اولویت بالا</h2>
-  <div class="line"></div>
-</div>
-<div class="warn-box" style="margin-bottom:16px">
-  <b>این بخش پس از UI/UX و فیچرهای باقی‌مانده بررسی می‌شود.</b> مشکلات نقشه پیچیده و وابسته به provider هستند.
-  قبل از هر تغییر، تحقیق ریشه‌ای لازم است — نه تعویض بی‌هدف provider.
-</div>
-
-<div class="phases">
-
-  <!-- Map Issue A -->
-  <div class="phase-card is-defer open">
+  <details class="fold">
+    <summary>معوق — نقشه و مکان‌یابی<span class="tag">۴ گام · تحقیق کنارگذاشته‌شده با اولویت بالا؛ دلیل هر کدام ثبت شده</span></summary>
+    <div class="foldbody"><div class="phases">
+<div class="phase-card is-defer open">
     <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#f87171; border-color:#ef444444">MAP-A</div>
+      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#C33A3A; border-color:#ef444444">MAP-A</div>
       <div class="ph-title"><h3>«API Key Required» روی نقشه</h3><p>نقشه مکرراً این پیام را نشان می‌دهد — قبلاً نشان نمی‌داد</p></div>
-      <div class="ph-badge" style="background:#ef444418; color:#f87171; border:1px solid #ef444444">⏸ تحقیق معوق</div>
+      <div class="ph-badge" style="background:#ef444418; color:#C33A3A; border:1px solid #ef444444">⏸ تحقیق معوق</div>
     </div>
     <div class="ph-body">
       <div class="defer-note" style="border-color:#ef444444; background:#ef44440a">
-        <b style="color:#f87171">وضعیت فعلی:</b> tile provider فعلی CARTO است (<code>cartocdn.com</code>) — OpenStreetMap-based، بدون API key در URL tile.
+        <b style="color:#C33A3A">وضعیت فعلی:</b> tile provider فعلی CARTO است (<code>cartocdn.com</code>) — OpenStreetMap-based، بدون API key در URL tile.
         منشأ پیام «API Key Required» مشخص نیست. ممکن است از جای دیگری بیاید (مثلاً geocoding Neshan، یا تغییر سیاست CARTO).
       </div>
       <h4>وظایف تحقیق</h4>
@@ -1599,17 +1988,15 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- Map Issue B -->
-  <div class="phase-card is-defer">
+<div class="phase-card is-defer">
     <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#f87171; border-color:#ef444444">MAP-B</div>
+      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#C33A3A; border-color:#ef444444">MAP-B</div>
       <div class="ph-title"><h3>مختصات بیلبوردها نادرست است</h3><p>بیلبوردها در شهرها یا مناطق اشتباه نمایش داده می‌شوند</p></div>
-      <div class="ph-badge" style="background:#ef444418; color:#f87171; border:1px solid #ef444444">⏸ تحقیق معوق</div>
+      <div class="ph-badge" style="background:#ef444418; color:#C33A3A; border:1px solid #ef444444">⏸ تحقیق معوق</div>
     </div>
     <div class="ph-body">
       <div class="defer-note" style="border-color:#ef444444; background:#ef44440a">
-        <b style="color:#f87171">مشکل:</b> مختصات‌های موجود در DB ممکن است از scraper، geocoding خودکار، یا ورودی دستی باشند.
+        <b style="color:#C33A3A">مشکل:</b> مختصات‌های موجود در DB ممکن است از scraper، geocoding خودکار، یا ورودی دستی باشند.
         تشخیص «کجای pipeline خطا ایجاد می‌کند» قبل از هر تصحیح لازم است. تصحیح تصادفی مختصات ممنوع است.
       </div>
       <h4>وظایف تحقیق</h4>
@@ -1621,17 +2008,15 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- Map Issue C -->
-  <div class="phase-card is-defer">
+<div class="phase-card is-defer">
     <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#f87171; border-color:#ef444444">MAP-C</div>
+      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#C33A3A; border-color:#ef444444">MAP-C</div>
       <div class="ph-title"><h3>لینک «مشاهده در نقشه» / Google Maps نادرست</h3><p>صفحه جزئیات بیلبورد لینک Google Maps باز می‌کند که گاهی شهر اشتباه است</p></div>
-      <div class="ph-badge" style="background:#ef444418; color:#f87171; border:1px solid #ef444444">⏸ تحقیق معوق</div>
+      <div class="ph-badge" style="background:#ef444418; color:#C33A3A; border:1px solid #ef444444">⏸ تحقیق معوق</div>
     </div>
     <div class="ph-body">
       <div class="defer-note" style="border-color:#ef444444; background:#ef44440a">
-        <b style="color:#f87171">مثال:</b> بیلبورد تهران ممکن است لینک Google Maps به ابهر باز کند. دلیل احتمالی: مختصات اشتباه در DB، یا URL با آدرس/نام به جای lat/lng، یا هر دو.
+        <b style="color:#C33A3A">مثال:</b> بیلبورد تهران ممکن است لینک Google Maps به ابهر باز کند. دلیل احتمالی: مختصات اشتباه در DB، یا URL با آدرس/نام به جای lat/lng، یا هر دو.
         قبل از تصحیح URL باید ریشه مشخص شود.
       </div>
       <h4>وظایف تحقیق</h4>
@@ -1643,17 +2028,15 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
-
-  <!-- Provider constraint note -->
-  <div class="phase-card is-defer">
+<div class="phase-card is-defer">
     <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#f87171; border-color:#ef444444">MAP-D</div>
+      <div class="ph-num" style="font-size:11px; background:#ef444420; color:#C33A3A; border-color:#ef444444">MAP-D</div>
       <div class="ph-title"><h3>محدودیت‌های provider برای ایران</h3><p>Neshan گزینه مهمی است ولی انتخاب provider باید بر اساس تحقیق باشد نه حدس</p></div>
-      <div class="ph-badge" style="background:#ef444418; color:#f87171; border:1px solid #ef444444">⏸ تحقیق معوق</div>
+      <div class="ph-badge" style="background:#ef444418; color:#C33A3A; border:1px solid #ef444444">⏸ تحقیق معوق</div>
     </div>
     <div class="ph-body">
       <div class="defer-note" style="border-color:#ef444444; background:#ef44440a">
-        <b style="color:#f87171">هشدار:</b> تعویض مکرر provider بدون تحقیق ریشه‌ای منجر به حلقه می‌شود.
+        <b style="color:#C33A3A">هشدار:</b> تعویض مکرر provider بدون تحقیق ریشه‌ای منجر به حلقه می‌شود.
         Neshan API key در env vars موجود است (<code>NESHAN_API_KEY</code>). ولی «چه چیزی» از Neshan استفاده می‌شود باید اول روشن شود.
       </div>
       <div class="task-list">
@@ -1663,30 +2046,288 @@ footer { text-align: center; color: var(--muted2); font-size: 12px; margin-top: 
       </div>
     </div>
   </div>
+    </div></div>
+  </details>
 
-</div>
+</section>
 
-<footer>
-  Rasamap · ۱۲ شهریور ۱۴۰۵ · خواناتر شدن تب‌های «لاگ» و «اسکرپر» پنل ادمین (توضیح فارسی پای هر لاگ + بازطراحی بصری پنل اسکرپر) · بازبینی نهایی صفر تا صد: حذف زیرسیستم رزرو و چرخش مدل کسب‌وکار به سمت آگهی‌دهنده (§۱۷)، دو پلن + تأیید دستی پرداخت به‌جای درگاه جعلی (§۱۸)، آپلود عکس واقعی با اعتبارسنجی magic-byte (§۱۹)، سخت‌سازی ضد کپی‌برداری با حفظ گوگل (§۲۰)، دو ستون denormal برای مرتب‌سازی درست (§۲۱)؛ رفع باگ زمان‌سنجی لاگین، پوشش تصویر ۱۰۰٪→۵۷٪، drift شدن hasImages، دیده‌شدن آگهی تأییدنشده؛ حذف پنل اسکرپر ساختگی؛ امتیاز از روی جدول نظرات؛ گاردهای همزمانی منتقل‌شده به مسیر ثبت آگهی؛ تست‌ها ۵۷→۷۵ · سه‌حالته‌شدن تصمیم ادمین روی آگهی‌ها: «تأیید و انتشار» (توضیح اختیاری) / «نیاز به اصلاح» (وضعیت جدید <code>needs_revision</code>، آگهی با پیام کارشناس به داشبورد فرستنده برمی‌گردد تا ویرایش و <code>PATCH /api/listings/[id]</code> دوباره به صف بررسی برود) / «رد» — نوشتن توضیح برای «نیاز به اصلاح» و «رد» الزامی، متن روی ستون <code>reviewNote</code> ذخیره و در داشبورد کاربر نمایش داده می‌شود
+<!-- ════════ فصل ۹ ════════ -->
+<section class="chapter" id="c9">
+  <div class="chead">
+    <div class="cn">فصل ۹</div>
+    <div><h3>محدودیت‌ها</h3><p>آنچه عمداً ساخته نشد، و آنچه هنوز ضعیف است</p></div>
+  </div>
 
-</div>
+  <div class="note warn">
+    <span class="t">چرا این فصل وجود دارد</span>
+    داور هر ضعفی را که خودتان اول بگویید، دیگر به‌عنوان «مچ‌گیری» مطرح نمی‌کند. یک فصل صادقانهٔ
+    محدودیت‌ها نشانهٔ بلوغ مهندسی است، نه ضعف پروژه. برای هر مورد <b>دلیل</b> و <b>راه‌حل آینده</b> نوشته شده.
+  </div>
+
+  <div class="block">
+    <h4>تصمیم‌های آگاهانه — ساخته نشد چون نباید ساخته می‌شد</h4>
+    <table class="tbl">
+      <thead><tr><th>مورد</th><th>چرا نه</th></tr></thead>
+      <tbody>
+        <tr><td>رزرو و پرداخت آنلاین</td><td>پلتفرم مالک رسانه‌ها نیست و قرارداد واسطه‌گری ندارد؛ درگاه پرداخت هم نیاز به مجوز کسب‌وکار دارد. به‌جایش تأیید دستی و قابل‌ممیزی ادمین. (§۱۷، §۱۸)</td></tr>
+        <tr><td>ارسال پیامک</td><td>کد سرویس پیامک نوشته و تست شده ولی <b>خاموش</b> است: بدون پنل پیامکِ خریداری‌شده نمی‌شود واقعاً فرستاد. با گذاشتن کلید، فعال می‌شود. (§۱۶)</td></tr>
+        <tr><td>Docker و سامانهٔ لاگ متمرکز</td><td>برای یک پروژهٔ تک‌نفره روی یک لپ‌تاپ، هزینهٔ نگهداری‌اش از سودش بیشتر است. لاگ ساخت‌یافته در فایل هست. (§۷a)</td></tr>
+        <tr><td>CRM آماده</td><td>Atomic CRM بررسی و رد شد (وابسته به Supabase). فقط بخشی که واقعاً لازم بود — ثبت سرنخ — داخل خودِ پروژه ساخته شد. (§۲۳)</td></tr>
+        <tr><td>سرویس‌های ابری پولی</td><td>هیچ سرویس پولی یا تحریمی استفاده نشده: نه پایش، نه احراز هویت ابری، نه CDN. همه‌چیز قابل اجرا روی یک ماشین.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="block">
+    <h4>محدودیت‌های فنی واقعی</h4>
+    <table class="tbl">
+      <thead><tr><th>محدودیت</th><th>اثر</th><th>راه‌حل در مقیاس بزرگ‌تر</th></tr></thead>
+      <tbody>
+        <tr><td>فرض «یک نمونهٔ سرور»</td><td>سقف درخواست و بافر لاگ در حافظهٔ همان پروسه‌اند؛ با دو نمونه هر دو نادرست می‌شوند</td><td>انتقال به Redis یا جدول دیتابیس</td></tr>
+        <tr><td>SQLite تک‌نویسنده</td><td>نوشتن‌های همزمان صف می‌شوند</td><td>مهاجرت به PostgreSQL — به‌خاطر Prisma تقریباً بدون تغییر کد</td></tr>
+        <tr><td>۵۱۶ رکورد (۱۵٪) مختصات ندارند</td><td>روی نقشه نمایش داده نمی‌شوند</td><td>geocode دستی یا سرویس نقشهٔ داخلی</td></tr>
+        <tr><td>۴۳٪ رکوردها عکس ندارند</td><td>کارت‌شان بدون تصویر است</td><td>منبع اصلی عکس نداشت — نیازمند همکاری با صاحبان رسانه</td></tr>
+        <tr><td>قیمت‌ها از منابع خزیده‌شده‌اند</td><td>ممکن است قدیمی یا تقریبی باشند</td><td>تأیید قیمت توسط خودِ صاحب رسانه از طریق پنل ثبت آگهی</td></tr>
+        <tr><td>تخمین بازدید heuristic است</td><td>فرمول بر پایهٔ جمعیت، موقعیت، نوع و مساحت — نه داده‌ی شمارشِ واقعی</td><td>داده‌ی ترافیک شهرداری یا شمارندهٔ واقعی</td></tr>
+        <tr><td>تست فقط در سطح API</td><td>تست واحدِ کامپوننت و تست مرورگر (E2E) ندارد</td><td>Playwright برای مسیرهای اصلی</td></tr>
+        <tr><td>عکس‌ها در مخزن گیت نیستند</td><td>یک clone تازه، سایت را بدون عکس بالا می‌آورد</td><td>پشتیبان جدا از پوشهٔ تصاویر — <b>حتماً یک نسخه جای دیگری نگه دارید</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ════════ فصل ۱۰ ════════ -->
+<section class="chapter" id="c10">
+  <div class="chead">
+    <div class="cn">فصل ۱۰</div>
+    <div><h3>راهنمای نوشتن مستندات پایان‌نامه</h3><p>چند سند لازم است، هرکدام چه بگوید، و به چه ترتیب نوشته شود</p></div>
+  </div>
+
+  <div class="block">
+    <h4>معمولاً چه چیزی به داوران تحویل می‌شود</h4>
+    <p>
+      برای یک پروژهٔ کارشناسی نرم‌افزار، بستهٔ تحویلی تقریباً همیشه این چهار قلم است.
+      دقیقِ قالب را از استاد راهنما بپرسید — دانشگاه‌ها فرمت خودشان را دارند — ولی محتوا همین است:
+    </p>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>سند</th><th>حجم تقریبی</th><th>مخاطب و هدف</th></tr></thead>
+      <tbody>
+        <tr><td>۱</td><td><b>گزارش/پایان‌نامهٔ اصلی</b></td><td>۴۰ تا ۷۰ صفحه</td><td>سند رسمی داوری: مقدمه، پیشینه، تحلیل نیازمندی، طراحی، پیاده‌سازی، ارزیابی، نتیجه‌گیری</td></tr>
+        <tr><td>۲</td><td><b>مستند فنی</b></td><td>۱۵ تا ۳۰ صفحه</td><td>معماری، ERD، API، تصمیم‌های مهندسی — <span style="color:var(--green)">همین فایل تقریباً آماده‌اش است</span></td></tr>
+        <tr><td>۳</td><td><b>اسلاید دفاع</b></td><td>۱۵ تا ۲۵ اسلاید</td><td>۲۰ دقیقه حرف زدن + دمو زنده</td></tr>
+        <tr><td>۴</td><td><b>راهنمای اجرا / کاربر</b></td><td>۳ تا ۸ صفحه</td><td>داور بتواند خودش پروژه را بالا بیاورد و کار کند</td></tr>
+      </tbody>
+    </table>
+    <div class="note info">
+      <span class="t">گاهی این‌ها هم خواسته می‌شود</span>
+      چکیدهٔ یک‌صفحه‌ای فارسی و انگلیسی · فرم پیشنهاد پروژه (اگر اول ترم داده‌اید) ·
+      یک «مقالهٔ» ۶ تا ۱۰ صفحه‌ای در قالب کنفرانس، اگر استاد بخواهد از پروژه مقاله دربیاورید.
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>ساختار پیشنهادی گزارش اصلی — و اینکه مادهٔ خام هر فصل کجاست</h4>
+    <table class="tbl">
+      <thead><tr><th>فصل گزارش</th><th>محتوا</th><th>از کجا بردارید</th></tr></thead>
+      <tbody>
+        <tr><td>۱ — مقدمه</td><td>مسئله، اهمیت، اهداف، محدودهٔ کار</td><td>فصل ۱ همین سند</td></tr>
+        <tr><td>۲ — پیشینه و ابزارها</td><td>رقبا، فناوری‌های انتخابی و دلیل انتخاب</td><td>فصل ۱ + کارت CMP در فصل ۸</td></tr>
+        <tr><td>۳ — تحلیل نیازمندی‌ها</td><td>کاربران، نیازمندی وظیفه‌ای و غیروظیفه‌ای، Use Case</td><td>فصل ۴ (جریان‌های کاربری)</td></tr>
+        <tr><td>۴ — طراحی</td><td>معماری، ERD، طراحی API، طراحی رابط کاربری</td><td>فصل ۲ و ۳ + <code>docs/api.md</code></td></tr>
+        <tr><td>۵ — پیاده‌سازی</td><td>چه ساخته شد، چالش‌ها، تصمیم‌های مهندسی</td><td>فصل ۸ + <code>docs/engineering-decisions.md</code></td></tr>
+        <tr><td>۶ — ارزیابی و تست</td><td>روش تست، نتایج، اندازه‌گیری کارایی</td><td>فصل ۷ + خروجی <code>npm test</code></td></tr>
+        <tr><td>۷ — نتیجه‌گیری</td><td>دستاورد، محدودیت، کار آینده</td><td>فصل ۹</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="block">
+    <h4>ترتیب نوشتن — از آسان به سخت</h4>
+    <ul class="ul">
+      <li><span class="b">۱</span><span><b>اول فصل ۵ و ۶ (پیاده‌سازی و ارزیابی).</b> این‌ها را از همه بهتر می‌شناسید چون مادهٔ خامشان همین‌جا آماده است. نوشتنشان اعتمادبه‌نفس می‌دهد.</span></li>
+      <li><span class="b">۲</span><span><b>بعد فصل ۴ (طراحی).</b> نمودارهای این سند را مستقیم بردارید و زیر هرکدام دو پاراگراف توضیح بنویسید.</span></li>
+      <li><span class="b">۳</span><span><b>بعد فصل ۳ (نیازمندی‌ها).</b> از روی جریان‌های فصل ۴، Use Case بنویسید — هر جریان یک Use Case است.</span></li>
+      <li><span class="b">۴</span><span><b>بعد فصل ۲ (پیشینه).</b> نیاز به جستجو دارد؛ رقبا و مقاله‌های مرتبط.</span></li>
+      <li><span class="b">۵</span><span><b>آخر از همه فصل ۱ و ۷ (مقدمه و نتیجه‌گیری).</b> مقدمه را همیشه آخر بنویسید — وقتی می‌دانید بقیهٔ متن دقیقاً چه گفته.</span></li>
+    </ul>
+    <div class="note bad">
+      <span class="t">قانونی که نباید بشکنید</span>
+      هر عددی که در گزارش می‌نویسید باید <b>در لحظهٔ نوشتن</b> از پروژه گرفته شده باشد.
+      اعداد این سند به‌روزند، ولی اگر بعداً داده‌ای اضافه شد دوباره چک کنید.
+      یک عدد غلط در گزارش، اعتبارِ بقیهٔ اعداد را هم زیر سؤال می‌برد.
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>چطور به یک ایجنت (Claude) دستور بدهید</h4>
+    <p>
+      یک پرامپت خوب چهار چیز دارد: <b>نقش</b>، <b>منبع</b>، <b>خروجی دقیق</b>، <b>محدودیت</b>.
+      بدون «منبع»، مدل حدس می‌زند و عدد از خودش می‌سازد — بدترین اتفاقی که می‌تواند در یک پایان‌نامه بیفتد.
+    </p>
+    <details class="fold">
+      <summary>الگوی آماده ۱ — نوشتن یک فصل از گزارش</summary>
+      <div class="foldbody">
+        <div class="note viol" style="direction:rtl">
+          نقش تو نویسندهٔ گزارش پایان‌نامهٔ کارشناسی است.<br>
+          <b>منبع:</b> فقط از <code>docs/roadmap.html</code> فصل ۲ و ۳، و <code>docs/engineering-decisions.md</code> بخوان. هیچ چیزی از خودت اضافه نکن؛ اگر چیزی را در این فایل‌ها پیدا نکردی، بنویس «یافت نشد» و از من بپرس.<br>
+          <b>خروجی:</b> فصل ۴ گزارش با عنوان «طراحی سیستم»، حدود ۸ صفحه، فارسی رسمی و آکادمیک، با زیربخش‌های: ۴.۱ معماری کلی، ۴.۲ مدل داده، ۴.۳ طراحی API، ۴.۴ طراحی رابط کاربری.<br>
+          <b>محدودیت:</b> هر عددی که می‌نویسی باید از فایل‌های بالا باشد. جای هر نمودار را با «[نمودار ۴-۱: …]» مشخص کن. از اول‌شخص («من انجام دادم») استفاده نکن، فعل مجهول یا سوم‌شخص بنویس. خروجی را در <code>docs/thesis/ch4-design.md</code> ذخیره کن.
+        </div>
+      </div>
+    </details>
+    <details class="fold">
+      <summary>الگوی آماده ۲ — ساخت اسلاید دفاع</summary>
+      <div class="foldbody">
+        <div class="note viol" style="direction:rtl">
+          یک فایل HTML تک‌فایلی برای ارائهٔ ۲۰ دقیقه‌ای بساز (اسلایدها با کلید جهت‌دار عوض شوند).<br>
+          <b>منبع:</b> <code>docs/roadmap.html</code> و <code>docs/final-review-notes.md</code>.<br>
+          <b>خروجی:</b> ۱۸ اسلاید: ۱ عنوان، ۲ مسئله، ۳ راه‌حل، ۴ اعداد کلیدی، ۵ معماری (نمودار)، ۶ مدل داده (ERD)، ۷ تا ۱۰ چهار جریان اصلی، ۱۱ امنیت، ۱۲ کارایی با عدد ۹۷ برابر، ۱۳ تا ۱۵ دمو زنده (فقط تیتر برای حرف زدن)، ۱۶ محدودیت‌ها، ۱۷ کار آینده، ۱۸ تشکر.<br>
+          <b>محدودیت:</b> پس‌زمینهٔ روشن، فونت Vazirmatn محلی از <code>docs/vendor/</code>، بدون CDN. هر اسلاید حداکثر ۶ خط متن — بقیه‌اش را من شفاهی می‌گویم. در <code>docs/defense-slides.html</code> ذخیره کن.
+        </div>
+      </div>
+    </details>
+    <details class="fold">
+      <summary>الگوی آماده ۳ — بازبینی متنی که خودتان نوشته‌اید</summary>
+      <div class="foldbody">
+        <div class="note viol" style="direction:rtl">
+          این فایل را بخوان: <code>docs/thesis/ch5-implementation.md</code><br>
+          <b>کاری که باید بکنی:</b> هر ادعای فنی داخل متن را با کد واقعی پروژه مقایسه کن. فهرستی بده از: (الف) ادعاهایی که در کد تأیید می‌شوند، (ب) ادعاهایی که غلط یا اغراق‌آمیزند، (پ) عددهایی که با پروژه نمی‌خوانند.<br>
+          <b>محدودیت:</b> متن را <b>تغییر نده</b>، فقط گزارش بده. برای هر مورد شمارهٔ خط و فایلِ کد را بنویس.
+        </div>
+      </div>
+    </details>
+    <div class="note warn">
+      <span class="t">سه اشتباه رایج در پرامپت دادن</span>
+      <b>۱)</b> «یه گزارش خوب بنویس» — مدل نمی‌داند «خوب» یعنی چه؛ طول، مخاطب و ساختار را بگویید.
+      <b>۲)</b> ندادن منبع — نتیجه‌اش متنی است که قشنگ است ولی دربارهٔ پروژهٔ شما نیست.
+      <b>۳)</b> خواستنِ همه‌چیز در یک پرامپت — یک فصل در هر بار. متن بلند، کیفیتش افت می‌کند.
+    </div>
+  </div>
+</section>
+
+<!-- ════════ فصل ۱۱ ════════ -->
+<section class="chapter" id="c11">
+  <div class="chead">
+    <div class="cn">فصل ۱۱</div>
+    <div><h3>مسیر یادگیری برای دفاع</h3><p>اگر کد را خودتان ننوشته‌اید، این ترتیب را بروید</p></div>
+  </div>
+
+  <div class="note good">
+    <span class="t">خبر خوب</span>
+    داور از شما انتظار ندارد هر خط کد را از حفظ باشید — هیچ‌کس نیست. انتظار دارد
+    <b>بدانید هر چیزی کجاست، چرا آن‌طور ساخته شده، و اگر خراب شود چه می‌شود.</b>
+    این سه چیز یادگرفتنی است، و ترتیب زیر دقیقاً برای همان نوشته شده.
+  </div>
+
+  <div class="block">
+    <h4>هفت گام، به ترتیب</h4>
+    <ul class="ul">
+      <li><span class="b">۱</span><span><b>مفهوم «سرور و کلاینت».</b> فصل ۲ همین سند و تشبیه رستوران را بخوانید تا بتوانید بدون نگاه کردن توضیحش دهید. این تنها مفهومی است که <b>حتماً</b> پرسیده می‌شود.</span></li>
+      <li><span class="b">۲</span><span><b>مدل داده.</b> ERD فصل ۳ را روی کاغذ بکشید. اگر بتوانید نُه جدول و رابطه‌هایشان را از حفظ بکشید، نیمی از دفاع تمام است.</span></li>
+      <li><span class="b">۳</span><span><b>یک مسیر API را کامل بخوانید.</b> پیشنهاد: <code>app/api/billboards/[slug]/contact/route.ts</code> — کوتاه است و هر پنج مرحلهٔ نمودار ۲ را دارد. کامنت‌های انگلیسی‌اش دقیقاً «چرا»ی هر خط را می‌گویند.</span></li>
+      <li><span class="b">۴</span><span><b>یک صفحه را بخوانید.</b> <code>app/billboard/[slug]/page.tsx</code> — تا تفاوت «صفحه‌ای که روی سرور ساخته می‌شود» با «تکه‌ای که در مرورگر زنده است» را ببینید.</span></li>
+      <li><span class="b">۵</span><span><b>تست‌ها را اجرا کنید و خروجی را ببینید.</b> <code>npm test</code>. اسم هر تست یک جملهٔ انگلیسی است که می‌گوید چه چیزی تضمین می‌شود — این‌ها بهترین فهرستِ «سیستم چه کارهایی را قول داده» هستند.</span></li>
+      <li><span class="b">۶</span><span><b>عمداً چیزی را خراب کنید.</b> یک عدد در یک فایل عوض کنید، تست بگیرید، ببینید کدام قرمز می‌شود، بعد برش گردانید. هیچ چیز به اندازهٔ این کار نمی‌فهماند که هر تکه چه‌کاره است.</span></li>
+      <li><span class="b">۷</span><span><b>تصمیم‌ها را بخوانید.</b> <code>docs/engineering-decisions.md</code> — ۲۳ تصمیم با دلیل. سؤال‌های «چرا این را انتخاب کردی؟» جوابشان همین‌جاست.</span></li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <h4>حداقلِ TypeScript که باید بفهمید</h4>
+    <p>لازم نیست برنامه‌نویس شوید. این پنج چیز کافی است تا بتوانید کد را بخوانید و توضیح دهید:</p>
+    <table class="tbl">
+      <thead><tr><th>چیزی که می‌بینید</th><th>یعنی چه</th></tr></thead>
+      <tbody>
+        <tr><td><code>const x = ...</code></td><td>یک مقدار با نام <code>x</code> که دیگر عوض نمی‌شود</td></tr>
+        <tr><td><code>function f(a: string): number</code></td><td>تابعی که یک رشته می‌گیرد و یک عدد برمی‌گرداند. علامت‌های بعد از دونقطه «نوع» هستند — همان چیزی که TypeScript را از JavaScript جدا می‌کند.</td></tr>
+        <tr><td><code>async</code> / <code>await</code></td><td>«این کار طول می‌کشد (خواندن از دیتابیس)، منتظر بمان تا تمام شود». بدون این، برنامه ادامه می‌داد و نتیجه هنوز نرسیده بود.</td></tr>
+        <tr><td><code>interface Billboard { ... }</code></td><td>تعریف شکل یک شیء: یک بیلبورد چه فیلدهایی دارد و هرکدام چه نوعی است</td></tr>
+        <tr><td><code>if (!session) return 401</code></td><td>الگوی «گارد»: شرط بد را اول بررسی کن و زود خارج شو. تقریباً همهٔ مسیرهای API با چند گارد شروع می‌شوند.</td></tr>
+      </tbody>
+    </table>
+    <div class="note info">
+      <span class="t">یک ترفند عملی</span>
+      کامنت‌های داخل کد این پروژه عمداً «<b>چرا</b>» را توضیح می‌دهند نه «چه». مثلاً بالای تابع
+      ثبت سرنخ نوشته شده چرا POST است و نه GET. برای آماده شدن، خواندن کامنت‌ها از خواندن کد
+      سریع‌تر و مفیدتر است.
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>ده سؤالی که تقریباً حتماً پرسیده می‌شود</h4>
+    <ul class="ul">
+      <li><span class="b">۱</span><span>چرا Next.js؟ چرا SQLite؟ → فصل ۱ و §۱۴</span></li>
+      <li><span class="b">۲</span><span>چرا بعضی صفحه‌ها API صدا نمی‌زنند؟ → فصل ۲، تشبیه رستوران</span></li>
+      <li><span class="b">۳</span><span>رمزها را چطور نگه می‌داری؟ → bcrypt، فصل ۶</span></li>
+      <li><span class="b">۴</span><span>اگر دو نفر همزمان ثبت کنند چه می‌شود؟ → Idempotency-Key + ایندکس یکتا، فصل ۴.۲</span></li>
+      <li><span class="b">۵</span><span>داده‌ها واقعی‌اند؟ از کجا آمده‌اند؟ → خزنده، ۵ منبع، ۳۵۳۶ رکورد</span></li>
+      <li><span class="b">۶</span><span>چرا رزرو آنلاین نداری؟ → فصل ۱، مدل کسب‌وکار</span></li>
+      <li><span class="b">۷</span><span>تست داری؟ چند تا؟ → ۸۷ تست API، فصل ۷</span></li>
+      <li><span class="b">۸</span><span>اگر ۱۰۰۰ نفر همزمان بیایند؟ → فصل ۹، محدودیت تک‌نمونه و مسیر مهاجرت</span></li>
+      <li><span class="b">۹</span><span>جلوی کپی شدن داده‌ها را چطور گرفتی؟ → ضد کپی‌برداری، فصل ۶</span></li>
+      <li><span class="b">۱۰</span><span>ضعف پروژه‌ات چیست؟ → فصل ۹ را باز کنید و صادقانه بگویید؛ این سؤال دام است و صداقت بهترین پاسخ آن</span></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer style="border-top:1px solid var(--line);margin-top:60px;">
+  <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۲ شهریور ۱۴۰۵ ·
+    ساخته‌شده از روی کد و دیتابیس واقعی پروژه
+  </div>
+</footer>
 
 <script>
-function toggle(header) {
-  const card = header.closest('.phase-card');
-  card.classList.toggle('open');
-}
+  // Chapter 8's history cards keep their original one-line toggle.
+  function toggle(el){
+    var card = el.closest('.phase-card');
+    if (card) card.classList.toggle('open');
+  }
 
-// Countdown to Sep 4, 2026 (10 days from Aug 25)
-function updateCountdown() {
-  const target = new Date('2026-09-04T08:00:00');
-  const now = new Date();
-  const diff = Math.max(0, target - now);
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  const persianDigits = s => String(s).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
-  document.getElementById('countdown-num').textContent = persianDigits(days);
-  document.getElementById('days-left').textContent = persianDigits(days);
-}
-updateCountdown();
-setInterval(updateCountdown, 60000);
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#FFFFFF',
+      primaryColor: '#EDF3FF',
+      primaryBorderColor: '#2F6BE0',
+      primaryTextColor: '#151A23',
+      secondaryColor: '#F4F5F8',
+      tertiaryColor: '#FAFBFC',
+      lineColor: '#7E8899',
+      textColor: '#151A23',
+      mainBkg: '#EDF3FF',
+      nodeBorder: '#2F6BE0',
+      clusterBkg: '#FAFBFC',
+      clusterBorder: '#CDD3DC',
+      actorBkg: '#EDF3FF',
+      actorBorder: '#2F6BE0',
+      actorTextColor: '#151A23',
+      actorLineColor: '#9AA2B1',
+      signalColor: '#3D4655',
+      signalTextColor: '#151A23',
+      labelBoxBkgColor: '#EDF3FF',
+      labelBoxBorderColor: '#2F6BE0',
+      labelTextColor: '#151A23',
+      loopTextColor: '#B57209',
+      noteBkgColor: '#FFF8E8',
+      noteBorderColor: '#B57209',
+      noteTextColor: '#3D4655',
+      altBackground: '#FAFBFC',
+      attributeBackgroundColorOdd: '#FFFFFF',
+      attributeBackgroundColorEven: '#FAFBFC',
+      fontFamily: 'Vazirmatn, system-ui, sans-serif',
+      fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis', padding: 14 },
+    sequence: { actorMargin: 62, messageMargin: 42, boxMargin: 10, mirrorActors: false, wrap: true, width: 165 },
+    er: { layoutDirection: 'TB', entityPadding: 18, useMaxWidth: true },
+    securityLevel: 'loose'
+  });
+
 </script>
+
+</body>
+</html>
