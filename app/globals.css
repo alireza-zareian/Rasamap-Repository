@@ -71,6 +71,16 @@ body {
 @keyframes slideUp  { from { transform:translateY(100%); } to { transform:translateY(0); } }
 @keyframes shimmer  { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes relatedScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Related-media carousel on the billboard detail page. Marquee pauses while the
+   pointer is over it; with reduced motion the animation is off and the strip
+   becomes a plain horizontal scroller instead. */
+.related-strip:hover { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .related-strip { animation: none !important; }
+  .related-marquee { overflow-x: auto !important; }
+}
 
 /* Accent glow (now blue) */
 @keyframes pulse-glow {

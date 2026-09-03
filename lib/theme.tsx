@@ -3,13 +3,14 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 type Theme = "dark" | "light";
 const KEY = "rasamap-theme";
-const Ctx = createContext<{ theme: Theme; toggle: () => void }>({ theme: "dark", toggle: () => {} });
+const Ctx = createContext<{ theme: Theme; toggle: () => void }>({ theme: "light", toggle: () => {} });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
 
-  // Hydrate from localStorage after mount (browser-only; the inline script in
-  // layout.tsx already set data-theme before paint, this syncs React state).
+  // Hydrate from localStorage after mount (browser-only). The SSR default is
+  // "light" (set on <html> in layout.tsx); this switches to "dark" only if the
+  // visitor chose it on a previous visit.
   useEffect(() => {
     let saved: string | null = null;
     try { saved = localStorage.getItem(KEY); } catch { /* private mode */ }

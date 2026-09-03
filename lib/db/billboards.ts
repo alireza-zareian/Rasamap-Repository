@@ -181,6 +181,39 @@ export async function getBillboardBySlug(slug: string): Promise<Billboard | null
   return fromRow(row);
 }
 
+/**
+ * Foot-of-page suggestions for a media detail page: other published listings in
+ * the same neighbourhood (`region`), topped up with ones of the same media type
+ * when the neighbourhood alone does not fill the strip. The reference row is
+ * always excluded. Ordered so paid (`featured`) and photographed (`hasImages`)
+ * listings lead, then by denormalised `estimatedViews`.
+ *
+ * `fromRow` includes `phone`, so any caller that sends this to the client must
+ * strip it first — exactly as the detail Server Component does for the main
+ * record.
+ */
+export async function getRelatedBillboards(ref: Billboard, limit = 12): Promise<Billboard[]> {
+  const orderBy: Prisma.BillboardOrderByWithRelationInput[] = [
+    { featured: "desc" }, { hasImages: "desc" }, { estimatedViews: "desc" },
+  ];
+
+  const sameRegion = await prisma.billboard.findMany({
+    where: { status: publishedOnly, region: ref.region, id: { not: ref.id } },
+    orderBy,
+    take: limit,
+  });
+  if (sameRegion.length >= limit) return sameRegion.map(fromRow);
+
+  const exclude = [ref.id, ...sameRegion.map(r => r.id)];
+  const sameType = await prisma.billboard.findMany({
+    where: { status: publishedOnly, type: ref.type, id: { notIn: exclude } },
+    orderBy,
+    take: limit - sameRegion.length,
+  });
+
+  return [...sameRegion, ...sameType].map(fromRow);
+}
+
 export interface BillboardCreateInput {
   name: string;
   location: string;

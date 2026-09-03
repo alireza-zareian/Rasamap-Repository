@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink } from "lucide-react";
-import { getBillboardBySlug } from "@/lib/db/billboards";
+import { getBillboardBySlug, getRelatedBillboards } from "@/lib/db/billboards";
 import BillboardGallery from "@/components/BillboardGallery";
+import RelatedBillboards from "@/components/RelatedBillboards";
 import ShareButton from "@/components/ShareButton";
 import ReviewsSection from "@/components/ReviewsSection";
 import TrafficMeter from "@/components/TrafficMeter";
@@ -44,6 +45,11 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
   // an explicit click, which also records the lead (§23).
   const phoneAvailable = !!(raw.phone && raw.phone !== "—" && raw.phone.trim());
   const b = { ...raw, phone: "" };
+
+  // Suggestions for the foot of the page — same neighbourhood or same media
+  // type. Each owner phone is stripped here too: these rows also travel to the
+  // client in the RSC payload.
+  const related = (await getRelatedBillboards(raw, 12)).map(r => ({ ...r, phone: "" }));
 
   const allImgs: string[] = [
     ...(b.images ?? []),
@@ -281,6 +287,8 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
           </div>
         </div>
       </div>
+
+      <RelatedBillboards items={related} />
 
       <Footer />
     </div>
