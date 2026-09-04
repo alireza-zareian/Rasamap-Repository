@@ -40,7 +40,9 @@ function AdminDashboard() {
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  // `?q=` prefills the search, so "edit this listing" on the staff bar lands on
+  // the row the person was just looking at rather than on page one of 3,536.
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [sort, setSort] = useState("id_asc");

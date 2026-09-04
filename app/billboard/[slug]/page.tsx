@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink } from "lucide-react";
+import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck } from "lucide-react";
 import { getBillboardBySlug, getRelatedBillboards } from "@/lib/db/billboards";
+import { getSession } from "@/lib/auth/session";
+import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
 import BillboardGallery from "@/components/BillboardGallery";
 import RelatedBillboards from "@/components/RelatedBillboards";
 import ShareButton from "@/components/ShareButton";
@@ -36,8 +38,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BillboardPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const raw = await getBillboardBySlug(slug);
+
+  // A reviewer needs to see a submission the way an advertiser eventually will,
+  // not only as rows in a form — so a staff session may open a listing that is
+  // still pending, and gets told plainly that it is. The check happens here, on
+  // the server: the page is rendered before anything reaches the browser, so
+  // there is no moment where the markup exists and the permission does not.
+  const session = await getSession();
+  const isStaff = !!session && session.role !== "user";
+
+  const raw = await getBillboardBySlug(slug, { includeUnpublished: isStaff });
   if (!raw) notFound();
+
+  const unpublished = UNPUBLISHED_STATUSES.includes(raw.status);
 
   // The owner/agency phone must never reach the client (it would end up in the
   // page HTML / RSC payload). Keep only whether one exists; the number itself
@@ -62,8 +75,26 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
       <Topbar />
 
+      {/* Staff preview banner — only ever rendered for a staff session, because
+          only a staff session can reach an unpublished row at all. */}
+      {unpublished && (
+        <div style={{ background: "rgba(98,71,196,0.12)", borderBottom: "1px solid rgba(98,71,196,0.35)", padding: "70px 20px 12px" }}>
+          <div style={{ maxWidth: 1350, margin: "0 auto", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 800, color: "#8B7BE0" }}>
+              <ShieldCheck size={15} /> پیش‌نمایش همکاران
+            </span>
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.9 }}>
+              این آگهی هنوز <b style={{ color: "var(--text-main)" }}>{STATUS_LABEL[raw.status] ?? raw.status}</b> است و برای بازدیدکنندگان دیده نمی‌شود.
+            </span>
+            <Link href="/admin?tab=listings" style={{ marginRight: "auto", fontSize: "0.75rem", color: "#8B7BE0", textDecoration: "none", border: "1px solid rgba(98,71,196,0.4)", borderRadius: 8, padding: "5px 13px", whiteSpace: "nowrap" }}>
+              رفتن به صف تأیید ←
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
-      <div style={{ maxWidth: 1350, margin: "0 auto", padding: "80px 20px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "0.78rem", color: "var(--text-muted)" }}>
+      <div style={{ maxWidth: 1350, margin: "0 auto", padding: unpublished ? "16px 20px 0" : "80px 20px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "0.78rem", color: "var(--text-muted)" }}>
         {/* These were already links, but a 0.78rem line of text is a ~14px tap
             target — under half the 44px a finger needs, so on a phone they read
             as decoration. The padding grows the hit area and the negative margin

@@ -732,6 +732,33 @@ still 401, and the login lockout still fires on the eleventh wrong password.
 
 ---
 
+### 14a. One SQLite connection per process, in every mode
+
+`lib/db/client.ts` cached its Prisma client on `globalThis` only when
+`NODE_ENV !== "production"`. The comment explained why — dev hot-reloads modules
+and would otherwise open a connection per reload — and stopped there.
+
+Production needed it for a different reason. Next splits server code into
+chunks, and a page rendered on the server and a route handler beside it live in
+different ones, so the module was instantiated more than once and each copy
+opened its own connection to the same file.
+
+With WAL that is not merely wasteful, it is wrong. Two connections, one
+checkpointing the write-ahead log while the other is part-way through a read,
+return `SQLITE_IOERR_SHORT_READ`: the detail page answers 500 while the API
+beside it, on the other connection, is fine.
+
+It surfaced under a test run that read and wrote hard at the same time — four
+extra tests were enough — and the same shape is what a demo with several people
+browsing while an administrator approves a listing looks like. Caching the
+client unconditionally fixed it: ten I/O errors per suite run became zero.
+
+Worth keeping in mind as a class: a guard written for one environment, with the
+reason recorded for that environment only, is a guard nobody re-examines when a
+second reason appears.
+
+---
+
 ## 21. Denormalising the two sort keys
 
 **Decision.** `Billboard.estimatedViews` and `Billboard.area` are stored

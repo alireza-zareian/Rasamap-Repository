@@ -1,10 +1,21 @@
 // ============================================================
 // RASAMAP — Prisma client singleton
 //
-// Next.js dev mode hot-reloads modules on every request; without this
-// guard each reload would create a brand-new PrismaClient and open a
-// new SQLite connection, eventually exhausting file handles.
-// Standard pattern from Prisma's own Next.js guide.
+// One connection per process, in every mode.
+//
+// The guard was here for dev, where hot reload re-evaluates modules on every
+// request and would open a new SQLite connection each time. It is needed in
+// production too, for a different reason: Next splits server code into chunks,
+// and a page rendered on the server and a route handler live in different ones,
+// so the module is instantiated more than once and each copy opened its own
+// connection to the same file.
+//
+// With WAL that is not merely wasteful, it is wrong. Two connections, one
+// checkpointing the write-ahead log while the other is part-way through a read,
+// produce SQLITE_IOERR_SHORT_READ — the page 500s while the API beside it is
+// fine. It surfaced as a detail page failing under a test run that wrote and
+// read hard at the same time, which is also what a demo with several people on
+// it looks like.
 //
 // Prisma 7's generated client has no implicit query engine binary —
 // a driver adapter must be passed explicitly, the same way
@@ -32,15 +43,16 @@ if (!globalForPrisma.prisma) {
   }
 }
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL!,
-});
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createClient(): PrismaClient {
+  // Built here rather than at module scope so re-importing the module does not
+  // construct an adapter it will not use.
+  const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
+  return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export const prisma = globalForPrisma.prisma ?? createClient();
+
+globalForPrisma.prisma = prisma;

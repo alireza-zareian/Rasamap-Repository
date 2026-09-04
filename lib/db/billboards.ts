@@ -150,6 +150,9 @@ export async function getAdminBillboardPage(
     where.OR = [
       { name:     { contains: p.q } },
       { location: { contains: p.q } },
+      // A slug, so pasting the tail of a public URL finds the row — which is
+      // what "edit this listing" on the staff bar does.
+      { slug:     { contains: p.q } },
     ];
   }
 
@@ -175,9 +178,26 @@ export async function getBillboardById(id: number): Promise<Billboard | null> {
  * reachable at its own URL even though it is hidden from search, the map, the
  * stats and the sitemap. Admin screens read by id via getBillboardById().
  */
-export async function getBillboardBySlug(slug: string): Promise<Billboard | null> {
+/**
+ * One media item by its slug.
+ *
+ * Unpublished rows are invisible: a submission awaiting review must not be
+ * reachable by guessing its address, the same way it is kept out of search, the
+ * statistics and the sitemap.
+ *
+ * `includeUnpublished` lifts that for a reviewer looking at a submission on the
+ * real page instead of in a form. It is a parameter and not a lookup inside
+ * this function on purpose — a data-access function that decides for itself who
+ * is asking is a function whose callers stop thinking about it. The only caller
+ * that passes true does so after checking the session on the server.
+ */
+export async function getBillboardBySlug(
+  slug: string,
+  { includeUnpublished = false } = {},
+): Promise<Billboard | null> {
   const row = await prisma.billboard.findUnique({ where: { slug } });
-  if (!row || UNPUBLISHED_STATUSES.includes(row.status)) return null;
+  if (!row) return null;
+  if (!includeUnpublished && UNPUBLISHED_STATUSES.includes(row.status)) return null;
   return fromRow(row);
 }
 

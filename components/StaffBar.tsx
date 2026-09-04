@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShieldCheck, LayoutDashboard, ClipboardCheck, Handshake, PencilLine } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, ClipboardCheck, Handshake, PencilLine, BarChart3, Users } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 
 /**
@@ -11,23 +11,87 @@ import { useCurrentUser } from "@/lib/auth/useCurrentUser";
  * making them remember an admin URL to act on what they are looking at is how
  * things stop getting checked.
  *
- * It shows only to a staff session (GET /api/auth/me reports `isStaff`), it
- * never renders inside the panel itself, and every control is a link into the
- * panel. It grants nothing: each of those pages checks the session again, and
- * so does every API call behind them. This is a shortcut, not a permission.
+ * The actions are **contextual**: standing on a listing offers to edit that
+ * listing, standing on the catalogue offers the media table, and so on. A bar
+ * that shows the same four links everywhere is a menu, not a tool.
+ *
+ * It grants nothing. Every destination checks the session again, and so does
+ * every API behind it — this is a shortcut, not a permission. It renders only
+ * for a staff session and never inside the panel itself.
  */
+
+interface Action {
+  href: string;
+  label: string;
+  Icon: typeof LayoutDashboard;
+}
+
+/** What is worth offering while looking at this page. */
+function actionsFor(pathname: string): { where: string; actions: Action[] } {
+  if (pathname.startsWith("/billboard/")) {
+    const slug = pathname.split("/")[2] ?? "";
+    return {
+      where: "صفحهٔ رسانه",
+      actions: [
+        { href: `/admin?tab=billboards&q=${encodeURIComponent(slug)}`, label: "ویرایش همین رسانه", Icon: PencilLine },
+        { href: "/admin?tab=listings", label: "صف تأیید", Icon: ClipboardCheck },
+        { href: "/admin?tab=leads", label: "سرنخ‌ها", Icon: Handshake },
+      ],
+    };
+  }
+  if (pathname.startsWith("/explore") || pathname.startsWith("/compare")) {
+    return {
+      where: "کاتالوگ",
+      actions: [
+        { href: "/admin?tab=billboards", label: "جدول رسانه‌ها", Icon: PencilLine },
+        { href: "/admin?tab=quality", label: "کنترل کیفیت", Icon: ShieldCheck },
+        { href: "/admin?tab=listings", label: "صف تأیید", Icon: ClipboardCheck },
+      ],
+    };
+  }
+  if (pathname.startsWith("/analytics")) {
+    return {
+      where: "تحلیل بازار",
+      actions: [
+        { href: "/admin", label: "آمار پنل", Icon: BarChart3 },
+        { href: "/admin?tab=leads", label: "سرنخ‌ها", Icon: Handshake },
+      ],
+    };
+  }
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/list-media")) {
+    return {
+      where: "ناحیهٔ کاربر",
+      actions: [
+        { href: "/admin?tab=users", label: "کاربران", Icon: Users },
+        { href: "/admin?tab=listings", label: "صف تأیید", Icon: ClipboardCheck },
+      ],
+    };
+  }
+  return {
+    where: "سایت عمومی",
+    actions: [
+      { href: "/admin", label: "پنل مدیریت", Icon: LayoutDashboard },
+      { href: "/admin?tab=listings", label: "صف تأیید", Icon: ClipboardCheck },
+      { href: "/admin?tab=leads", label: "سرنخ‌ها", Icon: Handshake },
+    ],
+  };
+}
+
 export default function StaffBar() {
   const { user } = useCurrentUser();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
 
   if (!user?.isStaff) return null;
-  if (pathname?.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin")) return null;
+
+  const { where, actions } = actionsFor(pathname);
 
   const link: React.CSSProperties = {
     display: "inline-flex", alignItems: "center", gap: 5,
-    color: "rgba(255,255,255,0.92)", textDecoration: "none",
+    color: "rgba(255,255,255,0.94)", textDecoration: "none",
     fontSize: "0.72rem", fontWeight: 600, whiteSpace: "nowrap",
-    padding: "3px 9px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.22)",
+    padding: "4px 10px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.24)",
+    background: "rgba(255,255,255,0.08)",
   };
 
   return (
@@ -35,24 +99,21 @@ export default function StaffBar() {
       className="staff-bar"
       style={{
         position: "fixed", bottom: 0, right: 0, left: 0, zIndex: 200,
-        background: "linear-gradient(90deg, #1E3A8A, #2F6BE0)",
-        borderTop: "1px solid rgba(255,255,255,0.18)",
-        display: "flex", alignItems: "center", gap: 8,
+        background: "linear-gradient(90deg, #3B2E7E, #6247C4)",
+        borderTop: "1px solid rgba(255,255,255,0.2)",
+        display: "flex", alignItems: "center", gap: 9,
         padding: "7px 14px", overflowX: "auto",
-        boxShadow: "0 -4px 18px rgba(0,0,0,0.25)",
+        boxShadow: "0 -4px 18px rgba(0,0,0,0.28)",
       }}
     >
       <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#fff", fontSize: "0.72rem", fontWeight: 800, whiteSpace: "nowrap" }}>
         <ShieldCheck size={13} /> {user.name}
       </span>
-      <span style={{ fontSize: "0.66rem", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
-        نمای مدیریت
-      </span>
+      <span style={{ fontSize: "0.66rem", color: "rgba(255,255,255,0.62)", whiteSpace: "nowrap" }}>{where}</span>
       <div style={{ display: "flex", gap: 6, marginRight: "auto" }}>
-        <Link href="/admin" style={link}><LayoutDashboard size={11} /> پنل</Link>
-        <Link href="/admin?tab=listings" style={link}><ClipboardCheck size={11} /> تأیید آگهی‌ها</Link>
-        <Link href="/admin?tab=leads" style={link}><Handshake size={11} /> سرنخ‌ها</Link>
-        <Link href="/admin?tab=billboards" style={link}><PencilLine size={11} /> ویرایش رسانه‌ها</Link>
+        {actions.map(a => (
+          <Link key={a.href} href={a.href} style={link}><a.Icon size={11} /> {a.label}</Link>
+        ))}
       </div>
     </div>
   );

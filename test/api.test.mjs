@@ -192,6 +192,43 @@ test("a user cannot delete someone else's review", async () => {
   assert.ok(still.json.reviews.some(r => r.id === id), "the review must survive both attempts");
 });
 
+// ── Staff powers on the public site ─────────────────────────────
+// The page is rendered on the server, so the check has to happen there. These
+// assert the shape that matters: a stranger cannot reach an unpublished listing
+// by any means, and a reviewer can.
+
+test("an unpublished listing stays a 404 for a guest and for a customer", async () => {
+  const customer = await mintSession({ userId: "1", role: "user" });
+  for (const slug of ["pending-listing", "unpaid-listing"]) {
+    assert.equal((await api(`/billboard/${slug}`)).status, 404, `${slug} leaked to a guest`);
+    assert.equal((await api(`/billboard/${slug}`, { token: customer })).status, 404, `${slug} leaked to a customer`);
+    // and still not through the API, whoever asks
+    assert.equal((await api(`/api/billboards/${slug}`, { token: customer })).status, 404);
+  }
+});
+
+test("a staff session may preview an unpublished listing, and is told it is one", async () => {
+  const staff = await mintSession({ role: "editor" });
+  const { status, json: html } = await api("/billboard/pending-listing", { token: staff });
+  assert.equal(status, 200, "a reviewer must be able to open a submission");
+  assert.ok(html.includes("پیش‌نمایش همکاران"), "the preview banner is missing");
+  assert.ok(html.includes("در انتظار تأیید"), "the banner must name the real status");
+});
+
+test("the staff preview does not open the API as a side door", async () => {
+  // Only the page was relaxed. The JSON endpoint stays shut, so nothing that
+  // consumes the API can be handed an unpublished row by accident.
+  const staff = await mintSession({ role: "admin" });
+  assert.equal((await api("/api/billboards/pending-listing", { token: staff })).status, 404);
+});
+
+test("admin search finds a row by its slug", async () => {
+  const staff = await mintSession({ role: "editor" });
+  const { status, json } = await api("/api/admin/billboards?q=valiasr-tower&limit=20", { token: staff });
+  assert.equal(status, 200);
+  assert.ok(json.items.some(b => b.slug === "valiasr-tower"), "pasting a slug must find the row");
+});
+
 // ── Review replies ──────────────────────────────────────────────
 
 test("anyone signed in can reply to a review, and staff replies are badged", async () => {
