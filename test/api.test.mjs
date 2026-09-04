@@ -141,6 +141,57 @@ test("POST /api/billboards/[slug]/contact 404s on an unpublished listing", async
   assert.equal(status, 404);
 });
 
+// ── Review edit and delete ──────────────────────────────────────
+
+test("a user can edit their own review, and the average follows", async () => {
+  const token = await mintSession({ userId: "2", role: "user" });
+  const post = (rating, comment) =>
+    api("/api/reviews", { method: "POST", token, body: { billboardId: 2, rating, comment } });
+
+  assert.equal((await post(5, "رسانهٔ بسیار خوبی بود و بازخورد گرفتیم")).status, 201);
+  assert.equal((await post(2, "بعد از یک ماه نظرم عوض شد، بازدهی نداشت")).status, 201);
+
+  const { json } = await api("/api/reviews?billboardId=2");
+  const mine = json.reviews.filter(r => r.userId === 2);
+  assert.equal(mine.length, 1, "editing must replace the review, not add a second");
+  assert.equal(mine[0].rating, 2);
+  assert.equal(json.avg, 2, "the average has to follow the edit");
+});
+
+test("a user can delete their own review and the billboard average is recomputed", async () => {
+  const token = await mintSession({ userId: "1", role: "user" });
+  const created = await api("/api/reviews", {
+    method: "POST", token, body: { billboardId: 6, rating: 4, comment: "نظری برای حذف کردن در تست" },
+  });
+  assert.equal(created.status, 201);
+  const id = created.json.review.id;
+
+  const { status } = await api(`/api/reviews/${id}`, { method: "DELETE", token });
+  assert.equal(status, 200);
+
+  const after = await api("/api/reviews?billboardId=6");
+  assert.ok(!after.json.reviews.some(r => r.id === id), "the review is still listed");
+  assert.equal(after.json.avg, null, "with no reviews left the average must clear");
+});
+
+test("a user cannot delete someone else's review", async () => {
+  const owner = await mintSession({ userId: "1", role: "user" });
+  const other = await mintSession({ userId: "2", role: "user" });
+  const created = await api("/api/reviews", {
+    method: "POST", token: owner,
+    body: { billboardId: 3, rating: 5, comment: "نظری که فقط صاحبش حق حذفش را دارد" },
+  });
+  assert.equal(created.status, 201);
+  const id = created.json.review.id;
+
+  // 404 rather than 403: telling a stranger the id exists is itself a leak.
+  assert.equal((await api(`/api/reviews/${id}`, { method: "DELETE", token: other })).status, 404);
+  assert.equal((await api(`/api/reviews/${id}`, { method: "DELETE" })).status, 401);
+
+  const still = await api("/api/reviews?billboardId=3");
+  assert.ok(still.json.reviews.some(r => r.id === id), "the review must survive both attempts");
+});
+
 // ── Related media ───────────────────────────────────────────────
 // The suggestion strip used to match on `region`, a free-text neighbourhood
 // label that is near-unique per row, so it matched nothing and every listing in

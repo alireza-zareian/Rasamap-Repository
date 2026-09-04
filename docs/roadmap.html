@@ -2120,6 +2120,24 @@ sequenceDiagram
     </div>
   </div>
 
+  <!-- ─── REVW — edit and delete a review ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">REVW</div>
+      <div class="ph-title"><h3>ویرایش و حذف نظر برای کاربر</h3><p>نظر ثبت می‌شد ولی راهی برای پس‌گرفتنش نبود</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ویرایش به روت تازه نیاز نداشت:</strong> <code>POST /api/reviews</code> از قبل روی جفتِ یکتای (رسانه، کاربر) <code>upsert</code> می‌کرد، پس ارسال دوباره همان ردیف را جایگزین می‌کند. رابط کاربری حالا فرم را با نظرِ فعلی پر می‌کند و دکمه «ذخیرهٔ تغییرات» می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>DELETE /api/reviews/[id]</code> ساخته شد</strong> — تنها کاری که هیچ راهی برایش نبود. حذف و بازمحاسبهٔ <code>rating</code> و <code>reviewCount</code> بیلبورد در <b>یک تراکنش</b> انجام می‌شود، وگرنه یک نظرِ حذف‌شدهٔ یک‌ستاره تا ابد میانگین را پایین نگه می‌داشت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نظرِ دیگری ۴۰۴ می‌گیرد، نه ۴۰۳:</strong> تفاوتِ این دو به یک غریبه می‌گوید کدام شناسه‌ها وجود دارند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>دکمه‌های «ویرایش» و «حذف» فقط زیرِ نظرِ خودِ کاربر ظاهر می‌شوند؛ حذفِ در حال انجام دکمه را غیرفعال می‌کند و خطای شبکه پیام فارسی می‌دهد</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> سه تست تازه — ویرایش ردیف دوم نمی‌سازد و میانگین را دنبال می‌کند · حذف، میانگین را پاک می‌کند وقتی آخرین نظر بود · کاربر دیگر ۴۰۴ و مهمان ۴۰۱ می‌گیرد و نظر سرِ جایش می‌ماند. ۱۰۴ تست، ۱۰۳ سبز.</div>
+    </div>
+  </div>
+
 <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>

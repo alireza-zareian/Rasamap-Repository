@@ -53,6 +53,8 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 | GET | `/api/reviews?billboardId=<id>` | public | Reviews for a billboard, latest 50, with the average. |
 | POST | `/api/reviews` | user | Body (Zod): `billboardId`, `rating` (1–5), `comment` (10–1000). 404 if the media does not exist or is not published. One review per user per billboard (DB unique constraint) — a repeat submission edits the existing row. The write and the recomputation of `billboards.rating` / `reviewCount` from the reviews table happen in one `prisma.$transaction`. 201 on success. |
 
+| DELETE | `/api/reviews/[id]` | user | A user removes their own review. 404 — not 403 — for a review that is not theirs, so the response cannot be used to discover which ids exist. The delete and the recomputation of `billboards.rating` / `reviewCount` happen in one `prisma.$transaction`. Editing needs no route: `POST /api/reviews` upserts on (billboardId, userId), so submitting again replaces what is there. |
+
 ## User — listings (the submission pipeline)
 
 | Method | Path | Auth | Notes |
