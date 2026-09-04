@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Billboard } from "@/lib/types";
 import type { AdminStats } from "@/lib/admin/types";
 import type { UserRole } from "@/lib/auth/session";
@@ -20,14 +20,21 @@ import { CreateModal } from "@/components/admin/CreateModal";
 import { ListingsPanel } from "@/components/admin/ListingsPanel";
 import { LeadsPanel } from "@/components/admin/LeadsPanel";
 
-type Tab = "overview" | "billboards" | "listings" | "leads" | "quality" | "scraper" | "users" | "audit";
+const TABS = ["overview", "billboards", "listings", "leads", "quality", "scraper", "users", "audit"] as const;
+type Tab = (typeof TABS)[number];
 interface SessionUser { id: string; name: string; role: UserRole; email: string; }
 
-export default function AdminDashboard() {
+function AdminDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("overview");
+  // `?tab=` opens a section directly, which is what the staff bar on the public
+  // site links to. Anything unrecognised falls back to the overview.
+  const searchParams = useSearchParams();
+  const requested = searchParams.get("tab") as Tab | null;
+  const [tab, setTab] = useState<Tab>(
+    requested && TABS.includes(requested) ? requested : "overview",
+  );
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [billboards, setBillboards] = useState<Billboard[]>([]);
   const [total, setTotal] = useState(0);
@@ -363,5 +370,20 @@ export default function AdminDashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * `useSearchParams` inside a prerendered client page has to sit under a Suspense
+ * boundary, or the production build refuses to export the route — the panel
+ * reads `?tab=` so the staff bar on the public site can link straight into a
+ * section. The fallback is what shows for the instant before the query string
+ * is known, which is why it is the page's own background rather than a spinner.
+ */
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: C.bg }} />}>
+      <AdminDashboard />
+    </Suspense>
   );
 }

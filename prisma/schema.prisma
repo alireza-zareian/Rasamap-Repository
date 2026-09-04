@@ -40,6 +40,7 @@ model User {
 
   listings        Billboard[]
   reviews         Review[]
+  reviewReplies   ReviewReply[]
   contactRequests ContactRequest[]
 
   @@map("users")
@@ -207,9 +208,39 @@ model Review {
 
   createdAt DateTime @default(now())
 
+  replies ReviewReply[]
+
   @@unique([billboardId, userId])
   @@index([billboardId])
   @@map("reviews")
+}
+
+// ── ReviewReply ────────────────────────────────────────────────
+// A reply under a review, the way a comment thread works: other customers can
+// answer, and so can the team. One level deep only — a reply cannot be replied
+// to, which keeps the thread readable and the query a single join.
+model ReviewReply {
+  id       Int    @id @default(autoincrement())
+  reviewId Int
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  // A customer's reply carries the account it came from. A staff reply cannot:
+  // the administrator configured through the environment has no row in `admins`
+  // at all, which is the same reason audit_logs stores the actor's email rather
+  // than a foreign key. So `authorName` is written at the time of the reply and
+  // `isStaff` is what the badge reads.
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  authorName String
+  isStaff    Boolean @default(false)
+  body       String
+
+  createdAt DateTime @default(now())
+
+  @@index([reviewId, createdAt])
+  @@index([userId])
+  @@map("review_replies")
 }
 
 // ── ContactRequest ─────────────────────────────────────────────

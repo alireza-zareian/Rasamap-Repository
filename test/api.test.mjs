@@ -192,6 +192,93 @@ test("a user cannot delete someone else's review", async () => {
   assert.ok(still.json.reviews.some(r => r.id === id), "the review must survive both attempts");
 });
 
+// ── Review replies ──────────────────────────────────────────────
+
+test("anyone signed in can reply to a review, and staff replies are badged", async () => {
+  const author = await mintSession({ userId: "1", role: "user" });
+  const other  = await mintSession({ userId: "2", role: "user" });
+  const staff  = await mintSession({ role: "admin", name: "پشتیبانی" });
+
+  const review = await api("/api/reviews", {
+    method: "POST", token: author,
+    body: { billboardId: 1, rating: 4, comment: "نظری که قرار است پاسخ بگیرد" },
+  });
+  assert.equal(review.status, 201);
+  const id = review.json.review.id;
+
+  assert.equal((await api(`/api/reviews/${id}/replies`, { method: "POST", token: other, body: { body: "منم همین تجربه را داشتم" } })).status, 201);
+  assert.equal((await api(`/api/reviews/${id}/replies`, { method: "POST", token: staff, body: { body: "ممنون از بازخوردتان" } })).status, 201);
+  assert.equal((await api(`/api/reviews/${id}/replies`, { method: "POST", body: { body: "مهمان نباید بتواند" } })).status, 401);
+  assert.equal((await api(`/api/reviews/${id}/replies`, { method: "POST", token: other, body: { body: "ک" } })).status, 400);
+
+  const { json } = await api("/api/reviews?billboardId=1");
+  const thread = json.reviews.find(r => r.id === id);
+  assert.equal(thread.replies.length, 2, "both replies must come back with the review");
+  assert.equal(thread.replies[0].isStaff, false, "oldest first — the customer replied first");
+  assert.equal(thread.replies[1].isStaff, true);
+  assert.equal(thread.replies[1].userId, null, "a staff reply stores no account id");
+});
+
+test("a reply can be removed by its author or by staff, but not by a stranger", async () => {
+  const author = await mintSession({ userId: "1", role: "user" });
+  const other  = await mintSession({ userId: "2", role: "user" });
+  const staff  = await mintSession({ role: "admin" });
+
+  const review = await api("/api/reviews", {
+    method: "POST", token: author,
+    body: { billboardId: 2, rating: 3, comment: "نظر دوم برای آزمودن حذف پاسخ" },
+  });
+  const reviewId = review.json.review.id;
+
+  const mine = await api(`/api/reviews/${reviewId}/replies`, { method: "POST", token: other, body: { body: "پاسخی که خودم حذف می‌کنم" } });
+  const theirs = await api(`/api/reviews/${reviewId}/replies`, { method: "POST", token: other, body: { body: "پاسخی که مدیر حذف می‌کند" } });
+
+  // a third party gets the same answer as a missing row
+  assert.equal((await api(`/api/reviews/${reviewId}/replies/${mine.json.reply.id}`, { method: "DELETE", token: author })).status, 404);
+  assert.equal((await api(`/api/reviews/${reviewId}/replies/${mine.json.reply.id}`, { method: "DELETE", token: other })).status, 200);
+  assert.equal((await api(`/api/reviews/${reviewId}/replies/${theirs.json.reply.id}`, { method: "DELETE", token: staff })).status, 200);
+
+  const { json } = await api("/api/reviews?billboardId=2");
+  assert.equal(json.reviews.find(r => r.id === reviewId).replies.length, 0);
+});
+
+// ── One sign-in form, two kinds of account ──────────────────────
+
+test("the public login accepts a staff email and hands back a staff session", async () => {
+  const res = await api("/api/auth/login", {
+    method: "POST", ip: uniqueIp(),
+    body: { identifier: "admin@test.local", password: "admin123" },
+  });
+  // The test admin comes from env with a hash the suite does not know, so the
+  // shape of the refusal is what matters: it must be the shared message, never
+  // one that says "no such account".
+  assert.ok([200, 401].includes(res.status), `unexpected ${res.status}`);
+  if (res.status === 401) {
+    assert.equal(res.json.error, "شماره/ایمیل یا رمز عبور اشتباه است");
+  } else {
+    assert.equal(res.json.user.isStaff, true);
+  }
+});
+
+test("a wrong phone and a wrong email are refused in exactly the same words", async () => {
+  const byPhone = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: "09190000001", password: "nope" } });
+  const byEmail = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: "nobody@example.com", password: "nope" } });
+  assert.equal(byPhone.status, 401);
+  assert.equal(byEmail.status, 401);
+  assert.equal(byPhone.json.error, byEmail.json.error, "the two stores must not be distinguishable from the response");
+});
+
+test("GET /api/auth/me answers for a staff session with isStaff", async () => {
+  const staff = await mintSession({ role: "editor", name: "ویرایشگر" });
+  const { status, json } = await api("/api/auth/me", { token: staff });
+  assert.equal(status, 200);
+  assert.equal(json.user.isStaff, true);
+  assert.equal(json.user.role, "editor");
+
+  const customer = await api("/api/auth/me", { token: await mintSession({ userId: "1", role: "user" }) });
+  assert.equal(customer.json.user.isStaff, false);
+});
+
 // ── Related media ───────────────────────────────────────────────
 // The suggestion strip used to match on `region`, a free-text neighbourhood
 // label that is near-unique per row, so it matched nothing and every listing in

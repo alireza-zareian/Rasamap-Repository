@@ -10,15 +10,32 @@ import { withApiLog } from "@/lib/api-log";
 
 const TWO_HOURS = 2 * 60 * 60; // seconds
 
-// GET /api/auth/me — return current user + sliding session refresh
+/**
+ * GET /api/auth/me — who is signed in, plus a sliding session refresh.
+ *
+ * Answers for a staff session too, not only a customer one. It used to refuse
+ * anything but `role: "user"`, which meant that to the public site an
+ * administrator was simply a stranger: no name in the header, no way to answer
+ * a review. `isStaff` is what the site reads to decide whether to offer the
+ * things only the team should see. PATCH below stays customer-only — a staff
+ * account has no profile in `users` to edit.
+ */
 async function GETHandler(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "user") {
+  if (!session) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }
 
+  const isStaff = session.role !== "user";
   const res = NextResponse.json({
-    user: { id: session.userId, name: session.name, phone: session.email },
+    user: {
+      id:      session.userId,
+      name:    session.name,
+      phone:   isStaff ? "" : session.email,   // staff sign in with an email
+      email:   isStaff ? session.email : "",
+      role:    session.role,
+      isStaff,
+    },
   });
 
   // Sliding window: refresh token if less than 2 hours remain

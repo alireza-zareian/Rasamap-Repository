@@ -4,6 +4,7 @@ import "./globals.css";
 import { SITE_URL } from "@/lib/site-url";
 import { ThemeProvider } from "@/lib/theme";
 import BackgroundPattern from "@/components/BackgroundPattern";
+import StaffBar from "@/components/StaffBar";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <BackgroundPattern />
           <div className="grain-overlay" aria-hidden="true" />
           {children}
+          <StaffBar />
         </ThemeProvider>
       </body>
     </html>

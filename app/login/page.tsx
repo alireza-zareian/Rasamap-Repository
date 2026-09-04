@@ -34,13 +34,18 @@ function LoginForm() {
     setLoading(true);
     try {
       const endpoint = tab === "login" ? "/api/auth/login" : "/api/auth/register";
+      // Signing in accepts a mobile number or a team email address — the server
+      // reads the shape of it to know which store to check. Registration is for
+      // customers only, so it stays a phone.
       const body = tab === "login"
-        ? { phone: form.phone, password: form.pass }
+        ? { identifier: form.phone.trim(), password: form.pass }
         : { name: form.name.trim(), phone: form.phone, password: form.pass };
       const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "خطایی رخ داد"); setLoading(false); return; }
-      router.push(nextPath);
+      // A team member who signed in here almost certainly wants the panel; a
+      // customer wants wherever they were headed.
+      router.push(data.user?.isStaff ? "/admin" : nextPath);
     } catch {
       setError("خطای شبکه"); setLoading(false);
     }
@@ -59,16 +64,23 @@ function LoginForm() {
       type="text" placeholder="نام و نام خانوادگی" style={base} />
   );
 
-  // Phone input — force Latin keyboard, convert Persian digits
-  const phoneInp = () => (
-    <input
-      value={form.phone}
-      onChange={e => s("phone", toLatin(e.target.value))}
-      type="tel" inputMode="tel" dir="ltr" lang="en"
-      placeholder="09123456789"
-      style={{ ...base, textAlign: "left" }}
-    />
-  );
+  // One field for both kinds of account when signing in. Registration is
+  // customers only, so there it stays a phone keypad.
+  const identifierInp = () => {
+    const signIn = tab === "login";
+    return (
+      <input
+        value={form.phone}
+        onChange={e => s("phone", toLatin(e.target.value))}
+        type={signIn ? "text" : "tel"}
+        inputMode={signIn ? "text" : "tel"}
+        dir="ltr" lang="en"
+        autoComplete={signIn ? "username" : "tel"}
+        placeholder={signIn ? "۰۹۱۲۳۴۵۶۷۸۹ یا ایمیل همکاران" : "09123456789"}
+        style={{ ...base, textAlign: "left" }}
+      />
+    );
+  };
 
   // Password input with show/hide toggle + forced Latin
   const passInp = (
@@ -123,7 +135,7 @@ function LoginForm() {
           </div>
           <div style={{ padding: "24px" }}>
             {tab === "register" && nameInp()}
-            {phoneInp()}
+            {identifierInp()}
             {passInp(form.pass, v => s("pass", v), "رمز عبور", showPass, setShowPass)}
             {tab === "register" && passInp(form.confirm, v => s("confirm", v), "تکرار رمز", showConfirm, setShowConfirm)}
             {error && (

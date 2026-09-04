@@ -30,7 +30,15 @@ async function GETHandler(req: NextRequest) {
 
   const reviews = await prisma.review.findMany({
     where:   { billboardId },
-    include: { user: { select: { name: true } } },
+    include: {
+      user:    { select: { name: true } },
+      // Oldest first inside a thread — a conversation reads downwards, even
+      // though the reviews themselves are newest-first.
+      replies: {
+        orderBy: { createdAt: "asc" },
+        select:  { id: true, userId: true, authorName: true, isStaff: true, body: true, createdAt: true },
+      },
+    },
     orderBy: { createdAt: "desc" },
     take:    50,
   });
@@ -39,7 +47,9 @@ async function GETHandler(req: NextRequest) {
     ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10
     : null;
 
-  return NextResponse.json({ reviews, avg, total: reviews.length }, { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=120" } });
+  // Shorter than it was: a thread people are replying to in real time should
+  // not sit in a shared cache for half a minute after an answer lands.
+  return NextResponse.json({ reviews, avg, total: reviews.length }, { headers: { "Cache-Control": "public, max-age=5, stale-while-revalidate=30" } });
 }
 
 // POST /api/reviews — signed-in users only; one review per media per account

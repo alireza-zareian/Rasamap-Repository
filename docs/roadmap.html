@@ -2138,6 +2138,26 @@ sequenceDiagram
     </div>
   </div>
 
+  <!-- ─── THRD — reply threads and one sign-in ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">THRD</div>
+      <div class="ph-title"><h3>پاسخ به نظرات، و یک فرمِ ورود برای هر دو نوع حساب</h3><p>رشتهٔ گفتگو زیر هر نظر + نوار مدیریت روی سایت عمومی</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مدل <code>ReviewReply</code>:</strong> پاسخ‌ها <b>یک سطح</b> عمق دارند — نه درختِ بی‌انتها. پاسخِ کاربر شناسهٔ حسابش را دارد، ولی پاسخِ تیم <b>نمی‌تواند</b>: ادمینی که از متغیر محیطی تنظیم می‌شود اصلاً ردیفی در جدول <code>admins</code> ندارد (همان دلیلی که جدول لاگ هم به‌جای کلید خارجی، ایمیل را نگه می‌دارد). پس نامِ نویسنده روی خودِ پاسخ نوشته می‌شود و <code>isStaff</code> نشانِ «تیم رساماپ» را می‌سازد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حذف پاسخ برای نویسنده‌اش و برای ویرایشگر به بالا:</strong> رشتهٔ عمومی‌ای که فقط نویسنده‌اش بتواند تمیزش کند، جوابی برای پاسخ توهین‌آمیز ندارد؛ و جایگزینش — دست‌بردن مستقیم در دیتابیس — از هر نظر بدتر است، از جمله اینکه هیچ ردی نمی‌گذارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>یک فرم ورود، دو منبع اعتبارنامه:</strong> مشتری با <b>شماره موبایل</b> ثبت‌نام می‌کند و تیم با <b>ایمیل</b> — پس شکلِ خودِ ورودی می‌گوید کدام جدول را باید دید. حدسی در کار نیست و هیچ‌کدام از دو جدول پشت سر هم آزموده نمی‌شوند. <b>هر شکستی دقیقاً یک جمله برمی‌گرداند</b>، وگرنه تفاوتِ پیام‌ها خودش یک اوراکل بود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>GET /api/auth/me</code> حالا نشستِ تیم را هم می‌شناسد.</strong> قبلاً هر چیزی جز <code>role: "user"</code> را ۴۰۱ می‌داد — یعنی ادمین برای سایتِ عمومی یک غریبه بود: نه نامی در هدر، نه راهی برای پاسخ دادن به یک نظر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نوار مدیریت (<code>StaffBar</code>)</strong> — همان الگویی که وردپرس و جنگو دارند، به همان دلیل: تیم بیشترِ وقتش سایت را از چشمِ بازدیدکننده می‌بیند، و مجبورکردنش به حفظِ یک آدرسِ پنل، همان جایی است که کارها دیگر بررسی نمی‌شوند. <b>هیچ دسترسی‌ای نمی‌دهد</b> — فقط میان‌بر است؛ هر صفحه و هر API پشتش دوباره نشست را بررسی می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>پنل حالا <code>?tab=</code> را می‌خواند تا لینک‌های نوار مستقیم به همان بخش باز شوند — با مرزِ <code>Suspense</code> که مستندِ Next برای <code>useSearchParams</code> در صفحهٔ پیش‌رندرشده الزامی می‌کند</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> شش تست تازه — پاسخِ کاربر و پاسخِ تیم هر دو ثبت می‌شوند و به ترتیبِ زمانی برمی‌گردند؛ پاسخِ تیم شناسهٔ حساب ندارد؛ مهمان ۴۰۱ و متنِ خیلی کوتاه ۴۰۰ می‌گیرد؛ حذف برای نویسنده و مدیر کار می‌کند و برای شخص سوم ۴۰۴؛ <b>ورود با شمارهٔ غلط و ایمیل غلط دقیقاً یک جمله برمی‌گرداند</b>؛ و <code>me</code> برای نشستِ ویرایشگر <code>isStaff: true</code> می‌دهد. آزمونِ زنده روی بیلد production هم همین را نشان داد. ۱۰۹ تست، ۱۰۸ سبز.</div>
+    </div>
+  </div>
+
 <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>

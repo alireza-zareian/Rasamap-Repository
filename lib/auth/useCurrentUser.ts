@@ -1,7 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 
-export interface CurrentUser { id: number; name: string; phone: string; }
+export interface CurrentUser {
+  id: number;
+  name: string;
+  phone: string;
+  /** A member of the team rather than a customer — see GET /api/auth/me. */
+  isStaff?: boolean;
+  role?: string;
+}
 
 export function useCurrentUser() {
   const [user, setUser] = useState<CurrentUser | null | undefined>(undefined); // undefined = loading

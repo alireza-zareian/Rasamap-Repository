@@ -1,6 +1,15 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Star, MessageSquare, Send, Check, Pencil, Trash2, X } from "lucide-react";
+import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
+
+interface Reply {
+  id: number;
+  userId: number | null;   // null for a staff reply — see the ReviewReply model
+  authorName: string;
+  isStaff: boolean;
+  body: string;
+  createdAt: string;
+}
 
 interface Review {
   id: number;
@@ -9,6 +18,7 @@ interface Review {
   comment: string;
   createdAt: string;
   user: { name: string };
+  replies: Reply[];
 }
 
 interface Props { billboardId: number; }
@@ -45,7 +55,7 @@ export default function ReviewsSection({ billboardId }: Props) {
   const [avg, setAvg] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   // undefined = still asking, null = signed out.
-  const [user, setUser] = useState<{ id: number; name: string } | null | undefined>(undefined);
+  const [user, setUser] = useState<{ id: number; name: string; isStaff: boolean } | null | undefined>(undefined);
 
   // Form state
   const [rating, setRating] = useState(0);
@@ -55,6 +65,13 @@ export default function ReviewsSection({ billboardId }: Props) {
   const [success, setSuccess] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // Reply state, keyed by the review being answered — only one box is open at a
+  // time, but the draft has to survive while the request is in flight.
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+  const [replyBody, setReplyBody] = useState("");
+  const [replyBusy, setReplyBusy] = useState(false);
+  const [busyReplyId, setBusyReplyId] = useState<number | null>(null);
 
   const fetchReviews = useCallback(() => {
     fetch(`/api/reviews?billboardId=${billboardId}`)
@@ -68,7 +85,7 @@ export default function ReviewsSection({ billboardId }: Props) {
     fetchReviews();
     fetch("/api/auth/me")
       .then(r => r.ok ? r.json() : null)
-      .then(d => setUser(d?.user ? { id: Number(d.user.id), name: d.user.name } : null))
+      .then(d => setUser(d?.user ? { id: Number(d.user.id), name: d.user.name, isStaff: !!d.user.isStaff } : null))
       .catch(() => setUser(null));
   }, [fetchReviews]);
 
@@ -112,6 +129,46 @@ export default function ReviewsSection({ billboardId }: Props) {
     }
   };
 
+  const openReply = (reviewId: number) => {
+    setReplyTo(reviewId);
+    setReplyBody("");
+    setError("");
+  };
+
+  const sendReply = async (reviewId: number) => {
+    if (replyBusy) return;
+    const body = replyBody.trim();
+    if (body.length < 2) { setError("پاسخ خیلی کوتاه است"); return; }
+    setReplyBusy(true); setError("");
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}/replies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) { setError(data?.error ?? "ثبت پاسخ ممکن نشد"); return; }
+      setReplyTo(null); setReplyBody("");
+      fetchReviews();
+    } catch { setError("خطای شبکه — دوباره تلاش کنید"); }
+    finally { setReplyBusy(false); }
+  };
+
+  const deleteReply = async (reviewId: number, replyId: number) => {
+    if (busyReplyId) return;
+    setBusyReplyId(replyId); setError("");
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}/replies/${replyId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "حذف پاسخ ممکن نشد");
+        return;
+      }
+      fetchReviews();
+    } catch { setError("خطای شبکه — دوباره تلاش کنید"); }
+    finally { setBusyReplyId(null); }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rating) { setError("لطفاً امتیاز را انتخاب کنید"); return; }
@@ -137,6 +194,13 @@ export default function ReviewsSection({ billboardId }: Props) {
   // this account already left. Named once so the error banner below can ask the
   // opposite question without repeating the expression.
   const formOpen = !!user && (editing || (!mine && !success));
+
+  const actionBtn = (color: string, border: string): React.CSSProperties => ({
+    background: "none", border: `1px solid ${border}`, color,
+    fontFamily: "inherit", fontSize: "0.72rem", fontWeight: 600,
+    padding: "5px 12px", borderRadius: 7, cursor: "pointer",
+    display: "inline-flex", alignItems: "center", gap: 5,
+  });
 
   const card: React.CSSProperties = { background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginTop: 16 };
 
@@ -228,14 +292,72 @@ export default function ReviewsSection({ billboardId }: Props) {
                 </div>
               </div>
               <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.7 }}>{r.comment}</p>
-              {user && r.userId === user.id && (
-                <div style={{ display: "flex", gap: 8, marginTop: 10, paddingTop: 9, borderTop: "1px solid var(--border)" }}>
-                  <button onClick={startEdit} disabled={deletingId === r.id} style={{ background: "none", border: "1px solid var(--border)", color: "var(--accent)", fontFamily: "inherit", fontSize: "0.72rem", fontWeight: 600, padding: "5px 12px", borderRadius: 7, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    <Pencil size={11} /> ویرایش
+              {/* Actions: editing and deleting belong to the author; replying
+                  is open to anyone signed in. */}
+              {user && (
+                <div style={{ display: "flex", gap: 8, marginTop: 10, paddingTop: 9, borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
+                  {r.userId === user.id && (
+                    <>
+                      <button onClick={startEdit} disabled={deletingId === r.id} style={actionBtn("var(--accent)", "var(--border)")}>
+                        <Pencil size={11} /> ویرایش
+                      </button>
+                      <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} style={actionBtn("#ef4444", "rgba(239,68,68,0.35)")}>
+                        <Trash2 size={11} /> {deletingId === r.id ? "در حال حذف…" : "حذف"}
+                      </button>
+                    </>
+                  )}
+                  <button onClick={() => openReply(r.id)} style={actionBtn("var(--text-muted)", "var(--border)")}>
+                    <CornerDownLeft size={11} /> پاسخ
                   </button>
-                  <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} style={{ background: "none", border: "1px solid rgba(239,68,68,0.35)", color: "#ef4444", fontFamily: "inherit", fontSize: "0.72rem", fontWeight: 600, padding: "5px 12px", borderRadius: 7, cursor: deletingId === r.id ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    <Trash2 size={11} /> {deletingId === r.id ? "در حال حذف…" : "حذف"}
-                  </button>
+                </div>
+              )}
+
+              {/* The thread */}
+              {(r.replies?.length > 0 || replyTo === r.id) && (
+                <div style={{ marginTop: 10, paddingRight: 14, borderRight: "2px solid var(--border)", display: "flex", flexDirection: "column", gap: 9 }}>
+                  {r.replies?.map(rp => (
+                    <div key={rp.id} style={{ background: rp.isStaff ? "rgba(59,123,245,0.06)" : "var(--bg-card)", border: `1px solid ${rp.isStaff ? "rgba(59,123,245,0.25)" : "var(--border)"}`, borderRadius: 9, padding: "9px 12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.76rem", fontWeight: 700 }}>{rp.authorName}</span>
+                        {rp.isStaff && (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.62rem", fontWeight: 700, color: "var(--accent)", background: "rgba(59,123,245,0.12)", border: "1px solid rgba(59,123,245,0.3)", borderRadius: 20, padding: "1px 7px" }}>
+                            <ShieldCheck size={9} /> تیم رساماپ
+                          </span>
+                        )}
+                        <span style={{ fontSize: "0.64rem", color: "var(--text-muted)", marginRight: "auto" }}>
+                          {new Date(rp.createdAt).toLocaleDateString("fa-IR")}
+                        </span>
+                        {user && (user.isStaff || (rp.userId !== null && rp.userId === user.id)) && (
+                          <button onClick={() => deleteReply(r.id, rp.id)} disabled={busyReplyId === rp.id}
+                            style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", fontSize: "0.64rem", gap: 3 }}>
+                            <Trash2 size={10} /> {busyReplyId === rp.id ? "…" : "حذف"}
+                          </button>
+                        )}
+                      </div>
+                      <p style={{ margin: 0, fontSize: "0.77rem", color: "var(--text-muted)", lineHeight: 1.75 }}>{rp.body}</p>
+                    </div>
+                  ))}
+
+                  {replyTo === r.id && (
+                    <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
+                      <textarea
+                        value={replyBody} onChange={e => setReplyBody(e.target.value)}
+                        rows={2} maxLength={600}
+                        placeholder={user?.isStaff ? "پاسخ رسمی تیم رساماپ…" : "پاسخ شما…"}
+                        style={{ flex: 1, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.78rem", padding: "8px 10px", borderRadius: 8, outline: "none", resize: "vertical" }}
+                      />
+                      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                        <button onClick={() => sendReply(r.id)} disabled={replyBusy}
+                          style={{ background: replyBusy ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.72rem", fontWeight: 700, padding: "7px 13px", borderRadius: 7, cursor: replyBusy ? "default" : "pointer", whiteSpace: "nowrap" }}>
+                          {replyBusy ? "…" : "ارسال"}
+                        </button>
+                        <button onClick={() => setReplyTo(null)}
+                          style={{ background: "none", border: `1px solid var(--border)`, color: "var(--text-muted)", fontFamily: "inherit", fontSize: "0.72rem", padding: "6px 13px", borderRadius: 7, cursor: "pointer" }}>
+                          انصراف
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
