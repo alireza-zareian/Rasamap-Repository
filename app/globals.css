@@ -66,6 +66,16 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
 
+/* ── Staff bar: reserve the space it covers ─────────────────────── */
+/* The bar is `position:fixed` at the bottom of the viewport, which takes it
+   out of normal flow — the page underneath has no idea it exists and lays out
+   as if the bottom of the screen were free. StaffBar.tsx measures its own
+   height and writes it to --staffbar-h; this is the other half, padding the
+   page out of the way. Without it the bar sits on top of whatever the page
+   put last — the footer's link columns, or the related-media strip on a
+   shorter page — rather than below it. */
+html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
+
 /* ── Animations ─────────────────────────────────────────────────── */
 @keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 @keyframes slideUp  { from { transform:translateY(100%); } to { transform:translateY(0); } }
@@ -378,7 +388,12 @@ button, a, input, select, label,
      the badge and logout button always stay on-screen. */
   .admin-topbar { padding: 0 12px !important; gap: 8px !important; }
   .admin-topbar-sep, .admin-topbar-sub { display: none !important; }
-  .admin-topbar-name { max-width: 96px; }
+  .admin-topbar-name { max-width: 64px; }
+  /* Same icon-only-on-mobile pattern as the public Topbar's logout label:
+     keep the "view site" button, drop its text so the badge/name/logout row
+     still fits a phone width. */
+  .admin-topbar-sitelink { padding: 6px 8px !important; }
+  .admin-topbar-sitelink-label { display: none !important; }
 
   /* Admin create/edit modals: the two-column field grid is too tight at
      phone width — collapse to a single column. */

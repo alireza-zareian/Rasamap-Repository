@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { ShieldCheck, LayoutDashboard, ClipboardCheck, Handshake, PencilLine, BarChart3, Users } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 
@@ -80,9 +81,40 @@ function actionsFor(pathname: string): { where: string; actions: Action[] } {
 export default function StaffBar() {
   const { user } = useCurrentUser();
   const pathname = usePathname() ?? "/";
+  const barRef = useRef<HTMLDivElement>(null);
 
-  if (!user?.isStaff) return null;
-  if (pathname.startsWith("/admin")) return null;
+  const visible = !!user?.isStaff && !pathname.startsWith("/admin");
+
+  // A fixed bar at the bottom of the viewport sits on top of whatever the page
+  // put there — the footer's last row, or a page short enough that the bar
+  // lands on the content itself. The page cannot be trusted to leave room for
+  // it (every page would have to know a staff session exists), so the bar
+  // reserves its own space: it measures its real height — which text wrapping,
+  // font loading or a future extra action could change — and writes it to a
+  // CSS variable that a global rule turns into bottom padding on <body>. Hidden
+  // (a customer, or the admin panel itself) removes both, exactly once.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!visible) {
+      root.classList.remove("has-staffbar");
+      root.style.removeProperty("--staffbar-h");
+      return;
+    }
+    const el = barRef.current;
+    if (!el) return;
+    root.classList.add("has-staffbar");
+    const sync = () => root.style.setProperty("--staffbar-h", `${el.offsetHeight}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.classList.remove("has-staffbar");
+      root.style.removeProperty("--staffbar-h");
+    };
+  }, [visible]);
+
+  if (!visible) return null;
 
   const { where, actions } = actionsFor(pathname);
 
@@ -96,6 +128,7 @@ export default function StaffBar() {
 
   return (
     <div
+      ref={barRef}
       className="staff-bar"
       style={{
         position: "fixed", bottom: 0, right: 0, left: 0, zIndex: 200,

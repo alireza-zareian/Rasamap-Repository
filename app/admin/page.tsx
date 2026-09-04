@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Billboard } from "@/lib/types";
 import type { AdminStats } from "@/lib/admin/types";
 import type { UserRole } from "@/lib/auth/session";
-import { LayoutDashboard, ClipboardList, ClipboardCheck, Handshake, ShieldCheck, Bot, Users, ScrollText, Plus, Lock, Trash2, AlertTriangle, MapPin, CheckCircle2, ImageOff, Sparkles, Copy } from "lucide-react";
+import { LayoutDashboard, ClipboardList, ClipboardCheck, Handshake, ShieldCheck, Bot, Users, ScrollText, Plus, Lock, Trash2, AlertTriangle, MapPin, CheckCircle2, ImageOff, Sparkles, Copy, Globe } from "lucide-react";
 import { C, TYPE_LABEL, STATUS_LABEL, ROLE_LABEL, ROLE_COLOR } from "@/components/admin/constants";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Badge, StatCard, BarRow } from "@/components/admin/Badge";
@@ -163,6 +163,14 @@ function AdminDashboard() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <Badge text={ROLE_LABEL[user.role] ?? user.role} color={ROLE_COLOR[user.role] ?? C.muted} bg={`${ROLE_COLOR[user.role] ?? C.muted}18`} />
           <div className="admin-topbar-name" style={{ fontSize: "0.78rem", color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</div>
+          {/* The only way out of the panel used to be a small grey link at the
+              foot of the sidebar — easy to miss, and on a phone the sidebar
+              collapses into a row of tab buttons that pushes it further down
+              still. This sits in the topbar instead, which is sticky, so it is
+              on screen from every tab. */}
+          <Link href="/" className="admin-topbar-sitelink" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.75rem", fontWeight: 600, padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.accent}55`, background: `${C.accent}12`, color: C.accent, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}>
+            <Globe size={13} /> <span className="admin-topbar-sitelink-label">مشاهده سایت</span>
+          </Link>
           <button onClick={handleLogout} disabled={loggingOut} style={{ fontSize: "0.75rem", padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: "pointer", flexShrink: 0 }}>
             {loggingOut ? "..." : "خروج"}
           </button>
@@ -178,9 +186,6 @@ function AdminDashboard() {
                 <Icon size={15} /> {label}
               </button>
             ))}
-            <div style={{ margin: "10px 8px 4px", borderTop: `1px solid ${C.border}`, paddingTop: 10 }}>
-              <Link href="/explore" style={{ display: "block", textAlign: "right", padding: "8px 6px", fontSize: "0.78rem", color: C.muted, textDecoration: "none" }}>← بازگشت</Link>
-            </div>
           </div>
         </div>
 
