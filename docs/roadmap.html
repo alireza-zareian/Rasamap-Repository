@@ -2076,6 +2076,50 @@ sequenceDiagram
     </div>
   </div>
 
+  <!-- ─── FTR — footer columns on mobile ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">FTR</div>
+      <div class="ph-title"><h3>فوتر روی گوشی جمع شد</h3><p>سه ستونِ «پلتفرم / کاربران / شرکت» زیرِ هم می‌افتادند و یک نوارِ سفیدِ بلند می‌ساختند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>ریشه:</b> قانونِ ریسپانسیوِ زیر ۶۴۰px کلِ <code>.footer-grid</code> را یک‌ستونه می‌کرد، پس هر چهار بخش — برند و هر سه ستونِ لینک — روی هم می‌نشستند. ستون‌های لینک متنِ کمی دارند و کنارِ هم راحت جا می‌شوند؛ زیرِ هم گذاشتنشان فقط ارتفاعِ فوتر را چند برابر می‌کرد.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>روی گوشی برند یک ردیفِ کامل می‌گیرد و سه ستونِ لینک کنارِ هم می‌مانند:</strong> <code>grid-template-columns: repeat(3, 1fr)</code> و <code>.footer-grid &gt; :first-child { grid-column: 1 / -1 }</code> — بدونِ تغییرِ چیدمانِ دسکتاپ</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>&lt;footer&gt;</code> کلاسِ <code>site-footer</code> گرفت تا padding افقی‌اش روی گوشی از ۲۸ به ۱۸ کم شود و سه ستون جا بگیرند — لندینگ فوتر جدا و دست‌نخورده است</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> فوتر در ویوپورت‌های ۳۲۰px، ۳۷۵px و ۴۳۰px رندر شد — هر سه ستون کنارِ هم، متن بدونِ بریدگی، بدونِ نوارِ سفیدِ اضافی. چیدمانِ دسکتاپ (۴ ستون) بی‌تغییر. <code>lint</code> بدونِ خطا.</div>
+    </div>
+  </div>
+
+  <!-- ─── EST — traffic and price model ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">EST</div>
+      <div class="ph-title"><h3>مدل تخمین بازدید و قیمت، از نو</h3><p>از ضریب‌های سرانگشتی به روشی که صنعت تبلیغات محیطی واقعاً استفاده می‌کند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>سه ایراد در مدل قبلی:</b> <b>۱)</b> پایهٔ ترافیک <b>جمعیتِ شهر</b> بود نه خودِ خیابان — هر بیلبورد در تهران از ۵٪ نُه میلیون نفر شروع می‌کرد، پس یک تابلو در کوچهٔ فرعی ادعای ۴۵۰٬۰۰۰ بیننده در روز داشت. <b>۲)</b> امتیازِ دیده‌شدن محاسبه و <b>نمایش</b> داده می‌شد ولی در عدد بازدید <b>هیچ نقشی نداشت</b> — بازدید همیشه ۳۵٪ ثابتِ ترافیک بود. <b>۳)</b> ساعتِ اوجِ ترافیک برای <b>هر ۳٬۵۳۶ رکورد یکسان</b> بود.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>روشِ صنعتی (Geopath / Route):</strong> ترافیکِ <b>کلاسِ راه</b> × ضریبِ اندازهٔ شهر ← سرنشین ← عابر ← «فرصتِ دیده‌شدن» ← ضرب در <b>visibility</b> ← «بازدیدِ مؤثر». حالا امتیازِ دیده‌شدن واقعاً عدد را کم می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>راه تعیین‌کننده است، نه شهر:</strong> شش کلاس (آزادراه، شریان، تقاطع، خیابان، حمل‌ونقل، محلی) با حجمِ ترددِ خودشان؛ شهر فقط <b>زیرخطی</b> مقیاس می‌دهد (توانِ ۰٫۳۵) — تهران سه برابرِ زنجان، نه بیست‌وسه برابر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ساعت اوج، سطح ازدحام و نسبت عابر</strong> همه از کلاسِ راه می‌آیند: ایستگاه مترو عابرمحور است، آزادراه تقریباً صفر عابر دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تصادفی‌بودن حذف شد:</strong> <code>random.uniform()</code> باعث می‌شد یک بیلبورد در دو بار اسکرپ دو عدد بدهد و <b>هیچ عددی در گزارش قابل بازتولید نباشد</b>. تنوع حالا از هشِ هویتِ خودِ رکورد می‌آید — پایدار بین اجراها</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>قیمت با ۳۹ شهر و ۲٬۵۰۰ قیمتِ واقعیِ بازار کالیبره شد:</strong> نرخِ هر مترمربعِ هر شهر = میانهٔ قیمت‌های منتشرشدهٔ همان شهر تقسیم بر پیش‌بینیِ مدل. نتیجه: نسبتِ قیمتِ واقعی به مدل، <b>میانه دقیقاً ۱٫۰۰×</b> و ۶۷٪ رکوردها بین نصف تا دو برابر. ضریبِ <b>کلاسِ راه</b> هم به قیمت اضافه شد — چیزی که برای آگهی‌دهنده از همه مهم‌تر است و قبلاً اصلاً وجود نداشت</div></div>
+      </div>
+      <div class="warn-box" style="background:var(--red-dim); border-color:var(--red-mid)">
+        <b>و یک باگِ داده که همین کار لوش داد:</b> اولین اجرای اصلاح، قیمت‌ها را <b>بدتر</b> کرد (بیشینه از ۸۴۱ هزار به ۲٫۹ میلیون رفت). علت: یازده رکورد از irbillboard ابعادشان <code>2040×310</code> ثبت شده بود — یعنی <b>سانتی‌متر در ستونِ متر</b>. مدل با ابعادِ خراب تغذیه شده بود و قیمتِ <b>درستِ</b> ۱۷۰M را «غیرقابل‌باور» دیده بود. تغییرات برگردانده شد، ریشه در خودِ فرمول بسته شد (<code>normalise_size()</code>)، و بعد دوباره اجرا شد.
+      </div>
+      <div class="proof"><b>تأیید:</b> بازدید ۱٬۵۱۹ تا ۱۹۲٬۹۸۹ در روز (پیش‌تر تا ۵۵۵٬۰۸۹) · قیمت ۵ تا ۱٬۵۹۴M (پیش‌تر تا ۸۴۱٬۵۰۳M) · بیشینهٔ ابعاد ۴۱×۲۸ متر · <code>area</code> با <code>width×height</code> کاملاً می‌خواند · ساعتِ اوج حالا پنج مقدارِ متفاوت دارد · دو بار صدا زدنِ فرمول عددِ یکسان می‌دهد. اسکریپت <code>scripts/recompute-estimates.py</code> با <code>--dry-run</code>، بکاپِ خودکار، و به‌روزرسانیِ <b>هم دیتابیس هم JSONِ دانه</b> — تا re-seed اعداد قدیمی را برنگرداند. ۱۰۱ تست، ۱۰۰ سبز.</div>
+    </div>
+  </div>
+
 <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>

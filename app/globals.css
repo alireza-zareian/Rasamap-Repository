@@ -289,8 +289,11 @@ button, a, input, select, label,
   .landing-nav { display: none !important; }
   .landing-cta-label { display: none; }
 
-  /* Footer: single column on mobile */
-  .footer-grid { grid-template-columns: 1fr !important; gap: 28px !important; }
+  /* Footer: brand on its own row, then the three link columns stay side by side —
+     stacking all four was doubling the footer height and leaving a band of white space */
+  .site-footer { padding-left: 18px !important; padding-right: 18px !important; }
+  .footer-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 26px 14px !important; }
+  .footer-grid > :first-child { grid-column: 1 / -1; }
 
   /* About stats: single column */
   .about-stats-grid { grid-template-columns: 1fr !important; }

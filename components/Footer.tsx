@@ -29,7 +29,7 @@ const cols = [
 
 export default function Footer() {
   return (
-    <footer style={{
+    <footer className="site-footer" style={{
       borderTop: "1px solid var(--border)",
       background: "var(--bg-card)",
       padding: "48px 28px 28px",
