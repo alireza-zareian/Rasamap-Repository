@@ -2056,6 +2056,26 @@ sequenceDiagram
     </div>
   </div>
 
+  <!-- ─── SUG — city-aware suggestions ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">SUG</div>
+      <div class="ph-title"><h3>پیشنهادها شهری شد</h3><p>زیر هر آگهی در هر شهرِ کشور، همان دوازده بیلبوردِ تهران پیشنهاد می‌شد</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>ریشه:</b> تابع روی <code>region</code> مچ می‌کرد، ولی <code>region</code> در این داده یک <b>برچسبِ متنِ آزادِ محله</b> است — «مرکز شهر»، «منطقه ۵»، گاهی یک جملهٔ کامل. زنجان <b>۵۸ رکورد دارد با ۵۸ region متفاوت</b>، پس شرط هیچ‌وقت مچ نمی‌شد و همه‌چیز به فهرستِ سراسری می‌افتاد. تازه «مرکز شهر» در ده‌ها شهرِ بی‌ربط تکرار شده، پس حتی وقتی مچ می‌شد هم غلط بود.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سه حلقهٔ گشاینده جای آن نشست:</strong> اول <b>همان شهر + همان نوع رسانه</b>، بعد <b>همان شهر با هر نوعی</b>، و در آخر <b>همان نوع در هر شهری</b>. هر حلقه فقط جای خالیِ حلقه‌های قبل را پر می‌کند و چیزی تکرار نمی‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>خودِ رکورد هیچ‌وقت خودش را پیشنهاد نمی‌دهد، و آگهیِ منتشرنشده هرگز وارد فهرست نمی‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>دو تستِ تازه رفتار را قفل کرد: «پیشنهادِ اول باید هم‌شهری باشد حتی اگر یک رکوردِ خوش‌رتبه‌ترِ شهر دیگر وجود داشته باشد» و «هیچ آگهیِ منتشرنشده‌ای در نوار نباشد»</div></div>
+      </div>
+      <div class="proof"><b>تأیید روی داده‌ی واقعی:</b> زنجان → ۱۲ از ۱۲ زنجانی · شیراز → ۱۲ از ۱۲ شیرازی · تبریز (عرشه پل) → ۱۲ از ۱۲ تبریزی · یزد → ۱۲ از ۱۲ یزدی · تهران → ۱۲ از ۱۲ تهرانی. و حالتِ لبه: شهری که فقط <b>یک</b> رکورد دارد (آستانه اشرفیه، اردل، ازنا) درست به حلقهٔ بعدی گسترش می‌یابد. ۱۰۱ تست، ۱۰۰ سبز.</div>
+    </div>
+  </div>
+
 <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>

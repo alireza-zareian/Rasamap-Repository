@@ -141,6 +141,36 @@ test("POST /api/billboards/[slug]/contact 404s on an unpublished listing", async
   assert.equal(status, 404);
 });
 
+// ── Related media ───────────────────────────────────────────────
+// The suggestion strip used to match on `region`, a free-text neighbourhood
+// label that is near-unique per row, so it matched nothing and every listing in
+// the country fell through to one national list — the same dozen Tehran
+// billboards under a Zanjan page. City comes first now.
+
+test("suggestions prefer the same city over a higher-ranked one elsewhere", async () => {
+  const { status, json: html } = await api("/billboard/valiasr-tower");
+  assert.equal(status, 200);
+
+  const strip = html.slice(html.indexOf("related-strip"));
+  assert.ok(strip.length > 0, "the related strip is missing from the page");
+
+  const suggested = [...new Set([...strip.matchAll(/href="\/billboard\/([a-z0-9-]+)"/g)].map(m => m[1]))];
+  assert.ok(suggested.length > 0, "no suggestions were rendered");
+  assert.ok(!suggested.includes("valiasr-tower"), "a listing must not suggest itself");
+
+  // inactive-board shares Tehran with the reference; photo-board is in Shiraz
+  // and outranks it on images. The city ring has to win.
+  assert.equal(suggested[0], "inactive-board", `expected the same-city listing first, got ${suggested[0]}`);
+});
+
+test("suggestions never include an unpublished listing", async () => {
+  const { json: html } = await api("/billboard/valiasr-tower");
+  const strip = html.slice(html.indexOf("related-strip"));
+  for (const hidden of ["pending-listing", "unpaid-listing"]) {
+    assert.ok(!strip.includes(hidden), `${hidden} must stay out of the suggestions`);
+  }
+});
+
 // ── Leads (the mini-CRM) ───────────────────────────────────────
 // A reveal is the only demand signal Rasamap can observe, so the row it writes
 // is what the admin leads panel reads.

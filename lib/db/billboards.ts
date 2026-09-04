@@ -182,36 +182,47 @@ export async function getBillboardBySlug(slug: string): Promise<Billboard | null
 }
 
 /**
- * Foot-of-page suggestions for a media detail page: other published listings in
- * the same neighbourhood (`region`), topped up with ones of the same media type
- * when the neighbourhood alone does not fill the strip. The reference row is
- * always excluded. Ordered so paid (`featured`) and photographed (`hasImages`)
- * listings lead, then by denormalised `estimatedViews`.
+ * Suggestions for the foot of a media page.
  *
- * `fromRow` includes `phone`, so any caller that sends this to the client must
- * strip it first — exactly as the detail Server Component does for the main
- * record.
+ * Three widening rings: the same city and the same kind of media first, then
+ * anything else in that city, then the same kind anywhere. Each ring only fills
+ * what the ones before it left empty, and nothing repeats.
+ *
+ * `region` is deliberately not part of this. In this dataset it is a free-text
+ * neighbourhood label — "مرکز شهر", "منطقه ۵", sometimes a whole sentence — so
+ * it is close to unique per row (Zanjan: 58 records, 58 distinct regions) and it
+ * repeats across cities that have nothing to do with each other. Matching on it
+ * found nothing, every page fell through to one national list, and the same
+ * dozen Tehran billboards were suggested under every listing in the country.
  */
 export async function getRelatedBillboards(ref: Billboard, limit = 12): Promise<Billboard[]> {
   const orderBy: Prisma.BillboardOrderByWithRelationInput[] = [
     { featured: "desc" }, { hasImages: "desc" }, { estimatedViews: "desc" },
   ];
 
-  const sameRegion = await prisma.billboard.findMany({
-    where: { status: publishedOnly, region: ref.region, id: { not: ref.id } },
-    orderBy,
-    take: limit,
-  });
-  if (sameRegion.length >= limit) return sameRegion.map(fromRow);
+  const rings: Prisma.BillboardWhereInput[] = [
+    { city: ref.city, type: ref.type },
+    { city: ref.city },
+    { type: ref.type },
+  ];
 
-  const exclude = [ref.id, ...sameRegion.map(r => r.id)];
-  const sameType = await prisma.billboard.findMany({
-    where: { status: publishedOnly, type: ref.type, id: { notIn: exclude } },
-    orderBy,
-    take: limit - sameRegion.length,
-  });
+  const picked: Row[] = [];
+  const seen = new Set<number>([ref.id]);
 
-  return [...sameRegion, ...sameType].map(fromRow);
+  for (const ring of rings) {
+    if (picked.length >= limit) break;
+    const rows = await prisma.billboard.findMany({
+      where:   { ...ring, status: publishedOnly, id: { notIn: [...seen] } },
+      orderBy,
+      take:    limit - picked.length,
+    });
+    for (const row of rows) {
+      picked.push(row);
+      seen.add(row.id);
+    }
+  }
+
+  return picked.map(fromRow);
 }
 
 export interface BillboardCreateInput {
