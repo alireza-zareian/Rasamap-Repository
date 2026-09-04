@@ -220,6 +220,76 @@ details.fold > summary .tag{
   details.fold > .foldbody{display:block !important;}
   .phase-card .ph-body{display:block !important;}
 }
+
+/* ── chapters 11b-15: architecture, file map, story ────────── */
+.archgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px;margin-top:18px;}
+.archcard{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;display:flex;flex-direction:column;}
+.archcard.picked{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-dim);}
+.archhead{display:flex;gap:11px;align-items:flex-start;margin-bottom:12px;}
+.archnum{flex-shrink:0;width:26px;height:26px;border-radius:8px;background:var(--paper2);border:1px solid var(--line);
+  color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.picked .archnum{background:var(--brand);border-color:var(--brand);color:#fff;}
+.archhead h5{font-size:15px;font-weight:800;line-height:1.5;}
+.archsub{font-size:11.5px;color:var(--muted);font-family:var(--mono);}
+.badge-pick{display:inline-block;font-size:10.5px;font-weight:700;color:#fff;background:var(--brand);
+  border-radius:100px;padding:1px 9px;margin-right:6px;vertical-align:middle;font-family:'Vazirmatn',sans-serif;}
+.tree{direction:ltr;text-align:left;font-family:var(--mono);font-size:11.5px;line-height:1.85;
+  background:#FBFCFD;border:1px solid var(--line);border-radius:10px;padding:13px 14px;overflow-x:auto;
+  color:var(--ink2);white-space:pre;margin-bottom:12px;}
+.tree.big{font-size:12px;line-height:2.0;}
+.tree b.d{color:var(--brand);font-weight:700;}
+.tree .f{color:#0E8F5D;}
+/* Persian comments sit inside an LTR code block, and a Latin word inside them
+   (API, seed) makes a three-level bidi mix that the browser reorders — "هم
+   صفحه، هم API" came out as "هم صفحه، هم AP" with a stray arrow. Isolating each
+   comment keeps its own direction from leaking into the ASCII art around it. */
+.tree .c{color:var(--muted2);direction:rtl;unicode-bidi:isolate;display:inline-block;}
+.tree .tag{font-family:'Vazirmatn',sans-serif;font-size:10px;padding:0 5px;border-radius:4px;direction:rtl;unicode-bidi:isolate;display:inline-block;}
+.tree .tag.srv{background:#EDF3FF;color:#2F6BE0;} .tree .tag.cli{background:#FFF4E6;color:#B57209;}
+.tree .tag.both{background:#F3EEFF;color:#6247C4;} .tree .tag.dat{background:#EAF7F1;color:#0E8F5D;}
+.archrow{font-size:12.5px;line-height:1.85;color:var(--ink2);padding:7px 10px;border-radius:8px;margin-top:6px;}
+.archrow.ok{background:var(--green-dim);border:1px solid var(--green-mid);}
+.archrow.bad{background:var(--amber-dim);border:1px solid var(--amber-mid);}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 10px;}
+.lg{font-size:11.5px;padding:2px 10px;border-radius:100px;}
+.lg.srv{background:#EDF3FF;color:#2F6BE0;} .lg.cli{background:#FFF4E6;color:#B57209;}
+.lg.both{background:#F3EEFF;color:#6247C4;} .lg.dat{background:#EAF7F1;color:#0E8F5D;}
+.maprow{display:flex;align-items:center;gap:10px;margin-top:9px;flex-wrap:wrap;}
+.mapbox{background:var(--paper2);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:12.5px;}
+.mapbox.url{background:var(--brand-dim);border-color:var(--brand-mid);direction:ltr;font-family:var(--mono);font-size:12px;}
+.mapbox.url.api{background:var(--green-dim);border-color:var(--green-mid);}
+.maparrow{color:var(--muted2);font-size:16px;}
+.pipeline{display:flex;flex-direction:column;gap:0;margin-top:14px;}
+.pstep{display:flex;align-items:center;gap:11px;padding:11px 14px;border:1px solid var(--line);
+  background:var(--paper);position:relative;flex-wrap:wrap;}
+.pstep:first-child{border-radius:11px 11px 0 0;} .pstep:last-child{border-radius:0 0 11px 11px;}
+.pstep+.pstep{border-top:none;}
+.pstep.done{background:var(--green-dim);border-color:var(--green-mid);}
+.pn{flex-shrink:0;width:22px;height:22px;border-radius:7px;background:var(--brand);color:#fff;
+  font-family:var(--mono);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.pstep code{direction:ltr;}
+.pstep em{font-style:normal;color:var(--muted);font-size:12px;margin-right:auto;}
+.formula{background:#FBFCFD;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:14px;}
+.frow{display:flex;align-items:baseline;gap:10px;padding:6px 0;font-size:13.5px;flex-wrap:wrap;}
+.frow+.frow{border-top:1px dashed var(--line);}
+.frow.hi{background:var(--green-dim);margin:6px -16px -14px;padding:10px 16px;border-radius:0 0 11px 11px;border-top:1px solid var(--green-mid);}
+.fl{min-width:96px;font-weight:700;color:var(--ink);} .fo{color:var(--muted2);font-family:var(--mono);}
+.fr{color:var(--ink2);}
+.story{display:flex;flex-direction:column;gap:12px;margin-top:18px;}
+.act{display:flex;gap:14px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;}
+.actnum{flex-shrink:0;width:30px;height:30px;border-radius:9px;background:var(--ink);color:#fff;
+  font-family:var(--mono);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.actbody{flex:1;min-width:0;}
+.actbody h5{font-size:15.5px;font-weight:800;margin-bottom:7px;}
+.actbody p{color:var(--ink2);font-size:14px;}
+.show{margin-top:10px;font-size:12.5px;color:var(--brand);background:var(--brand-dim);
+  border:1px solid var(--brand-mid);border-radius:8px;padding:6px 11px;display:inline-block;}
+.hint{margin-top:8px;font-size:12.5px;color:var(--ink2);background:var(--amber-dim);
+  border:1px solid var(--amber-mid);border-radius:8px;padding:7px 11px;}
+@media(max-width:640px){
+  .act{flex-direction:column;gap:10px;}
+  .tree,.tree.big{font-size:10.5px;}
+}
 </style>
 </head>
 <body>
@@ -240,6 +310,11 @@ details.fold > summary .tag{
       <a href="#c9">۹ محدودیت‌ها</a>
       <a href="#c10">۱۰ نوشتن مستندات</a>
       <a href="#c11">۱۱ مسیر یادگیری</a>
+      <a href="#c11b">۱۱ب محاسبات</a>
+      <a href="#c12">۱۲ معماری‌ها</a>
+      <a href="#c13">۱۳ فایل‌بندی</a>
+      <a href="#c14">۱۴ موبایل</a>
+      <a href="#c15">۱۵ روایت</a>
     </nav>
   </div>
 </div>
@@ -257,9 +332,9 @@ details.fold > summary .tag{
   <div class="numbers">
     <div class="nbox b"><div class="v">۳۵۳۶</div><div class="l">رسانه در دیتابیس</div></div>
     <div class="nbox"><div class="v">۱۰۱</div><div class="l">شهر</div></div>
-    <div class="nbox g"><div class="v">۸۷</div><div class="l">تست خودکار</div></div>
-    <div class="nbox"><div class="v">۳۱</div><div class="l">مسیر API</div></div>
-    <div class="nbox v_"><div class="v">۹</div><div class="l">جدول دیتابیس</div></div>
+    <div class="nbox g"><div class="v">۱۰۹</div><div class="l">تست خودکار</div></div>
+    <div class="nbox"><div class="v">۳۴</div><div class="l">مسیر API</div></div>
+    <div class="nbox v_"><div class="v">۱۰</div><div class="l">جدول دیتابیس</div></div>
     <div class="nbox a"><div class="v">۹۷ برابر</div><div class="l">کم‌مصرف‌تر در حالت دمو</div></div>
   </div>
 </div>
@@ -368,7 +443,7 @@ flowchart TB
     U["کاربر و مرورگر او"]
     PX["نگهبان لبه<br/>proxy.ts"]
     RSC["ساخت صفحه روی سرور<br/>Server Component"]
-    API["مسیرهای برنامه‌نویسی<br/>۳۱ مسیر"]
+    API["مسیرهای برنامه‌نویسی<br/>۳۴ مسیر"]
     DAL["لایهٔ دسترسی داده<br/>یک نقطهٔ ورود به دیتابیس"]
     DB[("دیتابیس")]
     PY["خزندهٔ پایتون<br/>۵ منبع"]
@@ -768,7 +843,7 @@ sequenceDiagram
       <thead><tr><th>مسیر</th><th>چه چیزی آنجاست</th></tr></thead>
       <tbody>
         <tr><td>app/</td><td>هم صفحه‌های سایت، هم API. هر پوشه یک آدرس است: <code>app/explore/page.tsx</code> یعنی صفحهٔ <code>/explore</code>.</td></tr>
-        <tr><td>app/api/</td><td>۳۱ مسیر API. هر پوشه یک <code>route.ts</code> دارد که متدهای GET/POST/PATCH/DELETE را صادر می‌کند.</td></tr>
+        <tr><td>app/api/</td><td>۳۴ مسیر API. هر پوشه یک <code>route.ts</code> دارد که متدهای GET/POST/PATCH/DELETE را صادر می‌کند.</td></tr>
         <tr><td>components/</td><td>تکه‌های قابل‌استفادهٔ مجدد رابط کاربری: کارت رسانه، نوار بالا، مودال مقایسه، گالری عکس…</td></tr>
         <tr><td>components/admin/</td><td>پنل مدیریت — هر تب یک فایل.</td></tr>
         <tr><td>lib/</td><td>منطق مشترک: دیتابیس، احراز هویت، لاگ، آپلود، اعتبارسنجی محیط.</td></tr>
@@ -2508,6 +2583,575 @@ sequenceDiagram
       <li><span class="b">۹</span><span>جلوی کپی شدن داده‌ها را چطور گرفتی؟ → ضد کپی‌برداری، فصل ۶</span></li>
       <li><span class="b">۱۰</span><span>ضعف پروژه‌ات چیست؟ → فصل ۹ را باز کنید و صادقانه بگویید؛ این سؤال دام است و صداقت بهترین پاسخ آن</span></li>
     </ul>
+  </div>
+</section>
+
+<!-- ════════ فصل ۱۱ ب ════════ -->
+<section class="chapter" id="c11b">
+  <div class="chead">
+    <div class="cn">فصل ۱۱ ب</div>
+    <div><h3>اعداد از کجا می‌آیند</h3><p>روش تخمین بازدید و قیمت — چیزی که داور حتماً می‌پرسد</p></div>
+  </div>
+
+  <div class="note warn">
+    <span class="t">اول صادقانه بگو</span>
+    این اعداد <b>تخمین‌اند، نه اندازه‌گیری</b>. هیچ شمارندهٔ ترافیکی زیر این بیلبوردها نیست.
+    ارزش کار در این است که تخمین <b>روش‌مند</b> باشد و بشود از رویش دفاع کرد — نه اینکه
+    وانمود کنیم داده‌ی واقعی است.
+  </div>
+
+  <div class="block">
+    <h4>روش: همان کاری که صنعت می‌کند</h4>
+    <p>
+      استاندارد جهانی تبلیغات محیطی (<b>Geopath</b> در آمریکا، <b>Route</b> در بریتانیا) یک
+      ایده دارد: ترافیکی که رد می‌شود را بشمار، به آدم تبدیلش کن، و بعد کم کن به اندازهٔ
+      اینکه چقدرشان واقعاً می‌توانند این تابلو را ببینند.
+    </p>
+    <div class="formula">
+      <div class="frow"><span class="fl">تردد</span><span class="fo">=</span><span class="fr">حجمِ <b>کلاسِ راه</b> × ضریبِ اندازهٔ شهر</span></div>
+      <div class="frow"><span class="fl">سرنشین</span><span class="fo">=</span><span class="fr">تردد × ۱٫۵۵ نفر در هر خودرو</span></div>
+      <div class="frow"><span class="fl">عابر</span><span class="fo">=</span><span class="fr">تابعی از کلاسِ راه — ایستگاه پُر، آزادراه تقریباً صفر</span></div>
+      <div class="frow"><span class="fl">فرصتِ دیدن</span><span class="fo">=</span><span class="fr">سرنشین + عابر</span></div>
+      <div class="frow"><span class="fl">دیده‌شدن</span><span class="fo">=</span><span class="fr">تابعی از اندازه، نوع رسانه و سرعتِ عبور</span></div>
+      <div class="frow hi"><span class="fl">بازدید مؤثر</span><span class="fo">=</span><span class="fr">فرصتِ دیدن × دیده‌شدن</span></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>سه چیزی که در نسخهٔ قبل غلط بود</h4>
+    <table class="tbl">
+      <thead><tr><th>ایراد</th><th>نتیجه‌اش</th><th>حالا</th></tr></thead>
+      <tbody>
+        <tr><td>پایه، <b>جمعیت شهر</b> بود</td><td>هر تابلو در تهران از ۵٪ نُه میلیون شروع می‌کرد — یک بیلبورد در کوچهٔ فرعی ادعای ۴۵۰٬۰۰۰ بیننده داشت</td><td><b>راه</b> تعیین می‌کند؛ شهر فقط <b>زیرخطی</b> مقیاس می‌دهد (توان ۰٫۳۵)</td></tr>
+        <tr><td>امتیاز دیده‌شدن <b>استفاده نمی‌شد</b></td><td>محاسبه و نمایش داده می‌شد ولی بازدید همیشه ۳۵٪ ثابتِ ترافیک بود</td><td>در فرمول <b>ضرب</b> می‌شود، پس واقعاً عدد را کم می‌کند</td></tr>
+        <tr><td><code>random()</code> در فرمول</td><td>یک بیلبورد در دو بار اسکرپ دو عدد می‌داد — هیچ عددی در گزارش قابل بازتولید نبود</td><td>تنوع از <b>هشِ هویتِ خودِ رکورد</b> می‌آید: پایدار بین اجراها</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="block">
+    <h4>قیمت: کالیبره‌شده با بازار، نه حدس‌زده</h4>
+    <p>
+      مدل <b>شکل</b> را می‌سازد (اندازه × نوع × کلاسِ راه) و بازار <b>سطح</b> را می‌دهد:
+      نرخِ هر مترمربعِ هر شهر برابر است با میانهٔ قیمت‌های واقعیِ منتشرشدهٔ همان شهر، تقسیم بر
+      چیزی که بقیهٔ مدل برای همان تابلوها پیش‌بینی می‌کند.
+    </p>
+    <div class="cols">
+      <div class="nbox b" style="text-align:center"><div class="v">۳۹</div><div class="l">شهر کالیبره‌شده</div></div>
+      <div class="nbox g" style="text-align:center"><div class="v">۱٫۰۰×</div><div class="l">میانهٔ نسبت واقعی به مدل</div></div>
+    </div>
+    <p style="margin-top:14px">
+      نتیجه: <b>۶۷٪ رکوردها</b> بین نصف تا دو برابرِ قیمت مدل قرار می‌گیرند. و ضریبِ
+      <b>کلاسِ راه</b> — مهم‌ترین عامل برای یک آگهی‌دهنده — که قبلاً اصلاً در قیمت نبود، حالا هست:
+      دو تابلوی هم‌اندازه در یک شهر، یکی روی بزرگراه و یکی در خیابان فرعی، دیگر یک قیمت ندارند.
+    </p>
+    <div class="note info">
+      <span class="t">و یک محافظ</span>
+      قیمتی که منبع منتشر کرده، دادهٔ صادقانه است و مدل حق ندارد نقضش کند — مگر وقتی خواندنِ
+      صفحه خراب بوده و عدد <b>غیرممکن</b> است. ۲۴ رکورد این‌طور بودند، از جمله یکی با
+      ۸۴۱٬۵۰۳ میلیون تومان در ماه. آن‌ها و فقط آن‌ها به تخمین برمی‌گردند.
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>پیش و پس</h4>
+    <table class="tbl">
+      <thead><tr><th>شاخص</th><th>پیش</th><th>پس</th></tr></thead>
+      <tbody>
+        <tr><td>بازدید روزانه</td><td>۸۴۵ تا ۵۵۵٬۰۸۹</td><td><b style="color:var(--green)">۱٬۵۱۹ تا ۱۹۲٬۹۸۹</b></td></tr>
+        <tr><td>قیمت ماهانه</td><td>۵ تا ۸۴۱٬۵۰۳ میلیون</td><td><b style="color:var(--green)">۵ تا ۱٬۵۹۴ میلیون</b></td></tr>
+        <tr><td>بیشینهٔ ابعاد</td><td>۲۰۴۰ متر (!)</td><td><b style="color:var(--green)">۴۱ متر</b></td></tr>
+        <tr><td>ساعت اوج</td><td>یک مقدار برای همه</td><td><b style="color:var(--green)">پنج مقدار، از کلاس راه</b></td></tr>
+        <tr><td>تکرارپذیری</td><td>ندارد</td><td><b style="color:var(--green)">کامل</b></td></tr>
+      </tbody>
+    </table>
+    <div class="note good">
+      <span class="t">جواب آماده برای «این عددها از کجا آمده؟»</span>
+      «تخمین است و روشش مستند است: ترافیکِ کلاسِ راه × اندازهٔ شهر، تبدیل به آدم، ضرب در
+      دیده‌شدن — همان کاری که Geopath و Route می‌کنند. قیمت هم با میانهٔ ۲٬۵۰۰ قیمتِ واقعیِ
+      بازار در ۳۹ شهر کالیبره شده. کدش در <code>scraper/traffic_formula.py</code> است و
+      کامنت‌هایش می‌گویند هر ضریب از کجا آمده.»
+    </div>
+  </div>
+</section>
+
+<!-- ════════ فصل ۱۲ ════════ -->
+<section class="chapter" id="c12">
+  <div class="chead">
+    <div class="cn">فصل ۱۲</div>
+    <div><h3>معماری و فایل‌بندی — چرا این شکل</h3><p>پنج معماری رایج، درخت پوشه‌ی واقعی هرکدام، و دلیل انتخاب ما</p></div>
+  </div>
+
+  <div class="note info">
+    <span class="t">این فصل برای پاسخ به یک سؤال مشخص نوشته شده</span>
+    داور فایل‌ها را باز می‌کند و می‌پرسد: «چرا این‌طوری چیده‌ای؟» جواب خوب، اسم بردن از یک
+    الگو نیست؛ نشان دادن این است که <b>می‌دانستی چه گزینه‌هایی داشتی</b> و چرا این یکی برای
+    این پروژه بهتر بود.
+  </div>
+
+  <div class="block">
+    <h4>پنج راهی که می‌شد این پروژه را چید</h4>
+    <p>
+      هر پنج تا واقعی‌اند و همه‌شان در جای خودشان درست‌اند. تفاوتشان در این است که
+      <b>مرز را کجا می‌کشند</b> — و هر مرز، یک چیز را آسان و یک چیز دیگر را سخت می‌کند.
+    </p>
+  </div>
+
+  <div class="archgrid">
+
+    <div class="archcard">
+      <div class="archhead">
+        <span class="archnum">۱</span>
+        <div><h5>تک‌پارچهٔ سنتی</h5><span class="archsub">Server-rendered Monolith · Django, Rails, Laravel</span></div>
+      </div>
+      <pre class="tree">project/
+├─ <b class="d">templates/</b>
+│  ├─ base.html
+│  ├─ billboard_list.html
+│  └─ billboard_detail.html
+├─ <b class="d">static/</b>
+│  ├─ css/  js/  img/
+├─ <b class="d">app/</b>
+│  ├─ <span class="f">models.py</span>     ← جدول‌ها
+│  ├─ <span class="f">views.py</span>      ← منطق صفحه
+│  ├─ <span class="f">urls.py</span>       ← آدرس‌ها
+│  └─ <span class="f">forms.py</span>
+└─ manage.py</pre>
+      <div class="archrow ok"><b>خوب برای:</b> سایت محتوایی، پنل داخلی، تیم کوچک. سریع‌ترین راه از صفر تا کار</div>
+      <div class="archrow bad"><b>سخت می‌کند:</b> اپ موبایل (باید API جدا بسازی)، تعاملِ زنده، و هر صفحه‌ای که باید بدون رفرش عوض شود</div>
+    </div>
+
+    <div class="archcard">
+      <div class="archhead">
+        <span class="archnum">۲</span>
+        <div><h5>بک‌اند و فرانت‌اند جدا</h5><span class="archsub">Headless / SPA + REST · DRF + React</span></div>
+      </div>
+      <pre class="tree">backend/                 frontend/
+├─ <b class="d">api/</b>                 ├─ <b class="d">src/</b>
+│  ├─ <span class="f">models.py</span>         │  ├─ <b class="d">pages/</b>
+│  ├─ <span class="f">serializers.py</span>    │  ├─ <b class="d">components/</b>
+│  ├─ <span class="f">views.py</span>          │  ├─ <b class="d">services/</b>
+│  └─ <span class="f">urls.py</span>           │  │   └─ <span class="f">api.ts</span>
+└─ manage.py             │  └─ <span class="f">App.tsx</span>
+                         └─ package.json
+   ↑ دو مخزن، دو دیپلوی، دو تیم</pre>
+      <div class="archrow ok"><b>خوب برای:</b> چند کلاینت روی یک API (وب + موبایل + شریک)، تیم‌های جدا</div>
+      <div class="archrow bad"><b>سخت می‌کند:</b> هر صفحه یک رفت‌وبرگشت شبکهٔ اضافه دارد؛ صفحهٔ اول خالی می‌آید و بعد پر می‌شود؛ SEO دردسر دارد؛ دو پروژه باید هماهنگ نگه داشته شوند</div>
+    </div>
+
+    <div class="archcard picked">
+      <div class="archhead">
+        <span class="archnum">۳</span>
+        <div><h5>تک‌پارچهٔ کامل‌پشته <span class="badge-pick">انتخاب ما</span></h5><span class="archsub">Full-stack Monolith · Next.js App Router</span></div>
+      </div>
+      <pre class="tree">rasamap/
+├─ <b class="d">app/</b>                    ← هم صفحه، هم API
+│  ├─ <span class="f">page.tsx</span>            <span class="c">/</span>
+│  ├─ <b class="d">explore/</b><span class="f">page.tsx</span>    <span class="c">/explore</span>
+│  ├─ <b class="d">billboard/[slug]/</b>
+│  │   └─ <span class="f">page.tsx</span>        <span class="c">/billboard/…</span>
+│  └─ <b class="d">api/</b>
+│      └─ <b class="d">billboards/</b><span class="f">route.ts</span> <span class="c">API</span>
+├─ <b class="d">components/</b>             ← تکه‌های UI
+├─ <b class="d">lib/</b>                    ← منطق مشترک
+│  ├─ <b class="d">db/</b>  <b class="d">auth/</b>
+├─ <b class="d">prisma/</b><span class="f">schema.prisma</span>   ← جدول‌ها
+└─ <span class="f">proxy.ts</span>               ← نگهبان لبه</pre>
+      <div class="archrow ok"><b>خوب برای:</b> یک تیم، یک دیپلوی، سایتی که هم باید در گوگل دیده شود هم تعاملی باشد. صفحه روی سرور ساخته و آماده فرستاده می‌شود، و API برای تعامل و برای اپ موبایلِ آینده سرِ جایش است</div>
+      <div class="archrow bad"><b>سخت می‌کند:</b> اگر روزی بخواهی فرانت را با تیم دیگری یا با تکنولوژی دیگری بنویسی، جدا کردنش کار دارد</div>
+    </div>
+
+    <div class="archcard">
+      <div class="archhead">
+        <span class="archnum">۴</span>
+        <div><h5>لایه‌ای / شش‌ضلعی</h5><span class="archsub">Clean · Hexagonal · Ports &amp; Adapters</span></div>
+      </div>
+      <pre class="tree">src/
+├─ <b class="d">domain/</b>            ← قواعد کسب‌وکار
+│  ├─ <span class="f">Billboard.ts</span>   بدون وابستگی
+│  └─ <span class="f">Lead.ts</span>        به دیتابیس
+├─ <b class="d">application/</b>       ← سناریوها
+│  └─ <span class="f">PublishListing.ts</span>
+├─ <b class="d">infrastructure/</b>    ← جزئیات
+│  ├─ <span class="f">PrismaRepo.ts</span>
+│  └─ <span class="f">SmsGateway.ts</span>
+└─ <b class="d">interfaces/</b>        ← ورودی‌ها
+   ├─ <b class="d">http/</b>  <b class="d">cli/</b></pre>
+      <div class="archrow ok"><b>خوب برای:</b> منطق کسب‌وکارِ پیچیده و ماندگار (بانک، بیمه، انبار)؛ وقتی دیتابیس یا فریم‌ورک باید بدون دست‌زدن به قواعد عوض شود</div>
+      <div class="archrow bad"><b>سخت می‌کند:</b> برای CRUDِ ساده سه لایه اضافه می‌سازد. یک «افزودن فیلد» می‌شود ویرایش پنج فایل</div>
+    </div>
+
+    <div class="archcard">
+      <div class="archhead">
+        <span class="archnum">۵</span>
+        <div><h5>میکروسرویس</h5><span class="archsub">Microservices</span></div>
+      </div>
+      <pre class="tree">services/
+├─ <b class="d">catalog-service/</b>   دیتابیس خودش
+├─ <b class="d">auth-service/</b>      دیتابیس خودش
+├─ <b class="d">media-service/</b>     دیتابیس خودش
+├─ <b class="d">lead-service/</b>      دیتابیس خودش
+└─ <b class="d">gateway/</b>
+infra/
+├─ docker-compose.yml
+├─ k8s/  ├─ monitoring/</pre>
+      <div class="archrow ok"><b>خوب برای:</b> چند تیمِ مستقل که نمی‌خواهند منتظر هم بمانند؛ بخش‌هایی که باید جدا مقیاس بگیرند</div>
+      <div class="archrow bad"><b>سخت می‌کند:</b> تقریباً همه‌چیز در مقیاس کوچک — تراکنش بین دو سرویس، ردیابی یک خطا، و اینکه یک نفر باید همهٔ این‌ها را روی یک لپ‌تاپ بالا بیاورد</div>
+    </div>
+
+  </div>
+
+  <div class="block">
+    <h4>چرا شمارهٔ ۳</h4>
+    <table class="tbl">
+      <thead><tr><th>معیار</th><th>۱ سنتی</th><th>۲ جدا</th><th>۳ ما</th><th>۴ لایه‌ای</th><th>۵ میکرو</th></tr></thead>
+      <tbody>
+        <tr><td>سرعت رسیدن به محصول</td><td>عالی</td><td>متوسط</td><td><b style="color:var(--green)">عالی</b></td><td>کند</td><td>خیلی کند</td></tr>
+        <tr><td>دیده‌شدن در گوگل</td><td>عالی</td><td>ضعیف</td><td><b style="color:var(--green)">عالی</b></td><td>بستگی دارد</td><td>بستگی دارد</td></tr>
+        <tr><td>تجربهٔ تعاملی</td><td>ضعیف</td><td>عالی</td><td><b style="color:var(--green)">عالی</b></td><td>بستگی دارد</td><td>بستگی دارد</td></tr>
+        <tr><td>آمادگی برای اپ موبایل</td><td>ندارد</td><td>عالی</td><td><b style="color:var(--green)">دارد (همان API)</b></td><td>عالی</td><td>عالی</td></tr>
+        <tr><td>تعداد چیزی که باید اجرا کنی</td><td>۱</td><td>۲</td><td><b style="color:var(--green)">۱</b></td><td>۱</td><td>۶+</td></tr>
+        <tr><td>مناسبِ یک نفر با ۵ روز</td><td>بله</td><td>سخت</td><td><b style="color:var(--green)">بله</b></td><td>نه</td><td>نه</td></tr>
+      </tbody>
+    </table>
+    <div class="note good">
+      <span class="t">جملهٔ کوتاه برای جلسهٔ دفاع</span>
+      «معماری را از روی <b>محدودیت‌ها</b> انتخاب کردم نه از روی مد روز: یک توسعه‌دهنده، یک ماشین،
+      نیاز همزمان به دیده‌شدن در گوگل و تعاملِ بدون رفرش، و یک API که فردا اپ موبایل هم بتواند
+      از آن استفاده کند. تک‌پارچهٔ کامل‌پشته دقیقاً همین چهار قید را با هم برآورده می‌کند.
+      میکروسرویس برای این اندازه، هزینه‌ای است بدون فایده — و لایه‌بندیِ شش‌ضلعی برای دامنه‌ای که
+      عمدتاً خواندن و فیلتر کردن است، سه لایهٔ اضافه می‌سازد.»
+    </div>
+  </div>
+</section>
+
+<!-- ════════ فصل ۱۳ ════════ -->
+<section class="chapter" id="c13">
+  <div class="chead">
+    <div class="cn">فصل ۱۳</div>
+    <div><h3>فایل‌بندی رساماپ، خط به خط</h3><p>هر پوشه چیست، چه اجازه‌ای دارد، و چه چیزی حق ندارد به چه چیزی دست بزند</p></div>
+  </div>
+
+  <div class="block">
+    <h4>قانون طلایی این پروژه: آدرس = پوشه</h4>
+    <p>
+      در App Router، <b>ساختار پوشه همان نقشهٔ سایت است</b>. هیچ فایل مسیریابی‌ای وجود ندارد که
+      بگوید کدام آدرس به کدام کد می‌رود — خودِ مسیرِ پوشه آن آدرس است. این یعنی برای پیدا کردن
+      کدِ هر صفحه، فقط کافی است آدرس را در پوشه‌ها دنبال کنی.
+    </p>
+    <div class="maprow">
+      <div class="mapbox"><code>app/explore/page.tsx</code></div>
+      <div class="maparrow">←</div>
+      <div class="mapbox url">rasamap.ir<b>/explore</b></div>
+    </div>
+    <div class="maprow">
+      <div class="mapbox"><code>app/billboard/[slug]/page.tsx</code></div>
+      <div class="maparrow">←</div>
+      <div class="mapbox url">rasamap.ir<b>/billboard/valiasr-tower</b></div>
+    </div>
+    <div class="maprow">
+      <div class="mapbox"><code>app/api/billboards/route.ts</code></div>
+      <div class="maparrow">←</div>
+      <div class="mapbox url api">rasamap.ir<b>/api/billboards</b></div>
+    </div>
+    <div class="note info" style="margin-top:16px">
+      <span class="t">قلاب یعنی متغیر</span>
+      <code>[slug]</code> یعنی «هرچه اینجا بیاید». یک فایل، سه هزار صفحه — چون
+      <code>/billboard/هر-چیزی</code> همان یک فایل را اجرا می‌کند و آن نام را به‌عنوان ورودی می‌گیرد.
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>درخت واقعی پروژه</h4>
+    <p>رنگ‌ها می‌گویند هر چیزی <b>کجا اجرا می‌شود</b> — و همین تفاوت، مرزِ امنیتیِ پروژه است.</p>
+    <div class="legend">
+      <span class="lg srv">روی سرور</span>
+      <span class="lg cli">در مرورگر کاربر</span>
+      <span class="lg both">هر دو</span>
+      <span class="lg dat">داده و ابزار</span>
+    </div>
+    <pre class="tree big">rasamap/
+│
+├─ <b class="d">app/</b> <span class="tag srv">سرور</span>                      <span class="c">هم صفحه‌ها، هم API — قلب پروژه</span>
+│  ├─ <span class="f">layout.tsx</span> <span class="tag srv">سرور</span>            <span class="c">قابِ مشترک همهٔ صفحه‌ها: فونت، تم، نوار مدیریت</span>
+│  ├─ <span class="f">page.tsx</span> <span class="tag cli">مرورگر</span>            <span class="c">صفحهٔ اصلی</span>
+│  ├─ <span class="f">error.tsx</span> · <span class="f">global-error.tsx</span> <span class="tag cli">مرورگر</span>
+│  ├─ <span class="f">not-found.tsx</span> <span class="tag srv">سرور</span>         <span class="c">صفحهٔ ۴۰۴ فارسی</span>
+│  ├─ <b class="d">explore/</b> <b class="d">compare/</b> <b class="d">analytics/</b>   <span class="c">صفحه‌های عمومی</span>
+│  ├─ <b class="d">billboard/[slug]/</b> <span class="tag srv">سرور</span>    <span class="c">جزئیات — مستقیم از دیتابیس می‌خواند</span>
+│  ├─ <b class="d">dashboard/</b> <b class="d">list-media/</b>         <span class="c">فقط با نشستِ کاربر</span>
+│  ├─ <b class="d">admin/</b> <span class="tag cli">مرورگر</span>              <span class="c">پنل مدیریت — فقط با نشستِ تیم</span>
+│  └─ <b class="d">api/</b> <span class="tag srv">سرور</span>                 <span class="c">۳۴ مسیر — تنها راهِ نوشتن در دیتابیس</span>
+│     ├─ <b class="d">billboards/</b>  <b class="d">reviews/</b>  <b class="d">listings/</b>
+│     ├─ <b class="d">auth/</b>        <span class="c">ورود، ثبت‌نام، رمز یک‌بارمصرف</span>
+│     └─ <b class="d">admin/</b>       <span class="c">هر کدام: نشست ← سقف ← دسترسی ← Zod ← منطق</span>
+│
+├─ <b class="d">components/</b> <span class="tag both">هر دو</span>            <span class="c">تکه‌های قابل استفادهٔ مجدد رابط کاربری</span>
+│  ├─ <span class="f">Topbar.tsx</span> <span class="f">BillboardCard.tsx</span> <span class="f">ReviewsSection.tsx</span>
+│  ├─ <span class="f">StaffBar.tsx</span>              <span class="c">نوار مدیریت روی سایت عمومی</span>
+│  └─ <b class="d">admin/</b>                    <span class="c">هر تبِ پنل، یک فایل</span>
+│
+├─ <b class="d">lib/</b> <span class="tag srv">سرور</span>                     <span class="c">منطقی که هیچ‌وقت به مرورگر نمی‌رود</span>
+│  ├─ <b class="d">db/</b><span class="f">billboards.ts</span>          <span class="c">تنها جایی که پرس‌وجو نوشته می‌شود</span>
+│  ├─ <b class="d">auth/</b><span class="f">session.ts</span> <span class="f">rate-limit.ts</span> <span class="f">users.ts</span> <span class="f">audit.ts</span>
+│  ├─ <span class="f">types.ts</span> <span class="tag both">هر دو</span>          <span class="c">فقط نوع‌ها — بدون داده، تا سبک بماند</span>
+│  └─ <span class="f">uploads.ts</span> <span class="f">logger.ts</span> <span class="f">env.ts</span>
+│
+├─ <span class="f">proxy.ts</span> <span class="tag srv">سرور</span>                 <span class="c">نگهبانِ لبه — قبل از هر چیز اجرا می‌شود</span>
+│
+├─ <b class="d">prisma/</b> <span class="tag dat">داده</span>                 <span class="c">تعریف جدول‌ها و تاریخچهٔ تغییرشان</span>
+│  ├─ <span class="f">schema.prisma</span>             <span class="c">۱۰ جدول</span>
+│  └─ <b class="d">migrations/</b>                <span class="c">۱۳ مهاجرت — تاریخِ دیتابیس</span>
+│
+├─ <b class="d">scraper/</b> <span class="tag dat">داده</span>                <span class="c">پایتون — کاملاً جدا از سایت</span>
+│  └─ <span class="f">traffic_formula.py</span>        <span class="c">مدل تخمین بازدید و قیمت</span>
+│
+├─ <b class="d">test/</b> <span class="tag dat">داده</span>                   <span class="c">۱۰۹ تست، بدون کتابخانهٔ بیرونی</span>
+├─ <b class="d">scripts/</b> <span class="tag dat">داده</span>                <span class="c">نگهداری: بکاپ، بهینه‌سازی عکس، بازمحاسبه</span>
+└─ <b class="d">docs/</b>                        <span class="c">همین سند و بقیهٔ مستندات</span></pre>
+  </div>
+
+  <div class="block">
+    <h4>مرزهایی که نباید شکسته شوند</h4>
+    <p>
+      این‌ها قانون‌های نوشته‌شدهٔ پروژه‌اند (<code>AGENTS.md</code>) و هرکدام دلیلِ عینی دارند.
+      دو تایشان را یک <b>تست خودکار</b> نگه می‌دارد، پس اگر کسی بشکندشان بیلد قرمز می‌شود.
+    </p>
+    <table class="tbl">
+      <thead><tr><th>مرز</th><th>چرا</th></tr></thead>
+      <tbody>
+        <tr><td>پرس‌وجو فقط در <code>lib/db/</code></td><td>اگر هر صفحه خودش پرس‌وجو بنویسد، یک روز یکی‌شان فیلترِ «فقط منتشرشده‌ها» را جا می‌اندازد و آگهیِ تأییدنشده عمومی می‌شود. یک نقطهٔ ورود یعنی یک نقطه برای درست کردن</td></tr>
+        <tr><td><code>lib/data.ts</code> فقط در seed</td><td>یک آرایهٔ ثابتِ ۴ مگابایتی است. اگر صفحه‌ای واردش کند، <b>کل دیتاست به مرورگر کاربر می‌رود</b> — یک بار افتاد و باندل را از ۱ به ۷٫۷ مگابایت برد</td></tr>
+        <tr><td>شمارهٔ مالک هرگز در پاسخ عمومی</td><td>ارزشمندترین دادهٔ سایت است. پشتِ نشست و پشتِ یک کلیکِ صریح — که همان کلیک، سرنخ را هم ثبت می‌کند</td></tr>
+        <tr><td>ترتیبِ ثابتِ روت‌های مدیریتی</td><td>نشست ← سقف ← دسترسی ← Zod ← منطق. اگر سقف قبل از نشست بیاید، یک مهاجمِ بی‌حساب می‌تواند سهمیهٔ کاربران واقعی را تمام کند</td></tr>
+        <tr><td>استایل inline، بدون کلاس Tailwind</td><td>پیکربندی purge فایل‌های کامپوننت را پوشش نمی‌دهد، پس کلاس در build حذف می‌شود و طراحی بی‌صدا می‌شکند</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="block">
+    <h4>یک درخواست، از انگشت تا دیتابیس</h4>
+    <p>وقتی کاربر روی «نمایش شمارهٔ تماس» می‌زند، دقیقاً این فایل‌ها به این ترتیب اجرا می‌شوند:</p>
+    <div class="pipeline">
+      <div class="pstep"><span class="pn">۱</span><code>components/BillboardContact.tsx</code><em>مرورگر — کلیک را می‌گیرد</em></div>
+      <div class="pstep"><span class="pn">۲</span><code>proxy.ts</code><em>سرور — ربات نیست؟ عبور کن</em></div>
+      <div class="pstep"><span class="pn">۳</span><code>app/api/billboards/[slug]/contact/route.ts</code><em>نشست ← سقف ← Zod</em></div>
+      <div class="pstep"><span class="pn">۴</span><code>lib/db/billboards.ts</code><em>تنها جایی که با دیتابیس حرف می‌زند</em></div>
+      <div class="pstep"><span class="pn">۵</span><code>prisma/schema.prisma</code><em>شکل جدول‌ها</em></div>
+      <div class="pstep done"><span class="pn">۶</span><code>dev.db</code><em>شماره برمی‌گردد، سرنخ ثبت می‌شود</em></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ فصل ۱۴ ════════ -->
+<section class="chapter" id="c14">
+  <div class="chead">
+    <div class="cn">فصل ۱۴</div>
+    <div><h3>موبایل و لپ‌تاپ</h3><p>یک کد، دو تجربه — و اینکه چطور پیاده شده</p></div>
+  </div>
+
+  <div class="block">
+    <h4>روش: یک HTML، نقطه‌های شکست در CSS</h4>
+    <p>
+      نسخهٔ موبایلِ جدا وجود ندارد — و این عمدی است. یک صفحهٔ دوم یعنی هر تغییر باید دو بار
+      انجام شود، و روزی یکی از دو نسخه عقب می‌ماند. به‌جایش، <b>همان HTML</b> با
+      <code>@media</code> در <code>globals.css</code> بازچینش می‌شود.
+    </p>
+    <div class="cols">
+      <div class="note good">
+        <span class="t">💻 روی لپ‌تاپ (بالای ۹۰۰ پیکسل)</span>
+        شبکهٔ دو ستونه · نوار ناوبری با متن · کارت رزرو چسبان در ستون کنار ·
+        پس‌زمینهٔ متحرکِ تزئینی · نقشه کنار مشخصات
+      </div>
+      <div class="note info">
+        <span class="t">📱 روی گوشی (زیر ۹۰۰ پیکسل)</span>
+        یک ستون · ناوبری فقط آیکون · کارت رزرو زیر عکس · پس‌زمینهٔ متحرک
+        <b>خاموش</b> · نقشه تمام‌عرض · ناحیهٔ لمسِ بزرگ‌تر
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>هفت تصمیمی که فقط برای گوشی گرفته شد</h4>
+    <table class="tbl">
+      <thead><tr><th>چه چیزی</th><th>چرا</th></tr></thead>
+      <tbody>
+        <tr><td>پس‌زمینهٔ متحرک روی موبایل حذف می‌شود</td><td>چهار لایهٔ بلور با ترنسفورمِ اسکرول، روی پردازندهٔ گرافیکیِ گوشی هزینهٔ واقعی دارد و باتری می‌برد</td></tr>
+        <tr><td>انیمیشن‌ها با مخفی‌شدنِ تب متوقف می‌شوند</td><td>تبِ پس‌زمینه نباید GPU را بیدار نگه دارد</td></tr>
+        <tr><td><code>loading="lazy"</code> فقط روی چیزی که کاربر می‌تواند به آن اسکرول کند</td><td>کروم اندروید روی اتصالِ کند فاصلهٔ پیش‌بارگذاری را خیلی کم می‌کند؛ عکسی که داخل کاروسل پنهان است هیچ‌وقت درخواست نمی‌شود</td></tr>
+        <tr><td>ناحیهٔ لمس حداقل ۴۴ پیکسل</td><td>یک خط متنِ ۰٫۷۸rem فقط ۱۴ پیکسل ارتفاع دارد — کمتر از نصفِ چیزی که انگشت لازم دارد</td></tr>
+        <tr><td>نوارها با انگشت کشیده می‌شوند</td><td>قابِ نوار یک اسکرول‌کانتینرِ واقعی است، پس اینرسی و کِشسانیِ خودِ سیستم‌عامل رایگان به دست می‌آید</td></tr>
+        <tr><td>فیلترها روی موبایل جمع می‌شوند</td><td>هشت فیلترِ باز، کلِ صفحهٔ اول گوشی را می‌گیرد و نتیجه‌ای دیده نمی‌شود</td></tr>
+        <tr><td><code>colorScheme</code> ثابت اعلام می‌شود</td><td>وگرنه «حالت تیرهٔ اجباری»ِ سامسونگ و کروم رنگ‌های سایت را دوباره رنگ می‌کند و خوانا نمی‌ماند</td></tr>
+      </tbody>
+    </table>
+    <div class="note warn">
+      <span class="t">درسی که گران تمام شد</span>
+      شش باگ از یک عادت آمدند: <b>حدس زدنِ ویژگیِ اتصال از روی محیطِ توسعه</b>. روی
+      <code>localhost</code> همه‌شان نامرئی بودند و روی گوشیِ متصل به همان وای‌فای ظاهر شدند —
+      عکس‌ها نمی‌آمدند، کوکی ذخیره نمی‌شد، نقشه بالا نمی‌آمد. حالا هم قانونش نوشته شده
+      (<code>AGENTS.md</code> بند ۹) و هم <b>پنج تست خودکار</b> نگهش می‌دارند.
+    </div>
+  </div>
+</section>
+
+<!-- ════════ فصل ۱۵ ════════ -->
+<section class="chapter" id="c15">
+  <div class="chead">
+    <div class="cn">فصل ۱۵</div>
+    <div><h3>روایت پروژه — از کجا شروع کنم؟</h3><p>داستانی که در جلسه تعریف می‌کنی، به‌ترتیبی که باید تعریف شود</p></div>
+  </div>
+
+  <div class="note good">
+    <span class="t">قاعده‌ای که کل این فصل روی آن بنا شده</span>
+    استاد یک پوشهٔ پر از فایل را باز می‌کند و می‌پرسد «این چیست؟». اگر جواب را از
+    <b>فایل</b> شروع کنی، باخته‌ای — چون هیچ‌کس نمی‌تواند چهارصد فایل را دنبال کند.
+    از <b>مسئله</b> شروع کن، بعد <b>تصمیم</b>، و فایل را فقط به‌عنوان <b>شاهد</b> باز کن.
+    <br><br>
+    «این فایل کاری می‌کند که…» ← ضعیف.<br>
+    «این مشکل را داشتیم، این تصمیم را گرفتم، و <b>اینجاست</b> که پیاده شده» ← قوی.
+  </div>
+
+  <div class="block">
+    <h4>داستان، در هفت پرده</h4>
+    <p>هر پرده یک پاراگراف است. اگر همین هفت‌تا را بلد باشی، بیست دقیقه‌ات پُر است.</p>
+  </div>
+
+  <div class="story">
+
+    <div class="act">
+      <div class="actnum">۱</div>
+      <div class="actbody">
+        <h5>مسئله — قبل از اینکه یک خط کد بنویسم</h5>
+        <p>
+          «بازار تبلیغات محیطی ایران آنلاین نیست. کسی که می‌خواهد بیلبورد اجاره کند باید به
+          آژانس‌ها زنگ بزند و هیچ‌جا نمی‌تواند ببیند در یک شهر چه رسانه‌ای هست، کجاست و چقدر
+          می‌ارزد. سایت‌های موجود فهرست‌های ساده‌اند: بدون مقایسه، بدون تخمین بازدید، اغلب
+          بدون قیمت.»
+        </p>
+        <div class="show">نشان بده: صفحهٔ اصلی و بعد <code>/explore</code> با فیلتر شهر</div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="actnum">۲</div>
+      <div class="actbody">
+        <h5>داده — سخت‌ترین بخش، که کسی انتظارش را ندارد</h5>
+        <p>
+          «اول باید داده می‌داشتم. یک خزندهٔ پایتون نوشتم که از پنج منبع جمع می‌کند،
+          یکسان‌سازی و حذف تکراری می‌کند و عکس‌ها را بهینه می‌کند. الان <b>۳٬۵۳۶ رسانه از
+          ۱۰۱ شهر</b> در دیتابیس است. این داده واقعی است، نه ساختگی — و همین باعث شد
+          مسئله‌های واقعی هم پیدا شوند: یازده رکورد ابعادشان سانتی‌متر بود در ستون متر،
+          و یک قیمت ۸۴۱ هزار میلیون تومان ثبت شده بود.»
+        </p>
+        <div class="show">نشان بده: پوشهٔ <code>scraper/</code> و بعد شمارِ رکوردها در پنل</div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="actnum">۳</div>
+      <div class="actbody">
+        <h5>مدل داده — قبل از هر صفحه‌ای</h5>
+        <p>
+          «ده جدول. قلبش <code>billboards</code> است. دو ستون عمداً تکراری دارد
+          (<code>area</code> و <code>estimatedViews</code>) چون SQLite نمی‌تواند روی نتیجهٔ یک
+          محاسبه یا داخل JSON ایندکس بزند — این یک <b>denormalization</b>ِ آگاهانه است، با
+          بهایی که پرداختش را هم می‌دانم: هر دو باید در یک تراکنش نوشته شوند.»
+        </p>
+        <div class="show">نشان بده: ERD در فصل ۳ · بعد <code>prisma/schema.prisma</code></div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="actnum">۴</div>
+      <div class="actbody">
+        <h5>معماری — سؤالی که حتماً می‌آید</h5>
+        <p>
+          «تک‌پارچهٔ کامل‌پشته با Next.js. داده از <b>دو مسیر</b> می‌آید و این عمدی است:
+          صفحه‌ها روی سرور ساخته می‌شوند و مستقیم از دیتابیس می‌خوانند، و هرجا کاربر
+          <b>تعامل</b> دارد مرورگر API را صدا می‌زند. مثل رستوران: وقتی آشپزخانه و سالن یک
+          ساختمان‌اند، آشپز خودش بشقاب را روی میز می‌گذارد؛ پیک وقتی لازم است که مشتری وسط غذا
+          چیز تازه‌ای بخواهد.»
+        </p>
+        <div class="show">نشان بده: نمودار ۱ در فصل ۲ · جدول مقایسهٔ پنج معماری در فصل ۱۲</div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="actnum">۵</div>
+      <div class="actbody">
+        <h5>امنیت — جایی که پروژه از تمرین کلاسی جدا می‌شود</h5>
+        <p>
+          «رمزها با bcrypt، نشست در کوکی HttpOnly، سقف روی ورود و ثبت‌نام — و یک چیز که
+          خودم پیدایش کردم: هشِ «زمان‌ثابت» که قرار بود جلوی شمارش کاربر را بگیرد، هشِ معتبری
+          نبود، پس در صفر میلی‌ثانیه برمی‌گشت و <b>با کرنومتر می‌شد فهمید کدام شماره ثبت شده
+          است</b>. تستی دارد که همین را می‌سنجد.»
+        </p>
+        <div class="show">نشان بده: جدول لایه‌های امنیتی در فصل ۶ · و اجرای <code>npm test</code></div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="actnum">۶</div>
+      <div class="actbody">
+        <h5>اشتباه‌ها — این پرده را حذف نکن</h5>
+        <p>
+          «شش باگ از یک عادت آمدند: حدس‌زدن ویژگیِ اتصال از روی محیط توسعه. روی
+          <code>localhost</code> همه‌شان نامرئی بودند و روی گوشی ظاهر شدند. حالا هم قانونش
+          نوشته شده و هم پنج تست خودکار نگهش می‌دارند. یک تصمیم را هم <b>پس گرفتم</b>:
+          محدودیت درخواست روی صفحه‌ها را گذاشته بودم که خزنده را بگیرد؛ نمی‌گرفت، ولی
+          چند نفر پشت یک وای‌فای را می‌گرفت. حذفش کردم و دلیلش را نوشتم.»
+        </p>
+        <div class="show">نشان بده: §۲۰a و §۲۴ در <code>engineering-decisions.md</code></div>
+        <div class="hint">این پرده بیشترین امتیاز را می‌گیرد. داوری که ببیند خودت اشتباهت را
+          پیدا کرده‌ای، مستندش کرده‌ای و جلویش را گرفته‌ای، دیگر دنبال مچ‌گیری نمی‌گردد.</div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="actnum">۷</div>
+      <div class="actbody">
+        <h5>محدودیت‌ها و آینده</h5>
+        <p>
+          «رزرو آنلاین ندارم چون مالک رسانه‌ها نیستم؛ پیامک ساخته شده ولی خاموش است چون
+          پنل پیامکی خریداری نشده؛ فرض «یک نمونهٔ سرور» دارم که با دو instance می‌شکند و
+          مسیر مهاجرتش به PostgreSQL به‌خاطر Prisma تقریباً بدون تغییر کد است.»
+        </p>
+        <div class="show">نشان بده: فصل ۹</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="block">
+    <h4>وقتی استاد گفت «کد را نشانم بده»</h4>
+    <p>سه فایل کافی است. این ترتیب را برو:</p>
+    <ul class="ul">
+      <li><span class="b">۱</span><span><code>prisma/schema.prisma</code> — «اینجا شکل داده است.» ساده‌ترین فایل برای شروع، چون خواندنش تقریباً فارسی است.</span></li>
+      <li><span class="b">۲</span><span><code>app/api/billboards/[slug]/contact/route.ts</code> — «اینجا یک درخواست کامل است.» کوتاه است و هر پنج دروازه را دارد: نشست، سقف، اعتبارسنجی، منطق، ثبت سرنخ.</span></li>
+      <li><span class="b">۳</span><span><code>lib/db/billboards.ts</code> — «و اینجا تنها جایی است که با دیتابیس حرف زده می‌شود.»</span></li>
+    </ul>
+    <div class="note warn">
+      <span class="t">اگر سؤالی را بلد نبودی</span>
+      «این را الان دقیق یادم نیست، ولی می‌دانم کجاست — <span style="color:var(--brand)">اجازه بدهید باز کنم</span>»
+      جوابِ کاملاً قابل‌قبولی است و از حدس زدن بی‌نهایت بهتر. <b>هیچ‌وقت چیزی را که مطمئن
+      نیستی با اطمینان نگو</b> — یک عدد اشتباه، اعتبار بقیهٔ حرف‌هایت را هم می‌برد.
+    </div>
+  </div>
+
+  <div class="block">
+    <h4>مسیر آماده‌سازی، از امروز تا جلسه</h4>
+    <table class="tbl">
+      <thead><tr><th>کِی</th><th>کار</th></tr></thead>
+      <tbody>
+        <tr><td>اول</td><td>فصل ۲ (دو مسیر داده) و فصل ۳ (ERD) را بخوان تا بتوانی بدون نگاه‌کردن تعریفشان کنی. اگر ERD را روی کاغذ بکشی، نیمی از دفاع تمام است</td></tr>
+        <tr><td>بعد</td><td>هفت پردهٔ بالا را یک بار <b>با صدای بلند</b> بگو. نه از رو — از حفظ، با جملهٔ خودت</td></tr>
+        <tr><td>بعد</td><td>سه فایل بالا را باز کن و کامنت‌هایشان را بخوان. کامنت‌های این پروژه عمداً «چرا» را می‌گویند نه «چه»</td></tr>
+        <tr><td>بعد</td><td><code>npm test</code> بگیر و خروجی را ببین. اسم هر تست یک جملهٔ انگلیسی است که می‌گوید سیستم چه چیزی را قول داده — بهترین فهرستِ قابلیت‌ها</td></tr>
+        <tr><td>شب قبل</td><td>چک‌لیست فاز PREP · یک بار کلِ دمو را با <code>npm run demo</code> اجرا کن، از گوشی هم</td></tr>
+        <tr><td>روز جلسه</td><td><b style="color:var(--red)">فقط <code>npm run demo</code></b> — نه <code>npm run dev</code>. ۹۷ برابر کم‌مصرف‌تر، و لپ‌تاپ داغ نمی‌شود</td></tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
