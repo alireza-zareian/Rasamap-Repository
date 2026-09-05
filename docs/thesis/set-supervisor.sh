@@ -43,4 +43,4 @@ sleep 1
   --no-pdf-header-footer --virtual-time-budget=25000 --run-all-compositor-stages-before-draw \
   --print-to-pdf=poster.pdf "http://127.0.0.1:8899/thesis/poster.html" >/dev/null 2>&1
 
-echo "✓ thesis.pdf و poster.pdf با نام «$FA» بازسازی شدند"
+echo "✓ thesis.pdf و poster.pdf با نام «${FA}» بازسازی شدند"
