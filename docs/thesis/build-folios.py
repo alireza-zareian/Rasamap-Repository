@@ -34,13 +34,13 @@ io.open(sys.argv[2], "w", encoding="utf-8").write(f"""<!doctype html>
 @font-face{{font-family:"Vazirmatn";
   src:url("../vendor/vazirmatn-arabic-wght-normal.woff2") format("woff2-variations");
   font-weight:100 900;font-display:block;}}
-@page{{ size:176mm 250mm; margin:0; }}
+@page{{ size:210mm 297mm; margin:0; }}
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:"Vazirmatn",sans-serif}}
 .pg{{
   /* دقیقاً ۲۵۰ نباشد: گِردکردن زیرپیکسلی هر برگه را به دو صفحه سرریز می‌کرد
      و لایهٔ شماره دو برابر صفحهٔ سند می‌شد. */
-  width:176mm; height:248mm; overflow:hidden; break-after:page;
+  width:210mm; height:295mm; overflow:hidden; break-after:page;
   display:flex; align-items:flex-end; justify-content:center;
   padding-bottom:20mm; font-size:10pt; color:#3C4757;
 }}
