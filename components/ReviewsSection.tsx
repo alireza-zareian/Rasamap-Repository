@@ -321,7 +321,7 @@ export default function ReviewsSection({ billboardId }: Props) {
                         <span style={{ fontSize: "0.76rem", fontWeight: 700 }}>{rp.authorName}</span>
                         {rp.isStaff && (
                           <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.62rem", fontWeight: 700, color: "var(--accent)", background: "rgba(59,123,245,0.12)", border: "1px solid rgba(59,123,245,0.3)", borderRadius: 20, padding: "1px 7px" }}>
-                            <ShieldCheck size={9} /> تیم رساماپ
+                            <ShieldCheck size={9} /> تیم رسامپ
                           </span>
                         )}
                         <span style={{ fontSize: "0.64rem", color: "var(--text-muted)", marginRight: "auto" }}>
@@ -343,7 +343,7 @@ export default function ReviewsSection({ billboardId }: Props) {
                       <textarea
                         value={replyBody} onChange={e => setReplyBody(e.target.value)}
                         rows={2} maxLength={600}
-                        placeholder={user?.isStaff ? "پاسخ رسمی تیم رساماپ…" : "پاسخ شما…"}
+                        placeholder={user?.isStaff ? "پاسخ رسمی تیم رسامپ…" : "پاسخ شما…"}
                         style={{ flex: 1, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.78rem", padding: "8px 10px", borderRadius: 8, outline: "none", resize: "vertical" }}
                       />
                       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>

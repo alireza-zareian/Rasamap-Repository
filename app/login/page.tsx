@@ -152,7 +152,7 @@ function LoginForm() {
           <div style={{ width: 52, height: 52, background: accent, borderRadius: 14, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", fontWeight: 900, color: "#fff", boxShadow: `0 0 24px ${glow}`, marginBottom: 10 }}>{staff ? <ShieldCheck size={26} /> : "R"}</div>
           <div className="logo-shimmer" style={{ fontSize: "1.4rem", fontWeight: 800 }}>رسامپ</div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 3 }}>
-            {staff ? "ورود همکاران — پنل مدیریت رساماپ" : "پلتفرم جامع رسانه‌های محیطی ایران"}
+            {staff ? "ورود همکاران — پنل مدیریت رسامپ" : "پلتفرم جامع رسانه‌های محیطی ایران"}
           </div>
         </div>
 

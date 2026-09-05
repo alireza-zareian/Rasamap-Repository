@@ -63,7 +63,7 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
     data: {
       reviewId,
       userId,
-      authorName: session.name || (isStaff ? "تیم رساماپ" : "کاربر"),
+      authorName: session.name || (isStaff ? "تیم رسامپ" : "کاربر"),
       isStaff,
       body: parsed.data.body,
     },
