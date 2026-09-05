@@ -71,7 +71,11 @@ p:last-child{ margin-bottom:0 }
 .formula{ font-family:ui-monospace,Menlo,monospace; direction:ltr; text-align:left;
   background:var(--paper); border-radius:6mm; padding:9mm 11mm; font-size:19pt;
   line-height:1.95; margin:7mm 0 }
-.formula b{ color:var(--violet) }
+.formula span{ display:block }
+.formula i{ font-style:normal; color:var(--muted); font-size:.9em }
+.formula sub{ font-size:.72em }
+.formula .hi{ font-weight:800; color:var(--violet); border-top:1.5px solid #CFC3F5;
+              margin-top:3mm; padding-top:3mm; font-size:21pt }
 
 /* mermaid یک max-width درون‌خطی روی svg می‌گذارد که width:100% را خنثی
    می‌کند؛ روی پوستر نمودار باید تمام عرض کارت را بگیرد. */
@@ -90,24 +94,55 @@ p:last-child{ margin-bottom:0 }
 .ft .run{ margin-inline-start:auto; text-align:left; direction:ltr; font-size:18pt; color:#9FB3D1;
           line-height:1.9 }
 .ft .run b{ color:#fff }
+
+.hd-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20mm }
+.hd .who{ text-align:left; direction:rtl; flex:0 0 auto; padding-top:4mm }
+.hd .who p{ margin:0 0 3mm; color:#fff; font-size:19pt; line-height:1.45 }
+.hd .who span{ display:block; font-size:14pt; color:#8FA6C6; font-weight:400 }
+.hd .who b{ font-weight:800 }
+
+/* ردیف نماد به‌جای ردیف اعداد: عدد ریز روی پوستر خوانده نمی‌شود و با هر
+   به‌روزرسانی داده هم عوض می‌شود. */
+.icons{ display:grid; grid-template-columns:repeat(4,1fr); background:var(--paper);
+        border-bottom:1px solid var(--line) }
+.ic{ padding:11mm 7mm; text-align:center; border-inline-start:1px solid var(--line) }
+.ic:first-child{ border:0 }
+.ic svg{ width:15mm; height:15mm; fill:none; stroke:var(--blue); stroke-width:1.7;
+         stroke-linecap:round; stroke-linejoin:round; margin-bottom:4mm }
+.ic b{ display:block; font-size:20pt; font-weight:800; margin-bottom:2mm }
+.ic span{ display:block; font-size:15pt; color:var(--muted); line-height:1.5 }
+
+/* پانویس روشن: متن تیره روی پس‌زمینهٔ تیره اصلاً دیده نمی‌شد */
+.ft{ background:var(--paper) !important; color:var(--ink) !important;
+     border-top:3px solid var(--blue) }
+.ft .qr{ background:#fff; border:1px solid var(--line) }
+.ft .t{ color:var(--ink) }
+.ft .u{ color:var(--blue) }
+.ft .run{ color:var(--muted) }
+.ft .run b{ color:var(--ink) }
 </style>
 </head>
 <body>
 
 <div class="hd">
-  <p class="uni">دانشگاه زنجان · دانشکدهٔ مهندسی · گروه مهندسی کامپیوتر</p>
-  <h1>سامانهٔ جست‌وجو و ثبت<br>آگهی بیلبورد</h1>
-  <div class="by">
-    <span>نگارش: <b>علیرضا زارعیان</b></span>
-    <span>استاد راهنما: <b>دکتر سجاد حق‌زاد کلیدبری</b></span>
+  <div class="hd-row">
+    <div>
+      <p class="uni">دانشگاه زنجان · دانشکدهٔ مهندسی · گروه مهندسی کامپیوتر</p>
+      <h1>سامانهٔ جست‌وجو و ثبت<br>آگهی بیلبورد</h1>
+    </div>
+    <div class="who">
+      <p><span>نگارش</span><b>علیرضا زارعیان</b></p>
+      <p><span>استاد راهنما</span><b>دکتر سجاد حق‌زاد کلیدبری</b></p>
+      <p><span>شهریور ۱۴۰۵</span></p>
+    </div>
   </div>
 </div>
 
-<div class="nums">
-  <div class="num"><b>۳٬۵۳۶</b><span>رسانهٔ تبلیغاتی</span></div>
-  <div class="num"><b>۱۰۱</b><span>شهر</span></div>
-  <div class="num"><b>۸۵٪</b><span>روی نقشه</span></div>
-  <div class="num"><b>۱۱۳</b><span>آزمون خودکار</span></div>
+<div class="icons">
+  <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="11" rx="1.5"/><path d="M12 16v3M8 19h8"/></svg><b>بیلبورد و رسانهٔ محیطی</b><span>بیلبورد · عرشهٔ پل · ایستگاه · نمایشگر</span></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg><b>جست‌وجو روی نقشه</b><span>موقعیت هر سازه، نه فقط نام خیابان</span></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 3 5-7"/><path d="M3 21h18"/><circle cx="17" cy="8" r="1.6"/></svg><b>برآورد بازدید روزانه</b><span>عددی که هیچ رقیبی نمی‌دهد</span></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg><b>دادهٔ تماس محافظت‌شده</b><span>پشت احراز هویت، با سقف نرخ</span></div>
 </div>
 
 <div class="body">
@@ -130,9 +165,9 @@ p:last-child{ margin-bottom:0 }
 
   <div class="row r2">
     <div class="card">
-      <h2>نسبت به فهرست‌های <em>موجود</em></h2>
+      <h2>نسبت به <em>سایت‌های رقیب</em></h2>
       <div class="cmp">
-        <div class="h">ویژگی</div><div class="h">آن‌ها</div><div class="h">اینجا</div>
+        <div class="h">ویژگی</div><div class="h">رقبا</div><div class="h">اینجا</div>
         <div class="f">تجمیع چند فروشنده</div>   <div class="m no">✗</div><div class="m yes">✓</div>
         <div class="f">نقشه و موقعیت</div>        <div class="m no">✗</div><div class="m yes">✓</div>
         <div class="f">مقایسهٔ کنار هم</div>       <div class="m no">✗</div><div class="m yes">✓</div>
@@ -147,8 +182,11 @@ p:last-child{ margin-bottom:0 }
       <p>هیچ منبعی نمی‌گوید چند نفر در روز یک سازه را می‌بینند — و خریدار دقیقاً همین را
       می‌خواهد.</p>
       <div class="formula">
-        opportunity = traffic × occupancy<br>
-        <b>impressions = opportunity × visibility</b>
+        <span>vehicles&nbsp;&nbsp;&nbsp;&nbsp;= roadClassBase × cityFactor</span>
+        <span>persons&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= vehicles × occupancy&nbsp;<i>(۱٫۵۵)</i></span>
+        <span>opportunity = persons + pedestrians</span>
+        <span>visibility&nbsp;&nbsp;= see<sub>road</sub> × see<sub>type</sub> × (1 + sizeBonus)</span>
+        <span class="hi">impressions = opportunity × visibility</span>
       </div>
       <p>پایه‌اش <b>کلاس معبر</b> است نه جمعیت شهر، خروجی‌اش <b>قطعی و بازتولیدپذیر</b>، و منبع
       هر ضریب ثبت شده.</p>
@@ -193,10 +231,11 @@ flowchart LR
       <p>ارسال دوباره رکورد دوم نمی‌سازد، تصمیم تأیید تک‌شلیک است، و نظر و میانگین امتیاز در
       یک تراکنش نوشته می‌شوند.</p>
     </div>
-    <div class="card">
-      <h2>کارایی</h2>
-      <p style="font-size:52pt;font-weight:800;color:var(--amber);line-height:1.1">۹۷×</p>
-      <p>پردازندهٔ کمتر در حالت ساخته‌شده نسبت به حالت توسعه — اندازه‌گیری‌شده.</p>
+    <div class="card" style="border-color:#C0392B;background:#FDF3F2">
+      <h2 style="color:#A93226">وضعیت</h2>
+      <p>این سامانه یک <b>نمونهٔ کارآمد و در حال اجرا</b> است، نه محصولی مستقرشده. بخش‌هایی
+      عمداً ساخته نشده‌اند و دلیلشان ثبت شده.</p>
+      <p>آنچه ساخته شده کار می‌کند و آزموده شده؛ مسیر تکمیل هم بدون بازطراحی روشن است.</p>
     </div>
   </div>
 

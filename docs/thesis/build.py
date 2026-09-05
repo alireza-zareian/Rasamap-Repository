@@ -221,8 +221,17 @@ def _resolve(spec, from_file):
     elif spec.startswith("."):   cand = os.path.normpath(os.path.join(os.path.dirname(from_file), spec))
     else:                        return None          # بستهٔ بیرونی
     for suffix in ("", ".ts", ".tsx", "/index.ts", "/index.tsx"):
-        if os.path.isfile(os.path.join(ROOT, cand + suffix)):
-            return (cand + suffix).replace(os.sep, "/")
+        rel = (cand + suffix).replace(os.sep, "/")
+        # پیمایش، پوشه‌هایی مثل .next را رد می‌کند ولی resolve آن‌ها را روی دیسک
+        # پیدا می‌کرد و یالی به گرهی می‌ساخت که اصلاً در گراف نیست.
+        # گراف فقط از فایل‌های TypeScript ساخته می‌شود؛ بدون این شرط، پسوند
+        # خالی به import های CSS هم جواب می‌داد و گرهی می‌ساخت که وجود ندارد.
+        if not rel.endswith((".ts", ".tsx")):
+            continue
+        if rel.split("/")[0] in SKIP or rel.startswith("."):
+            continue
+        if os.path.isfile(os.path.join(ROOT, rel)):
+            return rel
     return None
 
 def import_graph():
@@ -311,6 +320,95 @@ def build_codemap():
           f"{fa(len(data['edges']))} یال، {fa(len(DESC))} توضیح")
 
 
+
+# ══ گراف وابستگی برای چاپ ═══════════════════════════════════════
+LAYER_ORDER = ["edge", "page", "ui", "api", "auth", "lib", "data", "schema"]
+LAYER_FA = {"edge":"نگهبان لبه", "page":"صفحه‌ها", "ui":"مؤلفه‌های رابط",
+            "api":"مسیرهای برنامه‌نویسی", "auth":"احراز هویت",
+            "lib":"ابزارهای مشترک", "data":"لایهٔ داده", "schema":"طرح‌واره"}
+LAYER_COLOR = {"edge":"#2F6BE0","page":"#B57209","ui":"#0E8F5D","api":"#6247C4",
+               "auth":"#BE185D","lib":"#C2410C","data":"#0E7490","schema":"#4D7C0F"}
+HUBS = {"lib/api-log.ts":"api-log", "lib/auth/session.ts":"session",
+        "lib/auth/client-ip.ts":"client-ip", "lib/auth/rate-limit.ts":"rate-limit",
+        "lib/db/client.ts":"db/client",
+        "lib/types.ts":"types", "lib/db/billboards.ts":"db/billboards",
+        "proxy.ts":"proxy.ts", "components/admin/constants.ts":"admin/constants"}
+
+def build_graph_svg():
+    """
+    گراف را به‌صورت لایه‌ای می‌کشد، نه نیرومحور.
+
+    چیدمان نیرومحور در چاپ شبیه یک کلاف می‌شود: نقطه‌های بی‌برچسب، خط‌های
+    درهم، و ظاهری که «تصادفی» به نظر می‌رسد. اینجا هر لایه یک نوار افقی است و
+    جای هر گره معنا دارد — همان اطلاعات، ولی خوانا و قابل ارجاع.
+    گره‌های کاملاً منفرد (نه وارد می‌کنند نه وارد می‌شوند) کنار گذاشته می‌شوند؛
+    این‌ها فایل‌های قراردادی چارچوب‌اند (layout، loading، error) که چارچوب
+    خودش صدایشان می‌زند و در گراف import دیده نمی‌شوند.
+    """
+    g = import_graph()
+    F, E = g["files"], g["edges"]
+    keep = {k for k, v in F.items() if v["usedBy"] or v["deps"]}
+    edges = [(a, b) for a, b in E if a in keep and b in keep]
+    dropped = len(F) - len(keep)
+
+    W, PAD_R, PAD_L, TOP, BAND = 1020, 150, 30, 26, 74
+    layers = [l for l in LAYER_ORDER if any(F[k]["layer"] == l for k in keep)]
+    H = TOP + BAND * len(layers) + 30
+    yof = {l: TOP + BAND * i + BAND / 2 for i, l in enumerate(layers)}
+
+    pos = {}
+    for l in layers:
+        ns = sorted([k for k in keep if F[k]["layer"] == l],
+                    key=lambda k: -F[k]["usedBy"])
+        span = W - PAD_R - PAD_L
+        for i, k in enumerate(ns):
+            # پرارجاع‌ترین‌ها وسط، بقیه به دو طرف — تا مرکزِ هر نوار معنا داشته باشد
+            off = ((i + 1) // 2) * (1 if i % 2 else -1)
+            pos[k] = (PAD_L + span / 2 + off * (span / (len(ns) + 1)), yof[l])
+
+    out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" '
+           f'font-family="Vazirmatn, sans-serif">',
+           '<style>text{font-size:13px;fill:#3E4959}'
+           '.hub{font-size:13.5px;font-weight:700;fill:#141A24}</style>']
+
+    for i, l in enumerate(layers):                      # نوار هر لایه
+        y = TOP + BAND * i
+        out.append(f'<rect x="0" y="{y:.0f}" width="{W}" height="{BAND}" '
+                   f'fill="{"#F7F9FC" if i % 2 else "#FFFFFF"}"/>')
+        out.append(f'<text x="{W-14}" y="{y+BAND/2+5:.0f}" text-anchor="end" '
+                   f'font-weight="700" fill="{LAYER_COLOR[l]}">{LAYER_FA[l]}</text>')
+        n   = sum(1 for k in keep if F[k]["layer"] == l)
+        tot = sum(1 for k in F   if F[k]["layer"] == l)
+        cnt = f"{fa(n)} فایل" if n == tot else f"{fa(n)} از {fa(tot)} فایل"
+        out.append(f'<text x="{W-14}" y="{y+BAND/2+21:.0f}" text-anchor="end" '
+                   f'font-size="11" fill="#8B97A8">{cnt}</text>')
+
+    for a, b in edges:                                   # یال‌ها
+        x1, y1 = pos[a]; x2, y2 = pos[b]
+        out.append(f'<path d="M{x1:.0f},{y1:.0f} C{x1:.0f},{(y1+y2)/2:.0f} '
+                   f'{x2:.0f},{(y1+y2)/2:.0f} {x2:.0f},{y2:.0f}" fill="none" '
+                   f'stroke="#B9C6D8" stroke-width="0.7" opacity="0.4"/>')
+
+    for k in sorted(keep, key=lambda k: F[k]["usedBy"]):  # گره‌ها
+        x, y = pos[k]
+        r = max(3.2, min(13, (F[k]["lines"] ** 0.5) / 2.1))
+        out.append(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{r:.1f}" '
+                   f'fill="{LAYER_COLOR[F[k]["layer"]]}" stroke="#fff" stroke-width="1.2"/>')
+
+    for k, name in HUBS.items():                          # برچسب فایل‌های محوری
+        if k not in pos: continue
+        x, y = pos[k]
+        r = max(3.2, min(13, (F[k]["lines"] ** 0.5) / 2.1))
+        out.append(f'<text class="hub" x="{x:.0f}" y="{y-r-5:.0f}" text-anchor="middle" '
+                   f'stroke="#fff" stroke-width="3.5" paint-order="stroke">{name}</text>')
+
+    out.append("</svg>")
+    dest = os.path.join(HERE, "shots", "import-graph.svg")
+    io.open(dest, "w", encoding="utf-8").write("\n".join(out) + "\n")
+    print(f"✓ import-graph.svg — {fa(len(keep))} گره، {fa(len(edges))} یال "
+          f"({fa(dropped)} گرهٔ منفرد کنار گذاشته شد)")
+
+
 # ══ نام استاد راهنما ════════════════════════════════════════════
 def set_supervisor(fa_name, en_name):
     """
@@ -338,8 +436,8 @@ if __name__ == "__main__":
     os.chdir(HERE)
     if   cmd == "thesis":  build_thesis()
     elif cmd == "poster":  build_poster()
-    elif cmd == "codemap": build_codemap()
-    elif cmd == "all":     build_codemap(); build_thesis(); build_poster()
+    elif cmd == "codemap": build_codemap(); build_graph_svg()
+    elif cmd == "all":     build_codemap(); build_graph_svg(); build_thesis(); build_poster()
     elif cmd == "supervisor":
         if len(sys.argv) < 3:
             sys.exit('کاربرد: python3 build.py supervisor "نام فارسی" ["English Name"]')
