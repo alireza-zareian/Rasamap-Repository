@@ -141,6 +141,31 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 
 ---
 
+**9b. Run the tests with `npm test` — and never point them at `next dev`**
+
+`npm test` builds and serves a *production* server on :3100 (into `.next-test/`),
+reseeding its own `prisma/test.db`. It finishes in about 37 seconds with 113/113
+passing.
+
+It used to run `next dev`, and the failure mode is worth knowing because it looks
+like a broken test suite rather than a wrong server mode: one test reads the
+catalogue 120 times in a row, `next dev` recompiles on request, a single call
+passed undici's 300-second header timeout, the server wedged, and the last ~20
+tests failed naming code that was fine. The run took over twenty minutes and
+never reached the end.
+
+So: if the suite is slow or the tail fails, **the fix is never to switch it back
+to `next dev`, and never to delete the tests that look slow.** Check that the
+build step passed. Nothing in the suite waits on an external service — the SMS
+layer is dormant without `KAVENEGAR_API_KEY`, so the OTP tests issue and read
+their codes inside the local database and no message is ever sent. Every request
+aborts after 30 seconds, so a real stall reports itself immediately.
+
+The same rule that governs the demo governs the tests: §22 and §22b of
+`docs/engineering-decisions.md`.
+
+---
+
 **10. Leave the code readable by a person who has never seen it**
 
 Every change lands in a file someone else will open cold — a reviewer, an

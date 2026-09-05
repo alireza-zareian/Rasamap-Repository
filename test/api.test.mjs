@@ -3,6 +3,34 @@
 // user enumeration, the listing submission pipeline (upload validation and the
 // approval state machine), object-level authorisation, and the anti-scraping
 // limits.
+//
+// ─────────────────────────────────────────────────────────────────────────
+//  READ THIS BEFORE TOUCHING THE TEST SETUP
+// ─────────────────────────────────────────────────────────────────────────
+//
+//  1. `npm test` already builds and serves a PRODUCTION server (next build +
+//     next start on :3100, into .next-test/). Do not "fix" a slow run by
+//     pointing it at `next dev`. That is where it started, and it did not
+//     merely cost the ~97x CPU of §22: one test reads the catalogue 120 times
+//     in a row, which under `next dev` pushed a single request past undici's
+//     300-second header timeout, wedged the server, and made the last ~20
+//     tests fail for reasons that had nothing to do with them. Whole suite:
+//     >20 min and never finishing, versus ~37 s and 113/113 green.
+//
+//  2. Nothing in here waits on an external service. The SMS layer is dormant
+//     without KAVENEGAR_API_KEY (lib/sms.ts, §16), so the OTP tests issue and
+//     read codes entirely inside the local database — no message is ever
+//     sent and nothing polls for one. If an OTP test appears to hang, the
+//     cause is the server, not an SMS.
+//
+//  3. Every request aborts after 30 s (test/helpers.mjs). A run that stalls
+//     will say so in seconds. If you are waiting minutes, something outside
+//     this file is wrong — check that the build step succeeded.
+//
+//  4. Run it with `npm test` and nothing else. It resets and seeds its own
+//     database (prisma/test.db) and never reads or writes dev.db.
+//
+//  Full reasoning: docs/engineering-decisions.md §22b, and test/README.md.
 
 import test from "node:test";
 import assert from "node:assert/strict";
