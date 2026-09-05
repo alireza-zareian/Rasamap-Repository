@@ -166,7 +166,9 @@ function LoginForm() {
               </button>
             ))}
           </div>
-          <div style={{ padding: "24px" }}>
+          {/* یک <form> واقعی، نه فقط چند input کنار هم: بدون آن، زدنِ Enter
+              در فیلد رمز هیچ کاری نمی‌کند و کاربر باید حتماً دکمه را بزند. */}
+          <form onSubmit={e => { e.preventDefault(); if (!loading) submit(); }} style={{ padding: "24px" }}>
             {tab === "register" && nameInp()}
             {identifierInp()}
             {passInp(form.pass, v => s("pass", v), "رمز عبور", showPass, setShowPass)}
@@ -174,7 +176,7 @@ function LoginForm() {
             {error && (
               <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 13px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>
             )}
-            <button onClick={submit} disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : accent, border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer", boxShadow: `0 4px 16px ${glow}`, marginBottom: tab === "login" ? 10 : 14 }}>
+            <button type="submit" disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : accent, border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer", boxShadow: `0 4px 16px ${glow}`, marginBottom: tab === "login" ? 10 : 14 }}>
               {loading ? "در حال پردازش..." : staff ? "ورود به پنل مدیریت" : tab === "login" ? "ورود به حساب" : "ایجاد حساب"}
             </button>
             {tab === "login" && !staff && (
@@ -187,7 +189,7 @@ function LoginForm() {
                 بازیابی رمز همکاران از طریق سوپر ادمین انجام می‌شود
               </div>
             )}
-          </div>
+          </form>
         </div>
         {/* The switch. It changes the form's clothes, not its rules. */}
         <div style={{ display: "flex", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 4, marginTop: 16, gap: 4 }}>

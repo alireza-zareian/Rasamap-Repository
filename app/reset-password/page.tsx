@@ -81,29 +81,29 @@ export default function ResetPasswordPage() {
           )}
 
           {step === 1 && (
-            <>
+            <form onSubmit={e => { e.preventDefault(); if (!loading) sendCode(); }}>
               <label style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginBottom: 6 }}>شماره موبایل حساب</label>
               <input value={phone} onChange={e => setPhone(toLatin(e.target.value))} type="tel" inputMode="tel" dir="ltr" lang="en" placeholder="09123456789" style={{ ...inp, textAlign: "left" }} />
-              <button onClick={sendCode} disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer" }}>
+              <button type="submit" disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer" }}>
                 {loading ? "در حال ارسال..." : "ارسال کد تأیید"}
               </button>
-            </>
+            </form>
           )}
 
           {step === 2 && (
-            <>
+            <form onSubmit={e => { e.preventDefault(); if (!loading) verify(); }}>
               <label style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginBottom: 6 }}>کد ۶ رقمی پیامک‌شده</label>
               <input value={code} onChange={e => setCode(toLatin(e.target.value).replace(/\D/g, "").slice(0, 6))} inputMode="numeric" dir="ltr" placeholder="------" style={{ ...inp, textAlign: "center", letterSpacing: 6, fontSize: "1.1rem" }} />
               <label style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginBottom: 6 }}>رمز عبور جدید</label>
               <input value={pass} onChange={e => setPass(e.target.value)} type="password" placeholder="حداقل ۶ کاراکتر" style={inp} />
               <input value={confirm} onChange={e => setConfirm(e.target.value)} type="password" placeholder="تکرار رمز عبور جدید" style={inp} />
-              <button onClick={verify} disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer" }}>
+              <button type="submit" disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer" }}>
                 {loading ? "در حال ثبت..." : "ثبت رمز جدید"}
               </button>
-              <button onClick={() => { setStep(1); setError(""); }} style={{ width: "100%", background: "none", border: "none", color: "var(--text-muted)", fontFamily: "inherit", fontSize: "0.78rem", marginTop: 10, cursor: "pointer" }}>
+              <button type="button" onClick={() => { setStep(1); setError(""); }} style={{ width: "100%", background: "none", border: "none", color: "var(--text-muted)", fontFamily: "inherit", fontSize: "0.78rem", marginTop: 10, cursor: "pointer" }}>
                 شماره را اشتباه وارد کردم
               </button>
-            </>
+            </form>
           )}
 
           {step === 3 && (
