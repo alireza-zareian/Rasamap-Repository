@@ -2151,6 +2151,28 @@ sequenceDiagram
     </div>
   </div>
 
+  <!-- ─── AUD — architecture audit, test mode, digit consistency ─── -->
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">AUD</div>
+      <div class="ph-title"><h3>ممیزی معماری و پاک‌سازی نهایی</h3><p>تأییدِ ساختارِ پروژه، یکدست شدنِ ارقامِ فارسی، و تستی که دیگر وسطِ راه گیر نمی‌کند</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <div class="warn-box">
+        <b>ریشه:</b> سه چیزِ جدا که یک ریشه داشتند — «کدی که فقط روی ماشینِ نویسنده درست کار می‌کند». تست‌ها روی <code>next dev</code> اجرا می‌شدند و آن‌قدر کند بودند که یک درخواست از تایم‌اوتِ ۳۰۰ ثانیه‌ایِ undici رد می‌شد و سرور قفل می‌کرد؛ <code>toLocaleString()</code> بدونِ locale خروجی‌اش به مرورگرِ بازدیدکننده وابسته بود؛ و ۱۱ روت هیچ محافظِ ۵۰۰ نداشتند.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تست‌ها روی بیلدِ پروداکشن اجرا می‌شوند، نه <code>next dev</code>:</strong> بیش از ۲۰ دقیقه و ۲۰+ شکستِ آبشاری → <strong>۳۷.۶ ثانیه، ۱۱۳ از ۱۱۳ پاس</strong>. بیلدِ تست به <code>.next-test/</code> می‌رود تا بیلدِ <code>npm run demo</code> را خراب نکند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>هر درخواستِ تست بعد از ۳۰ ثانیه abort می‌شود — یک سرورِ قفل‌شده در چند ثانیه خودش را گزارش می‌کند، نه بعد از پنج دقیقه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تستِ بازیابیِ رمز دیگر به backdoor دیباگ وابسته نیست:</strong> محافظِ <code>NODE_ENV</code> روی <code>OTP_DEV_ECHO</code> دست‌نخورده ماند و در عوض تست کدِ صادرشده را از روی HMACِ ذخیره‌شده بازیابی می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>یک <code>faNum()</code> مشترک در <code>lib/format.ts</code>:</strong> ۴۸ نقطه یکدست شد و دو helperِ محلیِ تکراری (<code>toFa</code> و <code>fa</code>) حذف شدند — ارقام دیگر به locale دستگاهِ بازدیدکننده وابسته نیستند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>withApiLog</code> حالا آخرین خطِ دفاع است: هر throwِ پیش‌بینی‌نشده از مسیرِ <code>serverError</code> رد می‌شود — پیامِ فارسی + کدِ پیگیری، به‌جای ۵۰۰ خامِ فریم‌ورک (§۵)</div></div>
+      </div>
+      <div class="proof"><b>تأیید:</b> <code>tsc --noEmit</code> بدونِ خطا · <code>lint</code> بدونِ خطا · <code>npm run build</code> موفق · <code>npm test</code> ۱۱۳/۱۱۳ در ۳۷.۶ ثانیه. ممیزیِ ساختار: هیچ ماژولِ مرده، هیچ فایلِ زائد در گیت، هیچ رازی کامیت‌نشده، ترتیبِ <code>session → rate limit → Zod</code> در هر ۱۷ روتِ ادمین درست، و هیچ نشتیِ کدِ سرور به باندلِ مرورگر. جزئیات در §۲۲b سندِ تصمیم‌های مهندسی.</div>
+    </div>
+  </div>
+
   <!-- ─── FTR — footer columns on mobile ─── -->
   <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
@@ -3160,7 +3182,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۳ شهریور ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۴ شهریور ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>
