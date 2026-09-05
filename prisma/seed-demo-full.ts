@@ -9,7 +9,7 @@
  * create duplicates. Demo-only records are tagged "[DEMO]" in visible text.
  * Refuses to run against the test database. Password for every demo account: demo1234
  *
- * The account list it prints is also kept in docs/demo-accounts.md.
+ * The account list it prints is also kept in RUNBOOK.md.
  */
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";

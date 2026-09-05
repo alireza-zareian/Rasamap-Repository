@@ -1168,7 +1168,7 @@ sequenceDiagram
         <div class="task done-t"><div class="tick">✓</div><div>«امنیت؟» → JWT HttpOnly، bcrypt cost 12، rate limit، Zod، RBAC، proxy guard</div></div>
         <div class="task done-t"><div class="tick">✓</div><div>«تست دارید؟» → صادقانه: نه؛ ولی end-to-end دستی تست شده، next step است</div></div>
       </div>
-      <div class="proof"><b>تأیید:</b> فایل <code>docs/demo-script.html</code> ساخته شد — ۵ مرحله کامل با توضیحات داور + راهنمای credentials. seed-demo.ts موجود است (npm run db:seed:demo).</div>
+      <div class="proof"><b>تأیید:</b> فایل <code>demo.html</code> ساخته شد — ۵ مرحله کامل با توضیحات داور + راهنمای credentials. seed-demo.ts موجود است (npm run db:seed:demo).</div>
     </div>
   </div>
     </div></div>
@@ -1886,7 +1886,7 @@ sequenceDiagram
         <div class="task done-t"><div class="tick">✓</div><div><strong>امتیاز واقعی شد:</strong> ثبت نظر حالا <code>rating</code>/<code>reviewCount</code> بیلبورد را در همان تراکنش از روی جدول نظرات بازمحاسبه می‌کند؛ کارت رسانه‌ای که نظر ندارد دیگر امتیاز نشان نمی‌دهد.</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>پاک‌سازی:</strong> کد مرده حذف شد (<code>getListingsByStatus</code>، <code>countBillboards</code>، لیست تکراری UA ربات‌ها در ۳ روت، دو seed دمو ادغام شد)، برچسب وضعیت‌ها یک‌جا شد (<code>statusLabels</code>)، همه ۴۲۹ها یک شکل شدند.</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>گاردهای همزمانی به مسیر ثبت آگهی منتقل شدند:</strong> نوشتنِ غیرidempotent حالا آنجاست، پس <code>Idempotency-Key</code> + یک ایندکس یکتای <em>جزئی</em> روی <code>(submittedById, name, city)</code> با شرط <code>source='listing'</code> + همان تستِ ده درخواستِ همزمان (دقیقاً یک ردیف، نُه تای دیگر ۴۰۹) روی <code>POST /api/listings</code> کار می‌کنند. <code>test/reset-db.mjs</code> از <code>migrate deploy</code> استفاده می‌کند وگرنه دیتابیس تست بی‌سروصدا بدون آن محدودیت ساخته می‌شد.</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>یادداشت‌های نگارش پایان‌نامه:</strong> <code>docs/final-review-notes.md</code> — خلاصه کامل تغییرات، سؤالات آماده داور، ضعف‌های باقی‌مانده و اعدادِ قابل نقل.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>یادداشت‌های نگارش پایان‌نامه:</strong> <code>defense.md</code> — خلاصه کامل تغییرات، سؤالات آماده داور، ضعف‌های باقی‌مانده و اعدادِ قابل نقل.</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>متن سایت با محصول هم‌خوان شد:</strong> «رزرو آنلاین» از لندینگ، درباره‌ما، شرایط، فوتر و متادیتا برداشته شد.</div></div>
       </div>
       <div class="proof"><b>تأیید:</b> ۷۵ تست سبز (<code>npm test</code>) — از ۵۷ تست قبلی؛ <code>npx tsc --noEmit</code> بدون خطا؛ <code>npm run lint</code> بدون هشدار؛ <code>npm run build</code> موفق. آزمون دستی روی سرور واقعی: UA ربات ۴۰۳، گوگل‌بات ۲۰۰، hotlink خارجی ۴۰۳، آگهی pending از API و صفحه ۴۰۴، <code>limit=100</code> → ۴۰۰، فایل جعلیِ PNG رد شد، ثبت آگهی ویژه → <code>awaiting_payment</code> → تأیید ادمین → منتشر + <code>featured</code>، تأیید دوباره ۴۰۹، ردیف <code>listing_approved</code> در لاگ ماندگار. تست زمان‌سنجی لاگین با برگرداندن عمدی باگ راستی‌آزمایی شد (قرمز شد).</div>
@@ -1982,7 +1982,7 @@ sequenceDiagram
         <div class="task done-t"><div class="tick">✓</div><div><strong>مسابقهٔ همزمانی در ارسال مجدد بسته شد:</strong> <code>resubmitListing</code> اول مالکیت و وضعیت را می‌خواند و بعد می‌نوشت. حالا هر دو شرط داخلِ <code>WHERE</code> یک <code>updateMany</code> هستند و <code>count === 0</code> یعنی گارد رد کرده — همان چیزی که §۸ می‌خواهد: «هرگز چک کن سپس بنویس»</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong><code>app/global-error.tsx</code> اضافه شد:</strong> <code>error.tsx</code> داخلِ layout رندر می‌شود، پس اگر خودِ layout ریشه بترکد چیزی برای گرفتنش نیست و کاربر صفحهٔ پیش‌فرضِ انگلیسیِ Next را می‌دید. این فایل به globals.css و فونت هم تکیه نمی‌کند (رنگ‌ها literal، فونت با fallback سیستمی) چون همان چیزی که layout را شکسته ممکن است این‌ها را هم شکسته باشد</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>جدول <code>idempotency_keys</code> دیگر بی‌نهایت رشد نمی‌کند:</strong> هرسِ فرصت‌طلبانهٔ ردیف‌های قدیمی‌تر از ۲۴ ساعت، دقیقاً مثل کدهای OTP. کلید برای جذبِ دابل‌کلیک و retry است — چند ثانیه‌ای — پس یک روز نگه‌داشتن سخاوتمندانه است</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>اعدادِ داکیومنت‌ها اصلاح شد</strong> (مهم‌ترین برای مقاله): <code>final-review-notes.md</code> §۹ → تست ۷۵ به <b>۸۷</b>، migration ۹ به <b>۱۲</b>، مسیر API ۲۷ به <b>۳۱ فایل روت / ۳۹ متد</b>؛ <code>demo-guide</code> و <code>demo-script</code> و نوارِ بالای همین صفحه → <b>۲۸۰۸ به ۳۵۳۶ رسانه</b>، <b>۸۷ به ۱۰۱ شهر</b>، تهران <b>۸۹۸ به ۶۷۸</b></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>اعدادِ داکیومنت‌ها اصلاح شد</strong> (مهم‌ترین برای مقاله): <code>defense.md</code> §۹ → تست ۷۵ به <b>۸۷</b>، migration ۹ به <b>۱۲</b>، مسیر API ۲۷ به <b>۳۱ فایل روت / ۳۹ متد</b>؛ <code>demo-guide</code> و <code>demo-script</code> و نوارِ بالای همین صفحه → <b>۲۸۰۸ به ۳۵۳۶ رسانه</b>، <b>۸۷ به ۱۰۱ شهر</b>، تهران <b>۸۹۸ به ۶۷۸</b></div></div>
       </div>
       <div class="proof"><b>تأیید:</b> ۸۷ تست روی سرورِ production در <b>۱۱ ثانیه</b> (۸۶ سبز؛ تنها شکست، تستِ echo کدِ OTP که عمداً بیرون از production کار می‌کند). آزمونِ زنده روی بیلد production: همهٔ صفحه‌ها ۲۰۰، صفحاتِ محافظت‌شده ۳۰۷، UA ربات ۴۰۳، گوگل‌بات ۲۰۰، <code>limit=100</code> ← ۴۰۰، slug بد ← ۴۰۰، آگهیِ منتشرنشده ← ۴۰۴، API ادمین بدون نشست ← ۴۰۱، شمارهٔ مالک در هیچ پاسخ عمومی نیست. سلامتِ دیتابیس: ۳۵۳۶ ردیف، ۰ ناهماهنگیِ <code>hasImages</code>، ۰ کلید خارجیِ یتیم، ۰ وضعیتِ خارج از allowlist.</div>
     </div>
@@ -2541,7 +2541,7 @@ sequenceDiagram
       <div class="foldbody">
         <div class="note viol" style="direction:rtl">
           یک فایل HTML تک‌فایلی برای ارائهٔ ۲۰ دقیقه‌ای بساز (اسلایدها با کلید جهت‌دار عوض شوند).<br>
-          <b>منبع:</b> <code>docs/roadmap.html</code> و <code>docs/final-review-notes.md</code>.<br>
+          <b>منبع:</b> <code>docs/roadmap.html</code> و <code>defense.md</code>.<br>
           <b>خروجی:</b> ۱۸ اسلاید: ۱ عنوان، ۲ مسئله، ۳ راه‌حل، ۴ اعداد کلیدی، ۵ معماری (نمودار)، ۶ مدل داده (ERD)، ۷ تا ۱۰ چهار جریان اصلی، ۱۱ امنیت، ۱۲ کارایی با عدد ۹۷ برابر، ۱۳ تا ۱۵ دمو زنده (فقط تیتر برای حرف زدن)، ۱۶ محدودیت‌ها، ۱۷ کار آینده، ۱۸ تشکر.<br>
           <b>محدودیت:</b> پس‌زمینهٔ روشن، فونت Vazirmatn محلی از <code>docs/vendor/</code>، بدون CDN. هر اسلاید حداکثر ۶ خط متن — بقیه‌اش را من شفاهی می‌گویم. در <code>docs/defense-slides.html</code> ذخیره کن.
         </div>

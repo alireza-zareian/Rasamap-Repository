@@ -1,11 +1,20 @@
-# Rasamap — HTTP API reference
+# مرجع واسط برنامه‌نویسی
+
+> `api.md` در انتهای همین فایل ادغام شده است.
+
+
+---
+
+# مرجع نقاط پایانی
+
+## Rasamap — HTTP API reference
 
 All routes are Next.js Route Handlers under `app/api/`. Inputs are validated with
 Zod `.safeParse()`. User-facing error messages are in Persian. This document is
 maintained by hand — update it when a route changes.
 
 This file is also rendered in-app at **`/api-docs`** (self-hosted, no external
-CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accounts.md).
+CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](./RUNBOOK.md).
 
 **Auth levels**
 
@@ -36,7 +45,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 
 ---
 
-## Public — billboards & catalogue
+### Public — billboards & catalogue
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
@@ -46,7 +55,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 | GET | `/api/stats` | public | Aggregate counts for the landing page. |
 | GET | `/api/analytics` | public | Market analytics. Optional `?city=<name>`. |
 
-## User — reviews
+### User — reviews
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
@@ -57,7 +66,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 | DELETE | `/api/reviews/[id]/replies/[replyId]` | author / editor+ | Remove a reply. Its author may, and so may an editor or above — a public thread needs a way to be moderated. 404 (not 403) for a reply the caller may not touch. |
 | DELETE | `/api/reviews/[id]` | user | A user removes their own review. 404 — not 403 — for a review that is not theirs, so the response cannot be used to discover which ids exist. The delete and the recomputation of `billboards.rating` / `reviewCount` happen in one `prisma.$transaction`. Editing needs no route: `POST /api/reviews` upserts on (billboardId, userId), so submitting again replaces what is there. |
 
-## User — listings (the submission pipeline)
+### User — listings (the submission pipeline)
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
@@ -65,7 +74,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 | GET | `/api/listings` | user | The signed-in user's own submissions and their state (latest 50). Scoped by `session.userId` — a user cannot see another user's rows. Carries the full editable field set plus `reviewNote`, so a listing sent back for revision can be fixed in place on the dashboard without a second request. `no-store`. |
 | PATCH | `/api/listings/[id]` | user | The submitter edits a listing an admin sent back and resubmits it. Same field set as the create. Only the owning account, and only while the row is still `needs_revision` (409 otherwise; 404 when the row is not the caller's — no enumeration). `images` may mix already-stored URLs (kept photos) with fresh `data:` URLs; a kept URL must be one of **this listing's own** current photos, never an arbitrary string. On success the row re-enters the queue at its plan's initial status, `featured` drops to false and `reviewNote` is cleared. Body capped (413). Writes `listing_resubmitted`. |
 
-## User — auth
+### User — auth
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
@@ -77,7 +86,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 | GET | `/api/auth/me` | user | Current session `{ userId, name, phone, role }`. |
 | PATCH | `/api/auth/me` | user | Update `name` and/or `password` for the current user. |
 
-## Admin — auth
+### Admin — auth
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
@@ -85,7 +94,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 | POST | `/api/admin/auth/logout` | admin | Clears the admin session. |
 | GET | `/api/admin/auth/me` | admin | Current admin session. |
 
-## Admin — billboards & listing approval
+### Admin — billboards & listing approval
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
@@ -111,7 +120,7 @@ CDN). Demo accounts for trying the endpoints: [`demo-accounts.md`](./demo-accoun
 
 ---
 
-## Anti-scraping
+### Anti-scraping
 
 Enforced in `proxy.ts` before any handler runs:
 
@@ -130,7 +139,7 @@ None of this makes scraping impossible — a headless browser with a normal user
 agent and a slow crawl still works. It raises the cost and removes the cheap
 bulk endpoints.
 
-## Testing
+### Testing
 
 `test/api.test.mjs` (`npm test`) exercises the public billboards routes
 (including that the sort options really order by views and by area, and that
@@ -140,3 +149,114 @@ enumeration by body **or by timing**), the OTP reset flow, the listing pipeline
 object-level authorisation on `/api/listings`, admin RBAC, the approval state
 machine, reviews and the denormalised rating aggregate, analytics coverage
 counts, and the durable audit log. **113 tests.**
+
+---
+
+# الگوی نوشتن یک مسیر تازه
+
+## API Route Patterns
+
+Read this file when writing or modifying API routes.
+
+---
+
+### Admin Route Template
+
+Every admin route follows this exact order:
+
+```ts
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth/session";
+import { adminApiRateLimit, getIP } from "@/lib/auth/rate-limit";
+import { z } from "zod";
+
+export async function GET(req: NextRequest) {
+  // 1. Auth
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // 2. Rate limit
+  const rl = adminApiRateLimit(getIP(req));
+  if (!rl.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
+  // 3. Zod validation of query params
+  const schema = z.object({ /* ... */ });
+  const parsed = schema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
+  if (!parsed.success) return NextResponse.json({ error: "Invalid params" }, { status: 400 });
+
+  // 4. Business logic
+  const data = await someDbQuery(parsed.data);
+  return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
+}
+```
+
+### User Route Template
+
+```ts
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session || session.role !== "user")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json();
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+
+  // business logic
+}
+```
+
+### Public Route Template
+
+```ts
+export async function GET(req: NextRequest) {
+  // Zod validate query params
+  // Query DB via lib/db/billboards.ts
+  return NextResponse.json(data);
+}
+```
+
+---
+
+### RBAC Roles
+
+`super_admin > admin > editor > viewer > user`
+
+Check: `hasPermission(session.role, "admin")` — returns true if session role ≥ required role.
+
+- DELETE billboard: requires `admin`
+- PUT/update billboard: requires `editor`
+- GET admin routes: requires `viewer`
+
+---
+
+### Admin Billboard CRUD
+
+| Method | Route | Role | Notes |
+|---|---|---|---|
+| GET | `/api/admin/billboards` | viewer+ | list with filters |
+| POST | `/api/admin/billboards` | editor+ | create |
+| PUT | `/api/admin/billboards/[id]` | editor+ | update |
+| DELETE | `/api/admin/billboards/[id]` | admin+ | fails with 409 if the row has reviews |
+| GET | `/api/admin/billboards/stats` | viewer+ | aggregate stats |
+
+### Auth Endpoints (always public, bypass proxy)
+
+| Method | Route | Notes |
+|---|---|---|
+| POST | `/api/auth/register` | phone regex `^09[0-9]{9}$`, bcrypt cost 12 |
+| POST | `/api/auth/login` | rate-limited, timing-safe dummy hash |
+| GET | `/api/auth/me` | returns session user or 401 |
+| POST | `/api/auth/logout` | clears cookie |
+| POST | `/api/admin/auth/login` | rate-limited, audit logged |
+| POST | `/api/admin/auth/logout` | clears cookie |
+| GET | `/api/admin/auth/me` | returns admin session |
+
+### Reservation Endpoints (user auth required)
+
+| Method | Route | Notes |
+|---|---|---|
+| POST | `/api/listings` | user session required; image upload validated by magic bytes; `Idempotency-Key` supported |
+| GET | `/api/listings` | user session required — the caller's own submissions only |
+| GET | `/api/admin/listings` | editor+ — the approval queue |
+| POST | `/api/admin/listings/[id]/decision` | admin+ — approve/reject; single-shot (409 on a second decision) |

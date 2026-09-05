@@ -11,6 +11,6 @@ Check for:
 6. Missing rate limit on auth endpoints
 7. Any `eval`, `innerHTML`, or XSS vectors in client components
 
-Read `docs/api-patterns.md` for expected patterns.
+Read `docs/api.md` for expected patterns.
 
 Target: $ARGUMENTS (if empty, check all files under `app/api/`)

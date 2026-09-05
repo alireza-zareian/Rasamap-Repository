@@ -140,7 +140,7 @@ npm run demo                   # build + start → http://localhost:3000
 `NEXT_PUBLIC_NESHAN_KEY`. اگر یکی از موارد الزامی نباشد، سرور همان هنگام بالا آمدن با
 پیامی روشن متوقف می‌شود ([`lib/env.ts`](./lib/env.ts)) — به‌جای آنکه وسط کار کاربر خراب شود.
 
-حساب‌های آمادهٔ آزمون: [`docs/demo-accounts.md`](./docs/demo-accounts.md)
+حساب‌های آمادهٔ آزمون: [`RUNBOOK.md`](./RUNBOOK.md)
 (`npm run db:seed:demo:full`).
 
 ### حالت‌های اجرا و انتخاب درست میان آن‌ها
@@ -233,13 +233,15 @@ npm run db:studio           # Prisma Studio
 | [`docs/codemap.html`](./docs/codemap.html) | **نقشهٔ تعاملی کد** — از روی importهای واقعی |
 | [`docs/architecture.md`](./docs/architecture.md) | دو مسیر داده، تشبیه آشپزخانه، جدول کارایی |
 | [`docs/engineering-decisions.md`](./docs/engineering-decisions.md) | هر سیستم پروژه: چیست، چه ساختاری می‌سازد، چرا، کجا |
-| [`docs/api.md`](./docs/api.md) | مرجع کامل مسیرهای API (در خودِ سامانه هم: `/api-docs`) |
-| [`docs/thesis/thesis.pdf`](./docs/thesis/) | پایان‌نامهٔ کامل پروژه |
+| [`docs/api.md`](./docs/api.md) | مرجع کامل ۴۲ نقطهٔ پایانی + الگوی نوشتن مسیر تازه (در خودِ سامانه: `/api-docs`) |
+| [`docs/thesis/`](./docs/thesis/) | پایان‌نامه، پوستر و اسکریپت‌های ساختشان |
+| [`docs/defense-slides.html`](./docs/defense-slides.html) | اسلایدهای دفاع |
 | [`docs/roadmap.html`](./docs/roadmap.html) | سند فنی تصویری: معماری، مدل داده، جریان‌ها، تاریخچه |
-| [`docs/project-reference.md`](./docs/project-reference.md) | نقشهٔ فایل، ساختار جدول‌ها، احراز هویت |
-| [`docs/AUDIT.md`](./docs/AUDIT.md) · [`PLAN.md`](./PLAN.md) | ارزیابی آمادگی پروداکشن و کارهای باقی‌مانده |
-| [`RUNBOOK.md`](./RUNBOOK.md) · [`PRE_DEPLOY_CHECKLIST.md`](./PRE_DEPLOY_CHECKLIST.md) | رویهٔ بازیابی و چک‌لیست پیش از استقرار |
-| [`scraper/README.md`](./scraper/README.md) | منابع خزنده، زمان‌بندی، ژئوکدینگ |
+| [`docs/STATUS.md`](./docs/STATUS.md) | وضعیت پروژه، تریاژ آمادگی پروداکشن، ارزیابی ۱۳ لایه، ممیزی امنیتی |
+| [`docs/defense.md`](./docs/defense.md) | خلاصهٔ دفاع، چک‌لیست آمادگی، بازبینی نهایی، خودارزیابی |
+| [`docs/demo.html`](./docs/demo.html) | راهنما و سناریوی روز دمو |
+| [`RUNBOOK.md`](./RUNBOOK.md) | رویهٔ اجرا و بازیابی، چک‌لیست پیش از استقرار، حساب‌های دمو |
+| [`scraper/README.md`](./scraper/README.md) · [`test/README.md`](./test/README.md) | خزنده و مجموعهٔ آزمون |
 
 ---
 

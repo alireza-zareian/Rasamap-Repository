@@ -68,7 +68,7 @@ After completing any task, update `docs/roadmap.html`:
 ## Production Audit — Standing Rules
 
 Condensed from `PRODUCTION_AUDIT.md` §0, §5, §8. Full 12-phase workflow: run `/prod-audit`.
-Triage and status live in `PLAN.md`; 13-layer assessment in `docs/AUDIT.md`.
+Triage and status live in `docs/STATUS.md`; 13-layer assessment in `docs/STATUS.md`.
 
 ### §0 — How to work
 - Persian for every explanation, question, report, summary. English for everything **inside**
@@ -132,12 +132,17 @@ as a shortcut or a gap — it is the framework's recommended pattern and the fas
 
 ## Read When Relevant (not always)
 
-- `docs/architecture.md` — the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API
-- `docs/api.md` — full HTTP API reference (~28 endpoints, method / auth / params)
-- `docs/engineering-decisions.md` — 24 decision records + milestone log (the "what we built and why" spine; §7a = why no Docker/ELK yet, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo` and not `npm run dev`, §23 = the CRM question and the lead table built instead, §24 = the "works on the developer's machine" bug class)
-- `docs/final-review-notes.md` — **read this first when writing the thesis/report**: what the final review changed and why, defense Q&A, remaining weak spots, numbers to quote
-- `docs/presentation-prep.md` — checklist for building the thesis document / defense: screenshots to take, live checks, talking points, doc map
-- `docs/self-assessment.md` — internal rubric score (A−) with honest weak spots
-- `docs/project-reference.md` — file map, data flow, schema, auth, types, phase roadmap, stubs, known issues
-- `docs/api-patterns.md` — exact API route pattern + admin pattern template
-- `PLAN.md` · `docs/AUDIT.md` · `PRE_DEPLOY_CHECKLIST.md` · `RUNBOOK.md` — production-readiness triage and ops
+The documentation was consolidated: what used to be 24 files is now these.
+
+| File | What it carries |
+|---|---|
+| `docs/architecture.md` | the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API |
+| `docs/engineering-decisions.md` | 24 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class) |
+| `docs/api.md` | full HTTP API reference (42 endpoints) **+ the route-writing pattern** (was `api-patterns.md`) |
+| `docs/codemap.html` | interactive file map generated from the real import graph — supersedes the old hand-written `project-reference.md` |
+| `docs/STATUS.md` | project state, production-readiness triage, 13-layer assessment, remaining work, security audit (was `STATUS.md` + `PLAN.md` + `AUDIT.md` + `next-tasks.md` + `security-audit.md`) |
+| `docs/defense.md` | defence summary, prep checklist, final-review notes, self-assessment (was four separate files) |
+| `docs/roadmap.html` | the big visual technical document: architecture, ERD, flows, history |
+| `docs/demo.html` | demo-day guide **and** walkthrough script (was `demo-guide.html` + `demo-script.html`) |
+| `RUNBOOK.md` | run and recovery procedures, pre-deploy checklist, demo accounts |
+| `docs/thesis/` | the thesis document, poster, and their build scripts |

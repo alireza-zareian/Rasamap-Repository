@@ -2,7 +2,7 @@
 
 Give a concise status report of the Rasamap project.
 
-Read `docs/project-reference.md` (Phase Roadmap and Stubs sections) and run:
+Read `docs/codemap.html` (Phase Roadmap and Stubs sections) and run:
 - `npm run build` to check for build errors
 - `git status` if in a git repo
 

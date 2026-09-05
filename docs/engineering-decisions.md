@@ -9,8 +9,8 @@ Format of each record: **Decision · Context · Structure it produces · Why her
 Where it applies · How it's verified**.
 
 Companion docs: [`architecture.md`](./architecture.md) (data-flow model),
-[`api.md`](./api.md) (endpoint reference), [`AUDIT.md`](./AUDIT.md) (13-layer
-production assessment), [`security-audit.md`](./security-audit.md).
+[`api.md`](./api.md) (endpoint reference), [`STATUS.md`](./STATUS.md) (13-layer
+production assessment), [`STATUS.md`](./STATUS.md).
 
 ---
 
@@ -481,7 +481,7 @@ reviewer, multi-city, history-only, owner), 4 admins (one per role), 3 owners +
 4 `pending` listings, 13 reservations across every status, 3 reviews. All
 demo-only records carry a `[DEMO]` tag; the real admin row is left untouched;
 it refuses to run against the test DB. The account sheet is kept in
-`docs/demo-accounts.md`. `app/api-docs/page.tsx` is a Server Component that
+`RUNBOOK.md`. `app/api-docs/page.tsx` is a Server Component that
 reads `docs/api.md` and renders it (escaped-first, fixed transform set — no
 markdown library, no CDN); `next.config.ts` traces the file into the prod build.
 
@@ -1038,10 +1038,10 @@ not.
 | 2026-09-01 | Bundle fix | `lib/types.ts` split out of `lib/data.ts`. Client bundle 7.7 → 1.0 MB. |
 | 2026-09-01 | API completeness + docs | `GET /api/billboards/[slug]`. `docs/architecture.md`, `docs/api.md`. README architecture section rewritten. |
 | 2026-09-01 | Observability | `lib/logger.ts` + `lib/api-error.ts`. Error reference ids in 5 routes + `error.tsx`. |
-| 2026-09-01 | Recovery + audit | `npm run db:backup` + verified restore. `npm audit` → `docs/security-audit.md`. |
+| 2026-09-01 | Recovery + audit | `npm run db:backup` + verified restore. `npm audit` → `STATUS.md`. |
 | 2026-09-01 | Config safety + IP | `lib/env.ts` + `instrumentation.ts` (fail-closed). `lib/auth/client-ip.ts` (`TRUSTED_PROXY_COUNT`) across 20 routes. |
 | 2026-09-01 | Durable audit | `persistAudit()` → `audit_logs` for all admin mutations. `/api/admin/audit` → `{ logs, persisted }`. Race test → 10 concurrent. |
-| 2026-09-01 | Demo data + docs | `npm run db:seed:demo:full` (8 users / 4 admin roles / 3 owners / 4 listings / 13 reservations / 3 reviews, idempotent). `/api-docs` in-app reference. `docs/engineering-decisions.md`, `docs/demo-accounts.md`. |
+| 2026-09-01 | Demo data + docs | `npm run db:seed:demo:full` (8 users / 4 admin roles / 3 owners / 4 listings / 13 reservations / 3 reviews, idempotent). `/api-docs` in-app reference. `docs/engineering-decisions.md`, `RUNBOOK.md`. |
 | 2026-09-02 | Idempotency + races | `Idempotency-Key` on reservation/listing POSTs; unique `(billboardId,userId,startDate,endDate)`; wider concurrency test. |
 | 2026-09-02 | Security patch | `next` 16.2.9 → 16.2.11 (10 CVEs incl. App-Router proxy bypass). Fail-closed env at boot. Non-spoofable client IP. |
 | 2026-09-02 | Icon system | Site-wide keyboard-emoji → Lucide sweep (admin panel + all customer pages). Shared `TypeIcon`. |
@@ -1053,11 +1053,11 @@ not.
 | 2026-09-02 | Logging to file | `auditLog()` routes through `logger`; `LOG_DIR` → rotated `app.log`. `docs/engineering-decisions.md` §7a: why no Docker/ELK/Sentry yet + the path to it. |
 | 2026-09-02 | SMS (dormant) | §16 — Kavenegar adapter + `otp_codes` + `/api/auth/otp/{send,verify}` + `/reset-password` page + welcome SMS. Inert until `KAVENEGAR_API_KEY`. |
 | 2026-09-02 | Efficiency | Admin billboards list: DB-side filter/sort/paginate instead of loading all 3.5k rows. Overview "co-located clusters" stat O(n²) → O(n) grid bucket. Lint clean (0 warnings). |
-| 2026-09-02 | Data cleanup + defense prep | `db:dedupe --apply` → 17 cross-source duplicate rows removed (3549 → 3532; pre-dedupe backup kept). `LOG_DIR` set. `docs/presentation-prep.md` (screenshot + talking-point checklist) and `docs/self-assessment.md` (A− rubric) added. |
+| 2026-09-02 | Data cleanup + defense prep | `db:dedupe --apply` → 17 cross-source duplicate rows removed (3549 → 3532; pre-dedupe backup kept). `LOG_DIR` set. `defense.md` (screenshot + talking-point checklist) and `defense.md` (A− rubric) added. |
 | 2026-09-02 | **Final review — business model** | Reservation subsystem removed (§17). Rasamap is a directory: buyers get the owner's phone, owners pay to be listed. Two plans + a manual, auditable payment confirmation (§18). |
 | 2026-09-02 | **Final review — correctness** | Timing-attack padding hash was not a valid bcrypt hash (0 ms vs 250 ms — enumeration by stopwatch); analytics reported 100% image coverage instead of 57%; `hasImages` drifted on admin image edits; unapproved listings were readable by URL; both catalogue sorts ordered by the wrong column (§21). All fixed, each with a regression test. |
 | 2026-09-02 | **Final review — honesty** | Fake scraper panel (canned log lines, hardcoded "45 processed") replaced with a read-only status view fed by real counts. Listing photo upload made real and hardened (§19). Ratings now recomputed from the reviews table. |
 | 2026-09-02 | **Final review — anti-scraping** | Bot UAs blocked on pages as well as the API, per-IP page budget, hotlink protection, page cap 100 → 48, dead bulk `pins` endpoint and unused Leaflet dependencies removed (§20). |
-| 2026-09-02 | **Performance — demo mode** | §22 — measured `next dev` at 9.7 s CPU vs `next start` at 0.1 s for the same ten routes (~97×). Added `npm run demo`. Red-flagged in README, `docs/STATUS.md`, `docs/final-review-notes.md`, `docs/presentation-prep.md`, `RUNBOOK.md`, `PLAN.md`, `CLAUDE.md` and `docs/roadmap.html` because it is the rule most easily forgotten. |
+| 2026-09-02 | **Performance — demo mode** | §22 — measured `next dev` at 9.7 s CPU vs `next start` at 0.1 s for the same ten routes (~97×). Added `npm run demo`. Red-flagged in README, `docs/STATUS.md`, `defense.md`, `defense.md`, `RUNBOOK.md`, `docs/STATUS.md`, `CLAUDE.md` and `docs/roadmap.html` because it is the rule most easily forgotten. |
 | 2026-09-02 | **Performance — image weight** | §22a — 1332 fully-opaque PNGs re-encoded to progressive JPEG offline (Pillow): 493 MB → 64 MB (87%), RMSE 2.37/255, dimensions unchanged, 231 transparent PNGs untouched, references rewritten from an explicit map in both DB and seed JSON. `/explore` page image weight 4.0 MB → 1.09 MB. `loading="lazy"` + `decoding="async"` on every thumbnail. |
 | 2026-09-02 | **Performance — always-on animation** | Cursor-parallax and scroll-linked SVG redraw removed from `BackgroundPattern` (vines now draw once on mount); landing page stopped re-rendering on every scroll frame (continuous `scrollY` state → one `scrolled` boolean at a 60 px threshold); decorative animation pauses via `visibilitychange` while the tab is hidden. |

@@ -60,7 +60,7 @@ codebase itself: entry points, settings/config, models and schema, routes/URLs,
 views/controllers, services, templates/components, static assets, tests, deployment
 files and dependency files.
 
-1.3 Produce a written triage in `PLAN.md` before writing a single line of code. It must
+1.3 Produce a written triage in `docs/STATUS.md` before writing a single line of code. It must
 contain: (a) a one-page description of what this project actually is — its stack, its
 real scale, its user model — as you understand it from the code; (b) everything still
 remaining from Status/Roadmap; (c) everything you found yourself that is missing or
@@ -72,10 +72,10 @@ that are cheap now and expensive later, and things that other work depends on; *
 fast wins with the highest value per minute. Put a time estimate next to each item and
 mark the ones that will not fit into 5 days.
 
-1.5 Show me `PLAN.md`, then start executing immediately in that order. Do not wait for my
-approval unless rule 0.7 applies. Keep `PLAN.md` updated with checkboxes as you go.
+1.5 Show me `docs/STATUS.md`, then start executing immediately in that order. Do not wait for my
+approval unless rule 0.7 applies. Keep `docs/STATUS.md` updated with checkboxes as you go.
 
-## 2. PHASE 0.5 — LEVEL ASSESSMENT (do once, write into `docs/AUDIT.md`)
+## 2. PHASE 0.5 — LEVEL ASSESSMENT (do once, write into `docs/STATUS.md`)
 
 2.1 A full production stack is usually described as 13 layers: (1) front-end foundations,
 (2) APIs and backend logic, (3) database and storage, (4) auth and permissions,
@@ -403,7 +403,7 @@ the tests on every push.
 13.5 A rollback plan: how do I get back to the previous working version in under two
 minutes, and where exactly is that written down.
 
-13.6 Write `PRE_DEPLOY_CHECKLIST.md` — the exact things to verify before every deploy:
+13.6 Write `RUNBOOK.md` — the exact things to verify before every deploy:
 debug off, secrets loaded from the environment and not hardcoded, migrations applied,
 static files built, error pages working, rate limits active, backups running, tests
 passing, rollback ready.
@@ -463,10 +463,10 @@ so in one or two lines, then proceed as instructed unless I tell you otherwise.
 
 ## 17. DELIVERABLES
 
-17.1 `PLAN.md` — the triage and prioritised, checkbox-tracked task list.
-17.2 `docs/AUDIT.md` — the 13-layer assessment table with verdicts and justifications,
+17.1 `docs/STATUS.md` — the triage and prioritised, checkbox-tracked task list.
+17.2 `docs/STATUS.md` — the 13-layer assessment table with verdicts and justifications,
 plus what you changed for each layer.
-17.3 `PRE_DEPLOY_CHECKLIST.md` and `RUNBOOK.md`.
+17.3 `RUNBOOK.md` and `RUNBOOK.md`.
 17.4 An updated `README.md` and `.env.example`.
 17.5 A final summary in Persian for the presentation: what the project is, the
 architecture, which production concerns were addressed and how, what was deliberately left
@@ -475,7 +475,7 @@ out and why, and the honest known limitations.
 ## 18. START NOW
 
 18.1 Begin with Phase 0: read `docs/STATUS.md` and `docs/roadmap.html`, read the
-codebase, update `PLAN.md` and `docs/AUDIT.md`, show me the prioritised list in Persian,
+codebase, update `docs/STATUS.md` and `docs/STATUS.md`, show me the prioritised list in Persian,
 and then execute straight through the phases without waiting for me — stopping only under
 rule 0.7.
 
