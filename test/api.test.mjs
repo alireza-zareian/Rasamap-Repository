@@ -8,7 +8,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl } from "./helpers.mjs";
+import { api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
 
@@ -513,14 +513,23 @@ test("login is rate limited per IP", async () => {
 // ── Password reset via phone OTP (SMS layer dormant) ──────────────
 
 test("otp/send for an unknown phone is 200 and reveals nothing", async () => {
-  const { status, json } = await api("/api/auth/otp/send", {
+  const phone = "09123339999";
+  const { status } = await api("/api/auth/otp/send", {
     method: "POST",
-    body: { phone: "09123339999", purpose: "password_reset" },
+    body: { phone, purpose: "password_reset" },
   });
+  // The 200 is the point: a different status for an unregistered number would
+  // turn this endpoint into a membership oracle. Checking the table proves the
+  // silence is real and not merely a withheld field in the response.
   assert.equal(status, 200);
-  assert.equal(json.devCode, undefined, "no code for a phone that isn't registered");
+  assert.equal(await countOtpRows(phone), 0, "no code issued for a phone that isn't registered");
 });
 
+// Nothing here waits on an SMS. The SMS layer is dormant without
+// KAVENEGAR_API_KEY (lib/sms.ts, §16), so sendOtp() returns "sms_disabled"
+// without a network call, and the code is read back from the local store
+// rather than from a message. The ~1.9 s is bcrypt plus the hash search in
+// recoverOtpCode() — both local and both bounded.
 test("otp/send + otp/verify resets the password; the new one then logs in", async () => {
   const phone = "09120000000"; // seeded user 1
   const send = await api("/api/auth/otp/send", {
@@ -528,7 +537,8 @@ test("otp/send + otp/verify resets the password; the new one then logs in", asyn
     body: { phone, purpose: "password_reset" },
   });
   assert.equal(send.status, 200);
-  assert.match(String(send.json.devCode ?? ""), /^\d{6}$/, "dev echo should carry the code in tests");
+  const code = await recoverOtpCode(phone);
+  assert.match(String(code ?? ""), /^\d{6}$/, "otp/send should have issued a six-digit code");
 
   const wrong = await api("/api/auth/otp/verify", {
     method: "POST", ip: uniqueIp(),
@@ -538,7 +548,7 @@ test("otp/send + otp/verify resets the password; the new one then logs in", asyn
 
   const ok = await api("/api/auth/otp/verify", {
     method: "POST", ip: uniqueIp(),
-    body: { phone, purpose: "password_reset", code: send.json.devCode, newPassword: "brandnew1" },
+    body: { phone, purpose: "password_reset", code, newPassword: "brandnew1" },
   });
   assert.equal(ok.status, 200, JSON.stringify(ok.json));
 

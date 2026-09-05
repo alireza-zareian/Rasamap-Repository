@@ -9,6 +9,8 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    // The test suite's own build output (test/run.mjs sets distDir to this).
+    ".next-test/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

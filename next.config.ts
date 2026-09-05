@@ -43,6 +43,9 @@ const devOrigins = (
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: devOrigins,
+  // The test suite builds into its own directory (test/run.mjs sets this), so
+  // `npm test` never clobbers the .next that `npm run demo` is serving.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

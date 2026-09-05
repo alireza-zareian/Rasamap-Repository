@@ -1,7 +1,16 @@
-// Orchestrator: reset test DB -> seed fixtures -> start `next dev` on an isolated
-// port with test env -> run the API tests against it -> tear the server down.
+// Orchestrator: reset test DB -> seed fixtures -> build -> start the app on an
+// isolated port with test env -> run the API tests against it -> tear down.
 //
 //   npm test
+//
+// The server runs a *production* build (`next build` + `next start`), not
+// `next dev`, for the reason in docs/engineering-decisions.md §22: dev mode
+// recompiles a route on every request and costs ~97x the CPU. Under `next dev`
+// the 120-read loop in "reading is not rate limited the way writing is" pushed
+// a single request past undici's 300 s header timeout, which wedged the server
+// and cascaded into ~20 spurious failures at the tail of the suite. Building
+// once up front costs about a minute and makes the run both fast and honest —
+// the tests then exercise the same output that ships.
 
 import { spawn, execSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -23,9 +32,13 @@ const env = {
   NESHAN_API_KEY: "test-key",
   NEXT_PUBLIC_NESHAN_KEY: "test-key",
   NEXT_TELEMETRY_DISABLED: "1",
-  // SMS stays dormant (no KAVENEGAR_API_KEY); echo the OTP back so the reset
-  // flow is testable end-to-end without a live SMS line.
-  OTP_DEV_ECHO: "1",
+  // Build into a separate directory so a test run never replaces the .next
+  // that `npm run demo` is serving (read by next.config.ts).
+  NEXT_DIST_DIR: ".next-test",
+  // SMS stays dormant here (no KAVENEGAR_API_KEY). The reset test does not
+  // need OTP_DEV_ECHO: that echo is gated on NODE_ENV and so cannot arm
+  // against this production build, and helpers.recoverOtpCode() reads the
+  // issued code from the store instead.
 };
 
 function step(msg) {
@@ -38,8 +51,11 @@ execSync("node test/reset-db.mjs", { stdio: "inherit", env });
 step("seed fixtures");
 execSync("node test/seed.mjs", { stdio: "inherit", env });
 
-step(`start next dev on :${PORT}`);
-const server = spawn("npx", ["next", "dev", "-p", String(PORT)], {
+step("build the app (production mode)");
+execSync("npx next build", { stdio: "inherit", env });
+
+step(`start next on :${PORT}`);
+const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
   env,
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -47,7 +63,7 @@ let serverLog = "";
 server.stdout.on("data", (d) => (serverLog += d));
 server.stderr.on("data", (d) => (serverLog += d));
 
-async function waitForServer(timeoutMs = 120000) {
+async function waitForServer(timeoutMs = 60000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {

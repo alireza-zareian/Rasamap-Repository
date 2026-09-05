@@ -864,6 +864,51 @@ it already has under either extension. All three scrapers plus the two
 `fix_*_images.py` repair scripts go through it. The one-off
 `scripts/optimize-images.py` remains for the assets scraped before this.
 
+### 22b. The rule applied to the test suite — and the bug it uncovered
+
+`npm test` used to start `next dev`. The consequence was the same 97x, paid 113
+times over, and it eventually stopped being merely slow: one test reads the
+catalogue 120 times in a row to prove that reading is *not* rate limited the
+way writing is. Under `next dev` those reads were slow enough that a single
+request passed undici's 300-second header timeout. `fetch` threw
+`UND_ERR_HEADERS_TIMEOUT`, the server was wedged, and the remaining ~20 tests
+failed in a wall of milliseconds-long errors that had nothing to do with the
+code they named. A suite that fails for the wrong reason is worse than no
+suite: the author had learned to distrust its tail.
+
+Building once and serving with `next start` fixed it outright.
+
+| | `next dev` | `next build` + `next start` |
+|---|---|---|
+| Wall clock, whole suite | >20 min, never finished | **35.6 s** (16.3 s of tests) |
+| Result | 20+ cascading failures | 113 tests, all passing |
+
+Three details keep it honest. The build goes to `.next-test/` (a `distDir`
+override in `next.config.ts`) so a test run never replaces the `.next` that
+`npm run demo` is serving — losing the demo build to a test run, minutes before
+a defense, is a failure mode worth designing out. `test/helpers.mjs` aborts any
+single request after 30 seconds, so a stall reports itself in seconds instead
+of inheriting a five-minute default and burying its cause. And the suite now
+exercises the artifact that actually ships rather than a development build.
+
+That last point immediately earned itself. The password-reset test had been
+reading the one-time code out of the response body, which the route echoes when
+`OTP_DEV_ECHO=1` — an affordance also gated on `NODE_ENV !== "production"` so
+it can never arm on a real deployment. Against a production build the echo is
+correctly absent, and the test failed. The tempting fix was to drop the
+`NODE_ENV` half of the guard; that would have traded a real security property
+for test convenience. Instead `helpers.recoverOtpCode()` reads the issued row
+and walks the six-digit space against the stored HMAC (one second at worst),
+so the test proves the flow using only what a real client would ever receive.
+The neighbouring "unknown phone reveals nothing" test had been asserting that a
+field was absent — vacuously true once the echo was off — and now asserts that
+no code row was created at all.
+
+The guard survived because the test was made stronger, not because the code
+was made weaker. This is the whole argument for testing against the build that
+ships: a development-only convenience is exactly the kind of thing that hides a
+production difference until the day it matters.
+
 ---
 
 ## 23. A CRM, evaluated — and why the answer was 40 lines of schema, not a second application

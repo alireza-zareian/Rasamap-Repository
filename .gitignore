@@ -68,3 +68,6 @@ project-ai.zip
 next-env.d.ts
 __pycache__/
 *.pyc
+
+# test-suite build output (test/run.mjs builds here, not into .next)
+/.next-test/

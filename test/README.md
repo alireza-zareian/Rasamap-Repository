@@ -1,18 +1,30 @@
 # Test suite
 
 Dependency-free API integration tests. No Jest/Vitest — just Node's built-in
-`node:test` runner + `fetch` against a real `next dev` server backed by an
+`node:test` runner + `fetch` against a real **production** server backed by an
 isolated SQLite database (`prisma/test.db`, git-ignored, never `dev.db`).
 
 ## Run
 
 ```bash
-npm test          # reset test db -> seed fixtures -> start next dev :3100 -> run tests -> stop
+npm test          # reset test db -> seed -> next build -> next start :3100 -> run tests -> stop
 ```
 
-71 tests. `npm test` is fully self-contained. It sets its own env (`AUTH_SECRET`,
+113 tests, about 38 seconds end to end. `npm test` is fully self-contained. It sets its own env (`AUTH_SECRET`,
 `DATABASE_URL=file:./prisma/test.db`, dummy admin/Neshan vars) which override
 any `.env*` file, so it never reads or writes the development database.
+
+### Why a production build and not `next dev`
+
+`next dev` recompiles a route on every request (§22 of
+`docs/engineering-decisions.md`: ~97x the CPU of a built server). The 120-read
+loop in *"reading is not rate limited the way writing is"* was slow enough
+under dev that one request passed undici's 300-second header timeout; the
+server wedged and the last ~20 tests failed for no reason of their own. The
+one-off `next build` costs about a minute and the suite then runs against the
+same output that ships. Two guards keep a stall legible: the build goes to
+`.next-test/` so it never disturbs the `.next` that `npm run demo` serves, and
+`test/helpers.mjs` aborts any single request after 30 seconds.
 
 Helper scripts (rarely needed on their own):
 
