@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نقشهٔ کد رسامپ</title>
+<style>
+@font-face{font-family:"Vazirmatn";
+  src:url("../vendor/vazirmatn-arabic-wght-normal.woff2") format("woff2-variations");
+  font-weight:100 900;font-display:swap;
+  unicode-range:U+0600-06FF,U+200C,U+FB50-FDFF,U+FE70-FEFF;}
+@font-face{font-family:"Vazirmatn";
+  src:url("../vendor/vazirmatn-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight:100 900;font-display:swap;unicode-range:U+0000-00FF,U+2000-206F;}
+
+:root{
+  --bg:#F6F8FB; --card:#FFFFFF; --ink:#151A23; --ink2:#4A5567; --ink3:#7C8698;
+  --rule:#E2E7EF; --accent:#2F6BE0;
+  --edge:#2F6BE0; --page:#B57209; --ui:#0E8F5D; --api:#6247C4;
+  --lib:#C2410C; --auth:#BE185D; --data:#0E7490; --schema:#4D7C0F; --other:#64748B;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Vazirmatn",system-ui,sans-serif;font-size:14px;line-height:1.8}
+code,.mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;direction:ltr;
+  unicode-bidi:embed;display:inline-block}
+
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px 80px}
+header{background:linear-gradient(160deg,#1B2436,#2A3852);color:#fff;padding:38px 0 30px;margin-bottom:26px}
+header .wrap{padding-bottom:0}
+h1{margin:0 0 8px;font-size:27px;letter-spacing:-.02em}
+header p{margin:0;color:#B9C4D6;max-width:75ch}
+.hstat{display:flex;gap:26px;margin-top:20px;flex-wrap:wrap}
+.hstat div{font-size:12px;color:#8FA0BC}
+.hstat b{display:block;font-size:21px;color:#fff;line-height:1.3}
+
+h2{font-size:19px;margin:34px 0 6px}
+h2 .n{color:var(--accent);font-weight:800;margin-left:8px}
+.lede{color:var(--ink2);margin:0 0 16px;max-width:78ch}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+
+/* ── سفر یک درخواست ── */
+.journey{display:grid;gap:10px}
+.jstep{display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start}
+.jnum{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:13px}
+.jbody{padding-top:3px}
+.jbody b{display:block;margin-bottom:2px}
+.jbody .f{font-size:12px;color:var(--accent);cursor:pointer;text-decoration:underline dotted}
+.jbody p{margin:3px 0 0;color:var(--ink2);font-size:13px}
+
+/* ── کنترل‌ها ── */
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.bar input{flex:1;min-width:180px;padding:9px 13px;border:1px solid var(--rule);
+  border-radius:9px;font-family:inherit;font-size:13px;background:#fff}
+.tab{padding:8px 15px;border:1px solid var(--rule);background:#fff;border-radius:9px;
+  cursor:pointer;font-family:inherit;font-size:13px;color:var(--ink2)}
+.tab[aria-selected="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.lg{display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 11px;
+  border:1px solid var(--rule);border-radius:20px;background:#fff;cursor:pointer;user-select:none}
+.lg .dot{width:9px;height:9px;border-radius:50%}
+.lg.off{opacity:.35}
+
+/* ── نمای ستونی ── */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.col{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:12px;min-width:0}
+.col h3{margin:0 0 3px;font-size:14px;display:flex;align-items:center;gap:7px}
+.col .sub{font-size:11px;color:var(--ink3);margin:0 0 9px}
+.fitem{display:flex;justify-content:space-between;gap:6px;align-items:baseline;
+  padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11.5px}
+.fitem:hover{background:#EDF3FF}
+.fitem.sel{background:var(--accent);color:#fff}
+.fitem .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:left;flex:1}
+.fitem .ln{font-size:10px;opacity:.6;flex:0 0 auto}
+.fitem.dim{opacity:.2}
+
+/* ── نمای عنکبوتی ── */
+#graph{width:100%;height:620px;background:var(--card);border:1px solid var(--rule);border-radius:14px;display:block;touch-action:none}
+#graph text{font-family:"Vazirmatn",sans-serif;font-size:9px;fill:var(--ink2);pointer-events:none}
+#graph circle{cursor:pointer}
+
+/* ── پنل جزئیات ── */
+.detail{position:sticky;bottom:0;background:var(--card);border:1px solid var(--rule);
+  border-radius:14px;padding:16px 20px;margin-top:14px;box-shadow:0 -3px 20px rgba(21,26,35,.07)}
+.detail h4{margin:0 0 3px;font-size:15px;direction:ltr;text-align:left}
+.detail .meta{font-size:12px;color:var(--ink3);margin-bottom:9px}
+.detail .desc{color:var(--ink2);margin:0 0 12px;font-size:13px}
+.dcols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dcols h5{margin:0 0 5px;font-size:12px;color:var(--ink3);font-weight:700}
+.dlist{list-style:none;margin:0;padding:0;max-height:150px;overflow:auto}
+.dlist li{font-size:11.5px;padding:2px 0;direction:ltr;text-align:left;cursor:pointer;color:var(--accent)}
+.dlist li:hover{text-decoration:underline}
+.pill{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:11px;
+  background:#EDF3FF;color:var(--accent);margin-inline-start:6px}
+.pill.c{background:#FFF8E8;color:var(--page)}
+@media(max-width:640px){.dcols{grid-template-columns:1fr}#graph{height:460px}}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>نقشهٔ کد رسامپ</h1>
+  <p>این صفحه از روی <b>importهای واقعی</b> پروژه ساخته شده است، نه از روی حدس. هر خط میان
+  دو فایل یعنی یکی واقعاً دیگری را صدا می‌زند. اگر می‌خواهید بفهمید پروژه از کجا شروع
+  می‌شود و داده چطور از یک کلیک به پایگاه داده و برمی‌گردد، از بخش «سفر یک درخواست» شروع کنید.</p>
+  <div class="hstat" id="hstat"></div>
+</div></header>
+
+<div class="wrap">
+
+<h2><span class="n">۱</span>سفر یک درخواست — از کلیک تا پایگاه داده</h2>
+<p class="lede">مسیر واقعی وقتی کاربر در صفحهٔ جست‌وجو یک شهر را انتخاب می‌کند. روی نام هر
+فایل بزنید تا جزئیاتش را ببینید.</p>
+<div class="card journey" id="journey"></div>
+
+<h2><span class="n">۲</span>نقشهٔ فایل‌ها</h2>
+<p class="lede">دو نما از یک داده. <b>ستونی</b> نشان می‌دهد هر لایه چه فایل‌هایی دارد و کدام
+بزرگ‌ترند. <b>عنکبوتی</b> نشان می‌دهد چه چیزی به چه چیزی وصل است — فایل‌هایی که وسط جمع
+می‌شوند، همان‌هایی‌اند که همه به آن‌ها وابسته‌اند.</p>
+
+<div class="bar">
+  <button class="tab" id="tabCols" aria-selected="true">نمای ستونی</button>
+  <button class="tab" id="tabGraph" aria-selected="false">نمای عنکبوتی</button>
+  <input id="q" placeholder="جست‌وجوی نام فایل…">
+</div>
+<div class="legend" id="legend"></div>
+
+<div id="viewCols"><div class="cols" id="cols"></div></div>
+<div id="viewGraph" hidden><svg id="graph"></svg></div>
+
+<div class="detail" id="detail">
+  <h4 id="dTitle">یک فایل را انتخاب کنید</h4>
+  <div class="meta" id="dMeta">برای دیدن اینکه چه چیزی را صدا می‌زند و چه کسی صدایش می‌زند، روی یک فایل بزنید.</div>
+  <p class="desc" id="dDesc"></p>
+  <div class="dcols">
+    <div><h5>این فایل چه چیزهایی را صدا می‌زند</h5><ul class="dlist" id="dOut"></ul></div>
+    <div><h5>چه فایل‌هایی این را صدا می‌زنند</h5><ul class="dlist" id="dIn"></ul></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const DATA = {"files": {"app/about/page.tsx": {"layer": "page", "lines": 150, "client": false, "deps": ["components/Footer.tsx", "components/Topbar.tsx", "lib/db/client.ts", "lib/format.ts"], "usedBy": 0}, "app/admin/layout.tsx": {"layer": "page", "lines": 12, "client": false, "deps": [], "usedBy": 0}, "app/admin/login/page.tsx": {"layer": "page", "lines": 177, "client": true, "deps": [], "usedBy": 0}, "app/admin/page.tsx": {"layer": "page", "lines": 398, "client": true, "deps": ["components/TypeIcon.tsx", "components/admin/AuditPanel.tsx", "components/admin/Badge.tsx", "components/admin/BillboardRow.tsx", "components/admin/CreateModal.tsx", "components/admin/EditModal.tsx", "components/admin/ImageManager.tsx", "components/admin/LeadsPanel.tsx", "components/admin/ListingsPanel.tsx", "components/admin/QualityPanel.tsx", "components/admin/ScraperPanel.tsx", "components/admin/UsersPanel.tsx", "components/admin/constants.ts", "lib/admin/types.ts", "lib/auth/session.ts", "lib/format.ts", "lib/types.ts"], "usedBy": 0}, "app/analytics/page.tsx": {"layer": "page", "lines": 28, "client": true, "deps": ["components/AnalyticsTab.tsx", "components/Footer.tsx", "components/Topbar.tsx"], "usedBy": 0}, "app/api-docs/page.tsx": {"layer": "page", "lines": 126, "client": false, "deps": [], "usedBy": 0}, "app/api/admin/audit/route.ts": {"layer": "api", "lines": 39, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/admin/auth/login/route.ts": {"layer": "api", "lines": 82, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts"], "usedBy": 0}, "app/api/admin/auth/logout/route.ts": {"layer": "api", "lines": 24, "client": false, "deps": ["lib/api-log.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/session.ts"], "usedBy": 0}, "app/api/admin/auth/me/route.ts": {"layer": "api", "lines": 22, "client": false, "deps": ["lib/api-log.ts", "lib/auth/session.ts"], "usedBy": 0}, "app/api/admin/billboards/[id]/images/route.ts": {"layer": "api", "lines": 96, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts", "lib/uploads.ts"], "usedBy": 0}, "app/api/admin/billboards/[id]/route.ts": {"layer": "api", "lines": 155, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/billboards.ts", "lib/types.ts"], "usedBy": 0}, "app/api/admin/billboards/route.ts": {"layer": "api", "lines": 155, "client": false, "deps": ["lib/api-error.ts", "lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/billboards.ts", "lib/types.ts"], "usedBy": 0}, "app/api/admin/billboards/stats/route.ts": {"layer": "api", "lines": 71, "client": false, "deps": ["lib/admin/types.ts", "lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/billboards.ts"], "usedBy": 0}, "app/api/admin/customers/[id]/reset-password/route.ts": {"layer": "api", "lines": 72, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/admin/customers/[id]/route.ts": {"layer": "api", "lines": 132, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/admin/customers/route.ts": {"layer": "api", "lines": 73, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/admin/leads/[id]/route.ts": {"layer": "api", "lines": 94, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts", "lib/types.ts"], "usedBy": 0}, "app/api/admin/leads/route.ts": {"layer": "api", "lines": 88, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts", "lib/types.ts"], "usedBy": 0}, "app/api/admin/listings/[id]/decision/route.ts": {"layer": "api", "lines": 141, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/billboards.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/admin/listings/route.ts": {"layer": "api", "lines": 77, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/billboards.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/admin/users/[id]/route.ts": {"layer": "api", "lines": 85, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/admin/users/route.ts": {"layer": "api", "lines": 91, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/analytics/route.ts": {"layer": "api", "lines": 82, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/db/billboards.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/auth/login/route.ts": {"layer": "api", "lines": 117, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/auth/logout/route.ts": {"layer": "api", "lines": 12, "client": false, "deps": ["lib/api-log.ts", "lib/auth/session.ts"], "usedBy": 0}, "app/api/auth/me/route.ts": {"layer": "api", "lines": 133, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/auth/otp/send/route.ts": {"layer": "api", "lines": 60, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/db/client.ts", "lib/otp.ts", "lib/sms.ts"], "usedBy": 0}, "app/api/auth/otp/verify/route.ts": {"layer": "api", "lines": 71, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/db/client.ts", "lib/otp.ts"], "usedBy": 0}, "app/api/auth/register/route.ts": {"layer": "api", "lines": 67, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/client.ts", "lib/sms.ts"], "usedBy": 0}, "app/api/billboards/[slug]/contact/route.ts": {"layer": "api", "lines": 116, "client": false, "deps": ["lib/api-error.ts", "lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/billboards.ts", "lib/db/client.ts", "lib/logger.ts"], "usedBy": 0}, "app/api/billboards/[slug]/route.ts": {"layer": "api", "lines": 49, "client": false, "deps": ["lib/api-error.ts", "lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/db/billboards.ts"], "usedBy": 0}, "app/api/billboards/route.ts": {"layer": "api", "lines": 66, "client": false, "deps": ["lib/api-error.ts", "lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/db/billboards.ts"], "usedBy": 0}, "app/api/listings/[id]/route.ts": {"layer": "api", "lines": 181, "client": false, "deps": ["lib/api-error.ts", "lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/audit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/billboards.ts", "lib/db/client.ts", "lib/format.ts", "lib/uploads.ts"], "usedBy": 0}, "app/api/listings/route.ts": {"layer": "api", "lines": 157, "client": false, "deps": ["lib/api-error.ts", "lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/billboards.ts", "lib/idempotency.ts", "lib/uploads.ts"], "usedBy": 0}, "app/api/reviews/[id]/replies/[replyId]/route.ts": {"layer": "api", "lines": 58, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/auth/users.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/reviews/[id]/replies/route.ts": {"layer": "api", "lines": 77, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/reviews/[id]/route.ts": {"layer": "api", "lines": 70, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/reviews/route.ts": {"layer": "api", "lines": 126, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/auth/session.ts", "lib/db/billboards.ts", "lib/db/client.ts"], "usedBy": 0}, "app/api/stats/route.ts": {"layer": "api", "lines": 50, "client": false, "deps": ["lib/api-log.ts", "lib/api-rate-limit.ts", "lib/auth/client-ip.ts", "lib/auth/rate-limit.ts", "lib/db/billboards.ts", "lib/db/client.ts"], "usedBy": 0}, "app/billboard/[slug]/page.tsx": {"layer": "page", "lines": 339, "client": false, "deps": ["components/BillboardContact.tsx", "components/BillboardGallery.tsx", "components/Footer.tsx", "components/RelatedBillboards.tsx", "components/ReviewsSection.tsx", "components/ShareButton.tsx", "components/Topbar.tsx", "components/TrafficMeter.tsx", "lib/auth/session.ts", "lib/db/billboards.ts", "lib/format.ts", "lib/types.ts"], "usedBy": 0}, "app/compare/page.tsx": {"layer": "page", "lines": 140, "client": true, "deps": ["components/CompareModal.tsx", "components/Footer.tsx", "components/Topbar.tsx", "components/TypeIcon.tsx", "lib/types.ts"], "usedBy": 0}, "app/contact/page.tsx": {"layer": "page", "lines": 93, "client": false, "deps": ["components/Footer.tsx", "components/Topbar.tsx"], "usedBy": 0}, "app/dashboard/layout.tsx": {"layer": "page", "lines": 11, "client": false, "deps": [], "usedBy": 0}, "app/dashboard/loading.tsx": {"layer": "page", "lines": 12, "client": false, "deps": [], "usedBy": 0}, "app/dashboard/page.tsx": {"layer": "page", "lines": 326, "client": true, "deps": ["components/EditListingModal.tsx", "components/Footer.tsx", "components/Topbar.tsx", "lib/types.ts"], "usedBy": 0}, "app/error.tsx": {"layer": "page", "lines": 34, "client": true, "deps": [], "usedBy": 0}, "app/explore/layout.tsx": {"layer": "page", "lines": 11, "client": false, "deps": [], "usedBy": 0}, "app/explore/loading.tsx": {"layer": "page", "lines": 12, "client": false, "deps": [], "usedBy": 0}, "app/explore/map/layout.tsx": {"layer": "page", "lines": 11, "client": false, "deps": [], "usedBy": 0}, "app/explore/map/page.tsx": {"layer": "page", "lines": 6, "client": false, "deps": [], "usedBy": 0}, "app/explore/page.tsx": {"layer": "page", "lines": 604, "client": true, "deps": ["components/BillboardCard.tsx", "components/CompareBar.tsx", "components/CompareModal.tsx", "components/Footer.tsx", "components/SnakeScroll.tsx", "components/Toast.tsx", "components/Topbar.tsx", "lib/format.ts", "lib/iranLocations.ts", "lib/theme.tsx", "lib/types.ts"], "usedBy": 0}, "app/global-error.tsx": {"layer": "page", "lines": 58, "client": true, "deps": [], "usedBy": 0}, "app/layout.tsx": {"layer": "page", "lines": 49, "client": false, "deps": ["app/globals.css", "components/BackgroundPattern.tsx", "components/StaffBar.tsx", "lib/site-url.ts", "lib/theme.tsx"], "usedBy": 0}, "app/list-media/layout.tsx": {"layer": "page", "lines": 11, "client": false, "deps": [], "usedBy": 0}, "app/list-media/page.tsx": {"layer": "page", "lines": 329, "client": true, "deps": ["components/Footer.tsx", "components/Topbar.tsx"], "usedBy": 0}, "app/login/layout.tsx": {"layer": "page", "lines": 11, "client": false, "deps": [], "usedBy": 0}, "app/login/page.tsx": {"layer": "page", "lines": 237, "client": true, "deps": [], "usedBy": 0}, "app/not-found.tsx": {"layer": "page", "lines": 19, "client": false, "deps": [], "usedBy": 0}, "app/page.tsx": {"layer": "page", "lines": 417, "client": true, "deps": ["components/SwipeMarquee.tsx", "lib/auth/useCurrentUser.ts", "lib/format.ts", "lib/theme.tsx", "lib/types.ts"], "usedBy": 0}, "app/reset-password/page.tsx": {"layer": "page", "lines": 128, "client": true, "deps": [], "usedBy": 0}, "app/robots.ts": {"layer": "page", "lines": 14, "client": false, "deps": [], "usedBy": 0}, "app/sitemap.ts": {"layer": "page", "lines": 37, "client": false, "deps": ["lib/db/billboards.ts", "lib/db/client.ts", "lib/site-url.ts"], "usedBy": 0}, "app/terms/page.tsx": {"layer": "page", "lines": 49, "client": false, "deps": ["components/Footer.tsx", "components/Topbar.tsx"], "usedBy": 0}, "components/AnalyticsTab.tsx": {"layer": "ui", "lines": 157, "client": true, "deps": ["lib/format.ts", "lib/types.ts"], "usedBy": 1}, "components/BackgroundPattern.tsx": {"layer": "ui", "lines": 106, "client": true, "deps": [], "usedBy": 1}, "components/BillboardCard.tsx": {"layer": "ui", "lines": 246, "client": true, "deps": ["lib/theme.tsx", "lib/types.ts"], "usedBy": 1}, "components/BillboardContact.tsx": {"layer": "ui", "lines": 98, "client": true, "deps": ["lib/auth/useCurrentUser.ts"], "usedBy": 1}, "components/BillboardGallery.tsx": {"layer": "ui", "lines": 92, "client": true, "deps": [], "usedBy": 1}, "components/CompareBar.tsx": {"layer": "ui", "lines": 45, "client": true, "deps": ["components/TypeIcon.tsx", "lib/types.ts"], "usedBy": 1}, "components/CompareModal.tsx": {"layer": "ui", "lines": 101, "client": true, "deps": ["components/TypeIcon.tsx", "lib/format.ts", "lib/types.ts"], "usedBy": 2}, "components/EditListingModal.tsx": {"layer": "ui", "lines": 302, "client": true, "deps": ["lib/format.ts"], "usedBy": 1}, "components/Footer.tsx": {"layer": "ui", "lines": 85, "client": false, "deps": [], "usedBy": 9}, "components/RelatedBillboards.tsx": {"layer": "ui", "lines": 99, "client": false, "deps": ["components/SwipeMarquee.tsx", "components/TypeIcon.tsx", "lib/format.ts", "lib/types.ts"], "usedBy": 1}, "components/ReviewsSection.tsx": {"layer": "ui", "lines": 370, "client": true, "deps": [], "usedBy": 1}, "components/ShareButton.tsx": {"layer": "ui", "lines": 62, "client": true, "deps": ["lib/clipboard.ts"], "usedBy": 1}, "components/SnakeScroll.tsx": {"layer": "ui", "lines": 153, "client": true, "deps": [], "usedBy": 1}, "components/StaffBar.tsx": {"layer": "ui", "lines": 154, "client": true, "deps": ["lib/auth/useCurrentUser.ts"], "usedBy": 1}, "components/SwipeMarquee.tsx": {"layer": "ui", "lines": 44, "client": true, "deps": [], "usedBy": 2}, "components/Toast.tsx": {"layer": "ui", "lines": 28, "client": true, "deps": [], "usedBy": 1}, "components/Topbar.tsx": {"layer": "ui", "lines": 95, "client": true, "deps": ["lib/auth/useCurrentUser.ts", "lib/theme.tsx"], "usedBy": 9}, "components/TrafficMeter.tsx": {"layer": "ui", "lines": 117, "client": true, "deps": ["lib/types.ts"], "usedBy": 1}, "components/TypeIcon.tsx": {"layer": "ui", "lines": 19, "client": false, "deps": ["lib/types.ts"], "usedBy": 8}, "components/admin/AuditPanel.tsx": {"layer": "ui", "lines": 100, "client": true, "deps": ["components/admin/Badge.tsx", "components/admin/constants.ts", "lib/format.ts"], "usedBy": 1}, "components/admin/Badge.tsx": {"layer": "ui", "lines": 38, "client": false, "deps": ["lib/format.ts"], "usedBy": 9}, "components/admin/BillboardRow.tsx": {"layer": "ui", "lines": 41, "client": false, "deps": ["components/TypeIcon.tsx", "components/admin/Badge.tsx", "components/admin/constants.ts", "lib/types.ts"], "usedBy": 1}, "components/admin/CreateModal.tsx": {"layer": "ui", "lines": 85, "client": true, "deps": ["components/admin/constants.ts", "lib/types.ts"], "usedBy": 1}, "components/admin/CustomerModal.tsx": {"layer": "ui", "lines": 185, "client": true, "deps": ["components/admin/Badge.tsx", "components/admin/constants.ts", "lib/clipboard.ts", "lib/format.ts"], "usedBy": 1}, "components/admin/EditModal.tsx": {"layer": "ui", "lines": 175, "client": true, "deps": ["components/admin/constants.ts", "lib/types.ts"], "usedBy": 1}, "components/admin/ImageManager.tsx": {"layer": "ui", "lines": 117, "client": true, "deps": ["components/admin/Badge.tsx", "components/admin/constants.ts", "lib/types.ts"], "usedBy": 1}, "components/admin/LeadsPanel.tsx": {"layer": "ui", "lines": 199, "client": true, "deps": ["components/TypeIcon.tsx", "components/admin/Badge.tsx", "components/admin/constants.ts", "lib/format.ts", "lib/types.ts"], "usedBy": 1}, "components/admin/ListingsPanel.tsx": {"layer": "ui", "lines": 227, "client": true, "deps": ["components/TypeIcon.tsx", "components/admin/Badge.tsx", "components/admin/constants.ts", "lib/format.ts", "lib/types.ts"], "usedBy": 1}, "components/admin/QualityPanel.tsx": {"layer": "ui", "lines": 73, "client": false, "deps": ["components/admin/Badge.tsx", "components/admin/constants.ts", "lib/types.ts"], "usedBy": 1}, "components/admin/ScraperPanel.tsx": {"layer": "ui", "lines": 189, "client": true, "deps": ["components/admin/constants.ts", "lib/admin/types.ts", "lib/format.ts"], "usedBy": 1}, "components/admin/UsersPanel.tsx": {"layer": "ui", "lines": 367, "client": true, "deps": ["components/admin/Badge.tsx", "components/admin/CustomerModal.tsx", "components/admin/constants.ts", "lib/auth/session.ts", "lib/format.ts"], "usedBy": 1}, "components/admin/constants.ts": {"layer": "ui", "lines": 66, "client": false, "deps": [], "usedBy": 12}, "instrumentation.ts": {"layer": "other", "lines": 12, "client": false, "deps": [], "usedBy": 0}, "lib/admin/types.ts": {"layer": "lib", "lines": 42, "client": false, "deps": [], "usedBy": 3}, "lib/api-error.ts": {"layer": "lib", "lines": 28, "client": false, "deps": ["lib/logger.ts"], "usedBy": 7}, "lib/api-log.ts": {"layer": "lib", "lines": 74, "client": false, "deps": ["lib/api-error.ts", "lib/logger.ts"], "usedBy": 34}, "lib/api-rate-limit.ts": {"layer": "lib", "lines": 45, "client": false, "deps": ["lib/auth/audit.ts", "lib/auth/rate-limit.ts", "lib/format.ts"], "usedBy": 31}, "lib/auth/audit.ts": {"layer": "auth", "lines": 127, "client": false, "deps": ["lib/db/client.ts", "lib/logger.ts"], "usedBy": 16}, "lib/auth/client-ip.ts": {"layer": "auth", "lines": 38, "client": false, "deps": [], "usedBy": 32}, "lib/auth/rate-limit.ts": {"layer": "auth", "lines": 211, "client": false, "deps": [], "usedBy": 32}, "lib/auth/session.ts": {"layer": "auth", "lines": 108, "client": false, "deps": [], "usedBy": 33}, "lib/auth/useCurrentUser.ts": {"layer": "auth", "lines": 31, "client": true, "deps": [], "usedBy": 4}, "lib/auth/users.ts": {"layer": "auth", "lines": 92, "client": false, "deps": ["lib/auth/session.ts", "lib/db/client.ts"], "usedBy": 15}, "lib/clipboard.ts": {"layer": "lib", "lines": 46, "client": false, "deps": [], "usedBy": 2}, "lib/data.ts": {"layer": "lib", "lines": 371, "client": false, "deps": ["lib/types.ts", "scraper/data/billboards.json"], "usedBy": 1}, "lib/db/billboards.ts": {"layer": "data", "lines": 550, "client": false, "deps": ["lib/db/client.ts", "lib/types.ts"], "usedBy": 15}, "lib/db/client.ts": {"layer": "data", "lines": 59, "client": false, "deps": [], "usedBy": 31}, "lib/env.ts": {"layer": "lib", "lines": 58, "client": false, "deps": [], "usedBy": 0}, "lib/format.ts": {"layer": "lib", "lines": 19, "client": false, "deps": [], "usedBy": 19}, "lib/idempotency.ts": {"layer": "lib", "lines": 73, "client": false, "deps": ["lib/db/client.ts"], "usedBy": 1}, "lib/iranLocations.ts": {"layer": "lib", "lines": 193, "client": false, "deps": [], "usedBy": 1}, "lib/logger.ts": {"layer": "lib", "lines": 86, "client": false, "deps": [], "usedBy": 5}, "lib/otp.ts": {"layer": "lib", "lines": 56, "client": false, "deps": ["lib/db/client.ts"], "usedBy": 2}, "lib/site-url.ts": {"layer": "lib", "lines": 16, "client": false, "deps": [], "usedBy": 2}, "lib/sms.ts": {"layer": "lib", "lines": 96, "client": false, "deps": ["lib/logger.ts"], "usedBy": 2}, "lib/theme.tsx": {"layer": "lib", "lines": 45, "client": true, "deps": [], "usedBy": 5}, "lib/types.ts": {"layer": "lib", "lines": 136, "client": false, "deps": [], "usedBy": 26}, "lib/uploads.ts": {"layer": "lib", "lines": 154, "client": false, "deps": ["lib/format.ts"], "usedBy": 3}, "next-env.d.ts": {"layer": "other", "lines": 7, "client": false, "deps": [".next/types/routes.d.ts"], "usedBy": 0}, "next.config.ts": {"layer": "other", "lines": 60, "client": false, "deps": [], "usedBy": 0}, "prisma.config.ts": {"layer": "other", "lines": 17, "client": false, "deps": [], "usedBy": 0}, "prisma/backfill-coordinates.ts": {"layer": "schema", "lines": 224, "client": false, "deps": [], "usedBy": 0}, "prisma/dedupe-billboards.ts": {"layer": "schema", "lines": 199, "client": false, "deps": [], "usedBy": 0}, "prisma/export-unresolved.ts": {"layer": "schema", "lines": 95, "client": false, "deps": [], "usedBy": 0}, "prisma/reset-coordinates.ts": {"layer": "schema", "lines": 80, "client": false, "deps": [], "usedBy": 0}, "prisma/seed-demo-full.ts": {"layer": "schema", "lines": 185, "client": false, "deps": [], "usedBy": 0}, "prisma/seed.ts": {"layer": "schema", "lines": 149, "client": false, "deps": ["lib/data.ts"], "usedBy": 0}, "proxy.ts": {"layer": "edge", "lines": 159, "client": false, "deps": ["lib/auth/session.ts"], "usedBy": 0}}, "edges": [["app/about/page.tsx", "lib/format.ts"], ["app/about/page.tsx", "components/Footer.tsx"], ["app/about/page.tsx", "lib/db/client.ts"], ["app/about/page.tsx", "components/Topbar.tsx"], ["app/admin/page.tsx", "components/admin/AuditPanel.tsx"], ["app/admin/page.tsx", "lib/admin/types.ts"], ["app/admin/page.tsx", "lib/auth/session.ts"], ["app/admin/page.tsx", "components/admin/EditModal.tsx"], ["app/admin/page.tsx", "components/admin/constants.ts"], ["app/admin/page.tsx", "lib/types.ts"], ["app/admin/page.tsx", "components/admin/LeadsPanel.tsx"], ["app/admin/page.tsx", "components/admin/ScraperPanel.tsx"], ["app/admin/page.tsx", "lib/format.ts"], ["app/admin/page.tsx", "components/admin/CreateModal.tsx"], ["app/admin/page.tsx", "components/admin/Badge.tsx"], ["app/admin/page.tsx", "components/TypeIcon.tsx"], ["app/admin/page.tsx", "components/admin/ImageManager.tsx"], ["app/admin/page.tsx", "components/admin/BillboardRow.tsx"], ["app/admin/page.tsx", "components/admin/QualityPanel.tsx"], ["app/admin/page.tsx", "components/admin/UsersPanel.tsx"], ["app/admin/page.tsx", "components/admin/ListingsPanel.tsx"], ["app/analytics/page.tsx", "components/Footer.tsx"], ["app/analytics/page.tsx", "components/AnalyticsTab.tsx"], ["app/analytics/page.tsx", "components/Topbar.tsx"], ["app/api/admin/audit/route.ts", "lib/auth/session.ts"], ["app/api/admin/audit/route.ts", "lib/api-log.ts"], ["app/api/admin/audit/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/audit/route.ts", "lib/auth/users.ts"], ["app/api/admin/audit/route.ts", "lib/auth/audit.ts"], ["app/api/admin/audit/route.ts", "lib/db/client.ts"], ["app/api/admin/audit/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/audit/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/auth/login/route.ts", "lib/auth/session.ts"], ["app/api/admin/auth/login/route.ts", "lib/api-log.ts"], ["app/api/admin/auth/login/route.ts", "lib/auth/users.ts"], ["app/api/admin/auth/login/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/auth/login/route.ts", "lib/auth/audit.ts"], ["app/api/admin/auth/login/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/auth/login/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/auth/logout/route.ts", "lib/auth/audit.ts"], ["app/api/admin/auth/logout/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/auth/logout/route.ts", "lib/api-log.ts"], ["app/api/admin/auth/logout/route.ts", "lib/auth/session.ts"], ["app/api/admin/auth/me/route.ts", "lib/auth/session.ts"], ["app/api/admin/auth/me/route.ts", "lib/api-log.ts"], ["app/api/admin/billboards/[id]/images/route.ts", "lib/auth/session.ts"], ["app/api/admin/billboards/[id]/images/route.ts", "lib/api-log.ts"], ["app/api/admin/billboards/[id]/images/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/billboards/[id]/images/route.ts", "lib/auth/users.ts"], ["app/api/admin/billboards/[id]/images/route.ts", "lib/uploads.ts"], ["app/api/admin/billboards/[id]/images/route.ts", "lib/db/client.ts"], ["app/api/admin/billboards/[id]/images/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/billboards/[id]/images/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/billboards/[id]/route.ts", "lib/auth/session.ts"], ["app/api/admin/billboards/[id]/route.ts", "lib/api-log.ts"], ["app/api/admin/billboards/[id]/route.ts", "lib/types.ts"], ["app/api/admin/billboards/[id]/route.ts", "lib/db/billboards.ts"], ["app/api/admin/billboards/[id]/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/billboards/[id]/route.ts", "lib/auth/audit.ts"], ["app/api/admin/billboards/[id]/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/billboards/[id]/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/billboards/route.ts", "lib/auth/session.ts"], ["app/api/admin/billboards/route.ts", "lib/api-log.ts"], ["app/api/admin/billboards/route.ts", "lib/api-error.ts"], ["app/api/admin/billboards/route.ts", "lib/types.ts"], ["app/api/admin/billboards/route.ts", "lib/db/billboards.ts"], ["app/api/admin/billboards/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/billboards/route.ts", "lib/auth/users.ts"], ["app/api/admin/billboards/route.ts", "lib/auth/audit.ts"], ["app/api/admin/billboards/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/billboards/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/billboards/stats/route.ts", "lib/admin/types.ts"], ["app/api/admin/billboards/stats/route.ts", "lib/auth/session.ts"], ["app/api/admin/billboards/stats/route.ts", "lib/api-log.ts"], ["app/api/admin/billboards/stats/route.ts", "lib/db/billboards.ts"], ["app/api/admin/billboards/stats/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/billboards/stats/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/billboards/stats/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/customers/[id]/reset-password/route.ts", "lib/auth/session.ts"], ["app/api/admin/customers/[id]/reset-password/route.ts", "lib/api-log.ts"], ["app/api/admin/customers/[id]/reset-password/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/customers/[id]/reset-password/route.ts", "lib/auth/users.ts"], ["app/api/admin/customers/[id]/reset-password/route.ts", "lib/auth/audit.ts"], ["app/api/admin/customers/[id]/reset-password/route.ts", "lib/db/client.ts"], ["app/api/admin/customers/[id]/reset-password/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/customers/[id]/reset-password/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/customers/[id]/route.ts", "lib/auth/session.ts"], ["app/api/admin/customers/[id]/route.ts", "lib/api-log.ts"], ["app/api/admin/customers/[id]/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/customers/[id]/route.ts", "lib/auth/users.ts"], ["app/api/admin/customers/[id]/route.ts", "lib/auth/audit.ts"], ["app/api/admin/customers/[id]/route.ts", "lib/db/client.ts"], ["app/api/admin/customers/[id]/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/customers/[id]/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/customers/route.ts", "lib/auth/session.ts"], ["app/api/admin/customers/route.ts", "lib/api-log.ts"], ["app/api/admin/customers/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/customers/route.ts", "lib/auth/users.ts"], ["app/api/admin/customers/route.ts", "lib/db/client.ts"], ["app/api/admin/customers/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/customers/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/auth/session.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/api-log.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/types.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/auth/users.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/auth/audit.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/db/client.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/leads/[id]/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/leads/route.ts", "lib/auth/session.ts"], ["app/api/admin/leads/route.ts", "lib/api-log.ts"], ["app/api/admin/leads/route.ts", "lib/types.ts"], ["app/api/admin/leads/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/leads/route.ts", "lib/auth/users.ts"], ["app/api/admin/leads/route.ts", "lib/db/client.ts"], ["app/api/admin/leads/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/leads/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/auth/session.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/api-log.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/db/billboards.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/auth/users.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/auth/audit.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/db/client.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/listings/[id]/decision/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/listings/route.ts", "lib/auth/session.ts"], ["app/api/admin/listings/route.ts", "lib/api-log.ts"], ["app/api/admin/listings/route.ts", "lib/db/billboards.ts"], ["app/api/admin/listings/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/listings/route.ts", "lib/auth/users.ts"], ["app/api/admin/listings/route.ts", "lib/db/client.ts"], ["app/api/admin/listings/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/listings/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/users/[id]/route.ts", "lib/auth/session.ts"], ["app/api/admin/users/[id]/route.ts", "lib/api-log.ts"], ["app/api/admin/users/[id]/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/users/[id]/route.ts", "lib/auth/users.ts"], ["app/api/admin/users/[id]/route.ts", "lib/auth/audit.ts"], ["app/api/admin/users/[id]/route.ts", "lib/db/client.ts"], ["app/api/admin/users/[id]/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/users/[id]/route.ts", "lib/auth/rate-limit.ts"], ["app/api/admin/users/route.ts", "lib/auth/session.ts"], ["app/api/admin/users/route.ts", "lib/api-log.ts"], ["app/api/admin/users/route.ts", "lib/auth/client-ip.ts"], ["app/api/admin/users/route.ts", "lib/auth/users.ts"], ["app/api/admin/users/route.ts", "lib/auth/audit.ts"], ["app/api/admin/users/route.ts", "lib/db/client.ts"], ["app/api/admin/users/route.ts", "lib/api-rate-limit.ts"], ["app/api/admin/users/route.ts", "lib/auth/rate-limit.ts"], ["app/api/analytics/route.ts", "lib/api-log.ts"], ["app/api/analytics/route.ts", "lib/db/billboards.ts"], ["app/api/analytics/route.ts", "lib/auth/client-ip.ts"], ["app/api/analytics/route.ts", "lib/db/client.ts"], ["app/api/analytics/route.ts", "lib/api-rate-limit.ts"], ["app/api/analytics/route.ts", "lib/auth/rate-limit.ts"], ["app/api/auth/login/route.ts", "lib/auth/session.ts"], ["app/api/auth/login/route.ts", "lib/api-log.ts"], ["app/api/auth/login/route.ts", "lib/auth/client-ip.ts"], ["app/api/auth/login/route.ts", "lib/auth/users.ts"], ["app/api/auth/login/route.ts", "lib/auth/audit.ts"], ["app/api/auth/login/route.ts", "lib/db/client.ts"], ["app/api/auth/login/route.ts", "lib/api-rate-limit.ts"], ["app/api/auth/login/route.ts", "lib/auth/rate-limit.ts"], ["app/api/auth/logout/route.ts", "lib/auth/session.ts"], ["app/api/auth/logout/route.ts", "lib/api-log.ts"], ["app/api/auth/me/route.ts", "lib/auth/session.ts"], ["app/api/auth/me/route.ts", "lib/api-log.ts"], ["app/api/auth/me/route.ts", "lib/auth/client-ip.ts"], ["app/api/auth/me/route.ts", "lib/db/client.ts"], ["app/api/auth/me/route.ts", "lib/api-rate-limit.ts"], ["app/api/auth/me/route.ts", "lib/auth/rate-limit.ts"], ["app/api/auth/otp/send/route.ts", "lib/sms.ts"], ["app/api/auth/otp/send/route.ts", "lib/otp.ts"], ["app/api/auth/otp/send/route.ts", "lib/api-log.ts"], ["app/api/auth/otp/send/route.ts", "lib/auth/client-ip.ts"], ["app/api/auth/otp/send/route.ts", "lib/auth/audit.ts"], ["app/api/auth/otp/send/route.ts", "lib/db/client.ts"], ["app/api/auth/otp/send/route.ts", "lib/api-rate-limit.ts"], ["app/api/auth/otp/send/route.ts", "lib/auth/rate-limit.ts"], ["app/api/auth/otp/verify/route.ts", "lib/otp.ts"], ["app/api/auth/otp/verify/route.ts", "lib/api-log.ts"], ["app/api/auth/otp/verify/route.ts", "lib/auth/client-ip.ts"], ["app/api/auth/otp/verify/route.ts", "lib/auth/audit.ts"], ["app/api/auth/otp/verify/route.ts", "lib/db/client.ts"], ["app/api/auth/otp/verify/route.ts", "lib/api-rate-limit.ts"], ["app/api/auth/otp/verify/route.ts", "lib/auth/rate-limit.ts"], ["app/api/auth/register/route.ts", "lib/sms.ts"], ["app/api/auth/register/route.ts", "lib/auth/session.ts"], ["app/api/auth/register/route.ts", "lib/api-log.ts"], ["app/api/auth/register/route.ts", "lib/auth/client-ip.ts"], ["app/api/auth/register/route.ts", "lib/db/client.ts"], ["app/api/auth/register/route.ts", "lib/api-rate-limit.ts"], ["app/api/auth/register/route.ts", "lib/auth/rate-limit.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/auth/session.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/api-log.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/api-error.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/db/billboards.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/auth/client-ip.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/logger.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/db/client.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/api-rate-limit.ts"], ["app/api/billboards/[slug]/contact/route.ts", "lib/auth/rate-limit.ts"], ["app/api/billboards/[slug]/route.ts", "lib/api-log.ts"], ["app/api/billboards/[slug]/route.ts", "lib/api-error.ts"], ["app/api/billboards/[slug]/route.ts", "lib/db/billboards.ts"], ["app/api/billboards/[slug]/route.ts", "lib/auth/client-ip.ts"], ["app/api/billboards/[slug]/route.ts", "lib/api-rate-limit.ts"], ["app/api/billboards/[slug]/route.ts", "lib/auth/rate-limit.ts"], ["app/api/billboards/route.ts", "lib/api-log.ts"], ["app/api/billboards/route.ts", "lib/api-error.ts"], ["app/api/billboards/route.ts", "lib/db/billboards.ts"], ["app/api/billboards/route.ts", "lib/auth/client-ip.ts"], ["app/api/billboards/route.ts", "lib/api-rate-limit.ts"], ["app/api/billboards/route.ts", "lib/auth/rate-limit.ts"], ["app/api/listings/[id]/route.ts", "lib/auth/session.ts"], ["app/api/listings/[id]/route.ts", "lib/api-log.ts"], ["app/api/listings/[id]/route.ts", "lib/api-error.ts"], ["app/api/listings/[id]/route.ts", "lib/format.ts"], ["app/api/listings/[id]/route.ts", "lib/db/billboards.ts"], ["app/api/listings/[id]/route.ts", "lib/auth/client-ip.ts"], ["app/api/listings/[id]/route.ts", "lib/auth/audit.ts"], ["app/api/listings/[id]/route.ts", "lib/uploads.ts"], ["app/api/listings/[id]/route.ts", "lib/db/client.ts"], ["app/api/listings/[id]/route.ts", "lib/api-rate-limit.ts"], ["app/api/listings/[id]/route.ts", "lib/auth/rate-limit.ts"], ["app/api/listings/route.ts", "lib/auth/session.ts"], ["app/api/listings/route.ts", "lib/api-log.ts"], ["app/api/listings/route.ts", "lib/api-error.ts"], ["app/api/listings/route.ts", "lib/db/billboards.ts"], ["app/api/listings/route.ts", "lib/auth/client-ip.ts"], ["app/api/listings/route.ts", "lib/uploads.ts"], ["app/api/listings/route.ts", "lib/api-rate-limit.ts"], ["app/api/listings/route.ts", "lib/idempotency.ts"], ["app/api/listings/route.ts", "lib/auth/rate-limit.ts"], ["app/api/reviews/[id]/replies/[replyId]/route.ts", "lib/auth/session.ts"], ["app/api/reviews/[id]/replies/[replyId]/route.ts", "lib/api-log.ts"], ["app/api/reviews/[id]/replies/[replyId]/route.ts", "lib/auth/client-ip.ts"], ["app/api/reviews/[id]/replies/[replyId]/route.ts", "lib/auth/users.ts"], ["app/api/reviews/[id]/replies/[replyId]/route.ts", "lib/db/client.ts"], ["app/api/reviews/[id]/replies/[replyId]/route.ts", "lib/api-rate-limit.ts"], ["app/api/reviews/[id]/replies/[replyId]/route.ts", "lib/auth/rate-limit.ts"], ["app/api/reviews/[id]/replies/route.ts", "lib/auth/session.ts"], ["app/api/reviews/[id]/replies/route.ts", "lib/api-log.ts"], ["app/api/reviews/[id]/replies/route.ts", "lib/auth/client-ip.ts"], ["app/api/reviews/[id]/replies/route.ts", "lib/db/client.ts"], ["app/api/reviews/[id]/replies/route.ts", "lib/api-rate-limit.ts"], ["app/api/reviews/[id]/replies/route.ts", "lib/auth/rate-limit.ts"], ["app/api/reviews/[id]/route.ts", "lib/auth/session.ts"], ["app/api/reviews/[id]/route.ts", "lib/api-log.ts"], ["app/api/reviews/[id]/route.ts", "lib/auth/client-ip.ts"], ["app/api/reviews/[id]/route.ts", "lib/db/client.ts"], ["app/api/reviews/[id]/route.ts", "lib/api-rate-limit.ts"], ["app/api/reviews/[id]/route.ts", "lib/auth/rate-limit.ts"], ["app/api/reviews/route.ts", "lib/auth/session.ts"], ["app/api/reviews/route.ts", "lib/api-log.ts"], ["app/api/reviews/route.ts", "lib/db/billboards.ts"], ["app/api/reviews/route.ts", "lib/auth/client-ip.ts"], ["app/api/reviews/route.ts", "lib/db/client.ts"], ["app/api/reviews/route.ts", "lib/api-rate-limit.ts"], ["app/api/reviews/route.ts", "lib/auth/rate-limit.ts"], ["app/api/stats/route.ts", "lib/api-log.ts"], ["app/api/stats/route.ts", "lib/db/billboards.ts"], ["app/api/stats/route.ts", "lib/auth/client-ip.ts"], ["app/api/stats/route.ts", "lib/db/client.ts"], ["app/api/stats/route.ts", "lib/api-rate-limit.ts"], ["app/api/stats/route.ts", "lib/auth/rate-limit.ts"], ["app/billboard/[slug]/page.tsx", "lib/auth/session.ts"], ["app/billboard/[slug]/page.tsx", "lib/types.ts"], ["app/billboard/[slug]/page.tsx", "components/Footer.tsx"], ["app/billboard/[slug]/page.tsx", "lib/format.ts"], ["app/billboard/[slug]/page.tsx", "lib/db/billboards.ts"], ["app/billboard/[slug]/page.tsx", "components/ReviewsSection.tsx"], ["app/billboard/[slug]/page.tsx", "components/BillboardGallery.tsx"], ["app/billboard/[slug]/page.tsx", "components/TrafficMeter.tsx"], ["app/billboard/[slug]/page.tsx", "components/BillboardContact.tsx"], ["app/billboard/[slug]/page.tsx", "components/ShareButton.tsx"], ["app/billboard/[slug]/page.tsx", "components/RelatedBillboards.tsx"], ["app/billboard/[slug]/page.tsx", "components/Topbar.tsx"], ["app/compare/page.tsx", "lib/types.ts"], ["app/compare/page.tsx", "components/Footer.tsx"], ["app/compare/page.tsx", "components/TypeIcon.tsx"], ["app/compare/page.tsx", "components/CompareModal.tsx"], ["app/compare/page.tsx", "components/Topbar.tsx"], ["app/contact/page.tsx", "components/Footer.tsx"], ["app/contact/page.tsx", "components/Topbar.tsx"], ["app/dashboard/page.tsx", "components/Footer.tsx"], ["app/dashboard/page.tsx", "components/EditListingModal.tsx"], ["app/dashboard/page.tsx", "lib/types.ts"], ["app/dashboard/page.tsx", "components/Topbar.tsx"], ["app/explore/page.tsx", "lib/theme.tsx"], ["app/explore/page.tsx", "components/BillboardCard.tsx"], ["app/explore/page.tsx", "lib/types.ts"], ["app/explore/page.tsx", "components/Footer.tsx"], ["app/explore/page.tsx", "lib/format.ts"], ["app/explore/page.tsx", "components/Toast.tsx"], ["app/explore/page.tsx", "components/SnakeScroll.tsx"], ["app/explore/page.tsx", "lib/iranLocations.ts"], ["app/explore/page.tsx", "components/CompareBar.tsx"], ["app/explore/page.tsx", "components/CompareModal.tsx"], ["app/explore/page.tsx", "components/Topbar.tsx"], ["app/layout.tsx", "lib/theme.tsx"], ["app/layout.tsx", "components/StaffBar.tsx"], ["app/layout.tsx", "lib/site-url.ts"], ["app/layout.tsx", "components/BackgroundPattern.tsx"], ["app/layout.tsx", "app/globals.css"], ["app/list-media/page.tsx", "components/Footer.tsx"], ["app/list-media/page.tsx", "components/Topbar.tsx"], ["app/page.tsx", "lib/theme.tsx"], ["app/page.tsx", "lib/types.ts"], ["app/page.tsx", "lib/format.ts"], ["app/page.tsx", "lib/auth/useCurrentUser.ts"], ["app/page.tsx", "components/SwipeMarquee.tsx"], ["app/sitemap.ts", "lib/db/billboards.ts"], ["app/sitemap.ts", "lib/db/client.ts"], ["app/sitemap.ts", "lib/site-url.ts"], ["app/terms/page.tsx", "components/Footer.tsx"], ["app/terms/page.tsx", "components/Topbar.tsx"], ["components/AnalyticsTab.tsx", "lib/format.ts"], ["components/AnalyticsTab.tsx", "lib/types.ts"], ["components/BillboardCard.tsx", "lib/theme.tsx"], ["components/BillboardCard.tsx", "lib/types.ts"], ["components/BillboardContact.tsx", "lib/auth/useCurrentUser.ts"], ["components/CompareBar.tsx", "components/TypeIcon.tsx"], ["components/CompareBar.tsx", "lib/types.ts"], ["components/CompareModal.tsx", "components/TypeIcon.tsx"], ["components/CompareModal.tsx", "lib/format.ts"], ["components/CompareModal.tsx", "lib/types.ts"], ["components/EditListingModal.tsx", "lib/format.ts"], ["components/RelatedBillboards.tsx", "components/TypeIcon.tsx"], ["components/RelatedBillboards.tsx", "lib/format.ts"], ["components/RelatedBillboards.tsx", "lib/types.ts"], ["components/RelatedBillboards.tsx", "components/SwipeMarquee.tsx"], ["components/ShareButton.tsx", "lib/clipboard.ts"], ["components/StaffBar.tsx", "lib/auth/useCurrentUser.ts"], ["components/Topbar.tsx", "lib/theme.tsx"], ["components/Topbar.tsx", "lib/auth/useCurrentUser.ts"], ["components/TrafficMeter.tsx", "lib/types.ts"], ["components/TypeIcon.tsx", "lib/types.ts"], ["components/admin/AuditPanel.tsx", "lib/format.ts"], ["components/admin/AuditPanel.tsx", "components/admin/Badge.tsx"], ["components/admin/AuditPanel.tsx", "components/admin/constants.ts"], ["components/admin/Badge.tsx", "lib/format.ts"], ["components/admin/BillboardRow.tsx", "components/TypeIcon.tsx"], ["components/admin/BillboardRow.tsx", "components/admin/Badge.tsx"], ["components/admin/BillboardRow.tsx", "components/admin/constants.ts"], ["components/admin/BillboardRow.tsx", "lib/types.ts"], ["components/admin/CreateModal.tsx", "components/admin/constants.ts"], ["components/admin/CreateModal.tsx", "lib/types.ts"], ["components/admin/CustomerModal.tsx", "lib/clipboard.ts"], ["components/admin/CustomerModal.tsx", "components/admin/Badge.tsx"], ["components/admin/CustomerModal.tsx", "components/admin/constants.ts"], ["components/admin/CustomerModal.tsx", "lib/format.ts"], ["components/admin/EditModal.tsx", "components/admin/constants.ts"], ["components/admin/EditModal.tsx", "lib/types.ts"], ["components/admin/ImageManager.tsx", "components/admin/Badge.tsx"], ["components/admin/ImageManager.tsx", "components/admin/constants.ts"], ["components/admin/ImageManager.tsx", "lib/types.ts"], ["components/admin/LeadsPanel.tsx", "lib/types.ts"], ["components/admin/LeadsPanel.tsx", "components/admin/constants.ts"], ["components/admin/LeadsPanel.tsx", "lib/format.ts"], ["components/admin/LeadsPanel.tsx", "components/admin/Badge.tsx"], ["components/admin/LeadsPanel.tsx", "components/TypeIcon.tsx"], ["components/admin/ListingsPanel.tsx", "lib/types.ts"], ["components/admin/ListingsPanel.tsx", "components/admin/constants.ts"], ["components/admin/ListingsPanel.tsx", "lib/format.ts"], ["components/admin/ListingsPanel.tsx", "components/admin/Badge.tsx"], ["components/admin/ListingsPanel.tsx", "components/TypeIcon.tsx"], ["components/admin/QualityPanel.tsx", "components/admin/Badge.tsx"], ["components/admin/QualityPanel.tsx", "components/admin/constants.ts"], ["components/admin/QualityPanel.tsx", "lib/types.ts"], ["components/admin/ScraperPanel.tsx", "lib/format.ts"], ["components/admin/ScraperPanel.tsx", "lib/admin/types.ts"], ["components/admin/ScraperPanel.tsx", "components/admin/constants.ts"], ["components/admin/UsersPanel.tsx", "lib/auth/session.ts"], ["components/admin/UsersPanel.tsx", "components/admin/CustomerModal.tsx"], ["components/admin/UsersPanel.tsx", "components/admin/constants.ts"], ["components/admin/UsersPanel.tsx", "lib/format.ts"], ["components/admin/UsersPanel.tsx", "components/admin/Badge.tsx"], ["lib/api-error.ts", "lib/logger.ts"], ["lib/api-log.ts", "lib/logger.ts"], ["lib/api-log.ts", "lib/api-error.ts"], ["lib/api-rate-limit.ts", "lib/format.ts"], ["lib/api-rate-limit.ts", "lib/auth/audit.ts"], ["lib/api-rate-limit.ts", "lib/auth/rate-limit.ts"], ["lib/auth/audit.ts", "lib/logger.ts"], ["lib/auth/audit.ts", "lib/db/client.ts"], ["lib/auth/users.ts", "lib/auth/session.ts"], ["lib/auth/users.ts", "lib/db/client.ts"], ["lib/data.ts", "scraper/data/billboards.json"], ["lib/data.ts", "lib/types.ts"], ["lib/db/billboards.ts", "lib/db/client.ts"], ["lib/db/billboards.ts", "lib/types.ts"], ["lib/idempotency.ts", "lib/db/client.ts"], ["lib/otp.ts", "lib/db/client.ts"], ["lib/sms.ts", "lib/logger.ts"], ["lib/uploads.ts", "lib/format.ts"], ["next-env.d.ts", ".next/types/routes.d.ts"], ["prisma/seed.ts", "lib/data.ts"], ["proxy.ts", "lib/auth/session.ts"]]};
+const DESC = {"proxy.ts": "نگهبان لبه. هر درخواستی — چه صفحه چه API — پیش از هر چیز از اینجا می‌گذرد. ربات‌ها، درخواست بدون نشست به بخش مدیریت، و مبدأهای ناشناس همین‌جا رد می‌شوند.", "lib/db/client.ts": "تنها جایی که اتصال به پایگاه داده ساخته می‌شود. هر پرس‌وجوی پروژه در نهایت از همین یک نقطه رد می‌شود؛ به همین دلیل عوض کردن موتور پایگاه داده فقط همین فایل را درگیر می‌کند.", "lib/db/billboards.ts": "لایهٔ دسترسی دادهٔ رسانه‌ها. بزرگ‌ترین فایل غیرصفحه‌ای پروژه و مهم‌ترین‌شان: هم مسیرهای API و هم صفحهٔ جزئیات از همین توابع می‌خوانند، پس منطق پرس‌وجو یک بار نوشته شده.", "lib/auth/session.ts": "ساخت و خواندن توکن نشست. توکن با HS256 امضا می‌شود و در کوکی HttpOnly می‌نشیند تا کد صفحه نتواند بخواندش.", "lib/auth/rate-limit.ts": "سقف نرخ درخواست. شمارنده‌ها در حافظهٔ همین نمونه‌اند — برای یک نمونهٔ اجرایی درست است و برای چند نمونه به انبارهٔ مشترک نیاز دارد.", "lib/auth/client-ip.ts": "شناسهٔ کاربر برای سقف نرخ. نکته اینجاست که سرآیندهای قابل جعل نباید به‌تنهایی مبنا باشند، وگرنه مهاجم با عوض کردن یک سرآیند سقف را دور می‌زند.", "lib/auth/users.ts": "ورود و ثبت‌نام. گذرواژه با bcrypt و ضریب هزینهٔ ۱۲ درهم می‌شود، و برای شمارهٔ ناموجود هم یک مقایسهٔ ساختگی انجام می‌شود تا زمان پاسخ لو ندهد کدام شماره ثبت است.", "lib/auth/audit.ts": "رد ممیزی. هر تغییر مدیریتی با شناسهٔ مدیر، نشانی شبکه و جزئیات ثبت می‌شود.", "lib/auth/useCurrentUser.ts": "قلاب سمت مرورگر برای دانستن اینکه کاربر وارد شده یا نه.", "lib/api-log.ts": "پرارجاع‌ترین فایل پروژه. هر مسیر API از آن عبور می‌کند و برای هر درخواست یک سطر JSON با وضعیت و مدت زمان می‌نویسد.", "lib/api-error.ts": "پاسخ خطای یکسان برای همهٔ مسیرها. به کاربر پیام فارسی و یک شناسهٔ کوتاه می‌دهد و رد پشته را فقط در ثبت رخداد می‌گذارد.", "lib/api-rate-limit.ts": "پاسخ مشترک «تعداد درخواست زیاد». وجودش برای این است که چهار جور ۴۲۹ متفاوت در پروژه نداشته باشیم.", "lib/env.ts": "اعتبارسنجی متغیرهای محیطی هنگام بالا آمدن. اگر تنظیمی کم باشد برنامه همان‌جا می‌ایستد، به‌جای آنکه وسط کار کاربر خراب شود.", "lib/types.ts": "انواع دادهٔ دامنه، بدون هیچ داده‌ای. عمداً از lib/data.ts جدا شده تا صفحه‌ها با وارد کردن یک نوع، کل مجموعهٔ داده را به مرورگر نفرستند.", "lib/data.ts": "مجموعهٔ دادهٔ ایستا و گردآوری‌شده. فقط prisma/seed.ts آن را وارد می‌کند؛ وارد کردنش در کد صفحه یعنی چند مگابایت داده به مرورگر کاربر می‌رود.", "lib/idempotency.ts": "کلید یکتایی عملیات. اگر همان درخواست دوباره برسد، پاسخ ذخیره‌شده برمی‌گردد و رکورد دوم ساخته نمی‌شود.", "lib/uploads.ts": "پذیرش فایل از کاربر. نوع فایل از بایت‌های آغازین خودش تشخیص داده می‌شود، نه از ادعای مرورگر.", "lib/otp.ts": "رمز یک‌بارمصرف. فقط درهمِ کد ذخیره می‌شود، نه خود کد.", "lib/sms.ts": "لایهٔ پیامک. بدون کلید سرویس در حالت خواب می‌ماند: کد کامل است ولی پیامی ارسال نمی‌شود.", "lib/logger.ts": "ثبت ساخت‌یافته. هر رخداد یک شیء JSON در یک خط — برای چشم انسان بهینه نیست، برای پردازش ماشینی آماده است.", "lib/site-url.ts": "یک منبع واحد برای نشانی سایت. پیش‌تر چند جا به localhost برمی‌گشت و لینک‌ها روی تلفن همراه می‌شکست.", "lib/clipboard.ts": "نسخه‌برداری متن با مسیر جایگزین، چون واسط استاندارد مرورگر بیرون از بستر امن اصلاً وجود ندارد.", "lib/format.ts": "قالب‌بندی عدد و قیمت به فارسی.", "lib/iranLocations.ts": "فهرست استان‌ها و شهرهای ایران برای پالایه‌ها.", "lib/theme.tsx": "حالت روشن و تاریک.", "app/layout.tsx": "چیدمان ریشه. جهت راست‌به‌چپ، فونت و پوستهٔ مشترک همهٔ صفحه‌ها اینجا تعریف می‌شود.", "app/page.tsx": "صفحهٔ نخست. آمار و رسانه‌های شاخص را از API می‌گیرد.", "app/explore/page.tsx": "صفحهٔ جست‌وجو و پالایش؛ بزرگ‌ترین صفحهٔ پروژه. فهرست و نقشه را کنار هم نشان می‌دهد.", "app/billboard/[slug]/page.tsx": "تنها صفحه‌ای که مؤلفهٔ سمت سرور است: هنگام ساخت صفحه مستقیم لایهٔ داده را صدا می‌زند و HTML آماده می‌فرستد، بدون آنکه سرور به خودش درخواست HTTP بزند.", "app/dashboard/page.tsx": "پیشخوان کاربر: وضعیت آگهی‌های ثبت‌شده.", "app/list-media/page.tsx": "فرم چندمرحله‌ای ثبت آگهی با بارگذاری تصویر.", "app/compare/page.tsx": "مقایسهٔ کنار هم چند رسانه.", "app/admin/page.tsx": "پنل مدیریت: صف تأیید، رسانه‌ها، کاربران، کیفیت داده و رد ممیزی.", "app/global-error.tsx": "آخرین تور ایمنی. اگر همه چیز بشکند، کاربر به‌جای صفحهٔ سفید یک پیام فارسی با شناسهٔ پیگیری می‌بیند.", "app/error.tsx": "مرز خطا برای صفحه‌های کلاینتی.", "app/not-found.tsx": "صفحهٔ ۴۰۴ فارسی.", "app/api/billboards/route.ts": "فهرست رسانه‌ها با پالایش، مرتب‌سازی و صفحه‌بندی. مقدارهای مرتب‌سازی پیش از رسیدن به پرس‌وجو با فهرست مجاز سنجیده می‌شوند.", "app/api/billboards/[slug]/contact/route.ts": "دریافت شمارهٔ تماس مالک. عمداً POST است نه GET: هم یک رکورد درخواست می‌سازد، هم برداشت انبوه با حلقه روی نشانی‌ها را ناممکن می‌کند.", "app/api/auth/login/route.ts": "ورود کاربر. پیام خطا برای شمارهٔ ناموجود و گذرواژهٔ اشتباه یکسان است.", "app/api/listings/route.ts": "ثبت آگهی تازه. کلید یکتایی، تشخیص نوع فایل و ورود به صف بررسی همین‌جا انجام می‌شود.", "app/api/admin/listings/[id]/decision/route.ts": "تصمیم کارشناس دربارهٔ یک آگهی. تک‌شلیک است: تلاش دوم پاسخ تعارض می‌گیرد تا پلن ویژه دو بار اعطا نشود.", "app/api/reviews/route.ts": "ثبت نظر. نوشتن نظر و بازمحاسبهٔ میانگین امتیاز در یک تراکنش انجام می‌شوند.", "prisma/seed.ts": "پرکردن اولیهٔ پایگاه داده. تنها فایلی که lib/data.ts را وارد می‌کند.", "prisma/dedupe-billboards.ts": "یافتن و ادغام رکوردهای تکراری میان منابع مختلف.", "prisma/backfill-coordinates.ts": "ژئوکد کردن رکوردهایی که مختصات نداشتند.", "components/BillboardCard.tsx": "کارت هر رسانه در فهرست.", "components/TrafficMeter.tsx": "نمایش تخمین بازدید روزانه — نقطهٔ تمایز پروژه.", "components/BillboardContact.tsx": "دکمهٔ نمایش شمارهٔ تماس. شماره در HTML صفحه نیست و فقط در پاسخ همین درخواست می‌آید.", "components/ReviewsSection.tsx": "نمایش و ثبت نظرها.", "components/admin/constants.ts": "برچسب‌ها و رنگ‌های مشترک پنل مدیریت، تا یک وضعیت در چهار جا چهار اسم نداشته باشد.", "next.config.ts": "تنظیمات ساخت و سرآیندهای امنیتی.", "instrumentation.ts": "قلاب اجرا هنگام بالا آمدن سرور؛ اعتبارسنجی محیط از اینجا شروع می‌شود."};
+
+const LAYERS = {
+  edge:  {fa:"نگهبان لبه",    v:"--edge",   note:"پیش از هر درخواست اجرا می‌شود"},
+  page:  {fa:"صفحه‌ها",       v:"--page",   note:"چیزی که کاربر در مرورگر می‌بیند"},
+  ui:    {fa:"مؤلفه‌های رابط",v:"--ui",     note:"قطعه‌های قابل استفادهٔ مجدد"},
+  api:   {fa:"مسیرهای API",   v:"--api",    note:"نقطه‌های ورود HTTP"},
+  auth:  {fa:"احراز هویت",    v:"--auth",   note:"نشست، سقف نرخ، رد ممیزی"},
+  lib:   {fa:"ابزارهای مشترک",v:"--lib",    note:"کارهای عمومی همهٔ لایه‌ها"},
+  data:  {fa:"لایهٔ داده",     v:"--data",   note:"تنها راه رسیدن به پایگاه داده"},
+  schema:{fa:"طرح‌واره و داده اولیه",v:"--schema",note:"مهاجرت و پرکردن پایگاه داده"},
+  other: {fa:"پیکربندی",      v:"--other",  note:"تنظیمات ساخت و اجرا"},
+};
+const col = l => getComputedStyle(document.documentElement).getPropertyValue(LAYERS[l].v).trim();
+const FA="۰۱۲۳۴۵۶۷۸۹", fa=n=>String(n).replace(/\d/g,d=>FA[+d]);
+
+const files = DATA.files, edges = DATA.edges;
+const names = Object.keys(files);
+const inMap = {}, outMap = {};
+names.forEach(n => { inMap[n]=[]; outMap[n]=files[n].deps.slice(); });
+edges.forEach(([a,b]) => inMap[b] && inMap[b].push(a));
+
+/* ── آمار سربرگ ── */
+document.getElementById("hstat").innerHTML = [
+  [names.length, "فایل TypeScript"],
+  [edges.length, "پیوند import"],
+  [Object.keys(LAYERS).length, "لایهٔ معماری"],
+  [names.reduce((s,n)=>s+files[n].lines,0).toLocaleString("fa-IR"), "خط کد"],
+].map(([v,l])=>`<div><b>${typeof v==="number"?fa(v):v}</b>${l}</div>`).join("");
+
+/* ── سفر یک درخواست ── */
+const JOURNEY = [
+  ["proxy.ts","نگهبان لبه","هر درخواست، چه صفحه چه API، اول از اینجا رد می‌شود. ربات‌ها و درخواست‌های بی‌اجازه همین‌جا برمی‌گردند و هرگز به کد اصلی نمی‌رسند."],
+  ["app/explore/page.tsx","صفحهٔ جست‌وجو","کد سمت مرورگر. کاربر شهر را انتخاب می‌کند و این فایل یک fetch به مسیر API می‌زند. خودش مستقیم به پایگاه داده دست نمی‌زند."],
+  ["app/api/billboards/route.ts","مسیر API","درخواست را می‌گیرد و به ترتیب: سقف نرخ، اعتبارسنجی ورودی، و بعد صدا زدن لایهٔ داده. ترتیب این سه قابل جابه‌جایی نیست."],
+  ["lib/db/billboards.ts","لایهٔ دسترسی داده","تنها جایی که پرس‌وجوی رسانه‌ها نوشته می‌شود. هم این مسیر API و هم صفحهٔ جزئیات از همین‌جا می‌خوانند — یک منبع حقیقت."],
+  ["lib/db/client.ts","اتصال پایگاه داده","تنها جایی که اتصال ساخته می‌شود. اگر روزی موتور پایگاه داده عوض شود، فقط همین فایل تغییر می‌کند."],
+  ["lib/api-log.ts","ثبت رخداد","پاسخ که آماده شد، یک سطر JSON با زمان، وضعیت و مدت درخواست نوشته می‌شود. اگر خطایی رخ داده باشد، شناسه‌اش همین‌جا ثبت می‌شود."],
+];
+document.getElementById("journey").innerHTML = JOURNEY.map(([f,t,d],i)=>`
+  <div class="jstep"><div class="jnum">${fa(i+1)}</div><div class="jbody">
+    <b>${t}</b><span class="f mono" data-go="${f}">${f}</span>
+    <p>${d}</p></div></div>`).join("");
+
+/* ── راهنمای لایه‌ها ── */
+const hidden = new Set();
+document.getElementById("legend").innerHTML = Object.entries(LAYERS).map(([k,v])=>{
+  const n = names.filter(f=>files[f].layer===k).length;
+  return `<span class="lg" data-layer="${k}"><span class="dot" style="background:${col(k)}"></span>${v.fa} <b>${fa(n)}</b></span>`;
+}).join("");
+
+/* ── نمای ستونی ── */
+function drawCols(){
+  document.getElementById("cols").innerHTML = Object.entries(LAYERS).map(([k,v])=>{
+    const fs = names.filter(f=>files[f].layer===k).sort((a,b)=>files[b].lines-files[a].lines);
+    if(!fs.length) return "";
+    return `<div class="col" data-layer="${k}">
+      <h3><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col(k)}"></span>${v.fa}</h3>
+      <p class="sub">${v.note}</p>
+      ${fs.map(f=>`<div class="fitem" data-f="${f}">
+        <span class="nm">${f.replace(/^(app|components|lib|prisma)\//,"")}</span>
+        <span class="ln">${fa(files[f].lines)}</span></div>`).join("")}
+    </div>`;
+  }).join("");
+}
+drawCols();
+
+/* ── پنل جزئیات ── */
+let selected = null;
+function select(f){
+  if(!files[f]) return;
+  selected = f;
+  document.querySelectorAll(".fitem").forEach(e=>e.classList.toggle("sel", e.dataset.f===f));
+  const v = files[f];
+  document.getElementById("dTitle").textContent = f;
+  document.getElementById("dMeta").innerHTML =
+    `${fa(v.lines)} خط <span class="pill">${LAYERS[v.layer].fa}</span>` +
+    (v.client ? `<span class="pill c">اجرا در مرورگر</span>` : `<span class="pill">اجرا روی سرور</span>`);
+  document.getElementById("dDesc").textContent = DESC[f] || "";
+  const li = a => a.length
+    ? a.map(x=>`<li data-go="${x}">${x}</li>`).join("")
+    : `<li style="color:var(--ink3);cursor:default">—</li>`;
+  document.getElementById("dOut").innerHTML = li(outMap[f]);
+  document.getElementById("dIn").innerHTML  = li(inMap[f]);
+  if(view==="graph") paintGraph();
+}
+document.addEventListener("click", e=>{
+  const t = e.target.closest("[data-f],[data-go]");
+  if(t) select(t.dataset.f || t.dataset.go);
+  const lg = e.target.closest(".lg");
+  if(lg){
+    const k = lg.dataset.layer;
+    hidden.has(k) ? hidden.delete(k) : hidden.add(k);
+    lg.classList.toggle("off", hidden.has(k));
+    applyFilter();
+  }
+});
+
+/* ── جست‌وجو و پالایه ── */
+const q = document.getElementById("q");
+function applyFilter(){
+  const s = q.value.trim().toLowerCase();
+  document.querySelectorAll(".col").forEach(c=>{ c.hidden = hidden.has(c.dataset.layer); });
+  document.querySelectorAll(".fitem").forEach(e=>{
+    e.classList.toggle("dim", !!s && !e.dataset.f.toLowerCase().includes(s));
+  });
+  if(view==="graph") paintGraph();
+}
+q.addEventListener("input", applyFilter);
+
+/* ── نماها ── */
+let view = "cols";
+const tc = document.getElementById("tabCols"), tg = document.getElementById("tabGraph");
+tc.onclick = ()=>setView("cols"); tg.onclick = ()=>setView("graph");
+function setView(v){
+  view = v;
+  tc.setAttribute("aria-selected", v==="cols"); tg.setAttribute("aria-selected", v==="graph");
+  document.getElementById("viewCols").hidden  = v!=="cols";
+  document.getElementById("viewGraph").hidden = v!=="graph";
+  if(v==="graph") startGraph();
+}
+
+/* ══ نمای عنکبوتی ═══════════════════════════════════════════════
+   یک چیدمان نیرومحور کوچک و دست‌ساز: گره‌ها همدیگر را پس می‌زنند،
+   یال‌ها مثل فنر می‌کشند. هیچ کتابخانهٔ بیرونی لازم نیست. ── */
+const svg = document.getElementById("graph");
+let nodes = [], links = [], raf = null, started = false;
+
+function startGraph(){
+  if(started){ paintGraph(); return; }
+  started = true;
+  const W = svg.clientWidth, H = svg.clientHeight;
+  const order = Object.keys(LAYERS);
+  nodes = names.map((n,i)=>{
+    const li = order.indexOf(files[n].layer);
+    return { id:n, layer:files[n].layer, r:Math.max(3.2, Math.min(11, Math.sqrt(files[n].lines)/2.4)),
+             x: W*0.5 + (Math.random()-.5)*W*0.7,
+             y: H*(0.12 + 0.76*li/(order.length-1)) + (Math.random()-.5)*40,
+             vx:0, vy:0, ty: H*(0.12 + 0.76*li/(order.length-1)) };
+  });
+  const idx = Object.fromEntries(nodes.map((n,i)=>[n.id,i]));
+  links = edges.filter(([a,b])=>idx[a]!==undefined&&idx[b]!==undefined)
+               .map(([a,b])=>({s:idx[a], t:idx[b]}));
+  tick(320);
+}
+
+function tick(steps){
+  const W = svg.clientWidth, H = svg.clientHeight;
+  for(let s=0;s<steps;s++){
+    for(const n of nodes){ n.vy += (n.ty - n.y)*0.05; n.vx += (W/2 - n.x)*0.0008; }
+    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i], b=nodes[j];
+      let dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy||1;
+      if(d2<26000){ const f=620/d2, d=Math.sqrt(d2);
+        const ux=dx/d*f, uy=dy/d*f; a.vx-=ux; a.vy-=uy; b.vx+=ux; b.vy+=uy; }
+    }
+    for(const l of links){
+      const a=nodes[l.s], b=nodes[l.t];
+      const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1, f=(d-70)*0.0032;
+      a.vx+=dx/d*f; a.vy+=dy/d*f; b.vx-=dx/d*f; b.vy-=dy/d*f;
+    }
+    for(const n of nodes){
+      n.vx*=0.86; n.vy*=0.86; n.x+=n.vx; n.y+=n.vy;
+      n.x=Math.max(14,Math.min(W-14,n.x)); n.y=Math.max(14,Math.min(H-14,n.y));
+    }
+  }
+  paintGraph();
+}
+
+/* page.tsx و route.ts ده‌ها بار تکرار می‌شوند؛ نام پوشه گویاتر از نام فایل است */
+function label(id){
+  const p = id.split("/"), base = p.pop().replace(/\.tsx?$/, "");
+  return /^(page|route|layout|loading)$/.test(base) && p.length
+       ? p[p.length-1] + "/" + base
+       : base;
+}
+
+function paintGraph(){
+  const s = q.value.trim().toLowerCase();
+  const vis = n => !hidden.has(n.layer) && (!s || n.id.toLowerCase().includes(s));
+  const near = selected ? new Set([selected, ...outMap[selected], ...inMap[selected]]) : null;
+  const parts = [];
+  for(const l of links){
+    const a=nodes[l.s], b=nodes[l.t];
+    if(!vis(a)||!vis(b)) continue;
+    const hot = near && near.has(a.id) && near.has(b.id);
+    parts.push(`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"
+      stroke="${hot?"#2F6BE0":"#C9D2E0"}" stroke-width="${hot?1.5:.55}" opacity="${near?(hot?.9:.12):.4}"/>`);
+  }
+  for(const n of nodes){
+    if(!vis(n)) continue;
+    const on = !near || near.has(n.id);
+    parts.push(`<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${n.r.toFixed(1)}"
+      fill="${col(n.layer)}" opacity="${on?(n.id===selected?1:.85):.18}"
+      stroke="${n.id===selected?"#151A23":"#fff"}" stroke-width="${n.id===selected?2:1}"
+      data-f="${n.id}"><title>${n.id}</title></circle>`);
+    if(n.r>7.2 && on) parts.push(`<text x="${n.x.toFixed(1)}" y="${(n.y-n.r-3).toFixed(1)}"
+      text-anchor="middle">${label(n.id)}</text>`);
+  }
+  svg.innerHTML = parts.join("");
+}
+window.addEventListener("resize", ()=>{ if(view==="graph"&&started) tick(60); });
+</script>
+</body>
+</html>

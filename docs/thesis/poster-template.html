@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>پوستر رسامپ</title>
+<style>
+@font-face{font-family:"Vazirmatn";
+  src:url("../vendor/vazirmatn-arabic-wght-normal.woff2") format("woff2-variations");
+  font-weight:100 900;font-display:block;
+  unicode-range:U+0600-06FF,U+200C,U+FB50-FDFF,U+FE70-FEFF;}
+@font-face{font-family:"Vazirmatn";
+  src:url("../vendor/vazirmatn-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight:100 900;font-display:block;unicode-range:U+0000-00FF,U+2000-206F;}
+
+/* A1 ایستاده */
+@page{ size:594mm 841mm; margin:0; }
+:root{
+  --ink:#141A24; --ink2:#3E4959; --ink3:#6E7A8C;
+  --rule:#DCE2EC; --accent:#2F6BE0; --accent2:#6247C4;
+  --good:#0E8F5D; --warn:#B57209; --paper:#fff; --bg:#F4F7FB;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; width:594mm; min-height:841mm; background:var(--bg);
+  font-family:"Vazirmatn",system-ui,sans-serif; color:var(--ink);
+  font-size:12.5pt; line-height:1.72;
+}
+code{font-family:ui-monospace,Menlo,monospace;direction:ltr;display:inline-block;
+  background:#EDF1F7;padding:1px 5px;border-radius:4px;font-size:.9em}
+
+/* ── سربرگ ── */
+.hd{background:linear-gradient(150deg,#16202F 0%,#243burning 60%,#2B3A55 100%);}
+.hd{background:linear-gradient(150deg,#16202F,#2B3A55);color:#fff;padding:22mm 22mm 18mm;}
+.hd .uni{font-size:15pt;color:#A9BAD4;margin:0 0 3mm}
+.hd h1{font-size:44pt;line-height:1.28;margin:0 0 6mm;letter-spacing:-.02em;font-weight:800}
+.hd .by{display:flex;gap:16mm;flex-wrap:wrap;font-size:14pt;color:#C7D4E6}
+.hd .by b{color:#fff;font-weight:700}
+
+/* ── بدنه ── */
+.body{padding:14mm 22mm 20mm}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9mm;align-items:start}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:6mm;padding:8mm 9mm;
+  margin-bottom:9mm;break-inside:avoid}
+.card.span2{grid-column:span 2}
+.card.span3{grid-column:span 3}
+h2{font-size:21pt;margin:0 0 4mm;line-height:1.35;display:flex;align-items:center;gap:4mm}
+h2 .k{width:9mm;height:9mm;border-radius:2.5mm;background:var(--accent);color:#fff;
+  font-size:13pt;display:grid;place-items:center;flex:0 0 auto;font-weight:800}
+h3{font-size:15pt;margin:6mm 0 2mm}
+p{margin:0 0 3mm}
+.lead{font-size:14pt;color:var(--ink2)}
+ul{margin:0 0 3mm;padding-inline-start:6mm}
+li{margin-bottom:1.5mm}
+
+table{width:100%;border-collapse:collapse;font-size:11.5pt}
+th,td{border:1px solid var(--rule);padding:2.6mm 3mm;text-align:right;vertical-align:top}
+th{background:#EDF3FF;font-weight:700}
+tbody tr:nth-child(even) td{background:#FAFBFD}
+td b{color:var(--accent)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6mm}
+.stat{background:var(--paper);border:1px solid var(--rule);border-radius:5mm;
+  padding:6mm 3mm;text-align:center}
+.stat b{display:block;font-size:30pt;color:var(--accent);line-height:1.15;font-weight:800}
+.stat span{display:block;font-size:11.5pt;color:var(--ink3);margin-top:1.5mm}
+
+.usp{background:linear-gradient(150deg,#F3F0FF,#EEF3FF);border:2px solid var(--accent2)}
+.usp h2 .k{background:var(--accent2)}
+.formula{font-family:ui-monospace,Menlo,monospace;direction:ltr;text-align:left;
+  background:#fff;border:1px solid var(--rule);border-radius:4mm;padding:5mm 6mm;
+  font-size:11.5pt;line-height:2.1;margin:4mm 0}
+.formula b{color:var(--accent2)}
+
+.pill{display:inline-block;background:#EAF7F1;color:var(--good);border-radius:20px;
+  padding:1mm 4mm;font-size:11pt;font-weight:700;margin-inline-end:2mm}
+
+.mermaid{display:block}
+.mermaid svg{max-width:100%;height:auto;display:block;margin:0 auto}
+
+/* ── پانویس ── */
+.ft{display:grid;grid-template-columns:auto 1fr;gap:9mm;align-items:center;
+  background:var(--paper);border:1px solid var(--rule);border-radius:6mm;padding:8mm 9mm}
+.qr{width:46mm;height:46mm;display:block}
+.ft .u{font-family:ui-monospace,Menlo,monospace;direction:ltr;font-size:13pt;
+  color:var(--accent);word-break:break-all}
+.note{background:#FFF8E8;border:1px solid #E8C98A;border-radius:4mm;padding:4mm 6mm;
+  font-size:11.5pt;margin-top:4mm}
+.note b{color:var(--warn)}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <p class="uni">دانشگاه زنجان · دانشکدهٔ مهندسی · گروه مهندسی کامپیوتر</p>
+  <h1>طراحی و پیاده‌سازی سامانهٔ<br>جست‌وجو و ثبت آگهی بیلبورد</h1>
+  <div class="by">
+    <span>نگارش: <b>علیرضا زارعیان</b></span>
+    <span>استاد راهنما: <b>«نام استاد راهنما»</b></span>
+    <span>شهریور ۱۴۰۵</span>
+  </div>
+</div>
+
+<div class="body">
+
+  <div class="stats" style="margin-bottom:9mm">
+    <div class="stat"><b>۳٬۵۳۶</b><span>رسانه در ۱۰۱ شهر</span></div>
+    <div class="stat"><b>۴۲</b><span>نقطهٔ پایانی HTTP</span></div>
+    <div class="stat"><b>۱۱۳/۱۱۳</b><span>آزمون خودکار موفق</span></div>
+    <div class="stat"><b>۹۷×</b><span>صرفه‌جویی پردازنده</span></div>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <h2><span class="k">۱</span>مسئله</h2>
+      <p class="lead">بازار رسانهٔ محیطی ایران پراکنده است.</p>
+      <p>اطلاعات هر سازه نزد مالک یا پیمانکار همان سازه می‌ماند. خریدار تبلیغات برای یافتن
+      یک گزینهٔ مناسب باید جداگانه با چند واسطه تماس بگیرد و پاسخ‌هایی را که در قالب‌های
+      متفاوت می‌گیرد دستی مقایسه کند.</p>
+      <p><b>نتیجه:</b> زمان تلف‌شده، نبود امکان مقایسهٔ منصفانه، و نابرابری اطلاعاتی به سود
+      فروشنده. عرضه وجود دارد؛ آنچه وجود ندارد یک <b>نمای واحد و قابل جست‌وجو</b> از آن است.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="k">۲</span>راه‌حل</h2>
+      <p>یک سامانهٔ تحت وب که عرضهٔ پراکنده را در یک فهرست یکپارچه گرد می‌آورد و دو گروه
+      کاربر را به هم می‌رساند:</p>
+      <ul>
+        <li><b>خریدار تبلیغات</b> — جست‌وجو و پالایش بر پایهٔ شهر، نوع، قیمت و ابعاد؛ دیدن
+            موقعیت روی نقشه؛ مقایسهٔ کنار هم؛ و دریافت شمارهٔ تماس مالک پس از احراز هویت.</li>
+        <li><b>صاحب رسانه</b> — ثبت آگهی با فرم چندمرحله‌ای و بارگذاری تصویر، برای انتشار
+            پس از بررسی کارشناس.</li>
+      </ul>
+      <p><span class="pill">فارسی و راست‌به‌چپ</span><span class="pill">آمادهٔ موبایل</span></p>
+    </div>
+
+    <div class="card">
+      <h2><span class="k">۳</span>مرزهای آگاهانه</h2>
+      <p>سامانه مالک رسانه‌ها و واسطهٔ مالی نیست. سه قابلیت عمداً ساخته نشده‌اند:</p>
+      <ul>
+        <li><b>رزرو آنلاین</b> — تقویم اشغال سازه نزد مالک است. فرم رزرو بدون آن، تعهدی
+            بی‌پشتوانه می‌سازد.</li>
+        <li><b>درگاه پرداخت</b> — نیازمند شخصیت حقوقی است؛ به‌جای درگاه جعلی، پلن ویژه با
+            تأیید کارشناس پیاده شد.</li>
+        <li><b>سرویس‌های میزبانی‌شده</b> — هیچ سرویس پولی یا مسدود برای ایران به کار نرفته؛
+            معادل درون‌کدی ساخته شده است.</li>
+      </ul>
+    </div>
+
+    <div class="card span2">
+      <h2><span class="k">۴</span>مزیت نسبت به فهرست‌های موجود</h2>
+      <p>وب‌گاه‌های امروزی رسانهٔ محیطی در ایران عمدتاً <b>وب‌گاه یک شرکت‌اند، نه یک بازار</b>:
+      هر یک موجودی خودش را نشان می‌دهد و برای هر سازه یک عکس، یک اندازه و یک نام خیابان
+      منتشر می‌کند.</p>
+      <table>
+        <thead><tr><th style="width:24%">ویژگی</th><th style="width:32%">وب‌گاه‌های موجود</th><th>این سامانه</th></tr></thead>
+        <tbody>
+          <tr><td>دامنهٔ موجودی</td><td>فقط سازه‌های همان شرکت</td><td><b>تجمیع سه منبع:</b> ۳٬۵۳۶ رسانه در ۱۰۱ شهر</td></tr>
+          <tr><td>جست‌وجوی یکپارچه</td><td>باید چند وب‌گاه را جدا گشت</td><td>یک پالایه روی شهر، نوع، قیمت، ابعاد</td></tr>
+          <tr><td>نقشه</td><td>معمولاً فقط نام خیابان</td><td>فهرست و نقشه کنار هم — <b>۳٬۰۲۰ رسانه با مختصات (۸۵٪)</b></td></tr>
+          <tr><td>مقایسهٔ کنار هم</td><td>ندارد</td><td>مقایسهٔ ستونی مشخصات، قیمت و بازدید</td></tr>
+          <tr><td>برآورد بازدید روزانه</td><td>ندارد</td><td><b>مدل شفاف مبتنی بر کلاس معبر</b></td></tr>
+          <tr><td>شفافیت قیمت</td><td>پراکنده، گاهی «تماس بگیرید»</td><td>قیمت در فهرست، قابل مرتب‌سازی و پالایش</td></tr>
+          <tr><td>حفاظت از دادهٔ تماس</td><td>شماره در صفحهٔ عمومی</td><td>پشت احراز هویت، با سقف نرخ درخواست</td></tr>
+          <tr><td>فارسی و راست‌به‌چپ</td><td>غالباً قالب ترجمه‌شده</td><td>راست‌به‌چپ بومی در چیدمان، جدول و انیمیشن</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card usp">
+      <h2><span class="k">★</span>نوآوری اصلی</h2>
+      <h3>برآورد بازدید روزانه</h3>
+      <p>هیچ منبعی عددی برای «چند نفر در روز این سازه را می‌بینند» منتشر نمی‌کند — در حالی
+      که خریدار دقیقاً همین را برای سنجش ارزش خرید لازم دارد.</p>
+      <div class="formula">
+        vehicles&nbsp;&nbsp;&nbsp; = roadClass × cityFactor<br>
+        opportunity = vehicles × occupancy + pedestrians<br>
+        visibility&nbsp; = seeRoad × seeType × (1+size)<br>
+        <b>impressions = opportunity × visibility</b>
+      </div>
+      <ul>
+        <li><b>کلاس معبر، نه جمعیت شهر.</b> بزرگراه در هر شهری ترافیک بزرگراه دارد؛ جمعیت
+            فقط زیرخطی مقیاس می‌دهد (توان ۰٫۳۵).</li>
+        <li><b>قطعی و بازتولیدپذیر.</b> بدون عدد تصادفی — تنوع از درهم‌سازی هویت رکورد.</li>
+        <li><b>منبع هر ضریب ثبت شده.</b> پیروی از الگوی Geopath و Route.</li>
+      </ul>
+    </div>
+
+    <div class="card span2">
+      <h2><span class="k">۵</span>معماری — دو مسیر داده</h2>
+      <div class="mermaid">
+flowchart LR
+    U["کاربر و مرورگر او"]
+    PX["نگهبان لبه<br>proxy.ts"]
+    RSC["ساخت صفحه روی سرور<br>Server Component"]
+    API["مسیرهای برنامه‌نویسی<br>۴۲ نقطهٔ پایانی"]
+    DAL["لایهٔ دسترسی داده<br>یک نقطهٔ ورود"]
+    DB[("پایگاه داده")]
+    PY["خزندهٔ پایتون<br>۳ منبع"]
+    U --> PX
+    PX -->|"مسیر ۱ · درخواست صفحه"| RSC
+    PX -->|"مسیر ۲ · تعامل کاربر"| API
+    RSC --> DAL
+    API --> DAL
+    DAL --> DB
+    RSC -->|"HTML آماده"| U
+    API -->|"پاسخ JSON"| U
+    PY --> DB
+    classDef srv fill:#EDF3FF,stroke:#2F6BE0,color:#151A23
+    classDef sto fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
+    classDef ext fill:#F5F0FF,stroke:#6247C4,color:#151A23
+    classDef usr fill:#FFF8E8,stroke:#B57209,color:#151A23
+    class PX,RSC,API,DAL srv
+    class DB sto
+    class PY ext
+    class U usr
+      </div>
+      <p style="margin-top:4mm">هر دو مسیر از <b>یک لایهٔ داده</b> عبور می‌کنند — یک منبع
+      حقیقت، بدون منطق تکراری. صفحهٔ جزئیات رسانه مستقیم از پایگاه داده می‌خواند (یک پرش،
+      بدون تبدیل به JSON)؛ بقیهٔ تعامل‌ها از مسیر HTTP می‌روند. این الگوی توصیه‌شدهٔ خودِ
+      چارچوب است و گزینهٔ سریع‌تر، نه یک میان‌بر.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="k">۶</span>امنیت و صحت</h2>
+      <p><b>خط لولهٔ ثابت روی هر مسیر:</b></p>
+      <p style="font-size:11.5pt;color:var(--ink2)">نشست ← سقف نرخ ← اعتبارسنجی ← منطق
+      کسب‌وکار ← رد ممیزی</p>
+      <ul>
+        <li>ترتیب قابل جابه‌جایی نیست: سقف نرخ پیش از احراز هویت یعنی مهاجم بی‌حساب می‌تواند
+            سهمیه را تمام کند.</li>
+        <li>اعتبارسنجی طرح‌واره‌ای روی تمام ورودی‌ها + فهرست مجاز برای مرتب‌سازی و پالایش.</li>
+        <li>مرز دسترسی روی نقطهٔ پایانی، نه در رابط کاربری.</li>
+        <li>گذرواژه با bcrypt۱۲ و مقایسهٔ ساختگی، تا زمان پاسخ نگوید کدام شماره ثبت است.</li>
+        <li>کلید یکتایی روی ثبت آگهی؛ تصمیم تأیید تک‌شلیک؛ ثبت نظر و میانگین در یک تراکنش.</li>
+      </ul>
+    </div>
+
+    <div class="card span3">
+      <h2><span class="k">۷</span>ارزیابی</h2>
+      <div class="grid" style="gap:9mm">
+        <div>
+          <h3>آزمون خودکار</h3>
+          <p><b>۱۱۳ از ۱۱۳ موفق</b> در ۱۷٫۶ ثانیه، روی یک ساخت تولیدی و پایگاه دادهٔ ایزوله.
+          بدون هیچ وابستگی بیرونی، مستقیم با درخواست HTTP.</p>
+          <p style="font-size:11.5pt;color:var(--ink2)">پوشش: اعتبارسنجی و فهرست مجاز، دسترسی
+          در سطح نقش و شیء، سقف نرخ، عدم شمارش کاربران <b>هم در متن و هم در زمان پاسخ</b>،
+          رد فایل با امضای بایتی نادرست، ماشین حالت تأیید، چرخهٔ رمز یک‌بارمصرف.</p>
+        </div>
+        <div>
+          <h3>کارایی — عدد ۹۷ برابر</h3>
+          <p>پردازندهٔ مصرفی برای نخستین بازدید از ده مسیر:</p>
+          <table><tbody>
+            <tr><td>حالت توسعه</td><td><b>۹٫۷ ثانیه</b></td></tr>
+            <tr><td>حالت ساخته‌شده</td><td><b>۰٫۱ ثانیه</b></td></tr>
+          </tbody></table>
+          <p style="font-size:11.5pt;color:var(--ink2);margin-top:3mm">حالت توسعه هر صفحه را
+          لحظهٔ کلیک از نو ترجمه می‌کند. یک تصمیم عملیاتی قابل دفاع، نه جزئیات اجرایی.</p>
+        </div>
+        <div>
+          <h3>سازمان‌دهی کد</h3>
+          <p>۱۳۲ فایل با ۴۰۱ پیوند <code>import</code>، در ۹ لایه.</p>
+          <p style="font-size:11.5pt;color:var(--ink2)">پرارجاع‌ترین فایل‌ها دقیقاً مرحله‌های
+          خط لولهٔ درخواست‌اند: <code>api-log</code> (۳۴)، <code>session</code> (۳۳)،
+          <code>client-ip</code> (۳۲)، <code>rate-limit</code> (۳۲)،
+          <code>db/client</code> (۳۱). یعنی ادعای «یک نقطهٔ ورود به پایگاه داده»
+          <b>قابل بررسی است، نه شعار</b>.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="ft">
+    <!--QR-->
+    <div>
+      <h3 style="margin:0 0 2mm">کد منبع، مستندات فنی و تاریخچهٔ توسعه</h3>
+      <p class="u">github.com/alireza-zareian/Rasamap-Repository</p>
+      <div class="note"><b>برای اجرا:</b> <code>npm install</code> ←
+        <code>npm run db:seed</code> ← <code>npm run demo</code>.
+        تنها پیش‌نیاز <code>Node.js 20</code> است؛ هیچ سرویس بیرونی یا کانتینری لازم نیست.</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../vendor/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad:false, theme:"base", securityLevel:"loose",
+  themeVariables:{
+    background:"#FFFFFF", primaryColor:"#EDF3FF", primaryBorderColor:"#2F6BE0",
+    primaryTextColor:"#151A23", lineColor:"#7E8899", textColor:"#151A23",
+    mainBkg:"#EDF3FF", nodeBorder:"#2F6BE0",
+    fontFamily:"Vazirmatn, system-ui, sans-serif", fontSize:"17px",
+  },
+  flowchart:{ htmlLabels:true, curve:"basis", padding:20, nodeSpacing:60, rankSpacing:80 },
+});
+mermaid.run({querySelector:".mermaid"})
+  .then(()=>{document.documentElement.dataset.ready="1";});
+</script>
+</body>
+</html>

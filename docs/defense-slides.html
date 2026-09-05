@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دفاع پایان‌نامه — رسامپ</title>
+<style>
+@font-face{font-family:"Vazirmatn";
+  src:url("vendor/vazirmatn-arabic-wght-normal.woff2") format("woff2-variations");
+  font-weight:100 900;font-display:block;
+  unicode-range:U+0600-06FF,U+200C,U+FB50-FDFF,U+FE70-FEFF;}
+@font-face{font-family:"Vazirmatn";
+  src:url("vendor/vazirmatn-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight:100 900;font-display:block;unicode-range:U+0000-00FF,U+2000-206F;}
+
+:root{
+  --ink:#141A24; --ink2:#3E4959; --ink3:#6E7A8C; --rule:#DDE3ED;
+  --accent:#2F6BE0; --accent2:#6247C4; --good:#0E8F5D; --warn:#B57209;
+  --bg:#F5F7FB; --paper:#fff;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:#0E1420;color:var(--ink);
+  font-family:"Vazirmatn",system-ui,sans-serif;overflow:hidden}
+code{font-family:ui-monospace,Menlo,monospace;direction:ltr;display:inline-block;
+  background:#EDF1F7;padding:1px 6px;border-radius:5px;font-size:.88em}
+
+/* یک اسلاید = یک صفحهٔ ۱۶:۹ که با مقیاس در پنجره جا می‌شود */
+#stage{position:fixed;inset:0;display:grid;place-items:center}
+#deck{width:1280px;height:720px;transform-origin:center;position:relative}
+.slide{position:absolute;inset:0;background:var(--bg);border-radius:10px;
+  padding:56px 68px;display:none;flex-direction:column;overflow:hidden}
+.slide.on{display:flex}
+
+h1{font-size:52px;line-height:1.25;margin:0 0 18px;font-weight:800;letter-spacing:-.02em}
+h2{font-size:38px;line-height:1.3;margin:0 0 6px;font-weight:800;letter-spacing:-.01em}
+.kick{font-size:17px;color:var(--accent);font-weight:700;margin:0 0 8px;letter-spacing:.04em}
+.sub{font-size:21px;color:var(--ink2);margin:0 0 20px;max-width:62ch}
+p{margin:0 0 12px;font-size:20px;line-height:1.75}
+ul{margin:0;padding-inline-start:26px;font-size:20px;line-height:1.85}
+li{margin-bottom:9px}
+li b{color:var(--accent)}
+.big{font-size:26px;line-height:1.7}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;flex:1;min-height:0}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:22px 24px}
+.card h3{margin:0 0 8px;font-size:22px}
+.card p,.card li{font-size:17px;line-height:1.7}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:14px 0}
+.stat{background:var(--paper);border:1px solid var(--rule);border-radius:14px;
+  padding:20px 12px;text-align:center}
+.stat b{display:block;font-size:46px;color:var(--accent);line-height:1.1;font-weight:800}
+.stat span{display:block;font-size:15px;color:var(--ink3);margin-top:6px}
+
+table{width:100%;border-collapse:collapse;font-size:17px}
+th,td{border:1px solid var(--rule);padding:8px 11px;text-align:right;vertical-align:top}
+th{background:#EDF3FF;font-weight:700}
+tbody tr:nth-child(even) td{background:#FAFBFD}
+td b{color:var(--accent)}
+
+.hero{flex:1;display:flex;flex-direction:column;justify-content:center}
+.hero .uni{font-size:20px;color:var(--ink3);margin-bottom:16px}
+.hero .rule{width:110px;height:5px;background:var(--accent);border-radius:3px;margin:22px 0}
+.hero .by{font-size:21px;color:var(--ink2);line-height:2}
+.hero .by b{color:var(--ink)}
+
+.mermaid{display:flex;justify-content:center;align-items:center;flex:1;min-height:0}
+.mermaid svg{max-width:100%;max-height:430px;height:auto}
+
+.quote{background:#EEF3FF;border-inline-start:6px solid var(--accent);
+  border-radius:12px;padding:20px 26px;font-size:21px;line-height:1.75}
+.quote.v{background:#F4F0FF;border-color:var(--accent2)}
+.quote.w{background:#FFF8E8;border-color:var(--warn)}
+.quote.g{background:#EAF7F1;border-color:var(--good)}
+
+.formula{font-family:ui-monospace,Menlo,monospace;direction:ltr;text-align:left;
+  background:var(--paper);border:1px solid var(--rule);border-radius:12px;
+  padding:18px 24px;font-size:19px;line-height:2;margin:14px 0}
+.formula b{color:var(--accent2)}
+
+.huge{font-size:120px;font-weight:800;color:var(--accent);line-height:1;letter-spacing:-.04em}
+
+/* ── ناوبری ── */
+#bar{position:fixed;bottom:0;right:0;left:0;height:4px;background:#1B2536;z-index:5}
+#bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .22s}
+#pg{position:fixed;bottom:14px;left:20px;color:#7C8AA3;font-size:14px;z-index:5;
+  font-variant-numeric:tabular-nums}
+#help{position:fixed;bottom:14px;right:20px;color:#5C6C86;font-size:13px;z-index:5}
+</style>
+</head>
+<body>
+<div id="stage"><div id="deck">
+
+<!-- ۱ -->
+<section class="slide">
+  <div class="hero">
+    <p class="uni">دانشگاه زنجان · دانشکدهٔ مهندسی · گروه مهندسی کامپیوتر</p>
+    <h1>طراحی و پیاده‌سازی سامانهٔ<br>جست‌وجو و ثبت آگهی بیلبورد</h1>
+    <div class="rule"></div>
+    <p class="by">نگارش: <b>علیرضا زارعیان</b><br>
+       استاد راهنما: <b>«نام استاد راهنما»</b><br>
+       <span style="color:var(--ink3);font-size:18px">شهریور ۱۴۰۵</span></p>
+  </div>
+</section>
+
+<!-- ۲ -->
+<section class="slide">
+  <p class="kick">۱ · مسئله</p>
+  <h2>عرضه هست؛ نمای واحدی از آن نیست</h2>
+  <p class="sub">بازار رسانهٔ محیطی ایران پراکنده است.</p>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>اطلاعات هر سازه نزد <b>مالک یا پیمانکار همان سازه</b> می‌ماند.</li>
+        <li>خریدار برای یافتن یک گزینه باید با <b>چند واسطهٔ جداگانه</b> تماس بگیرد.</li>
+        <li>پاسخ‌ها در قالب‌های متفاوت می‌آیند و باید <b>دستی مقایسه</b> شوند.</li>
+      </ul>
+    </div>
+    <div class="quote">
+      <b>نتیجه:</b> زمان تلف‌شده، نبودِ امکان مقایسهٔ منصفانه، و نابرابری اطلاعاتی به سود
+      فروشنده.<br><br>
+      کسب‌وکار کوچک حتی نمی‌داند در شهر خودش گزینه‌ای در توان مالی‌اش هست یا نه.
+    </div>
+  </div>
+</section>
+
+<!-- ۳ -->
+<section class="slide">
+  <p class="kick">۲ · راه‌حل</p>
+  <h2>یک فهرست یکپارچه و قابل جست‌وجو</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>خریدار تبلیغات</h3>
+      <ul>
+        <li>جست‌وجو و پالایش: شهر، نوع، قیمت، ابعاد</li>
+        <li>موقعیت هر رسانه روی نقشه</li>
+        <li>مقایسهٔ کنار هم چند گزینه</li>
+        <li>دریافت شمارهٔ تماس مالک پس از احراز هویت</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>صاحب رسانه</h3>
+      <ul>
+        <li>ثبت آگهی با فرم چندمرحله‌ای</li>
+        <li>بارگذاری تصویر</li>
+        <li>بررسی کارشناس پیش از انتشار</li>
+        <li>پیگیری وضعیت در پیشخوان</li>
+      </ul>
+    </div>
+  </div>
+  <div class="quote w" style="margin-top:18px">
+    سامانه مالک رسانه‌ها و واسطهٔ مالی نیست — پس <b>عمداً رزرو آنلاین ندارد</b>.
+    چیزی که در اختیار ندارد را نمی‌فروشد.
+  </div>
+</section>
+
+<!-- ۴ -->
+<section class="slide">
+  <p class="kick">۳ · مزیت رقابتی</p>
+  <h2>تفاوت با فهرست‌های موجود</h2>
+  <p class="sub" style="font-size:19px">وب‌گاه‌های امروزی عمدتاً <b>وب‌گاه یک شرکت‌اند، نه یک بازار</b>.</p>
+  <table>
+    <thead><tr><th style="width:24%">ویژگی</th><th style="width:30%">وب‌گاه‌های موجود</th><th>این سامانه</th></tr></thead>
+    <tbody>
+      <tr><td>دامنهٔ موجودی</td><td>فقط سازه‌های همان شرکت</td><td><b>تجمیع سه منبع:</b> ۳٬۵۳۶ رسانه، ۱۰۱ شهر</td></tr>
+      <tr><td>نقشه</td><td>معمولاً فقط نام خیابان</td><td>فهرست و نقشه کنار هم — <b>۸۵٪ دارای مختصات</b></td></tr>
+      <tr><td>مقایسهٔ کنار هم</td><td>ندارد</td><td>مقایسهٔ ستونی مشخصات، قیمت و بازدید</td></tr>
+      <tr><td>برآورد بازدید روزانه</td><td>ندارد</td><td><b>مدل شفاف مبتنی بر کلاس معبر</b></td></tr>
+      <tr><td>شفافیت قیمت</td><td>پراکنده، گاهی «تماس بگیرید»</td><td>در فهرست، قابل مرتب‌سازی و پالایش</td></tr>
+      <tr><td>دادهٔ تماس</td><td>شماره در صفحهٔ عمومی</td><td>پشت احراز هویت، با سقف نرخ</td></tr>
+      <tr><td>فارسی و راست‌به‌چپ</td><td>غالباً قالب ترجمه‌شده</td><td>راست‌به‌چپ بومی در کل چیدمان</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ۵ -->
+<section class="slide">
+  <p class="kick">۴ · نوآوری اصلی</p>
+  <h2>برآورد بازدید روزانه</h2>
+  <p class="sub" style="font-size:19px">هیچ منبعی این عدد را منتشر نمی‌کند — و دقیقاً همان
+  چیزی است که خریدار برای سنجش ارزش خرید لازم دارد.</p>
+  <div class="cols">
+    <div>
+      <div class="formula">
+        vehicles&nbsp;&nbsp;&nbsp; = roadClass × cityFactor<br>
+        opportunity = vehicles × occupancy + pedestrians<br>
+        visibility&nbsp; = seeRoad × seeType × (1 + size)<br>
+        <b>impressions = opportunity × visibility</b>
+      </div>
+      <p style="font-size:17px;color:var(--ink3)">پیروی از شکلی که صنعت جهانی به کار می‌برد:
+      <code dir="ltr">Geopath</code> در آمریکا، <code dir="ltr">Route</code> در بریتانیا.</p>
+    </div>
+    <div>
+      <ul style="font-size:18px">
+        <li><b>کلاس معبر، نه جمعیت شهر.</b> بزرگراه در هر شهری ترافیک بزرگراه دارد؛ جمعیت
+            فقط زیرخطی مقیاس می‌دهد (توان ۰٫۳۵).</li>
+        <li><b>قطعی و بازتولیدپذیر.</b> بدون عدد تصادفی — تنوع از درهم‌سازی هویت رکورد.</li>
+        <li><b>منبع هر ضریب ثبت شده.</b> سرشماری، ارقام شرکت کنترل ترافیک تهران، میانهٔ
+            قیمت‌های منتشرشده.</li>
+      </ul>
+      <div class="quote g" style="font-size:17px;margin-top:6px">
+        این یک <b>برآورد</b> است نه اندازه‌گیری، و سامانه هم همین را می‌گوید.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ۶ -->
+<section class="slide">
+  <p class="kick">۵ · اعداد</p>
+  <h2>پروژه در یک نگاه</h2>
+  <div class="stats">
+    <div class="stat"><b>۳٬۵۳۶</b><span>رسانه در ۱۰۱ شهر</span></div>
+    <div class="stat"><b>۴۲</b><span>نقطهٔ پایانی HTTP</span></div>
+    <div class="stat"><b>۱۳۲</b><span>فایل TypeScript</span></div>
+    <div class="stat"><b>۱۶٬۷۱۵</b><span>خط کد</span></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>۱۱۳/۱۱۳</b><span>آزمون خودکار موفق</span></div>
+    <div class="stat"><b>۱۰</b><span>موجودیت پایگاه داده</span></div>
+    <div class="stat"><b>۸۵٪</b><span>دارای مختصات جغرافیایی</span></div>
+    <div class="stat"><b>۰</b><span>هشدار lint</span></div>
+  </div>
+  <div class="quote" style="margin-top:6px;font-size:19px">
+    هر عدد این اسلاید در زمان نگارش با اجرای مستقیم روی پروژه اندازه‌گیری شده است —
+    پرس‌وجوی پایگاه داده، پیمایش مخزن، و اجرای <code>npm test</code>.
+  </div>
+</section>
+
+<!-- ۷ -->
+<section class="slide">
+  <p class="kick">۶ · معماری</p>
+  <h2>دو مسیر داده، هر دو عمدی</h2>
+  <div class="mermaid">
+flowchart LR
+    U["کاربر و مرورگر او"]
+    PX["نگهبان لبه<br>proxy.ts"]
+    RSC["ساخت صفحه روی سرور<br>Server Component"]
+    API["مسیرهای برنامه‌نویسی<br>۴۲ نقطهٔ پایانی"]
+    DAL["لایهٔ دسترسی داده<br>یک نقطهٔ ورود"]
+    DB[("پایگاه داده")]
+    U --> PX
+    PX -->|"مسیر ۱ · درخواست صفحه"| RSC
+    PX -->|"مسیر ۲ · تعامل کاربر"| API
+    RSC --> DAL
+    API --> DAL
+    DAL --> DB
+    RSC -->|"HTML آماده"| U
+    API -->|"پاسخ JSON"| U
+    classDef srv fill:#EDF3FF,stroke:#2F6BE0,color:#151A23
+    classDef sto fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
+    classDef usr fill:#FFF8E8,stroke:#B57209,color:#151A23
+    class PX,RSC,API,DAL srv
+    class DB sto
+    class U usr
+  </div>
+  <div class="quote" style="font-size:18px">
+    هر دو مسیر از <b>یک لایهٔ داده</b> عبور می‌کنند: یک منبع حقیقت، بدون منطق تکراری،
+    بدون حالتِ «صفحه کهنه است ولی API تازه».
+  </div>
+</section>
+
+<!-- ۸ -->
+<section class="slide">
+  <p class="kick">۶ · معماری</p>
+  <h2>چرا هر صفحه‌ای API خودش را صدا نمی‌زند؟</h2>
+  <div class="cols">
+    <div class="quote v">
+      یک API بدون رابط کاربری (مثل <code dir="ltr">Django + DRF</code>) مثل
+      <b>آشپزخانهٔ ابری</b> است: فقط ارسال بیرون، بدون سالن پذیرایی. هر بشقاب از دریچهٔ
+      تحویل بیرون می‌رود چون <b>راه دیگری نیست</b> — این خاصیت ساختمان است، نه نشانهٔ کیفیت.
+    </div>
+    <div class="quote g">
+      این سامانه یک <b>رستوران با سرویس بیرون‌بر</b> است. مهمان سر میز غذایش را مستقیم از
+      آشپزخانه می‌گیرد (مسیر ۱)؛ سفارش بیرون‌بر بسته‌بندی می‌شود و پیک می‌بردش (مسیر ۲).
+      <b>آشپزخانه برای هر دو یکی است.</b>
+    </div>
+  </div>
+  <table style="margin-top:16px">
+    <thead><tr><th style="width:32%"></th><th>مسیر ۱ — Server Component</th><th>صفحه‌ای که API خودش را صدا بزند</th></tr></thead>
+    <tbody>
+      <tr><td>پرش شبکه</td><td><b>۱</b> (سرور ← پایگاه داده)</td><td>۲ یا بیشتر (سرور ← خودش ← پایگاه داده)</td></tr>
+      <tr><td>هزینهٔ معمول</td><td><b>۵ تا ۲۰ میلی‌ثانیه</b></td><td>۴۰ تا ۱۵۰ میلی‌ثانیه + پردازندهٔ بیشتر</td></tr>
+      <tr><td>تولید ایستا</td><td>کار می‌کند</td><td>می‌شکند</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ۹ -->
+<section class="slide">
+  <p class="kick">۷ · صحت</p>
+  <h2>خط لولهٔ ثابت هر درخواست</h2>
+  <div class="mermaid">
+flowchart LR
+    A["درخواست"] --> B{"ربات؟"}
+    B -->|بله| X1["۴۰۳"]
+    B -->|خیر| C{"نشست معتبر؟"}
+    C -->|خیر| X2["۴۰۱"]
+    C -->|بله| D{"سقف نرخ"}
+    D -->|رد| X3["۴۲۹"]
+    D -->|مجاز| E{"سطح دسترسی"}
+    E -->|ناکافی| X4["۴۰۳"]
+    E -->|کافی| F{"اعتبارسنجی"}
+    F -->|نامعتبر| X5["۴۰۰"]
+    F -->|معتبر| G["منطق کسب‌وکار"]
+    G --> H["رد ممیزی"] --> I["۲۰۰"]
+    classDef ok fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
+    classDef no fill:#FDEEEE,stroke:#C0392B,color:#151A23
+    class G,H,I ok
+    class X1,X2,X3,X4,X5 no
+  </div>
+  <div class="quote w" style="font-size:18px">
+    <b>ترتیب قابل جابه‌جایی نیست.</b> سقف نرخ پیش از بررسی نشست ← مهاجم بدون حساب سهمیه را
+    تمام می‌کند. اعتبارسنجی پیش از سقف نرخ ← مهاجم بارِ سنگین را رایگان به سرور تحمیل می‌کند.
+  </div>
+</section>
+
+<!-- ۱۰ -->
+<section class="slide">
+  <p class="kick">۸ · امنیت</p>
+  <h2>چهار تصمیم که ارزش گفتن دارند</h2>
+  <div class="cols3" style="flex:1">
+    <div class="card">
+      <h3>نشتِ زمانی</h3>
+      <p>اگر سرور برای شمارهٔ ناموجود سریع‌تر پاسخ دهد، <b>زمان پاسخ</b> می‌گوید کدام شماره
+      ثبت است. پس در آن حالت هم یک مقایسهٔ ساختگی انجام می‌شود.</p>
+      <p style="color:var(--good);font-size:15px"><b>آزمون خودکار دارد.</b></p>
+    </div>
+    <div class="card">
+      <h3>مرز روی نقطهٔ پایانی</h3>
+      <p>پنهان‌کردن یک دکمه امنیت نیست — درخواست را می‌توان مستقیم ساخت. بررسی سطح دسترسی
+      روی <b>خودِ مسیر</b> انجام می‌شود.</p>
+    </div>
+    <div class="card">
+      <h3>بارگذاری فایل</h3>
+      <p>نوع فایل از <b>بایت‌های آغازین خودش</b> تشخیص داده می‌شود، نه از ادعای مرورگر.
+      فایلی که امضای بایتی تصویر ندارد رد می‌شود.</p>
+    </div>
+  </div>
+  <div class="quote g" style="margin-top:14px;font-size:18px">
+    <b>حفاظت از دادهٔ تماس:</b> شماره <b>هرگز</b> در HTML صفحه نیست — حتی برای کاربر
+    واردشده. فقط در پاسخ یک درخواست <code>POST</code> جداگانه می‌آید، با ورود اجباری و
+    سقف نرخ. این برداشت انبوه را <b>ناممکن نمی‌کند، پرهزینه می‌کند</b> — و ادعای بیش از این
+    نادرست است.
+  </div>
+</section>
+
+<!-- ۱۱ -->
+<section class="slide">
+  <p class="kick">۹ · همروندی</p>
+  <h2>سه خطای همروندی، سه بستنِ ساختاری</h2>
+  <div class="cols3" style="flex:1">
+    <div class="card">
+      <h3>ارسال دوباره</h3>
+      <p>کاربر دکمه را دو بار می‌زند یا اتصالش قطع می‌شود.</p>
+      <p><b>کلید یکتایی:</b> اگر همان کلید دوباره برسد، پاسخ ذخیره‌شده برمی‌گردد و رکورد
+      دومی ساخته نمی‌شود.</p>
+    </div>
+    <div class="card">
+      <h3>تصمیم دوباره</h3>
+      <p>دو کارشناس هم‌زمان یک آگهی را تأیید می‌کنند.</p>
+      <p><b>تصمیم تک‌شلیک:</b> تلاش دوم پاسخ «تعارض» می‌گیرد، پس پلن ویژه دو بار اعطا
+      نمی‌شود.</p>
+    </div>
+    <div class="card">
+      <h3>خواندن، تغییر، نوشتن</h3>
+      <p>ثبت نظر، میانگین امتیاز را هم عوض می‌کند.</p>
+      <p><b>یک تراکنش:</b> نوشتن نظر و بازمحاسبهٔ میانگین با هم انجام می‌شوند — یا هر دو یا
+      هیچ‌کدام.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ۱۲ -->
+<section class="slide">
+  <p class="kick">۱۰ · مدل داده</p>
+  <h2>ده موجودیت، ۲۵ نمایه، ۱۳ مهاجرت</h2>
+  <div class="mermaid">
+erDiagram
+    OWNERS ||--o{ BILLBOARDS : "مالک است"
+    USERS  ||--o{ BILLBOARDS : "ثبت کرده"
+    USERS  ||--o{ REVIEWS : "نوشته"
+    BILLBOARDS ||--o{ REVIEWS : "دارد"
+    USERS  ||--o{ CONTACT_REQUESTS : "خواسته"
+    BILLBOARDS ||--o{ CONTACT_REQUESTS : "برایش"
+    ADMINS ||--o{ AUDIT_LOGS : "انجام داده"
+  </div>
+  <div class="quote" style="font-size:18px">
+    نمایه‌ها بر اساس <b>پرس‌وجوهایی که رابط کاربری واقعاً می‌سازد</b> تعریف شده‌اند، نه حدسی
+    روی تک‌تک ستون‌ها: <code>(city,status)</code>، <code>(city,type)</code>،
+    <code>(type,price)</code> دقیقاً پالایه‌های صفحهٔ جست‌وجو را پوشش می‌دهند.
+  </div>
+</section>
+
+<!-- ۱۳ -->
+<section class="slide">
+  <p class="kick">۱۱ · ارزیابی</p>
+  <h2>۱۱۳ آزمون، همه موفق</h2>
+  <div class="cols">
+    <div>
+      <div class="stats" style="grid-template-columns:1fr 1fr">
+        <div class="stat"><b>۱۱۳</b><span>موفق</span></div>
+        <div class="stat"><b>۱۷٫۶ ث</b><span>زمان اجرا</span></div>
+      </div>
+      <p style="font-size:18px">بدون هیچ وابستگی بیرونی، مستقیم با درخواست
+      <code dir="ltr">HTTP</code> به یک سرور واقعی — روی یک <b>ساخت تولیدی</b> و پایگاه
+      دادهٔ ایزوله که هر اجرا از نو ساخته می‌شود.</p>
+    </div>
+    <div>
+      <ul style="font-size:17px">
+        <li>اعتبارسنجی ورودی و فهرست‌های مجاز</li>
+        <li>دسترسی در سطح نقش و در سطح شیء</li>
+        <li>سقف نرخ درخواست</li>
+        <li><b>عدم شمارش کاربران — در متن و در زمان پاسخ</b></li>
+        <li>رد فایل با امضای بایتی نادرست</li>
+        <li>ماشین حالت تأیید آگهی</li>
+        <li>چرخهٔ رمز یک‌بارمصرف</li>
+        <li>درستی مرتب‌سازی، با محافظ در برابر «موفقیت پوچ»</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ۱۴ -->
+<section class="slide">
+  <p class="kick">۱۲ · کارایی</p>
+  <h2>یک اندازه‌گیری که به قاعده تبدیل شد</h2>
+  <div style="display:flex;gap:40px;align-items:center;flex:1">
+    <div style="text-align:center">
+      <div class="huge">۹۷×</div>
+      <p style="font-size:19px;color:var(--ink3);margin-top:6px">پردازندهٔ کمتر</p>
+    </div>
+    <div style="flex:1">
+      <p style="font-size:19px">پردازندهٔ مصرفی برای نخستین بازدید از ده مسیر سامانه:</p>
+      <table>
+        <tbody>
+          <tr><td style="width:52%">حالت توسعه (<code>next dev</code>)</td><td><b>۹٫۷ ثانیه</b></td></tr>
+          <tr><td>حالت ساخته‌شده (<code>next start</code>)</td><td><b>۰٫۱ ثانیه</b></td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:18px;margin-top:14px">حالت توسعه هر صفحه را در همان لحظهٔ درخواست
+      از نو ترجمه می‌کند و هزاران فایل را زیر نظر دارد. حالت ساخته‌شده این کار را یک بار و
+      پیشاپیش انجام داده است.</p>
+    </div>
+  </div>
+  <div class="quote w" style="font-size:18px">
+    همین قاعده یک بار عینی شد: مجموعهٔ آزمون روی سرور توسعه اجرا می‌شد، یک آزمون فهرست را
+    ۱۲۰ بار می‌خواند، سرور گیر کرد و ۲۰ آزمون پایانی <b>کدِ سالم را متهم می‌کردند</b>.
+    پس از انتقال به ساخت تولیدی: ۱۷٫۶ ثانیه، بدون خطا.
+  </div>
+</section>
+
+<!-- ۱۵ -->
+<section class="slide">
+  <p class="kick">۱۳ · سازمان‌دهی کد</p>
+  <h2>معماری در خودِ گراف دیده می‌شود</h2>
+  <p class="sub" style="font-size:19px">۱۳۲ فایل، ۴۰۱ پیوند <code>import</code>، استخراج‌شده
+  با پیمایش خودکار مخزن — نه توصیف آرزوشده، بلکه اندازه‌گیری وضع موجود.</p>
+  <div class="cols">
+    <table>
+      <thead><tr><th style="width:26%">وابسته</th><th>فایل</th></tr></thead>
+      <tbody>
+        <tr><td><b>۳۴</b></td><td><code>lib/api-log.ts</code></td></tr>
+        <tr><td><b>۳۳</b></td><td><code>lib/auth/session.ts</code></td></tr>
+        <tr><td><b>۳۲</b></td><td><code>lib/auth/client-ip.ts</code></td></tr>
+        <tr><td><b>۳۲</b></td><td><code>lib/auth/rate-limit.ts</code></td></tr>
+        <tr><td><b>۳۱</b></td><td><code>lib/db/client.ts</code></td></tr>
+      </tbody>
+    </table>
+    <div class="quote g">
+      این هشت فایل نخست <b>دقیقاً مرحله‌های خط لولهٔ درخواست‌اند</b>.<br><br>
+      اینکه ۳۱ فایل به <code>db/client.ts</code> وابسته‌اند و <b>هیچ فایلی اتصال جداگانه‌ای
+      نمی‌سازد</b>، یعنی ادعای «یک نقطهٔ ورود به پایگاه داده» <b>قابل بررسی است، نه شعار</b>.
+    </div>
+  </div>
+</section>
+
+<!-- ۱۶ -->
+<section class="slide">
+  <div class="hero" style="text-align:center;align-items:center">
+    <p class="kick">۱۴</p>
+    <h1 style="font-size:64px">نمایش زنده</h1>
+    <p class="sub" style="font-size:24px;text-align:center">جست‌وجو و نقشه ← صفحهٔ جزئیات و
+    ترافیک‌متر ← دریافت شمارهٔ تماس ← ثبت آگهی ← پنل مدیریت و تأیید</p>
+    <div class="quote w" style="max-width:70ch;font-size:19px">
+      سامانه پیش از آغاز جلسه با <code>npm run demo</code> ساخته و اجرا شده است.
+    </div>
+  </div>
+</section>
+
+<!-- ۱۷ -->
+<section class="slide">
+  <p class="kick">۱۵ · صداقت</p>
+  <h2>محدودیت‌های شناخته‌شده</h2>
+  <div class="cols">
+    <ul style="font-size:19px">
+      <li><b>داده زنده نیست.</b> گردآوری نقطه‌ای است؛ خزنده هست ولی زمان‌بندی‌شده اجرا
+          نمی‌شود.</li>
+      <li><b>برآورد بازدید، اندازه‌گیری نیست.</b> با شمارش میدانی اعتبارسنجی نشده.</li>
+      <li><b>یک نمونهٔ اجرایی.</b> موتور پایگاه داده و سقف نرخ هر دو تک‌نمونه‌ای‌اند.</li>
+    </ul>
+    <ul style="font-size:19px">
+      <li><b>پوشش آزمون در سطح API است.</b> رفتار مرورگر دستی آزموده شده، نه خودکار.</li>
+      <li><b>پرداخت بیرون از سامانه است.</b> پلن ویژه با تأیید دستی کارشناس.</li>
+      <li><b>سنجش زیر بار واقعی انجام نشده.</b> اندازه‌گیری‌ها روی یک دستگاه بوده‌اند.</li>
+    </ul>
+  </div>
+  <div class="quote" style="font-size:19px">
+    سامانه‌ای که می‌داند چه کاری را <b>انجام نمی‌دهد</b> و چرا، از سامانه‌ای که همه چیز را
+    ناقص ادعا می‌کند قابل اتکاتر است.
+  </div>
+</section>
+
+<!-- ۱۸ -->
+<section class="slide">
+  <div class="hero" style="align-items:center;text-align:center">
+    <h1 style="font-size:56px">با تشکر از توجه شما</h1>
+    <div class="rule" style="margin:22px auto"></div>
+    <p style="font-size:22px;color:var(--ink2)">کد منبع، مستندات فنی و تاریخچهٔ توسعه:</p>
+    <p style="font-family:ui-monospace,Menlo,monospace;direction:ltr;font-size:22px;color:var(--accent)">
+      github.com/alireza-zareian/Rasamap-Repository</p>
+    <div class="cols3" style="margin-top:26px;width:100%;max-width:980px">
+      <div class="card"><h3 style="font-size:19px">کار آینده</h3>
+        <p style="font-size:16px">اجرای زمان‌بندی‌شدهٔ خزنده · اعتبارسنجی میدانی مدل بازدید ·
+        آزمون سرتاسری مرورگر</p></div>
+      <div class="card"><h3 style="font-size:19px">مسیر مقیاس</h3>
+        <p style="font-size:16px">مهاجرت به موتور کلاینت-سروری = تغییر رشتهٔ اتصال، نه
+        بازنویسی · سقف نرخ اشتراکی</p></div>
+      <div class="card"><h3 style="font-size:19px">پرسش‌ها</h3>
+        <p style="font-size:16px">در خدمتم.</p></div>
+    </div>
+  </div>
+</section>
+
+</div></div>
+
+<div id="bar"><i></i></div>
+<div id="pg"></div>
+<div id="help">← → یا Space · F تمام‌صفحه</div>
+
+<script src="vendor/mermaid.min.js"></script>
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+const FA="۰۱۲۳۴۵۶۷۸۹", fa=n=>String(n).replace(/\d/g,d=>FA[+d]);
+let i = 0;
+
+function show(n){
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, k) => s.classList.toggle("on", k === i));
+  document.querySelector("#bar i").style.width = ((i + 1) / slides.length * 100) + "%";
+  document.getElementById("pg").textContent = fa(i + 1) + " / " + fa(slides.length);
+  location.hash = i + 1;
+}
+
+/* اسلاید ۱۲۸۰×۷۲۰ است و با مقیاس در هر پنجره‌ای جا می‌شود، پس اندازهٔ
+   نمایشگر جلسه هیچ چیدمانی را به هم نمی‌ریزد. */
+function fit(){
+  const d = document.getElementById("deck");
+  d.style.transform = "scale(" + Math.min(innerWidth / 1280, innerHeight / 720) * 0.97 + ")";
+}
+addEventListener("resize", fit); fit();
+
+addEventListener("keydown", e => {
+  if (["ArrowLeft", "PageDown", " ", "Enter"].includes(e.key)) { show(i + 1); e.preventDefault(); }
+  else if (["ArrowRight", "PageUp", "Backspace"].includes(e.key)) { show(i - 1); e.preventDefault(); }
+  else if (e.key === "Home") show(0);
+  else if (e.key === "End") show(slides.length - 1);
+  else if (e.key.toLowerCase() === "f") {
+    document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  }
+});
+addEventListener("click", e => { if (!e.target.closest("a")) show(i + 1); });
+
+mermaid.initialize({
+  startOnLoad:false, theme:"base", securityLevel:"loose",
+  themeVariables:{
+    background:"#FFFFFF", primaryColor:"#EDF3FF", primaryBorderColor:"#2F6BE0",
+    primaryTextColor:"#151A23", lineColor:"#7E8899", textColor:"#151A23",
+    mainBkg:"#EDF3FF", nodeBorder:"#2F6BE0",
+    fontFamily:"Vazirmatn, system-ui, sans-serif", fontSize:"15px",
+  },
+  flowchart:{ htmlLabels:true, curve:"basis", padding:16, nodeSpacing:44, rankSpacing:64 },
+  er:{ layoutDirection:"LR", entityPadding:14, useMaxWidth:true },
+});
+/* اسلایدهای پنهان عرض صفر دارند و mermaid نمی‌تواند اندازه بگیرد، پس همه را
+   موقتاً قابل اندازه‌گیری می‌کنیم، رندر می‌گیریم، بعد برمی‌گردانیم. */
+slides.forEach(s => { s.style.display = "flex"; s.style.visibility = "hidden"; });
+mermaid.run({ querySelector: ".mermaid" }).finally(() => {
+  slides.forEach(s => { s.style.display = ""; s.style.visibility = ""; });
+  show(parseInt(location.hash.slice(1)) - 1 || 0);
+  document.documentElement.dataset.ready = "1";
+});
+</script>
+</body>
+</html>

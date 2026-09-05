@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نقشهٔ کد رسامپ</title>
+<style>
+@font-face{font-family:"Vazirmatn";
+  src:url("../vendor/vazirmatn-arabic-wght-normal.woff2") format("woff2-variations");
+  font-weight:100 900;font-display:swap;
+  unicode-range:U+0600-06FF,U+200C,U+FB50-FDFF,U+FE70-FEFF;}
+@font-face{font-family:"Vazirmatn";
+  src:url("../vendor/vazirmatn-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight:100 900;font-display:swap;unicode-range:U+0000-00FF,U+2000-206F;}
+
+:root{
+  --bg:#F6F8FB; --card:#FFFFFF; --ink:#151A23; --ink2:#4A5567; --ink3:#7C8698;
+  --rule:#E2E7EF; --accent:#2F6BE0;
+  --edge:#2F6BE0; --page:#B57209; --ui:#0E8F5D; --api:#6247C4;
+  --lib:#C2410C; --auth:#BE185D; --data:#0E7490; --schema:#4D7C0F; --other:#64748B;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Vazirmatn",system-ui,sans-serif;font-size:14px;line-height:1.8}
+code,.mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;direction:ltr;
+  unicode-bidi:embed;display:inline-block}
+
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px 80px}
+header{background:linear-gradient(160deg,#1B2436,#2A3852);color:#fff;padding:38px 0 30px;margin-bottom:26px}
+header .wrap{padding-bottom:0}
+h1{margin:0 0 8px;font-size:27px;letter-spacing:-.02em}
+header p{margin:0;color:#B9C4D6;max-width:75ch}
+.hstat{display:flex;gap:26px;margin-top:20px;flex-wrap:wrap}
+.hstat div{font-size:12px;color:#8FA0BC}
+.hstat b{display:block;font-size:21px;color:#fff;line-height:1.3}
+
+h2{font-size:19px;margin:34px 0 6px}
+h2 .n{color:var(--accent);font-weight:800;margin-left:8px}
+.lede{color:var(--ink2);margin:0 0 16px;max-width:78ch}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+
+/* ── سفر یک درخواست ── */
+.journey{display:grid;gap:10px}
+.jstep{display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start}
+.jnum{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:13px}
+.jbody{padding-top:3px}
+.jbody b{display:block;margin-bottom:2px}
+.jbody .f{font-size:12px;color:var(--accent);cursor:pointer;text-decoration:underline dotted}
+.jbody p{margin:3px 0 0;color:var(--ink2);font-size:13px}
+
+/* ── کنترل‌ها ── */
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.bar input{flex:1;min-width:180px;padding:9px 13px;border:1px solid var(--rule);
+  border-radius:9px;font-family:inherit;font-size:13px;background:#fff}
+.tab{padding:8px 15px;border:1px solid var(--rule);background:#fff;border-radius:9px;
+  cursor:pointer;font-family:inherit;font-size:13px;color:var(--ink2)}
+.tab[aria-selected="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.lg{display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 11px;
+  border:1px solid var(--rule);border-radius:20px;background:#fff;cursor:pointer;user-select:none}
+.lg .dot{width:9px;height:9px;border-radius:50%}
+.lg.off{opacity:.35}
+
+/* ── نمای ستونی ── */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.col{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:12px;min-width:0}
+.col h3{margin:0 0 3px;font-size:14px;display:flex;align-items:center;gap:7px}
+.col .sub{font-size:11px;color:var(--ink3);margin:0 0 9px}
+.fitem{display:flex;justify-content:space-between;gap:6px;align-items:baseline;
+  padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11.5px}
+.fitem:hover{background:#EDF3FF}
+.fitem.sel{background:var(--accent);color:#fff}
+.fitem .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:left;flex:1}
+.fitem .ln{font-size:10px;opacity:.6;flex:0 0 auto}
+.fitem.dim{opacity:.2}
+
+/* ── نمای عنکبوتی ── */
+#graph{width:100%;height:620px;background:var(--card);border:1px solid var(--rule);border-radius:14px;display:block;touch-action:none}
+#graph text{font-family:"Vazirmatn",sans-serif;font-size:9px;fill:var(--ink2);pointer-events:none}
+#graph circle{cursor:pointer}
+
+/* ── پنل جزئیات ── */
+.detail{position:sticky;bottom:0;background:var(--card);border:1px solid var(--rule);
+  border-radius:14px;padding:16px 20px;margin-top:14px;box-shadow:0 -3px 20px rgba(21,26,35,.07)}
+.detail h4{margin:0 0 3px;font-size:15px;direction:ltr;text-align:left}
+.detail .meta{font-size:12px;color:var(--ink3);margin-bottom:9px}
+.detail .desc{color:var(--ink2);margin:0 0 12px;font-size:13px}
+.dcols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dcols h5{margin:0 0 5px;font-size:12px;color:var(--ink3);font-weight:700}
+.dlist{list-style:none;margin:0;padding:0;max-height:150px;overflow:auto}
+.dlist li{font-size:11.5px;padding:2px 0;direction:ltr;text-align:left;cursor:pointer;color:var(--accent)}
+.dlist li:hover{text-decoration:underline}
+.pill{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:11px;
+  background:#EDF3FF;color:var(--accent);margin-inline-start:6px}
+.pill.c{background:#FFF8E8;color:var(--page)}
+@media(max-width:640px){.dcols{grid-template-columns:1fr}#graph{height:460px}}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>نقشهٔ کد رسامپ</h1>
+  <p>این صفحه از روی <b>importهای واقعی</b> پروژه ساخته شده است، نه از روی حدس. هر خط میان
+  دو فایل یعنی یکی واقعاً دیگری را صدا می‌زند. اگر می‌خواهید بفهمید پروژه از کجا شروع
+  می‌شود و داده چطور از یک کلیک به پایگاه داده و برمی‌گردد، از بخش «سفر یک درخواست» شروع کنید.</p>
+  <div class="hstat" id="hstat"></div>
+</div></header>
+
+<div class="wrap">
+
+<h2><span class="n">۱</span>سفر یک درخواست — از کلیک تا پایگاه داده</h2>
+<p class="lede">مسیر واقعی وقتی کاربر در صفحهٔ جست‌وجو یک شهر را انتخاب می‌کند. روی نام هر
+فایل بزنید تا جزئیاتش را ببینید.</p>
+<div class="card journey" id="journey"></div>
+
+<h2><span class="n">۲</span>نقشهٔ فایل‌ها</h2>
+<p class="lede">دو نما از یک داده. <b>ستونی</b> نشان می‌دهد هر لایه چه فایل‌هایی دارد و کدام
+بزرگ‌ترند. <b>عنکبوتی</b> نشان می‌دهد چه چیزی به چه چیزی وصل است — فایل‌هایی که وسط جمع
+می‌شوند، همان‌هایی‌اند که همه به آن‌ها وابسته‌اند.</p>
+
+<div class="bar">
+  <button class="tab" id="tabCols" aria-selected="true">نمای ستونی</button>
+  <button class="tab" id="tabGraph" aria-selected="false">نمای عنکبوتی</button>
+  <input id="q" placeholder="جست‌وجوی نام فایل…">
+</div>
+<div class="legend" id="legend"></div>
+
+<div id="viewCols"><div class="cols" id="cols"></div></div>
+<div id="viewGraph" hidden><svg id="graph"></svg></div>
+
+<div class="detail" id="detail">
+  <h4 id="dTitle">یک فایل را انتخاب کنید</h4>
+  <div class="meta" id="dMeta">برای دیدن اینکه چه چیزی را صدا می‌زند و چه کسی صدایش می‌زند، روی یک فایل بزنید.</div>
+  <p class="desc" id="dDesc"></p>
+  <div class="dcols">
+    <div><h5>این فایل چه چیزهایی را صدا می‌زند</h5><ul class="dlist" id="dOut"></ul></div>
+    <div><h5>چه فایل‌هایی این را صدا می‌زنند</h5><ul class="dlist" id="dIn"></ul></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+const DESC = /*__DESC__*/;
+
+const LAYERS = {
+  edge:  {fa:"نگهبان لبه",    v:"--edge",   note:"پیش از هر درخواست اجرا می‌شود"},
+  page:  {fa:"صفحه‌ها",       v:"--page",   note:"چیزی که کاربر در مرورگر می‌بیند"},
+  ui:    {fa:"مؤلفه‌های رابط",v:"--ui",     note:"قطعه‌های قابل استفادهٔ مجدد"},
+  api:   {fa:"مسیرهای API",   v:"--api",    note:"نقطه‌های ورود HTTP"},
+  auth:  {fa:"احراز هویت",    v:"--auth",   note:"نشست، سقف نرخ، رد ممیزی"},
+  lib:   {fa:"ابزارهای مشترک",v:"--lib",    note:"کارهای عمومی همهٔ لایه‌ها"},
+  data:  {fa:"لایهٔ داده",     v:"--data",   note:"تنها راه رسیدن به پایگاه داده"},
+  schema:{fa:"طرح‌واره و داده اولیه",v:"--schema",note:"مهاجرت و پرکردن پایگاه داده"},
+  other: {fa:"پیکربندی",      v:"--other",  note:"تنظیمات ساخت و اجرا"},
+};
+const col = l => getComputedStyle(document.documentElement).getPropertyValue(LAYERS[l].v).trim();
+const FA="۰۱۲۳۴۵۶۷۸۹", fa=n=>String(n).replace(/\d/g,d=>FA[+d]);
+
+const files = DATA.files, edges = DATA.edges;
+const names = Object.keys(files);
+const inMap = {}, outMap = {};
+names.forEach(n => { inMap[n]=[]; outMap[n]=files[n].deps.slice(); });
+edges.forEach(([a,b]) => inMap[b] && inMap[b].push(a));
+
+/* ── آمار سربرگ ── */
+document.getElementById("hstat").innerHTML = [
+  [names.length, "فایل TypeScript"],
+  [edges.length, "پیوند import"],
+  [Object.keys(LAYERS).length, "لایهٔ معماری"],
+  [names.reduce((s,n)=>s+files[n].lines,0).toLocaleString("fa-IR"), "خط کد"],
+].map(([v,l])=>`<div><b>${typeof v==="number"?fa(v):v}</b>${l}</div>`).join("");
+
+/* ── سفر یک درخواست ── */
+const JOURNEY = [
+  ["proxy.ts","نگهبان لبه","هر درخواست، چه صفحه چه API، اول از اینجا رد می‌شود. ربات‌ها و درخواست‌های بی‌اجازه همین‌جا برمی‌گردند و هرگز به کد اصلی نمی‌رسند."],
+  ["app/explore/page.tsx","صفحهٔ جست‌وجو","کد سمت مرورگر. کاربر شهر را انتخاب می‌کند و این فایل یک fetch به مسیر API می‌زند. خودش مستقیم به پایگاه داده دست نمی‌زند."],
+  ["app/api/billboards/route.ts","مسیر API","درخواست را می‌گیرد و به ترتیب: سقف نرخ، اعتبارسنجی ورودی، و بعد صدا زدن لایهٔ داده. ترتیب این سه قابل جابه‌جایی نیست."],
+  ["lib/db/billboards.ts","لایهٔ دسترسی داده","تنها جایی که پرس‌وجوی رسانه‌ها نوشته می‌شود. هم این مسیر API و هم صفحهٔ جزئیات از همین‌جا می‌خوانند — یک منبع حقیقت."],
+  ["lib/db/client.ts","اتصال پایگاه داده","تنها جایی که اتصال ساخته می‌شود. اگر روزی موتور پایگاه داده عوض شود، فقط همین فایل تغییر می‌کند."],
+  ["lib/api-log.ts","ثبت رخداد","پاسخ که آماده شد، یک سطر JSON با زمان، وضعیت و مدت درخواست نوشته می‌شود. اگر خطایی رخ داده باشد، شناسه‌اش همین‌جا ثبت می‌شود."],
+];
+document.getElementById("journey").innerHTML = JOURNEY.map(([f,t,d],i)=>`
+  <div class="jstep"><div class="jnum">${fa(i+1)}</div><div class="jbody">
+    <b>${t}</b><span class="f mono" data-go="${f}">${f}</span>
+    <p>${d}</p></div></div>`).join("");
+
+/* ── راهنمای لایه‌ها ── */
+const hidden = new Set();
+document.getElementById("legend").innerHTML = Object.entries(LAYERS).map(([k,v])=>{
+  const n = names.filter(f=>files[f].layer===k).length;
+  return `<span class="lg" data-layer="${k}"><span class="dot" style="background:${col(k)}"></span>${v.fa} <b>${fa(n)}</b></span>`;
+}).join("");
+
+/* ── نمای ستونی ── */
+function drawCols(){
+  document.getElementById("cols").innerHTML = Object.entries(LAYERS).map(([k,v])=>{
+    const fs = names.filter(f=>files[f].layer===k).sort((a,b)=>files[b].lines-files[a].lines);
+    if(!fs.length) return "";
+    return `<div class="col" data-layer="${k}">
+      <h3><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col(k)}"></span>${v.fa}</h3>
+      <p class="sub">${v.note}</p>
+      ${fs.map(f=>`<div class="fitem" data-f="${f}">
+        <span class="nm">${f.replace(/^(app|components|lib|prisma)\//,"")}</span>
+        <span class="ln">${fa(files[f].lines)}</span></div>`).join("")}
+    </div>`;
+  }).join("");
+}
+drawCols();
+
+/* ── پنل جزئیات ── */
+let selected = null;
+function select(f){
+  if(!files[f]) return;
+  selected = f;
+  document.querySelectorAll(".fitem").forEach(e=>e.classList.toggle("sel", e.dataset.f===f));
+  const v = files[f];
+  document.getElementById("dTitle").textContent = f;
+  document.getElementById("dMeta").innerHTML =
+    `${fa(v.lines)} خط <span class="pill">${LAYERS[v.layer].fa}</span>` +
+    (v.client ? `<span class="pill c">اجرا در مرورگر</span>` : `<span class="pill">اجرا روی سرور</span>`);
+  document.getElementById("dDesc").textContent = DESC[f] || "";
+  const li = a => a.length
+    ? a.map(x=>`<li data-go="${x}">${x}</li>`).join("")
+    : `<li style="color:var(--ink3);cursor:default">—</li>`;
+  document.getElementById("dOut").innerHTML = li(outMap[f]);
+  document.getElementById("dIn").innerHTML  = li(inMap[f]);
+  if(view==="graph") paintGraph();
+}
+document.addEventListener("click", e=>{
+  const t = e.target.closest("[data-f],[data-go]");
+  if(t) select(t.dataset.f || t.dataset.go);
+  const lg = e.target.closest(".lg");
+  if(lg){
+    const k = lg.dataset.layer;
+    hidden.has(k) ? hidden.delete(k) : hidden.add(k);
+    lg.classList.toggle("off", hidden.has(k));
+    applyFilter();
+  }
+});
+
+/* ── جست‌وجو و پالایه ── */
+const q = document.getElementById("q");
+function applyFilter(){
+  const s = q.value.trim().toLowerCase();
+  document.querySelectorAll(".col").forEach(c=>{ c.hidden = hidden.has(c.dataset.layer); });
+  document.querySelectorAll(".fitem").forEach(e=>{
+    e.classList.toggle("dim", !!s && !e.dataset.f.toLowerCase().includes(s));
+  });
+  if(view==="graph") paintGraph();
+}
+q.addEventListener("input", applyFilter);
+
+/* ── نماها ── */
+let view = "cols";
+const tc = document.getElementById("tabCols"), tg = document.getElementById("tabGraph");
+tc.onclick = ()=>setView("cols"); tg.onclick = ()=>setView("graph");
+function setView(v){
+  view = v;
+  tc.setAttribute("aria-selected", v==="cols"); tg.setAttribute("aria-selected", v==="graph");
+  document.getElementById("viewCols").hidden  = v!=="cols";
+  document.getElementById("viewGraph").hidden = v!=="graph";
+  if(v==="graph") startGraph();
+}
+
+/* ══ نمای عنکبوتی ═══════════════════════════════════════════════
+   یک چیدمان نیرومحور کوچک و دست‌ساز: گره‌ها همدیگر را پس می‌زنند،
+   یال‌ها مثل فنر می‌کشند. هیچ کتابخانهٔ بیرونی لازم نیست. ── */
+const svg = document.getElementById("graph");
+let nodes = [], links = [], raf = null, started = false;
+
+function startGraph(){
+  if(started){ paintGraph(); return; }
+  started = true;
+  const W = svg.clientWidth, H = svg.clientHeight;
+  const order = Object.keys(LAYERS);
+  nodes = names.map((n,i)=>{
+    const li = order.indexOf(files[n].layer);
+    return { id:n, layer:files[n].layer, r:Math.max(3.2, Math.min(11, Math.sqrt(files[n].lines)/2.4)),
+             x: W*0.5 + (Math.random()-.5)*W*0.7,
+             y: H*(0.12 + 0.76*li/(order.length-1)) + (Math.random()-.5)*40,
+             vx:0, vy:0, ty: H*(0.12 + 0.76*li/(order.length-1)) };
+  });
+  const idx = Object.fromEntries(nodes.map((n,i)=>[n.id,i]));
+  links = edges.filter(([a,b])=>idx[a]!==undefined&&idx[b]!==undefined)
+               .map(([a,b])=>({s:idx[a], t:idx[b]}));
+  tick(320);
+}
+
+function tick(steps){
+  const W = svg.clientWidth, H = svg.clientHeight;
+  for(let s=0;s<steps;s++){
+    for(const n of nodes){ n.vy += (n.ty - n.y)*0.05; n.vx += (W/2 - n.x)*0.0008; }
+    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i], b=nodes[j];
+      let dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy||1;
+      if(d2<26000){ const f=620/d2, d=Math.sqrt(d2);
+        const ux=dx/d*f, uy=dy/d*f; a.vx-=ux; a.vy-=uy; b.vx+=ux; b.vy+=uy; }
+    }
+    for(const l of links){
+      const a=nodes[l.s], b=nodes[l.t];
+      const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1, f=(d-70)*0.0032;
+      a.vx+=dx/d*f; a.vy+=dy/d*f; b.vx-=dx/d*f; b.vy-=dy/d*f;
+    }
+    for(const n of nodes){
+      n.vx*=0.86; n.vy*=0.86; n.x+=n.vx; n.y+=n.vy;
+      n.x=Math.max(14,Math.min(W-14,n.x)); n.y=Math.max(14,Math.min(H-14,n.y));
+    }
+  }
+  paintGraph();
+}
+
+/* page.tsx و route.ts ده‌ها بار تکرار می‌شوند؛ نام پوشه گویاتر از نام فایل است */
+function label(id){
+  const p = id.split("/"), base = p.pop().replace(/\.tsx?$/, "");
+  return /^(page|route|layout|loading)$/.test(base) && p.length
+       ? p[p.length-1] + "/" + base
+       : base;
+}
+
+function paintGraph(){
+  const s = q.value.trim().toLowerCase();
+  const vis = n => !hidden.has(n.layer) && (!s || n.id.toLowerCase().includes(s));
+  const near = selected ? new Set([selected, ...outMap[selected], ...inMap[selected]]) : null;
+  const parts = [];
+  for(const l of links){
+    const a=nodes[l.s], b=nodes[l.t];
+    if(!vis(a)||!vis(b)) continue;
+    const hot = near && near.has(a.id) && near.has(b.id);
+    parts.push(`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"
+      stroke="${hot?"#2F6BE0":"#C9D2E0"}" stroke-width="${hot?1.5:.55}" opacity="${near?(hot?.9:.12):.4}"/>`);
+  }
+  for(const n of nodes){
+    if(!vis(n)) continue;
+    const on = !near || near.has(n.id);
+    parts.push(`<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${n.r.toFixed(1)}"
+      fill="${col(n.layer)}" opacity="${on?(n.id===selected?1:.85):.18}"
+      stroke="${n.id===selected?"#151A23":"#fff"}" stroke-width="${n.id===selected?2:1}"
+      data-f="${n.id}"><title>${n.id}</title></circle>`);
+    if(n.r>7.2 && on) parts.push(`<text x="${n.x.toFixed(1)}" y="${(n.y-n.r-3).toFixed(1)}"
+      text-anchor="middle">${label(n.id)}</text>`);
+  }
+  svg.innerHTML = parts.join("");
+}
+window.addEventListener("resize", ()=>{ if(view==="graph"&&started) tick(60); });
+</script>
+</body>
+</html>
