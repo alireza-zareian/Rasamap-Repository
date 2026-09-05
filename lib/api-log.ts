@@ -3,6 +3,30 @@ import { logger } from "@/lib/logger";
 import { serverError } from "@/lib/api-error";
 
 /**
+ * Next signals control flow by throwing: `redirect()`, `notFound()`, and the
+ * DynamicServerError the build throws when a route reads `request.headers`
+ * while it is being probed for static rendering. Every one of these carries a
+ * string `digest` ("NEXT_REDIRECT", "NEXT_HTTP_ERROR_FALLBACK",
+ * "DYNAMIC_SERVER_USAGE"), which is the one precondition all three of Next's
+ * own guards check — so the digest is the stable contract to test, rather than
+ * importing from `next/dist/client/components/*`, which is private and moves
+ * between versions.
+ *
+ * These must reach the framework untouched. Catching the DynamicServerError
+ * and answering it with a 500 told the build that a dynamic route had failed
+ * rather than that it was dynamic, and wrote a fake error to the log with a
+ * reference id no user would ever quote.
+ */
+function isFrameworkSignal(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "digest" in err &&
+    typeof (err as { digest: unknown }).digest === "string"
+  );
+}
+
+/**
  * Wrap a route handler so every call emits one structured `api_request` log
  * line: method, path, status, duration. Nothing about the body, query string,
  * headers, or user identity beyond an id is logged.
@@ -33,6 +57,7 @@ export function withApiLog<C = unknown>(
       status = res.status;
       return res;
     } catch (err) {
+      if (isFrameworkSignal(err)) throw err;
       status = 500;
       return serverError(`${req.method} /api/${name}`, err);
     } finally {
