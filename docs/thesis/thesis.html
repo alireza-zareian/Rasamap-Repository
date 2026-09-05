@@ -163,6 +163,30 @@ li{ margin-bottom:.3em; }
 .code .k{ color:#6247C4; }        /* کلیدواژه */
 .code .s{ color:#0E7490; }        /* رشته */
 
+
+/* ── درخت پوشه‌ها ──────────────────────────────────────────────
+   با CSS کشیده می‌شود نه با تصویر، تا در چاپ برداری و تیز بماند و متنش
+   قابل جست‌وجو و کپی باشد. */
+.tree{ font-size:8.4pt; line-height:1.9; direction:ltr; text-align:left;
+  background:#FBFCFE; border:1px solid var(--rule); border-radius:7px;
+  padding:4mm 5mm; margin:2mm 0; }
+.tree ul{ list-style:none; margin:0; padding-inline-start:5mm; position:relative }
+.tree > ul{ padding-inline-start:0 }
+.tree li{ position:relative; padding-inline-start:4.5mm }
+.tree > ul > li{ padding-inline-start:0; margin-top:1.2mm }
+.tree ul ul::before{ content:""; position:absolute; inset-inline-start:0.6mm; top:0;
+  bottom:2.2mm; border-inline-start:1px solid #C9D3E2 }
+.tree ul ul > li::before{ content:""; position:absolute; inset-inline-start:0.6mm;
+  top:2.2mm; width:3mm; border-top:1px solid #C9D3E2 }
+.tree .d{ font-family:ui-monospace,Menlo,monospace; font-weight:700; color:var(--accent) }
+.tree .f{ font-family:ui-monospace,Menlo,monospace; color:var(--ink) }
+/* درخت چپ‌به‌راست است و توضیح فارسی بعد از نام فایل می‌آید. حاشیهٔ منطقی
+   (inline-start) اینجا کار نمی‌کند: داخل یک عنصر راست‌به‌چپ، سمتِ «شروع»
+   راست است و فاصله در انتهای خط می‌افتد. پس حاشیهٔ فیزیکی لازم است. */
+.tree .n{ direction:rtl; unicode-bidi:isolate; color:var(--ink-3); font-size:8pt;
+  font-family:"Vazirmatn",sans-serif; margin-left:4mm }
+.tree .n b{ color:var(--ink-2); font-weight:700 }
+
 </style>
 </head>
 <body>
@@ -911,6 +935,88 @@ erDiagram
       <tr><td>پیکربندی</td><td>۴</td><td>تنظیمات ساخت و اجرا</td></tr>
     </tbody>
   </table>
+
+  <figure>
+    <div class="tree"><ul>
+      <li><span class="d">app/</span><span class="n">صفحه‌ها و مسیرهای برنامه‌نویسی — چارچوب از روی <b>نام پوشه</b> نشانی می‌سازد</span>
+        <ul>
+          <li><span class="f">page.tsx</span><span class="n">صفحهٔ نخست ‹/›</span></li>
+          <li><span class="d">explore/</span><span class="f">page.tsx</span><span class="n">جست‌وجو ‹/explore›</span></li>
+          <li><span class="d">billboard/[slug]/</span><span class="f">page.tsx</span><span class="n">جزئیات — <b>تنها مؤلفهٔ سمت سرور</b></span></li>
+          <li><span class="d">admin/</span><span class="f">page.tsx</span><span class="n">پنل مدیریت</span></li>
+          <li><span class="d">api/</span><span class="n"><b>۳۴ فایل</b> <span class="f">route.ts</span> — هر کدام یک نقطهٔ ورود HTTP</span>
+            <ul>
+              <li><span class="d">billboards/</span><span class="f">route.ts</span><span class="n">فهرست و پالایش</span></li>
+              <li><span class="d">auth/</span><span class="n">ورود، ثبت‌نام، رمز یک‌بارمصرف</span></li>
+              <li><span class="d">admin/</span><span class="n">مسیرهای مدیریتی</span></li>
+            </ul></li>
+        </ul></li>
+      <li><span class="d">components/</span><span class="n"><b>۳۲</b> قطعهٔ رابط کاربری قابل استفادهٔ مجدد</span></li>
+      <li><span class="d">lib/</span><span class="n">منطق مشترک — هیچ صفحه‌ای مستقیم به پایگاه داده دست نمی‌زند</span>
+        <ul>
+          <li><span class="d">db/</span><span class="f">client.ts</span><span class="n"><b>تنها</b> جای ساخت اتصال</span></li>
+          <li><span class="d">db/</span><span class="f">billboards.ts</span><span class="n">لایهٔ دسترسی داده</span></li>
+          <li><span class="d">auth/</span><span class="n">نشست، سقف نرخ، شناسهٔ کاربر، رد ممیزی</span></li>
+          <li><span class="f">api-log.ts</span> · <span class="f">api-error.ts</span><span class="n">ثبت رخداد و پاسخ خطای یکسان</span></li>
+          <li><span class="f">types.ts</span><span class="n">انواع داده، <b>بدون خودِ داده</b></span></li>
+        </ul></li>
+      <li><span class="d">prisma/</span><span class="f">schema.prisma</span><span class="n">۱۰ موجودیت، ۲۵ نمایه، ۱۳ مهاجرت</span></li>
+      <li><span class="f">proxy.ts</span><span class="n"><b>نگهبان لبه</b> — پیش از هر درخواستی اجرا می‌شود</span></li>
+    </ul></div>
+    <figcaption><span class="lbl"></span> ساختار پوشه‌های پروژه. نکتهٔ کلیدی این چیدمان آن است
+    که <code>lib/db/</code> تنها راه رسیدن به پایگاه داده است؛ نه صفحه‌ای و نه مسیری، اتصال
+    جداگانه‌ای نمی‌سازد.</figcaption>
+  </figure>
+
+  <h3>سفر یک درخواست، با نام فایل‌های واقعی</h3>
+  <p>نمودار زیر همان مسیری است که وقتی کاربر در صفحهٔ جست‌وجو شهری را انتخاب می‌کند طی
+  می‌شود. هر جعبه یک فایل واقعی در مخزن است.</p>
+
+  <figure>
+    <div class="frame"><div class="mermaid">
+flowchart TB
+    U["کاربر شهری را انتخاب می‌کند"]
+    PX["proxy.ts"]
+    PG["app/explore/page.tsx"]
+    RT["app/api/billboards/route.ts"]
+    DAL["lib/db/billboards.ts"]
+    CL["lib/db/client.ts"]
+    DB[("پایگاه داده")]
+    LG["lib/api-log.ts"]
+    U --> PX
+    PX -->|"عبور داده می‌شود"| PG
+    PG -->|"fetch"| RT
+    RT -->|"سقف نرخ ← اعتبارسنجی"| DAL
+    DAL --> CL --> DB
+    RT -.->|"یک سطر برای هر درخواست"| LG
+    DB -->|"ردیف‌ها"| DAL
+    DAL -->|"JSON"| PG
+    PG -->|"شبکهٔ نتایج"| U
+    classDef srv fill:#EDF3FF,stroke:#2F6BE0,color:#151A23
+    classDef sto fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
+    classDef usr fill:#FFF8E8,stroke:#B57209,color:#151A23
+    classDef aux fill:#F5F0FF,stroke:#6247C4,color:#151A23
+    class PX,PG,RT,DAL,CL srv
+    class DB sto
+    class U usr
+    class LG aux
+    </div></div>
+    <figcaption><span class="lbl"></span> سفر یک درخواست از کلیک کاربر تا پایگاه داده و
+    برگشت. صفحهٔ جزئیات رسانه تنها استثناست: چون مؤلفهٔ سمت سرور است، مستقیم
+    <code>lib/db/billboards.ts</code> را صدا می‌زند و دو جعبهٔ میانی را رد می‌کند.</figcaption>
+  </figure>
+
+  <h3>گراف کامل وابستگی</h3>
+  <p>شکل زیر هر ۱۳۲ فایل و هر ۴۰۱ پیوند <code>import</code> را با هم نشان می‌دهد. رنگ‌ها همان
+  لایه‌های جدول بالایند و اندازهٔ هر دایره به تعداد خطوط آن فایل است. چیدمان نیرومحور است:
+  فایل‌هایی که همه به آن‌ها وابسته‌اند خودبه‌خود به مرکز کشیده می‌شوند.</p>
+
+  <figure class="big">
+    <div class="frame"><img src="shots/import-graph.svg" alt="" style="width:100%;display:block"></div>
+    <figcaption><span class="lbl"></span> گراف وابستگی پروژه، استخراج‌شده با پیمایش خودکار
+    مخزن. لایه‌ها از بالا به پایین: نگهبان لبه، صفحه‌ها، مؤلفه‌های رابط، مسیرهای
+    برنامه‌نویسی، احراز هویت، ابزارهای مشترک، لایهٔ داده، طرح‌واره و پیکربندی.</figcaption>
+  </figure>
 
   <figure>
     <div class="shots ">
