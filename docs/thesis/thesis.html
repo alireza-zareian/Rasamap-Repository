@@ -145,7 +145,7 @@ li{ margin-bottom:.3em; }
 .shots > *{ min-width:0; }
 .shots.two{ grid-template-columns:repeat(2, minmax(0,1fr)); }
 .shots.three{ grid-template-columns:repeat(3, minmax(0,1fr)); }
-.shots.two-m{ grid-template-columns:repeat(2, minmax(0,1fr)); max-width:76mm; margin:0 auto; }
+.shots.two-m{ grid-template-columns:repeat(2, minmax(0,1fr)); max-width:112mm; margin:0 auto; }
 .shots.four{ grid-template-columns:repeat(2, minmax(0,1fr)); }
 .shots img{ width:100%; height:auto; display:block;
             border:1px solid var(--rule); border-radius:4px; }
@@ -875,11 +875,16 @@ erDiagram
   می‌کند، ولی سامانهٔ طراحی را از وابستگی به پیکربندی پالایش یک ابزار بیرونی جدا نگه می‌دارد
   و تضمین می‌کند سبکی که در کد دیده می‌شود همان است که در مرورگر اجرا می‌شود.</p>
   <figure>
-    <div class="shots two">
-      <div><img src="shots/explore.jpg" alt=""><p class="shot-cap">صفحهٔ جست‌وجو و پالایش</p></div>
-      <div><img src="shots/detail.jpg" alt=""><p class="shot-cap">صفحهٔ جزئیات رسانه</p></div>
-    </div>
-    <figcaption><span class="lbl"></span> دو صفحهٔ اصلی سمت کاربر. سمت راست پالایه‌ها و شبکهٔ نتایج، سمت چپ صفحهٔ جزئیات با گالری تصویر، مشخصات فنی و برآورد بازدید روزانه.</figcaption>
+    <div class="shots"><div><img src="shots/explore.jpg" alt=""></div></div>
+    <figcaption><span class="lbl"></span> صفحهٔ جست‌وجو و پالایش. پالایه‌های شهر، نوع، قیمت و
+    ابعاد بالای شبکهٔ نتایج؛ هر کارت قیمت ماهانه و برآورد بازدید روزانه را نشان می‌دهد.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="shots"><div><img src="shots/detail.jpg" alt=""></div></div>
+    <figcaption><span class="lbl"></span> صفحهٔ جزئیات رسانه: گالری تصویر، مشخصات فنی، موقعیت
+    روی نقشه، و پنل «آنالیز ترافیک» که برآورد بازدید روزانه و مبنای محاسبه‌اش را می‌آورد.
+    شمارهٔ تماس در این صفحه نیست؛ جایش دکمهٔ «برای دیدن اطلاعات تماس وارد شوید» است.</figcaption>
   </figure>
 
   <p>سه اصل در طراحی حالت‌های رابط رعایت شده است: هر فهرست حالت «خالی» طراحی‌شده دارد و
@@ -1550,42 +1555,37 @@ stateDiagram-v2
 <section class="sheet chapter">
   <div class="ch-head"><p class="ch-kicker">پیوست ب</p><h1>نماهایی از سامانه</h1></div>
   <p class="noind">تصاویر زیر از نسخهٔ در حال اجرای سامانه گرفته شده‌اند و دادهٔ درونشان
-  واقعی است. صفحه‌هایی که نیاز به ورود دارند با حساب‌های نمونه باز شده‌اند.</p>
+  واقعی است. صفحه‌هایی که نیاز به ورود دارند با حساب‌های نمونه باز شده‌اند. صفحه‌های
+  پرجزئیات‌تر در فصل‌های ۴ و ۵ در اندازهٔ بزرگ‌تر آمده‌اند.</p>
 
   <figure>
-    <div class="shots three">
+    <div class="shots two">
       <div><img src="shots/home.jpg" alt=""><p class="shot-cap">صفحهٔ نخست</p></div>
-      <div><img src="shots/compare.jpg" alt=""><p class="shot-cap">مقایسهٔ کنار هم</p></div>
       <div><img src="shots/dashboard.jpg" alt=""><p class="shot-cap">پیشخوان کاربر</p></div>
+      <div><img src="shots/analytics.jpg" alt=""><p class="shot-cap">صفحهٔ تحلیل</p></div>
+      <div><img src="shots/compare.jpg" alt=""><p class="shot-cap">مقایسه — حالت خالی طراحی‌شده</p></div>
     </div>
-    <figcaption><span class="lbl"></span> سمت کاربر: صفحهٔ نخست با آمار کلی، ابزار مقایسهٔ ستون‌به‌ستون، و پیشخوانی که وضعیت هر آگهی ثبت‌شده را در چرخهٔ تأیید نشان می‌دهد.</figcaption>
+    <figcaption><span class="lbl"></span> سمت کاربر. صفحهٔ تحلیل توزیع شهر، نوع و قیمت را از دادهٔ واقعی رسم می‌کند و پیشخوان وضعیت هر آگهی را در چرخهٔ تأیید نشان می‌دهد. صفحهٔ مقایسه عمداً در حالت خالی آورده شده تا نمونه‌ای از «حالت خالیِ طراحی‌شده» باشد که در بخش ۴-۴ به آن اشاره شد.</figcaption>
   </figure>
 
   <figure>
-    <div class="shots three">
-      <div><img src="shots/analytics.jpg" alt=""><p class="shot-cap">صفحهٔ تحلیل</p></div>
+    <div class="shots two">
+      <div><img src="shots/admin-list.jpg" alt=""><p class="shot-cap">فهرست و ویرایش رسانه‌ها</p></div>
+      <div><img src="shots/admin-quality.jpg" alt=""><p class="shot-cap">وضعیت کیفیت داده</p></div>
+      <div><img src="shots/admin-users.jpg" alt=""><p class="shot-cap">مدیریت مدیران و سطوح دسترسی</p></div>
+      <div><img src="shots/admin-audit.jpg" alt=""><p class="shot-cap">رد ممیزی</p></div>
+    </div>
+    <figcaption><span class="lbl"></span> پنل مدیریت. صفحهٔ کیفیت رکوردهای ناقص (بدون تصویر یا بدون مختصات) را برای پیگیری جدا می‌کند؛ رد ممیزی هر تغییر مدیریتی را با شناسهٔ مدیر، نشانی شبکه و جزئیات نگه می‌دارد.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="shots two">
+      <div><img src="shots/admin-leads.jpg" alt=""><p class="shot-cap">پیگیری سرنخ‌ها</p></div>
       <div><img src="shots/apidocs.jpg" alt=""><p class="shot-cap">مرجع واسط برنامه‌نویسی</p></div>
       <div><img src="shots/login.jpg" alt=""><p class="shot-cap">صفحهٔ ورود</p></div>
+      <div><img src="shots/explore-m.jpg" alt=""><p class="shot-cap">جست‌وجو روی تلفن همراه</p></div>
     </div>
-    <figcaption><span class="lbl"></span> صفحهٔ تحلیل توزیع شهر، نوع و قیمت را از دادهٔ واقعی رسم می‌کند؛ مرجع کامل ۴۲ نقطهٔ پایانی درون خودِ سامانه سرو می‌شود؛ صفحهٔ ورود دو حالت «کاربر» و «همکاران» دارد.</figcaption>
-  </figure>
-
-  <figure>
-    <div class="shots three">
-      <div><img src="shots/admin-list.jpg" alt=""><p class="shot-cap">فهرست رسانه‌ها</p></div>
-      <div><img src="shots/admin-quality.jpg" alt=""><p class="shot-cap">وضعیت کیفیت داده</p></div>
-      <div><img src="shots/admin-users.jpg" alt=""><p class="shot-cap">مدیریت مدیران</p></div>
-    </div>
-    <figcaption><span class="lbl"></span> پنل مدیریت: ویرایش رسانه‌ها، صفحهٔ کیفیت که رکوردهای ناقص را برای پیگیری جدا می‌کند، و چهار سطح دسترسی مدیران.</figcaption>
-  </figure>
-
-  <figure>
-    <div class="shots three">
-      <div><img src="shots/admin-audit.jpg" alt=""><p class="shot-cap">رد ممیزی</p></div>
-      <div><img src="shots/admin-leads.jpg" alt=""><p class="shot-cap">پیگیری سرنخ‌ها</p></div>
-      <div><img src="shots/explore-m.jpg" alt=""><p class="shot-cap">نمای موبایل</p></div>
-    </div>
-    <figcaption><span class="lbl"></span> رد ممیزی هر تغییر مدیریتی را با شناسهٔ مدیر و نشانی شبکه نگه می‌دارد؛ سرنخ‌ها درخواست‌های تماس ثبت‌شده را دنبال می‌کنند.</figcaption>
+    <figcaption><span class="lbl"></span> سرنخ‌ها درخواست‌های تماس ثبت‌شده را دنبال می‌کنند؛ مرجع کامل ۴۲ نقطهٔ پایانی درون خودِ سامانه سرو می‌شود؛ صفحهٔ ورود دو حالت «کاربر» و «همکاران» دارد و پیام خطایش در هر دو حالتِ شکست یکسان است.</figcaption>
   </figure>
 
 </section>
