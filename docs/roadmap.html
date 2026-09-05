@@ -1942,14 +1942,14 @@ sequenceDiagram
         قانونِ inline-style این پروژه. مدلش هم contacts / companies / <b>deals</b> است و از بیلبورد چیزی نمی‌داند.
       </div>
       <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div><strong>سؤال درست پرسیده شد:</strong> از سه کاری که یک CRM می‌کند، «قیف معامله» در رساماپ <b>موضوعیت ندارد</b> (رزرو نداریم — §۱۷)، «گردش‌کار تأیید با لاگ ممیزی» <b>از قبل ساخته شده بود</b>، و فقط <b>ثبت سرنخ</b> واقعاً خالی بود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سؤال درست پرسیده شد:</strong> از سه کاری که یک CRM می‌کند، «قیف معامله» در رسامپ <b>موضوعیت ندارد</b> (رزرو نداریم — §۱۷)، «گردش‌کار تأیید با لاگ ممیزی» <b>از قبل ساخته شده بود</b>، و فقط <b>ثبت سرنخ</b> واقعاً خالی بود</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>حفره‌ی واقعی:</strong> دادنِ شمارهٔ صاحب رسانه آخرین چیزی است که پلتفرم می‌بیند — و هیچ‌جا ثبت نمی‌شد. یعنی محصول هیچ رکوردی از تقاضا نداشت: چه رسانه‌ای متقاضی دارد، از طرفِ چه کسی، چند بار</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>جدول <code>contact_requests</code>:</strong> یک ردیف به‌ازای هر (رسانه، حساب) با ایندکسِ یکتا روی همین جفت. درخواستِ دوباره <b>ردیف جدید نمی‌سازد</b>، شمارندهٔ <code>count</code> را اتمیک بالا می‌برد (§۸: تعریفِ تکراری در سطح دیتابیس، نه در کد)؛ مسابقهٔ دو کلیکِ همزمانِ اول با <code>P2002</code> گرفته و به همان increment تبدیل می‌شود</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong><code>GET</code> → <code>POST</code> شد و دکمهٔ صریح آمد:</strong> شماره قبلاً موقعِ باز شدنِ صفحه خودکار گرفته می‌شد — یعنی ثبتش «بازدید» بود نه «قصد تماس». حالا دکمهٔ «نمایش شمارهٔ تماس» است. GET قدیمی <b>حذف شد</b> نه اینکه کنارش بماند: یک مسیرِ دومِ بدونِ ثبت، کل رکورد را بی‌معنا می‌کرد</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>تب «سرنخ‌ها» در پنل مدیریت:</strong> <code>GET /api/admin/leads</code> و <code>PATCH /api/admin/leads/[id]</code> — وضعیت پیگیری <b>جدید → پیگیری شده → بسته شده</b> و یادداشت داخلی. همین‌قدر و نه بیشتر: این همان بخشِ CRMِ ماجراست</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>خرابیِ دفتردار نباید محصول را خراب کند:</strong> اگر نوشتنِ سرنخ شکست بخورد، شماره باز هم به کاربر داده می‌شود و خطا لاگ می‌شود (بلعیده نمی‌شود)</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>حریم خصوصی:</strong> بند ۶ صفحهٔ قوانین صریحاً می‌گوید این درخواست‌ها ثبت می‌شوند و فقط تیم مدیریت می‌بیند؛ یادداشتِ ادمین هرگز به کاربر نشان داده نمی‌شود؛ ردیفِ لاگِ <code>lead_update</code> فقط شناسه دارد — نه نام، نه شماره</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>آنچه آگاهانه نداریم:</strong> شرکت‌ها، ثبتِ ایمیل، کانبان، یادآور، import/export و پورتالِ صاحب رسانه. هیچ‌کدام در دایرکتوری‌ای با یک ادمین کاربری ندارد. حرفِ صادقانه برای دفاع: CRM ابزارِ <em>فروش</em> است و رساماپ فرایند فروش ندارد — سیگنالِ تقاضا دارد و حالا ثبتش می‌کند (§۲۳)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>آنچه آگاهانه نداریم:</strong> شرکت‌ها، ثبتِ ایمیل، کانبان، یادآور، import/export و پورتالِ صاحب رسانه. هیچ‌کدام در دایرکتوری‌ای با یک ادمین کاربری ندارد. حرفِ صادقانه برای دفاع: CRM ابزارِ <em>فروش</em> است و رسامپ فرایند فروش ندارد — سیگنالِ تقاضا دارد و حالا ثبتش می‌کند (§۲۳)</div></div>
       </div>
       <div class="proof"><b>تأیید:</b> ۱۱ تست تازه سبز شد — ۴۰۱ بدون لاگین، بازگشتِ شماره، ۴۰۴ روی آگهیِ منتشرنشده، ساخته‌شدنِ سرنخ، <b>افزایشِ شمارنده به‌جای ردیف دوم</b>، سرنخ‌نساختن برای نشستِ ادمین، ۴۰۱ برای کاربر عادی و ۴۰۳ برای viewer روی پنل، تغییر وضعیت + یادداشت، ردِ وضعیتِ خارج از allowlist (۴۰۰) و ۴۰۴ سرنخِ ناموجود. <code>npx tsc --noEmit</code>، <code>npm run lint</code> و <code>npm run build</code> بدون خطا.</div>
     </div>
@@ -2244,7 +2244,7 @@ sequenceDiagram
     </div>
     <div class="ph-body">
       <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div><strong>مدل <code>ReviewReply</code>:</strong> پاسخ‌ها <b>یک سطح</b> عمق دارند — نه درختِ بی‌انتها. پاسخِ کاربر شناسهٔ حسابش را دارد، ولی پاسخِ تیم <b>نمی‌تواند</b>: ادمینی که از متغیر محیطی تنظیم می‌شود اصلاً ردیفی در جدول <code>admins</code> ندارد (همان دلیلی که جدول لاگ هم به‌جای کلید خارجی، ایمیل را نگه می‌دارد). پس نامِ نویسنده روی خودِ پاسخ نوشته می‌شود و <code>isStaff</code> نشانِ «تیم رساماپ» را می‌سازد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مدل <code>ReviewReply</code>:</strong> پاسخ‌ها <b>یک سطح</b> عمق دارند — نه درختِ بی‌انتها. پاسخِ کاربر شناسهٔ حسابش را دارد، ولی پاسخِ تیم <b>نمی‌تواند</b>: ادمینی که از متغیر محیطی تنظیم می‌شود اصلاً ردیفی در جدول <code>admins</code> ندارد (همان دلیلی که جدول لاگ هم به‌جای کلید خارجی، ایمیل را نگه می‌دارد). پس نامِ نویسنده روی خودِ پاسخ نوشته می‌شود و <code>isStaff</code> نشانِ «تیم رسامپ» را می‌سازد</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>حذف پاسخ برای نویسنده‌اش و برای ویرایشگر به بالا:</strong> رشتهٔ عمومی‌ای که فقط نویسنده‌اش بتواند تمیزش کند، جوابی برای پاسخ توهین‌آمیز ندارد؛ و جایگزینش — دست‌بردن مستقیم در دیتابیس — از هر نظر بدتر است، از جمله اینکه هیچ ردی نمی‌گذارد</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>یک فرم ورود، دو منبع اعتبارنامه:</strong> مشتری با <b>شماره موبایل</b> ثبت‌نام می‌کند و تیم با <b>ایمیل</b> — پس شکلِ خودِ ورودی می‌گوید کدام جدول را باید دید. حدسی در کار نیست و هیچ‌کدام از دو جدول پشت سر هم آزموده نمی‌شوند. <b>هر شکستی دقیقاً یک جمله برمی‌گرداند</b>، وگرنه تفاوتِ پیام‌ها خودش یک اوراکل بود</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong><code>GET /api/auth/me</code> حالا نشستِ تیم را هم می‌شناسد.</strong> قبلاً هر چیزی جز <code>role: "user"</code> را ۴۰۱ می‌داد — یعنی ادمین برای سایتِ عمومی یک غریبه بود: نه نامی در هدر، نه راهی برای پاسخ دادن به یک نظر</div></div>
@@ -2280,11 +2280,33 @@ sequenceDiagram
       </div>
     </div>
   </div>
-<div class="phase-card is-next">
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">DOC</div>
+      <div class="ph-title"><h3>بستهٔ تحویلی پایان‌نامه</h3><p>پایان‌نامه، پوستر، اسلاید دفاع، نقشهٔ کد — مهلت داوران ۱۷ شهریور، دفاع ۲۱ شهریور</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پایان‌نامه</strong> — <code>docs/thesis/thesis.html</code> → <code>thesis.pdf</code>؛ ساختار دقیق قالب دانشگاه زنجان (B5، حاشیهٔ ۳۰/۳۵/۲۵/۲۵، صفحهٔ عنوان، تعهدنامه، <strong>فرم افشای هوش مصنوعی</strong>، چکیدهٔ فارسی و انگلیسی، فهرست‌ها، واژه‌نامه). ۷ فصل، ۴۲ صفحه متن اصلی، ۶۵ صفحه کل</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>شماره‌گذاری خودکار</strong> — بخش‌ها به سبک راست‌به‌چپ قالب (<code>۲-۴</code>، <code>۳-۲-۴</code>)، شکل و جدول per-chapter، و فهرست مطالب/شکل‌ها/جدول‌ها با <strong>شمارهٔ صفحهٔ واقعی</strong></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>خط ساخت PDF سه‌پاسه</strong> — <code>build-pdf.sh</code>: پاس ۱ با نشانهٔ نامرئی، نگاشت عنوان به صفحه از متن PDF، پاس ۲ تا رسیدن به نقطهٔ ثابت، پاس ۳ لایهٔ شمارهٔ صفحه با <code>qpdf --overlay</code>. <em style="color:var(--amber);font-size:0.78rem">Chrome به margin-box های @page شماره نمی‌دهد؛ روی‌هم‌گذاری تنها راه بود</em></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پوستر A1</strong> — <code>docs/thesis/poster.html</code> → <code>poster.pdf</code>، تک‌صفحه، با نمودار معماری و کد QR مخزن</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>اسلاید دفاع</strong> — <code>docs/defense-slides.html</code>، ۱۸ اسلاید ۱۶:۹ با ناوبری کیبورد و مقیاس خودکار؛ بدون CDN، فونت و mermaid محلی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نقشهٔ تعاملی کد</strong> — <code>docs/codemap.html</code> از روی <strong>importهای واقعی</strong> استخراج می‌شود (۱۳۲ فایل، ۴۰۱ یال). دو نما: ستونی و گراف نیرومحور دست‌ساز بدون کتابخانهٔ بیرونی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>README بازنویسی شد</strong> — لحن رسمی برای داور، جدول مزیت رقابتی، مدل تخمین بازدید، و اصلاح عدد کهنهٔ آزمون‌ها (۳۷ → ۱۱۳)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>یکدست‌سازی نام برند</strong> — «رساماپ» → «رسامپ» در ۲۹ مورد و ۱۴ فایل، شامل ۵ فایل کد با متن دیدنی کاربر</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><strong>پر کردن نام استاد راهنما</strong> — در <code>META</code> بالای اسکریپت <code>thesis.html</code>، و در پوستر و اسلاید ۱</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><strong>عمومی کردن مخزن گیت‌هاب</strong> — الان private است؛ لینک روی پوستر و پایان‌نامه تا آن لحظه برای داور باز نمی‌شود</div></div>
+      </div>
+      <div class="proof">اعداد سند از خود پروژه گرفته شده‌اند، نه از حافظه: شمارش رکوردها با پرس‌وجوی SQLite روی <code>dev.db</code>، شمارش مسیر و خط کد با پیمایش مخزن، و <code>npm test</code> با <strong>۱۱۳/۱۱۳ موفق در ۱۷٫۶ ثانیه</strong>. گراف کد با تحلیل خودکار importها ساخته شده و پرارجاع‌ترین فایل‌ها دقیقاً مرحله‌های خط لولهٔ درخواست‌اند — یعنی ادعای «یک نقطهٔ ورود به دیتابیس» قابل بررسی است.</div>
+    </div>
+  </div>
+  <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">CMP</div>
       <div class="ph-title"><h3>برتری رقابتی — پاسخ‌های آماده داور</h3><p>رسامپ vs IRBillboard vs Billboardiha — ۷ بُعد</p></div>
-      <div class="ph-badge">→ مرور کن</div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">داور احتمالاً می‌پرسد: <em>«چرا رسامپ از IRBillboard و Billboardiha بهتر است؟»</em> پاسخ آماده:</p>
@@ -2294,7 +2316,7 @@ sequenceDiagram
         <div class="task done-t"><div class="tick">✓</div><div><strong>تخمین ترافیک روزانه</strong> <em style="color:var(--amber);font-size:0.78rem">(heuristic — جمعیت × ضریب موقعیت × ضریب نوع × ضریب مساحت، نه داده واقعی)</em> — رقبا اصلاً عدد نمی‌دهند</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>قیمت نمایش داده می‌شود</strong> <em style="color:var(--amber);font-size:0.78rem">(حدسی یا متغیر — از منابع scrape شده، نه تأیید صاحب رسانه)</em> — IRBillboard «تماس بگیرید» دارد</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>داشبورد تحلیلی</strong> — نمودار توزیع شهر/نوع/قیمت از DB واقعی؛ رقبا هیچ analytics ندارند</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>حجم داده</strong> — ۲۸۰۸+ رکورد از ۵ منبع (Divar، Sheypoor، IRBillboard، Billboardiha، Arad) با dedup</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حجم داده</strong> — <strong>۳٬۵۳۶ رکورد در ۱۰۱ شهر</strong> از ۳ منبع (Billboardiha ۲۷۸۱، Arad ۶۱۵، IRBillboard ۱۱۵) پس از dedup؛ ۳٬۰۲۰ رکورد (۸۵٪) دارای مختصات جغرافیایی</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>امنیت</strong> — JWT HttpOnly، bcrypt cost 12، rate limit، Zod، RBAC، اعتبارسنجی آپلود از روی magic bytes، محافظت ضدِ کپی‌برداری</div></div>
       </div>
       <div class="proof" style="background:var(--amber-dim); border-color:var(--amber-mid); color:var(--text)">رسامپ در ساختار فنی و قابلیت‌ها از رقبا پیشتاز است — با این صداقت که برخی داده‌ها heuristic هستند و همه صاحبان رسانه هنوز به پلتفرم متصل نشده‌اند. این محدودیت‌ها ذاتی مرحله MVP است، نه نقص طراحی.</div>
@@ -2852,7 +2874,7 @@ infra/
 <section class="chapter" id="c13">
   <div class="chead">
     <div class="cn">فصل ۱۳</div>
-    <div><h3>فایل‌بندی رساماپ، خط به خط</h3><p>هر پوشه چیست، چه اجازه‌ای دارد، و چه چیزی حق ندارد به چه چیزی دست بزند</p></div>
+    <div><h3>فایل‌بندی رسامپ، خط به خط</h3><p>هر پوشه چیست، چه اجازه‌ای دارد، و چه چیزی حق ندارد به چه چیزی دست بزند</p></div>
   </div>
 
   <div class="block">
