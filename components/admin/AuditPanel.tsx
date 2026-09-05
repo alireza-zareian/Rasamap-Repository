@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { C, AUDIT_ACTION } from "./constants";
 import { Badge } from "./Badge";
 import { ScrollText } from "lucide-react";
+import { faNum } from "@/lib/format";
 
 interface Row {
   id: string | number;
@@ -40,7 +41,7 @@ export function AuditPanel() {
         borderRadius: 8, padding: "6px 14px", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer",
       }}
     >
-      {label} <span style={{ opacity: 0.7 }}>({count.toLocaleString("fa-IR")})</span>
+      {label} <span style={{ opacity: 0.7 }}>({faNum(count)})</span>
     </button>
   );
 

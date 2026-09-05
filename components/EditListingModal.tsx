@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { X, ImagePlus, Check } from "lucide-react";
+import { faNum } from "@/lib/format";
 
 // One of the user's own submissions, with every field the edit form touches.
 export interface EditableListing {
@@ -234,7 +235,7 @@ export default function EditListingModal({
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <label style={label}>تصاویر ({photoCount.toLocaleString("fa-IR")} از ۵)</label>
+            <label style={label}>تصاویر ({faNum(photoCount)} از ۵)</label>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple style={{ display: "none" }} onChange={handleFiles} />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
               {keptUrls.map(url => (

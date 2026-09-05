@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { PieChart, LayoutGrid, Building2, Wallet, Database, X } from "lucide-react";
 import { typeLabels, statusLabels } from "@/lib/types";
+import { faNum } from "@/lib/format";
 
 interface AnalyticsData {
   total: number;
@@ -96,10 +97,10 @@ export default function AnalyticsTab() {
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         {[
-          { num: data.total.toLocaleString("fa-IR"), label: "کل رسانه ثبت‌شده", color: "var(--accent)" },
+          { num: faNum(data.total), label: "کل رسانه ثبت‌شده", color: "var(--accent)" },
           { num: `${available} / ${data.total}`, label: "خالی / کل", color: "var(--green)" },
-          { num: `${data.price.avg.toLocaleString("fa-IR")}M`, label: "میانگین قیمت (تومان/ماه)", color: "var(--accent-warm)" },
-          { num: `${data.coverage.geocoded.toLocaleString("fa-IR")}`, label: "رسانه با مختصات GPS", color: "#06b6d4" },
+          { num: `${faNum(data.price.avg)}M`, label: "میانگین قیمت (تومان/ماه)", color: "var(--accent-warm)" },
+          { num: `${faNum(data.coverage.geocoded)}`, label: "رسانه با مختصات GPS", color: "#06b6d4" },
         ].map(k => (
           <div key={k.label} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px", textAlign: "center" }}>
             <div style={{ fontSize: "1.35rem", fontWeight: 800, color: k.color }}>{k.num}</div>
@@ -136,7 +137,7 @@ export default function AnalyticsTab() {
       <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px" }}>
         <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}><Wallet size={14} /> محدوده قیمتی</div>
         <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginBottom: 12 }}>
-          کمینه {data.price.min.toLocaleString("fa-IR")}M · بیشینه {data.price.max.toLocaleString("fa-IR")}M · میانگین {data.price.avg.toLocaleString("fa-IR")}M
+          کمینه {faNum(data.price.min)}M · بیشینه {faNum(data.price.max)}M · میانگین {faNum(data.price.avg)}M
         </div>
         {data.priceBrackets.map((b, i) => (
           <Bar key={b.label} label={b.label} value={b.count} max={maxBracket} color={TYPE_COLORS[i % TYPE_COLORS.length]} />

@@ -2,6 +2,7 @@
 import type { AdminStats } from "@/lib/admin/types";
 import { C } from "./constants";
 import { Bot, Database, MapPin, Images, Copy, FileCode2, GitCommitHorizontal, Server, Workflow, CalendarClock, Info } from "lucide-react";
+import { faNum } from "@/lib/format";
 
 /**
  * Read-only status of the data pipeline.
@@ -26,7 +27,6 @@ const BLUE = "#3B7BF5", PURPLE = "#8b5cf6", GREEN = "#22C55E", AMBER = "#f59e0b"
 // A fixed palette so a source keeps the same colour between renders.
 const SOURCE_COLORS = [BLUE, PURPLE, GREEN, AMBER, "#38bdf8", "#ec4899", "#94a3b8"];
 
-const fa = (n: number) => n.toLocaleString("fa-IR");
 const pct = (n: number, total: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
 
 /** One health metric: big number, coloured icon chip, and — when a ratio makes
@@ -61,7 +61,7 @@ function Step({ n, icon, title, note }: { n: number; icon: React.ReactNode; titl
     <div style={{ flex: "1 1 160px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 14px", position: "relative" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
         <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, borderRadius: 999, background: C.accent, color: "#fff", fontSize: "0.66rem", fontWeight: 800, flexShrink: 0 }}>
-          {fa(n)}
+          {faNum(n)}
         </span>
         <span style={{ color: C.muted, display: "flex" }}>{icon}</span>
       </div>
@@ -108,28 +108,28 @@ export function ScraperPanel({ stats }: { stats: AdminStats | null }) {
 
       {/* ── Health metrics ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 12 }}>
-        <Metric icon={<Database size={15} />} label="کل رکوردها" value={fa(stats.total)} tone={BLUE} />
-        <Metric icon={<CalendarClock size={15} />} label="ایمپورت ۷ روز اخیر" value={fa(stats.recentlyImported)} tone={PURPLE} sub="رکوردهایی که فیلد scrapedAt آن‌ها تازه است" />
+        <Metric icon={<Database size={15} />} label="کل رکوردها" value={faNum(stats.total)} tone={BLUE} />
+        <Metric icon={<CalendarClock size={15} />} label="ایمپورت ۷ روز اخیر" value={faNum(stats.recentlyImported)} tone={PURPLE} sub="رکوردهایی که فیلد scrapedAt آن‌ها تازه است" />
         <Metric
           icon={<MapPin size={15} />}
           label="جئوکد شده (دارای مختصات)"
-          value={`${fa(stats.withCoords)}  ·  ${fa(pct(stats.withCoords, stats.total))}٪`}
+          value={`${faNum(stats.withCoords)}  ·  ${faNum(pct(stats.withCoords, stats.total))}٪`}
           tone={pct(stats.withCoords, stats.total) >= 80 ? GREEN : AMBER}
           ratio={stats.withCoords / (stats.total || 1)}
-          sub={`${fa(stats.missingCoords)} رکورد هنوز مختصات ندارد`}
+          sub={`${faNum(stats.missingCoords)} رکورد هنوز مختصات ندارد`}
         />
         <Metric
           icon={<Images size={15} />}
           label="دارای تصویر"
-          value={`${fa(withImages)}  ·  ${fa(pct(withImages, stats.total))}٪`}
+          value={`${faNum(withImages)}  ·  ${faNum(pct(withImages, stats.total))}٪`}
           tone={pct(withImages, stats.total) >= 80 ? GREEN : AMBER}
           ratio={withImages / (stats.total || 1)}
-          sub={`${fa(stats.missingImages)} رکورد بدون هیچ تصویری`}
+          sub={`${faNum(stats.missingImages)} رکورد بدون هیچ تصویری`}
         />
         <Metric
           icon={<Copy size={15} />}
           label="خوشهٔ مختصات تکراری"
-          value={fa(stats.duplicateGroups)}
+          value={faNum(stats.duplicateGroups)}
           tone={RED}
           sub="سلول‌های ۵۰ متری که بیش از یک رکورد در آن‌هاست"
         />
@@ -139,7 +139,7 @@ export function ScraperPanel({ stats }: { stats: AdminStats | null }) {
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
           <div style={{ fontSize: "0.82rem", fontWeight: 700 }}>منبع رکوردها</div>
-          <div style={{ fontSize: "0.7rem", color: C.muted }}>{fa(sources.length)} منبع · مجموع {fa(sourceTotal)} رکورد</div>
+          <div style={{ fontSize: "0.7rem", color: C.muted }}>{faNum(sources.length)} منبع · مجموع {faNum(sourceTotal)} رکورد</div>
         </div>
 
         {/* Stacked composition bar */}
@@ -147,7 +147,7 @@ export function ScraperPanel({ stats }: { stats: AdminStats | null }) {
           {sources.map(([src, count], i) => (
             <div
               key={src}
-              title={`${SOURCE_LABEL[src] ?? src} — ${fa(count)}`}
+              title={`${SOURCE_LABEL[src] ?? src} — ${faNum(count)}`}
               style={{ width: `${(count / sourceTotal) * 100}%`, background: colorFor(i) }}
             />
           ))}
@@ -164,8 +164,8 @@ export function ScraperPanel({ stats }: { stats: AdminStats | null }) {
               <div style={{ flex: 1, height: 7, background: C.card, borderRadius: 4, overflow: "hidden" }}>
                 <div style={{ width: `${(count / sourceTotal) * 100}%`, height: "100%", background: colorFor(i), borderRadius: 4 }} />
               </div>
-              <div style={{ width: 44, fontSize: "0.72rem", color: C.muted, textAlign: "left", flexShrink: 0 }}>{fa(pct(count, sourceTotal))}٪</div>
-              <div style={{ width: 52, fontSize: "0.78rem", fontWeight: 700, textAlign: "left", flexShrink: 0 }}>{fa(count)}</div>
+              <div style={{ width: 44, fontSize: "0.72rem", color: C.muted, textAlign: "left", flexShrink: 0 }}>{faNum(pct(count, sourceTotal))}٪</div>
+              <div style={{ width: 52, fontSize: "0.78rem", fontWeight: 700, textAlign: "left", flexShrink: 0 }}>{faNum(count)}</div>
             </div>
           ))}
         </div>

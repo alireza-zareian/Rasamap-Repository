@@ -3,6 +3,7 @@ import { Search, Scale, MapPin, Shield, Zap, TrendingUp } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import { prisma } from "@/lib/db/client";
+import { faNum } from "@/lib/format";
 
 const advantages = [
   {
@@ -94,8 +95,8 @@ export default async function AboutPage() {
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <div className="about-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, textAlign: "center" }}>
             {[
-              { num: `${total.toLocaleString("fa-IR")}+`, label: "رسانه ثبت‌شده", color: "var(--accent)" },
-              { num: `${cityCount.toLocaleString("fa-IR")}+`, label: "شهر پوشش‌داده", color: "var(--green-accent)" },
+              { num: `${faNum(total)}+`, label: "رسانه ثبت‌شده", color: "var(--accent)" },
+              { num: `${faNum(cityCount)}+`, label: "شهر پوشش‌داده", color: "var(--green-accent)" },
               { num: "۱۰۰٪", label: "آنلاین و رایگان", color: "var(--accent-warm)" },
             ].map(s => (
               <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "28px 16px" }}>

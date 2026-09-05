@@ -19,6 +19,7 @@ import { AuditPanel } from "@/components/admin/AuditPanel";
 import { CreateModal } from "@/components/admin/CreateModal";
 import { ListingsPanel } from "@/components/admin/ListingsPanel";
 import { LeadsPanel } from "@/components/admin/LeadsPanel";
+import { faNum } from "@/lib/format";
 
 const TABS = ["overview", "billboards", "listings", "leads", "quality", "scraper", "users", "audit"] as const;
 type Tab = (typeof TABS)[number];
@@ -200,13 +201,13 @@ function AdminDashboard() {
               {stats ? (
                 <>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(155px, 1fr))", gap: 12, marginBottom: 24 }}>
-                    <StatCard icon={<ClipboardList size={20} />} label="کل بیلبوردها"  value={stats.total.toLocaleString()}          color={C.accent} />
-                    <StatCard icon={<CheckCircle2 size={20} />} label="فعال"           value={stats.active.toLocaleString()}         color={C.green} />
-                    <StatCard icon={<MapPin size={20} />} label="دارای مختصات"  value={stats.withCoords.toLocaleString()}     color={C.green}  sub={`${Math.round((stats.withCoords/stats.total)*100)}%`} />
-                    <StatCard icon={<AlertTriangle size={20} />} label="بدون مختصات"   value={stats.missingCoords.toLocaleString()}  color="#f59e0b" />
-                    <StatCard icon={<ImageOff size={20} />} label="بدون تصویر"    value={stats.missingImages.toLocaleString()}  color="#f59e0b" />
-                    <StatCard icon={<Sparkles size={20} />} label="هفته اخیر"     value={stats.recentlyImported.toLocaleString()} color="#8b5cf6" />
-                    <StatCard icon={<Copy size={20} />} label="خوشه هم‌مکان (~۵۰م)" value={stats.duplicateGroups.toLocaleString()} color="#ef4444" sub="نقاطی با ۲+ رسانه نزدیک هم" />
+                    <StatCard icon={<ClipboardList size={20} />} label="کل بیلبوردها"  value={faNum(stats.total)}          color={C.accent} />
+                    <StatCard icon={<CheckCircle2 size={20} />} label="فعال"           value={faNum(stats.active)}         color={C.green} />
+                    <StatCard icon={<MapPin size={20} />} label="دارای مختصات"  value={faNum(stats.withCoords)}     color={C.green}  sub={`${Math.round((stats.withCoords/stats.total)*100)}%`} />
+                    <StatCard icon={<AlertTriangle size={20} />} label="بدون مختصات"   value={faNum(stats.missingCoords)}  color="#f59e0b" />
+                    <StatCard icon={<ImageOff size={20} />} label="بدون تصویر"    value={faNum(stats.missingImages)}  color="#f59e0b" />
+                    <StatCard icon={<Sparkles size={20} />} label="هفته اخیر"     value={faNum(stats.recentlyImported)} color="#8b5cf6" />
+                    <StatCard icon={<Copy size={20} />} label="خوشه هم‌مکان (~۵۰م)" value={faNum(stats.duplicateGroups)} color="#ef4444" sub="نقاطی با ۲+ رسانه نزدیک هم" />
                   </div>
                   <div className="admin-3col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
                     {([["منابع داده", stats.bySource, C.accent], ["نوع رسانه", stats.byType, "#8b5cf6"], ["شهرها (برتر)", stats.byCity, C.green]] as const).map(([title, data, color]) => {
@@ -233,7 +234,7 @@ function AdminDashboard() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                 <div>
                   <div style={{ fontSize: "1rem", fontWeight: 800 }}>مدیریت بیلبوردها</div>
-                  <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 2 }}>{total.toLocaleString()} آیتم</div>
+                  <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 2 }}>{faNum(total)} آیتم</div>
                 </div>
                 {canEdit && (
                   <button onClick={() => setShowCreate(true)} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.82rem", fontWeight: 700, padding: "8px 16px", borderRadius: 8, background: C.green, border: "none", color: "#fff", fontFamily: C.font, cursor: "pointer" }}>

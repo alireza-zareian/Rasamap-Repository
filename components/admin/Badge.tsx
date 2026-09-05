@@ -1,3 +1,5 @@
+import { faNum } from "@/lib/format";
+
 export function Badge({ text, color, bg }: { text: string; color: string; bg: string }) {
   return (
     <span style={{ fontSize: "0.68rem", padding: "3px 9px", borderRadius: 20, background: bg, color, fontWeight: 600, whiteSpace: "nowrap" }}>
@@ -25,7 +27,7 @@ export function BarRow({ label, value, max, color }: { label: string; value: num
   return (
     <div style={{ marginBottom: 10 }}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: C.muted, marginBottom: 4 }}>
-        <span>{label}</span><span style={{ color: C.text, fontWeight: 600 }}>{value.toLocaleString()}</span>
+        <span>{label}</span><span style={{ color: C.text, fontWeight: 600 }}>{faNum(value)}</span>
       </div>
       <div style={{ height: 6, borderRadius: 4, background: C.surface, overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${(value / max) * 100}%`, background: color, borderRadius: 4, transition: "width 0.5s ease" }} />

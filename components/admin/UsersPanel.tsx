@@ -5,6 +5,7 @@ import { C, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
 import { Users, ShieldCheck, Plus, X, AlertTriangle, Search } from "lucide-react";
 import { CustomerModal } from "./CustomerModal";
+import { faNum } from "@/lib/format";
 
 interface SessionUser { id: string; name: string; role: UserRole; email: string; }
 
@@ -236,7 +237,7 @@ function CustomersSection() {
       <div style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><Users size={16} /> کاربران ثبت‌نام‌شده</div>
         <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4 }}>
-          همهٔ حساب‌های کاربری سایت (جدول users) — چه سفارش داشته باشند چه نه. {total.toLocaleString("fa-IR")} نفر.
+          همهٔ حساب‌های کاربری سایت (جدول users) — چه سفارش داشته باشند چه نه. {faNum(total)} نفر.
         </div>
       </div>
 
@@ -284,8 +285,8 @@ function CustomersSection() {
                   <td style={{ padding: "12px 14px", fontSize: "0.85rem", fontWeight: 600, color: C.accent }}>{u.name}</td>
                   <td style={{ padding: "12px 14px", fontSize: "0.8rem", color: C.muted, direction: "ltr", textAlign: "right" }}>{u.phone}</td>
                   <td style={{ padding: "12px 14px", fontSize: "0.75rem", color: C.muted }}>{fmt(u.createdAt)}</td>
-                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{u.listingCount.toLocaleString("fa-IR")}</td>
-                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{u.reviewCount.toLocaleString("fa-IR")}</td>
+                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{faNum(u.listingCount)}</td>
+                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{faNum(u.reviewCount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -296,7 +297,7 @@ function CustomersSection() {
       {pages > 1 && (
         <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16 }}>
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: page === 1 ? "not-allowed" : "pointer" }}>قبلی</button>
-          <span style={{ padding: "7px 14px", fontSize: "0.78rem", color: C.muted }}>{page.toLocaleString("fa-IR")} / {pages.toLocaleString("fa-IR")}</span>
+          <span style={{ padding: "7px 14px", fontSize: "0.78rem", color: C.muted }}>{faNum(page)} / {faNum(pages)}</span>
           <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: page === pages ? "not-allowed" : "pointer" }}>بعدی</button>
         </div>
       )}

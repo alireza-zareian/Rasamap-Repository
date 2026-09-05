@@ -5,6 +5,7 @@ import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";
 import { planLabels } from "@/lib/types";
 import { ClipboardCheck, Check, X, Sparkles, ImageOff, PencilLine } from "lucide-react";
+import { faNum } from "@/lib/format";
 
 interface Listing {
   id: number;
@@ -165,7 +166,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                     </div>
                     <div style={{ fontSize: "0.75rem", color: C.muted, lineHeight: 1.9 }}>
                       {l.city}{l.region ? ` · ${l.region}` : ""} · {l.location}<br />
-                      {l.width}×{l.height} متر · {l.faces} وجه · {l.price.toLocaleString("fa-IR")}M تومان/ماه<br />
+                      {l.width}×{l.height} متر · {l.faces} وجه · {faNum(l.price)}M تومان/ماه<br />
                       فرستنده: {l.submittedBy ? `${l.submittedBy.name} (${l.submittedBy.phone})` : "نامشخص"} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}
                     </div>
                     {l.description && (

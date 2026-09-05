@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Billboard, typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Scale, X, Star } from "lucide-react";
+import { faNum } from "@/lib/format";
 
 interface Props {
   items: Billboard[];
@@ -19,10 +20,10 @@ export default function CompareModal({ items, onClose }: Props) {
     ["ابعاد", b=>`${b.width}×${b.height} م`, false],
     ["مساحت (م²)", b=>b.width*b.height, true],
     ["تعداد وجوه", b=>b.faces, true],
-    ["بازدید روزانه (تخمین)", b=>b.traffic.estimatedViews.toLocaleString(), true],
+    ["بازدید روزانه (تخمین)", b=>faNum(b.traffic.estimatedViews), true],
     ["امتیاز دیده‌شدن", b=>b.traffic.viewabilityScore+"/100", true],
-    ["ترافیک سواره (روز)", b=>b.traffic.daily.toLocaleString(), true],
-    ["ترافیک پیاده (روز)", b=>b.traffic.pedestrian.toLocaleString(), true],
+    ["ترافیک سواره (روز)", b=>faNum(b.traffic.daily), true],
+    ["ترافیک پیاده (روز)", b=>faNum(b.traffic.pedestrian), true],
     ["قیمت ماهانه (M ت)", b=>b.price, false],
     ["قیمت سالانه (M ت)", b=>b.priceYearly, false],
     ["سن سازه (سال)", b=>b.age, false],

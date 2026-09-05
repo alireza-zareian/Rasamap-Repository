@@ -11,6 +11,7 @@ import CompareModal from "@/components/CompareModal";
 import CompareBar from "@/components/CompareBar";
 import Toast from "@/components/Toast";
 import SnakeScroll from "@/components/SnakeScroll";
+import { faNum } from "@/lib/format";
 
 // ── Types ────────────────────────────────────────────────────────
 interface Filters {
@@ -249,7 +250,7 @@ export default function ExplorePage() {
                   جستجوی رسانه تبلیغاتی
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 2 }}>
-                  {total > 0 ? `${total.toLocaleString("fa")} رسانه یافت شد` : "جستجو در پایگاه داده رسانه‌های ایران"}
+                  {total > 0 ? `${faNum(total)} رسانه یافت شد` : "جستجو در پایگاه داده رسانه‌های ایران"}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 4, background: "var(--bg-surface)", borderRadius: 8, padding: 3 }}>
@@ -469,7 +470,7 @@ export default function ExplorePage() {
         }}>
           <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
             {dataLoading ? "در حال جستجو..." : (
-              <><span style={{ color: "var(--accent)", fontWeight: 700 }}>{total.toLocaleString("fa")}</span> رسانه یافت شد</>
+              <><span style={{ color: "var(--accent)", fontWeight: 700 }}>{faNum(total)}</span> رسانه یافت شد</>
             )}
           </div>
           <select value={filters.sortBy} onChange={e => setF("sortBy", e.target.value as Filters["sortBy"])} style={{
@@ -536,7 +537,7 @@ export default function ExplorePage() {
                   ‹ قبلی
                 </button>
                 <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", padding: "0 8px" }}>
-                  صفحه {page.toLocaleString("fa")} از {totalPages.toLocaleString("fa")}
+                  صفحه {faNum(page)} از {faNum(totalPages)}
                 </span>
                 <button
                   disabled={page >= totalPages}

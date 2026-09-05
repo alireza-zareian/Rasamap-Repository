@@ -4,6 +4,7 @@ import type { Billboard } from "@/lib/types";
 import { typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
 import SwipeMarquee from "@/components/SwipeMarquee";
+import { faNum } from "@/lib/format";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
 
@@ -83,7 +84,7 @@ export default function RelatedBillboards({ items }: { items: Billboard[] }) {
                     <MapPin size={11} /> {b.city}
                   </div>
                   <div style={{ marginTop: 8, display: "flex", alignItems: "baseline", gap: 4 }}>
-                    <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent)" }}>{b.price.toLocaleString()}</span>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent)" }}>{faNum(b.price)}</span>
                     <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>میلیون تومان / ماه</span>
                   </div>
                 </div>

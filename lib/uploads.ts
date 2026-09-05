@@ -24,6 +24,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { faNum } from "@/lib/format";
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB per image, after decoding
 export const MAX_LISTING_IMAGES = 5;
@@ -61,7 +62,7 @@ export type DecodeResult =
  * write, or a Persian reason why we are not.
  */
 export function decodeImageDataUrl(src: string, index: number): DecodeResult {
-  const position = (index + 1).toLocaleString("fa-IR");
+  const position = faNum((index + 1));
 
   const match = DATA_URL_RE.exec(src.trim());
   if (!match) {
@@ -111,7 +112,7 @@ export type SaveResult =
 export async function saveImages(scope: string, sources: string[]): Promise<SaveResult> {
   if (sources.length === 0) return { ok: true, urls: [], dir: "" };
   if (sources.length > MAX_LISTING_IMAGES) {
-    return { ok: false, error: `حداکثر ${MAX_LISTING_IMAGES.toLocaleString("fa-IR")} تصویر مجاز است.` };
+    return { ok: false, error: `حداکثر ${faNum(MAX_LISTING_IMAGES)} تصویر مجاز است.` };
   }
 
   // Decode and validate everything before touching the disk, so a bad image in

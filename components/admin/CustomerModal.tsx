@@ -4,6 +4,7 @@ import { copyText } from "@/lib/clipboard";
 import { C } from "./constants";
 import { Badge } from "./Badge";
 import { User, X, AlertTriangle, KeyRound, Check, Copy } from "lucide-react";
+import { faNum } from "@/lib/format";
 
 interface UserListing {
   id: number;
@@ -122,8 +123,8 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
             </div>
             <div style={{ display: "flex", gap: 16, fontSize: "0.75rem", color: C.muted, marginBottom: 16, flexWrap: "wrap" }}>
               <span>ثبت‌نام: {fmt(data.createdAt)}</span>
-              <span>آگهی‌ها: {data._count.listings.toLocaleString("fa-IR")}</span>
-              <span>نظرها: {data._count.reviews.toLocaleString("fa-IR")}</span>
+              <span>آگهی‌ها: {faNum(data._count.listings)}</span>
+              <span>نظرها: {faNum(data._count.reviews)}</span>
             </div>
 
             <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
@@ -165,7 +166,7 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
                       <div style={{ minWidth: 0 }}>
                         <div style={{ fontSize: "0.8rem", fontWeight: 600 }}>{l.name}</div>
                         <div style={{ fontSize: "0.7rem", color: C.muted }}>
-                          {l.city} · {l.price.toLocaleString("fa-IR")}M تومان/ماه · {fmt(l.createdAt)}
+                          {l.city} · {faNum(l.price)}M تومان/ماه · {fmt(l.createdAt)}
                           {l.featured ? " · ویژه" : ""}
                         </div>
                       </div>

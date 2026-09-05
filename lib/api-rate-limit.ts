@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { retryAfterSeconds, type RateLimitResult } from "@/lib/auth/rate-limit";
 import { auditLog, persistAudit } from "@/lib/auth/audit";
+import { faNum } from "@/lib/format";
 
 export function rateLimited(
   rl: RateLimitResult,
@@ -17,7 +18,7 @@ export function rateLimited(
   const mins = Math.ceil(retryAfter / 60);
   const message =
     mins > 1
-      ? `درخواست‌های زیادی فرستاده شده. لطفاً حدود ${mins.toLocaleString("fa-IR")} دقیقه دیگر دوباره تلاش کنید.`
+      ? `درخواست‌های زیادی فرستاده شده. لطفاً حدود ${faNum(mins)} دقیقه دیگر دوباره تلاش کنید.`
       : "درخواست‌های زیادی فرستاده شده. لطفاً یک دقیقه دیگر دوباره تلاش کنید.";
 
   const details = { endpoint: ctx.endpoint, retryAfter, lockedUntil: rl.lockedUntil ?? null };

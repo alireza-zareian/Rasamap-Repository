@@ -13,6 +13,7 @@ import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import BillboardContact from "@/components/BillboardContact";
 import { typeLabels, statusLabels } from "@/lib/types";
+import { faNum } from "@/lib/format";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
 const STATUS_LABEL = statusLabels as Record<string, string>;
@@ -26,10 +27,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!b) return { title: "رسانه یافت نشد | رسامپ" };
   return {
     title: `${b.name} | رسامپ`,
-    description: `${TYPE_LABEL[b.type] ?? b.type} در ${b.city} — ${b.width}×${b.height} متر — ${b.price.toLocaleString()} میلیون تومان/ماه`,
+    description: `${TYPE_LABEL[b.type] ?? b.type} در ${b.city} — ${b.width}×${b.height} متر — ${faNum(b.price)} میلیون تومان/ماه`,
     openGraph: {
       title: b.name,
-      description: `${b.city} · ${TYPE_LABEL[b.type]} · ${b.price.toLocaleString()} میلیون تومان`,
+      description: `${b.city} · ${TYPE_LABEL[b.type]} · ${faNum(b.price)} میلیون تومان`,
       ...(b.images?.[0] ? { images: [{ url: b.images[0] }] } : {}),
     },
   };
@@ -225,7 +226,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "18px 20px" }}>
                 {/* Price + label on one line */}
                 <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 12, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: "1.85rem", fontWeight: 800, color: "var(--accent)", lineHeight: 1 }}>{b.price.toLocaleString()}</span>
+                  <span style={{ fontSize: "1.85rem", fontWeight: 800, color: "var(--accent)", lineHeight: 1 }}>{faNum(b.price)}</span>
                   <span style={{ fontSize: "0.73rem", color: "var(--text-muted)" }}>میلیون تومان / ماه</span>
                   <span style={{ fontSize: "0.6rem", fontWeight: 600, padding: "1px 6px", borderRadius: 20, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b", whiteSpace: "nowrap" }}>حدسی · متغیر</span>
                 </div>
@@ -238,7 +239,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                     { label: "سالانه", val: b.priceYearly },
                   ].map(p => (
                     <div key={p.label} style={{ flex: 1, background: "var(--bg-surface)", borderRadius: 8, padding: "7px 4px", textAlign: "center" }}>
-                      <div style={{ fontSize: "0.8rem", fontWeight: 700 }}>{p.val?.toLocaleString() ?? "—"}</div>
+                      <div style={{ fontSize: "0.8rem", fontWeight: 700 }}>{p.val != null ? faNum(p.val) : "—"}</div>
                       <div style={{ fontSize: "0.58rem", color: "var(--text-muted)", marginTop: 1 }}>{p.label}</div>
                     </div>
                   ))}

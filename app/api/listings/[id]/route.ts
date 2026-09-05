@@ -10,6 +10,7 @@ import { persistAudit } from "@/lib/auth/audit";
 import { saveImages, discardImages, MAX_LISTING_IMAGES, MAX_IMAGE_BYTES } from "@/lib/uploads";
 import { serverError } from "@/lib/api-error";
 import { withApiLog } from "@/lib/api-log";
+import { faNum } from "@/lib/format";
 
 // Mirrors the create bound in app/api/listings/route.ts: enough headroom for a
 // full set of images plus the JSON envelope, refused before the body is read.
@@ -106,7 +107,7 @@ async function PATCHHandler(req: NextRequest, { params }: { params: Promise<{ id
   const fresh = images.filter(s => s.startsWith("data:"));
   if (kept.length + fresh.length > MAX_LISTING_IMAGES) {
     return NextResponse.json(
-      { error: `حداکثر ${MAX_LISTING_IMAGES.toLocaleString("fa-IR")} تصویر مجاز است` },
+      { error: `حداکثر ${faNum(MAX_LISTING_IMAGES)} تصویر مجاز است` },
       { status: 400 },
     );
   }

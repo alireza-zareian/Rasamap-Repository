@@ -5,6 +5,7 @@ import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";
 import { leadStatusLabels, LEAD_STATUSES } from "@/lib/types";
 import { Handshake, Inbox, Repeat, Save } from "lucide-react";
+import { faNum } from "@/lib/format";
 
 interface Lead {
   id: number;
@@ -95,7 +96,7 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}>
-          <Handshake size={16} /> سرنخ‌ها ({total.toLocaleString("fa-IR")})
+          <Handshake size={16} /> سرنخ‌ها ({faNum(total)})
         </div>
         <select value={filter} onChange={e => setFilter(e.target.value)} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "7px 10px", borderRadius: 8, outline: "none" }}>
           <option value="">همه</option>
@@ -143,12 +144,12 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
                       <Badge text={leadStatusLabels[l.status] ?? l.status} color={tone} bg={toneBg} />
                       {l.count > 1 && (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.68rem", color: C.yellow }}>
-                          <Repeat size={11} /> {l.count.toLocaleString("fa-IR")} بار
+                          <Repeat size={11} /> {faNum(l.count)} بار
                         </span>
                       )}
                     </div>
                     <div style={{ fontSize: "0.75rem", color: C.muted, lineHeight: 1.9 }}>
-                      {l.billboard ? `${l.billboard.city} · ${l.billboard.price.toLocaleString("fa-IR")}M تومان/ماه · صاحب رسانه: ${l.billboard.agency || "—"} ${l.billboard.phone || ""}` : "—"}<br />
+                      {l.billboard ? `${l.billboard.city} · ${faNum(l.billboard.price)}M تومان/ماه · صاحب رسانه: ${l.billboard.agency || "—"} ${l.billboard.phone || ""}` : "—"}<br />
                       متقاضی: <b style={{ color: C.text }}>{l.user?.name ?? "حساب حذف‌شده"}</b>
                       {l.user?.phone ? ` (${l.user.phone})` : ""} · آخرین درخواست: {fmt(l.lastRequestedAt)}
                     </div>

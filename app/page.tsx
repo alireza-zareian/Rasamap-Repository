@@ -6,10 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import SwipeMarquee from "@/components/SwipeMarquee";
 import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Phone, Monitor, Milestone, Train, Sun, Moon, User, Map, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
-
-function toFa(n: number) {
-  return n.toLocaleString("fa-IR");
-}
+import { faNum } from "@/lib/format";
 
 const howSteps = [
   { Icon: Search, title: "جستجو کن", desc: "شهر، منطقه، بودجه و نوع رسانه‌ات رو انتخاب کن" },
@@ -277,9 +274,9 @@ export default function LandingPage() {
       <section style={{ padding: "56px 28px", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "var(--bg-card)" }}>
         <div className="stats-bar-grid" style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24, textAlign: "center" }}>
           {[
-            { num: siteStats ? toFa(siteStats.total) + "+" : "۳۵۰۰+", label: "رسانه ثبت‌شده", Icon: Megaphone, color: "var(--accent)" },
-            { num: siteStats ? toFa(Math.round(siteStats.totalDailyReach / 1_000_000)) + "M+" : "۵۰۰M+", label: "تردد روزانه بازار", Icon: Eye, color: "var(--green-accent)" },
-            { num: siteStats ? toFa(siteStats.cityCount) : "۸۷", label: "شهر پوشش‌داده", Icon: Building2, color: "var(--accent-warm)" },
+            { num: siteStats ? faNum(siteStats.total) + "+" : "۳۵۰۰+", label: "رسانه ثبت‌شده", Icon: Megaphone, color: "var(--accent)" },
+            { num: siteStats ? faNum(Math.round(siteStats.totalDailyReach / 1_000_000)) + "M+" : "۵۰۰M+", label: "تردد روزانه بازار", Icon: Eye, color: "var(--green-accent)" },
+            { num: siteStats ? faNum(siteStats.cityCount) : "۸۷", label: "شهر پوشش‌داده", Icon: Building2, color: "var(--accent-warm)" },
             { num: "۱۰۰٪", label: "آنلاین و بدون تماس", Icon: CheckCircle2, color: "var(--green-accent)" },
           ].map(s => (
             <div key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -306,7 +303,7 @@ export default function LandingPage() {
                 <div style={{ width: 56, height: 56, background: "rgba(59,123,245,0.08)", border: "1px solid rgba(59,123,245,0.2)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", flexShrink: 0 }}><t.Icon size={26} /></div>
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: 4 }}>{t.label}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{typeCounts(t.type) != null ? toFa(typeCounts(t.type)!) + " رسانه موجود" : "..."}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{typeCounts(t.type) != null ? faNum(typeCounts(t.type)!) + " رسانه موجود" : "..."}</div>
                 </div>
                 <div style={{ marginRight: "auto", fontSize: "0.8rem", color: "var(--accent)", fontWeight: 600 }}>مشاهده ←</div>
               </Link>
@@ -381,7 +378,7 @@ export default function LandingPage() {
       {/* ── CTA ── */}
       <section className="section-halo" style={{ padding: "100px 28px", textAlign: "center" }}>
         <h2 style={{ fontSize: "2.2rem", fontWeight: 900, marginBottom: 16 }}>آماده‌ای شروع کنی؟</h2>
-        <p style={{ color: "var(--text-muted)", marginBottom: 36, fontSize: "0.95rem" }}>بیش از {siteStats ? toFa(siteStats.total) : "۳۵۰۰"} رسانه منتظرته — رایگان شروع کن</p>
+        <p style={{ color: "var(--text-muted)", marginBottom: 36, fontSize: "0.95rem" }}>بیش از {siteStats ? faNum(siteStats.total) : "۳۵۰۰"} رسانه منتظرته — رایگان شروع کن</p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/explore" className="btn-sheen" style={{ background: "var(--accent)", color: "#fff", padding: "14px 36px", borderRadius: 10, textDecoration: "none", fontWeight: 700, fontSize: "1rem", boxShadow: "0 4px 24px rgba(59,123,245,0.4)", display: "inline-flex", alignItems: "center", gap: 8 }}><Map size={18} /> ورود به پلتفرم</Link>
           <Link href="/list-media" style={{ border: "1px solid var(--border)", color: "var(--text-main)", padding: "14px 36px", borderRadius: 10, textDecoration: "none", fontSize: "0.95rem" }}>ثبت رسانه شما</Link>
