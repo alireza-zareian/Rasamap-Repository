@@ -12,293 +12,221 @@
   src:url("../vendor/vazirmatn-latin-wght-normal.woff2") format("woff2-variations");
   font-weight:100 900;font-display:block;unicode-range:U+0000-00FF,U+2000-206F;}
 
-/* A1 ایستاده */
+/* A1 ایستاده. همه‌چیز باید از دو متری خوانده شود، پس کوچک‌ترین متن این
+   صفحه ۱۶pt است — یعنی حدود ۵٫۶ میلی‌متر ارتفاع حرف. */
 @page{ size:594mm 841mm; margin:0; }
 :root{
-  --ink:#141A24; --ink2:#3E4959; --ink3:#6E7A8C;
-  --rule:#DCE2EC; --accent:#2F6BE0; --accent2:#6247C4;
-  --good:#0E8F5D; --warn:#B57209; --paper:#fff; --bg:#F4F7FB;
+  --ink:#101725; --ink2:#44506380; --muted:#5C6B84;
+  --line:#DCE3ED; --blue:#2F6BE0; --violet:#6247C4;
+  --green:#0E8F5D; --amber:#B57209; --paper:#fff; --bg:#EEF2F8;
 }
-*{box-sizing:border-box}
-body{
-  margin:0; width:594mm; min-height:841mm; background:var(--bg);
-  font-family:"Vazirmatn",system-ui,sans-serif; color:var(--ink);
-  font-size:12.5pt; line-height:1.72;
-}
-code{font-family:ui-monospace,Menlo,monospace;direction:ltr;display:inline-block;
-  background:#EDF1F7;padding:1px 5px;border-radius:4px;font-size:.9em}
+*{box-sizing:border-box; margin:0; padding:0}
+body{ width:594mm; height:841mm; background:var(--bg); color:var(--ink);
+  font-family:"Vazirmatn",system-ui,sans-serif; font-size:17pt; line-height:1.6;
+  display:flex; flex-direction:column; }
+b{ font-weight:800 }
+code{font-family:ui-monospace,Menlo,monospace;direction:ltr;display:inline-block;font-size:.9em}
 
 /* ── سربرگ ── */
-.hd{background:linear-gradient(150deg,#16202F 0%,#243burning 60%,#2B3A55 100%);}
-.hd{background:linear-gradient(150deg,#16202F,#2B3A55);color:#fff;padding:22mm 22mm 18mm;}
-.hd .uni{font-size:15pt;color:#A9BAD4;margin:0 0 3mm}
-.hd h1{font-size:44pt;line-height:1.28;margin:0 0 6mm;letter-spacing:-.02em;font-weight:800}
-.hd .by{display:flex;gap:16mm;flex-wrap:wrap;font-size:14pt;color:#C7D4E6}
-.hd .by b{color:#fff;font-weight:700}
+.hd{ background:linear-gradient(145deg,#101828,#223050 60%,#2B3A58);
+     color:#fff; padding:20mm 26mm 17mm; }
+.hd .uni{ font-size:19pt; color:#9FB3D1; letter-spacing:.01em; margin-bottom:8mm }
+.hd h1{ font-size:58pt; line-height:1.16; font-weight:800; letter-spacing:-.025em; margin-bottom:9mm }
+.hd .by{ display:flex; gap:22mm; font-size:20pt; color:#C4D2E6 }
+.hd .by b{ color:#fff }
+
+/* ── نوار اعداد ── */
+.nums{ display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+       background:var(--paper); border-bottom:1px solid var(--line) }
+.num{ padding:10mm 6mm; text-align:center; border-inline-start:1px solid var(--line) }
+.num:first-child{ border:0 }
+.num b{ display:block; font-size:58pt; font-weight:800; line-height:1;
+        color:var(--blue); letter-spacing:-.03em }
+.num span{ display:block; font-size:18pt; color:var(--muted); margin-top:5mm }
 
 /* ── بدنه ── */
-.body{padding:14mm 22mm 20mm}
-.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9mm;align-items:start}
-.card{background:var(--paper);border:1px solid var(--rule);border-radius:6mm;padding:8mm 9mm;
-  margin-bottom:9mm;break-inside:avoid}
-.card.span2{grid-column:span 2}
-.card.span3{grid-column:span 3}
-h2{font-size:21pt;margin:0 0 4mm;line-height:1.35;display:flex;align-items:center;gap:4mm}
-h2 .k{width:9mm;height:9mm;border-radius:2.5mm;background:var(--accent);color:#fff;
-  font-size:13pt;display:grid;place-items:center;flex:0 0 auto;font-weight:800}
-h3{font-size:15pt;margin:6mm 0 2mm}
-p{margin:0 0 3mm}
-.lead{font-size:14pt;color:var(--ink2)}
-ul{margin:0 0 3mm;padding-inline-start:6mm}
-li{margin-bottom:1.5mm}
+.body{ flex:1; padding:15mm 26mm 0; display:flex; flex-direction:column; gap:11mm }
+.row{ display:grid; gap:11mm }
+.r3{ grid-template-columns:repeat(3,1fr) }
+.r2{ grid-template-columns:1.15fr 1fr }
+.card{ background:var(--paper); border:1px solid var(--line); border-radius:9mm; padding:11mm 13mm }
+h2{ font-size:31pt; font-weight:800; line-height:1.25; margin-bottom:7mm; letter-spacing:-.015em }
+h2 em{ font-style:normal; color:var(--blue) }
+p{ margin-bottom:5mm; color:#2A3547 }
+p:last-child{ margin-bottom:0 }
+.lead{ font-size:20pt; color:var(--muted) }
 
-table{width:100%;border-collapse:collapse;font-size:11.5pt}
-th,td{border:1px solid var(--rule);padding:2.6mm 3mm;text-align:right;vertical-align:top}
-th{background:#EDF3FF;font-weight:700}
-tbody tr:nth-child(even) td{background:#FAFBFD}
-td b{color:var(--accent)}
+/* ── مقایسه: به‌جای جدولِ پرمتن، ✓ و ✗ ── */
+.cmp{ display:grid; grid-template-columns:1fr auto auto; gap:0 10mm; align-items:center }
+.cmp .h{ font-size:17pt; color:var(--muted); padding-bottom:4mm; text-align:center }
+.cmp .h:first-child{ text-align:right }
+.cmp .f{ font-size:20pt; padding:5.5mm 0; border-top:1px solid var(--line) }
+.cmp .m{ font-size:27pt; text-align:center; padding:5.5mm 0; border-top:1px solid var(--line);
+         font-weight:800; width:26mm }
+.cmp .no{ color:#C0483A } .cmp .yes{ color:var(--green) }
 
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6mm}
-.stat{background:var(--paper);border:1px solid var(--rule);border-radius:5mm;
-  padding:6mm 3mm;text-align:center}
-.stat b{display:block;font-size:30pt;color:var(--accent);line-height:1.15;font-weight:800}
-.stat span{display:block;font-size:11.5pt;color:var(--ink3);margin-top:1.5mm}
+/* ── نوآوری ── */
+.usp{ background:linear-gradient(150deg,#F1EDFF,#E9F0FF); border:2.5px solid var(--violet) }
+.usp h2 em{ color:var(--violet) }
+.formula{ font-family:ui-monospace,Menlo,monospace; direction:ltr; text-align:left;
+  background:var(--paper); border-radius:6mm; padding:9mm 11mm; font-size:19pt;
+  line-height:1.95; margin:7mm 0 }
+.formula b{ color:var(--violet) }
 
-.usp{background:linear-gradient(150deg,#F3F0FF,#EEF3FF);border:2px solid var(--accent2)}
-.usp h2 .k{background:var(--accent2)}
-.formula{font-family:ui-monospace,Menlo,monospace;direction:ltr;text-align:left;
-  background:#fff;border:1px solid var(--rule);border-radius:4mm;padding:5mm 6mm;
-  font-size:11.5pt;line-height:2.1;margin:4mm 0}
-.formula b{color:var(--accent2)}
-
-.pill{display:inline-block;background:#EAF7F1;color:var(--good);border-radius:20px;
-  padding:1mm 4mm;font-size:11pt;font-weight:700;margin-inline-end:2mm}
-
-.mermaid{display:block}
-.mermaid svg{max-width:100%;height:auto;display:block;margin:0 auto}
+/* mermaid یک max-width درون‌خطی روی svg می‌گذارد که width:100% را خنثی
+   می‌کند؛ روی پوستر نمودار باید تمام عرض کارت را بگیرد. */
+/* mermaid یک max-width درون‌خطی روی svg می‌گذارد که width:100% را خنثی
+   می‌کند. پهن کردنش ارتفاع را هم بالا می‌برد، پس سقف ارتفاع لازم است
+   وگرنه پوستر به صفحهٔ دوم سرریز می‌کند. */
+.mermaid svg{ width:100% !important; max-width:none !important;
+              max-height:86mm; height:auto; display:block; margin:0 auto }
 
 /* ── پانویس ── */
-.ft{display:grid;grid-template-columns:auto 1fr;gap:9mm;align-items:center;
-  background:var(--paper);border:1px solid var(--rule);border-radius:6mm;padding:8mm 9mm}
-.qr{width:46mm;height:46mm;display:block}
-.ft .u{font-family:ui-monospace,Menlo,monospace;direction:ltr;font-size:13pt;
-  color:var(--accent);word-break:break-all}
-.note{background:#FFF8E8;border:1px solid #E8C98A;border-radius:4mm;padding:4mm 6mm;
-  font-size:11.5pt;margin-top:4mm}
-.note b{color:var(--warn)}
+.ft{ margin-top:auto; background:#101828; color:#fff; padding:13mm 26mm;
+     display:flex; align-items:center; gap:16mm }
+.qr{ width:46mm; height:46mm; background:#fff; padding:3mm; border-radius:4mm; flex:0 0 auto }
+.ft .t{ font-size:22pt; font-weight:700; margin-bottom:3mm }
+.ft .u{ font-family:ui-monospace,Menlo,monospace; direction:ltr; font-size:21pt; color:#7FA8F0 }
+.ft .run{ margin-inline-start:auto; text-align:left; direction:ltr; font-size:18pt; color:#9FB3D1;
+          line-height:1.9 }
+.ft .run b{ color:#fff }
 </style>
 </head>
 <body>
 
 <div class="hd">
   <p class="uni">دانشگاه زنجان · دانشکدهٔ مهندسی · گروه مهندسی کامپیوتر</p>
-  <h1>طراحی و پیاده‌سازی سامانهٔ<br>جست‌وجو و ثبت آگهی بیلبورد</h1>
+  <h1>سامانهٔ جست‌وجو و ثبت<br>آگهی بیلبورد</h1>
   <div class="by">
     <span>نگارش: <b>علیرضا زارعیان</b></span>
     <span>استاد راهنما: <b>دکتر سجاد حق‌زاد کلیدبری</b></span>
-    <span>شهریور ۱۴۰۵</span>
   </div>
+</div>
+
+<div class="nums">
+  <div class="num"><b>۳٬۵۳۶</b><span>رسانهٔ تبلیغاتی</span></div>
+  <div class="num"><b>۱۰۱</b><span>شهر</span></div>
+  <div class="num"><b>۸۵٪</b><span>روی نقشه</span></div>
+  <div class="num"><b>۱۱۳</b><span>آزمون خودکار</span></div>
 </div>
 
 <div class="body">
 
-  <div class="stats" style="margin-bottom:9mm">
-    <div class="stat"><b>۳٬۵۳۶</b><span>رسانه در ۱۰۱ شهر</span></div>
-    <div class="stat"><b>۴۲</b><span>نقطهٔ پایانی HTTP</span></div>
-    <div class="stat"><b>۱۱۳/۱۱۳</b><span>آزمون خودکار موفق</span></div>
-    <div class="stat"><b>۹۷×</b><span>صرفه‌جویی پردازنده</span></div>
+  <div class="row r2">
+    <div class="card">
+      <h2>مسئله</h2>
+      <p class="lead">بازار رسانهٔ محیطی ایران پراکنده است.</p>
+      <p>اطلاعات هر سازه نزد مالکِ خودش می‌ماند. خریدار تبلیغات باید با چند واسطه جداگانه تماس
+      بگیرد و پاسخ‌های بی‌قالب را دستی مقایسه کند.</p>
+      <p><b>عرضه هست؛ نمای واحدی از آن نیست.</b></p>
+    </div>
+    <div class="card">
+      <h2>راه‌حل</h2>
+      <p>یک فهرست یکپارچه و قابل جست‌وجو، با نقشه و مقایسهٔ کنار هم.</p>
+      <p>صاحبان رسانه آگهی خود را ثبت می‌کنند و پس از بررسی کارشناس منتشر می‌شود.</p>
+      <p class="lead" style="margin-top:7mm">رابط کاملاً فارسی و راست‌به‌چپ</p>
+    </div>
   </div>
 
-  <div class="grid">
-
+  <div class="row r2">
     <div class="card">
-      <h2><span class="k">۱</span>مسئله</h2>
-      <p class="lead">بازار رسانهٔ محیطی ایران پراکنده است.</p>
-      <p>اطلاعات هر سازه نزد مالک یا پیمانکار همان سازه می‌ماند. خریدار تبلیغات برای یافتن
-      یک گزینهٔ مناسب باید جداگانه با چند واسطه تماس بگیرد و پاسخ‌هایی را که در قالب‌های
-      متفاوت می‌گیرد دستی مقایسه کند.</p>
-      <p><b>نتیجه:</b> زمان تلف‌شده، نبود امکان مقایسهٔ منصفانه، و نابرابری اطلاعاتی به سود
-      فروشنده. عرضه وجود دارد؛ آنچه وجود ندارد یک <b>نمای واحد و قابل جست‌وجو</b> از آن است.</p>
-    </div>
-
-    <div class="card">
-      <h2><span class="k">۲</span>راه‌حل</h2>
-      <p>یک سامانهٔ تحت وب که عرضهٔ پراکنده را در یک فهرست یکپارچه گرد می‌آورد و دو گروه
-      کاربر را به هم می‌رساند:</p>
-      <ul>
-        <li><b>خریدار تبلیغات</b> — جست‌وجو و پالایش بر پایهٔ شهر، نوع، قیمت و ابعاد؛ دیدن
-            موقعیت روی نقشه؛ مقایسهٔ کنار هم؛ و دریافت شمارهٔ تماس مالک پس از احراز هویت.</li>
-        <li><b>صاحب رسانه</b> — ثبت آگهی با فرم چندمرحله‌ای و بارگذاری تصویر، برای انتشار
-            پس از بررسی کارشناس.</li>
-      </ul>
-      <p><span class="pill">فارسی و راست‌به‌چپ</span><span class="pill">آمادهٔ موبایل</span></p>
-    </div>
-
-    <div class="card">
-      <h2><span class="k">۳</span>مرزهای آگاهانه</h2>
-      <p>سامانه مالک رسانه‌ها و واسطهٔ مالی نیست. سه قابلیت عمداً ساخته نشده‌اند:</p>
-      <ul>
-        <li><b>رزرو آنلاین</b> — تقویم اشغال سازه نزد مالک است. فرم رزرو بدون آن، تعهدی
-            بی‌پشتوانه می‌سازد.</li>
-        <li><b>درگاه پرداخت</b> — نیازمند شخصیت حقوقی است؛ به‌جای درگاه جعلی، پلن ویژه با
-            تأیید کارشناس پیاده شد.</li>
-        <li><b>سرویس‌های میزبانی‌شده</b> — هیچ سرویس پولی یا مسدود برای ایران به کار نرفته؛
-            معادل درون‌کدی ساخته شده است.</li>
-      </ul>
-    </div>
-
-    <div class="card span2">
-      <h2><span class="k">۴</span>مزیت نسبت به فهرست‌های موجود</h2>
-      <p>وب‌گاه‌های امروزی رسانهٔ محیطی در ایران عمدتاً <b>وب‌گاه یک شرکت‌اند، نه یک بازار</b>:
-      هر یک موجودی خودش را نشان می‌دهد و برای هر سازه یک عکس، یک اندازه و یک نام خیابان
-      منتشر می‌کند.</p>
-      <table>
-        <thead><tr><th style="width:24%">ویژگی</th><th style="width:32%">وب‌گاه‌های موجود</th><th>این سامانه</th></tr></thead>
-        <tbody>
-          <tr><td>دامنهٔ موجودی</td><td>فقط سازه‌های همان شرکت</td><td><b>تجمیع سه منبع:</b> ۳٬۵۳۶ رسانه در ۱۰۱ شهر</td></tr>
-          <tr><td>جست‌وجوی یکپارچه</td><td>باید چند وب‌گاه را جدا گشت</td><td>یک پالایه روی شهر، نوع، قیمت، ابعاد</td></tr>
-          <tr><td>نقشه</td><td>معمولاً فقط نام خیابان</td><td>فهرست و نقشه کنار هم — <b>۳٬۰۲۰ رسانه با مختصات (۸۵٪)</b></td></tr>
-          <tr><td>مقایسهٔ کنار هم</td><td>ندارد</td><td>مقایسهٔ ستونی مشخصات، قیمت و بازدید</td></tr>
-          <tr><td>برآورد بازدید روزانه</td><td>ندارد</td><td><b>مدل شفاف مبتنی بر کلاس معبر</b></td></tr>
-          <tr><td>شفافیت قیمت</td><td>پراکنده، گاهی «تماس بگیرید»</td><td>قیمت در فهرست، قابل مرتب‌سازی و پالایش</td></tr>
-          <tr><td>حفاظت از دادهٔ تماس</td><td>شماره در صفحهٔ عمومی</td><td>پشت احراز هویت، با سقف نرخ درخواست</td></tr>
-          <tr><td>فارسی و راست‌به‌چپ</td><td>غالباً قالب ترجمه‌شده</td><td>راست‌به‌چپ بومی در چیدمان، جدول و انیمیشن</td></tr>
-        </tbody>
-      </table>
+      <h2>نسبت به فهرست‌های <em>موجود</em></h2>
+      <div class="cmp">
+        <div class="h">ویژگی</div><div class="h">آن‌ها</div><div class="h">اینجا</div>
+        <div class="f">تجمیع چند فروشنده</div>   <div class="m no">✗</div><div class="m yes">✓</div>
+        <div class="f">نقشه و موقعیت</div>        <div class="m no">✗</div><div class="m yes">✓</div>
+        <div class="f">مقایسهٔ کنار هم</div>       <div class="m no">✗</div><div class="m yes">✓</div>
+        <div class="f">برآورد بازدید روزانه</div>  <div class="m no">✗</div><div class="m yes">✓</div>
+        <div class="f">قیمت شفاف و قابل پالایش</div><div class="m no">✗</div><div class="m yes">✓</div>
+        <div class="f">ثبت آگهی خودخدمت</div>      <div class="m no">✗</div><div class="m yes">✓</div>
+      </div>
     </div>
 
     <div class="card usp">
-      <h2><span class="k">★</span>نوآوری اصلی</h2>
-      <h3>برآورد بازدید روزانه</h3>
-      <p>هیچ منبعی عددی برای «چند نفر در روز این سازه را می‌بینند» منتشر نمی‌کند — در حالی
-      که خریدار دقیقاً همین را برای سنجش ارزش خرید لازم دارد.</p>
+      <h2>نوآوری: <em>برآورد بازدید</em></h2>
+      <p>هیچ منبعی نمی‌گوید چند نفر در روز یک سازه را می‌بینند — و خریدار دقیقاً همین را
+      می‌خواهد.</p>
       <div class="formula">
-        vehicles&nbsp;&nbsp;&nbsp; = roadClass × cityFactor<br>
-        opportunity = vehicles × occupancy + pedestrians<br>
-        visibility&nbsp; = seeRoad × seeType × (1+size)<br>
+        opportunity = traffic × occupancy<br>
         <b>impressions = opportunity × visibility</b>
       </div>
-      <ul>
-        <li><b>کلاس معبر، نه جمعیت شهر.</b> بزرگراه در هر شهری ترافیک بزرگراه دارد؛ جمعیت
-            فقط زیرخطی مقیاس می‌دهد (توان ۰٫۳۵).</li>
-        <li><b>قطعی و بازتولیدپذیر.</b> بدون عدد تصادفی — تنوع از درهم‌سازی هویت رکورد.</li>
-        <li><b>منبع هر ضریب ثبت شده.</b> پیروی از الگوی Geopath و Route.</li>
-      </ul>
+      <p>پایه‌اش <b>کلاس معبر</b> است نه جمعیت شهر، خروجی‌اش <b>قطعی و بازتولیدپذیر</b>، و منبع
+      هر ضریب ثبت شده.</p>
     </div>
+  </div>
 
-    <div class="card span2">
-      <h2><span class="k">۵</span>معماری — دو مسیر داده</h2>
-      <div class="mermaid">
+  <div class="card">
+    <h2>معماری — دو مسیر داده، یک لایهٔ داده</h2>
+    <div class="mermaid">
 flowchart LR
-    U["کاربر و مرورگر او"]
-    PX["نگهبان لبه<br>proxy.ts"]
-    RSC["ساخت صفحه روی سرور<br>Server Component"]
-    API["مسیرهای برنامه‌نویسی<br>۴۲ نقطهٔ پایانی"]
-    DAL["لایهٔ دسترسی داده<br>یک نقطهٔ ورود"]
+    U["کاربر"]
+    PX["نگهبان لبه"]
+    RSC["ساخت صفحه<br>روی سرور"]
+    API["۴۲ نقطهٔ پایانی"]
+    DAL["لایهٔ دسترسی داده"]
     DB[("پایگاه داده")]
-    PY["خزندهٔ پایتون<br>۳ منبع"]
     U --> PX
-    PX -->|"مسیر ۱ · درخواست صفحه"| RSC
-    PX -->|"مسیر ۲ · تعامل کاربر"| API
+    PX -->|"درخواست صفحه"| RSC
+    PX -->|"تعامل کاربر"| API
     RSC --> DAL
     API --> DAL
     DAL --> DB
-    RSC -->|"HTML آماده"| U
-    API -->|"پاسخ JSON"| U
-    PY --> DB
-    classDef srv fill:#EDF3FF,stroke:#2F6BE0,color:#151A23
-    classDef sto fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
-    classDef ext fill:#F5F0FF,stroke:#6247C4,color:#151A23
-    classDef usr fill:#FFF8E8,stroke:#B57209,color:#151A23
-    class PX,RSC,API,DAL srv
-    class DB sto
-    class PY ext
-    class U usr
-      </div>
-      <p style="margin-top:4mm">هر دو مسیر از <b>یک لایهٔ داده</b> عبور می‌کنند — یک منبع
-      حقیقت، بدون منطق تکراری. صفحهٔ جزئیات رسانه مستقیم از پایگاه داده می‌خواند (یک پرش،
-      بدون تبدیل به JSON)؛ بقیهٔ تعامل‌ها از مسیر HTTP می‌روند. این الگوی توصیه‌شدهٔ خودِ
-      چارچوب است و گزینهٔ سریع‌تر، نه یک میان‌بر.</p>
+    RSC -->|"HTML"| U
+    API -->|"JSON"| U
+    classDef s fill:#EDF3FF,stroke:#2F6BE0,color:#101725,font-size:19px
+    classDef d fill:#EAF7F1,stroke:#0E8F5D,color:#101725,font-size:19px
+    classDef u fill:#FFF8E8,stroke:#B57209,color:#101725,font-size:19px
+    class PX,RSC,API,DAL s
+    class DB d
+    class U u
     </div>
+  </div>
 
+  <div class="row r3">
     <div class="card">
-      <h2><span class="k">۶</span>امنیت و صحت</h2>
-      <p><b>پایپلاینِ ثابت روی هر مسیر:</b></p>
-      <p style="font-size:11.5pt;color:var(--ink2)">نشست ← سقف نرخ ← اعتبارسنجی ← منطق
-      کسب‌وکار ← رد ممیزی</p>
-      <ul>
-        <li>ترتیب قابل جابه‌جایی نیست: سقف نرخ پیش از احراز هویت یعنی مهاجم بی‌حساب می‌تواند
-            سهمیه را تمام کند.</li>
-        <li>اعتبارسنجی طرح‌واره‌ای روی تمام ورودی‌ها + فهرست مجاز برای مرتب‌سازی و پالایش.</li>
-        <li>مرز دسترسی روی نقطهٔ پایانی، نه در رابط کاربری.</li>
-        <li>گذرواژه با bcrypt۱۲ و مقایسهٔ ساختگی، تا زمان پاسخ نگوید کدام شماره ثبت است.</li>
-        <li>کلید یکتایی روی ثبت آگهی؛ تصمیم تأیید تک‌شلیک؛ ثبت نظر و میانگین در یک تراکنش.</li>
-      </ul>
+      <h2>صحت</h2>
+      <p>هر مسیر یک پایپلاین ثابت دارد: نشست ← سقف نرخ ← دسترسی ← اعتبارسنجی ← رد ممیزی.</p>
+      <p><b>ترتیبش قابل جابه‌جایی نیست.</b></p>
     </div>
-
-    <div class="card span3">
-      <h2><span class="k">۷</span>ارزیابی</h2>
-      <div class="grid" style="gap:9mm">
-        <div>
-          <h3>آزمون خودکار</h3>
-          <p><b>۱۱۳ از ۱۱۳ موفق</b> در ۱۷٫۶ ثانیه، روی یک ساخت تولیدی و پایگاه دادهٔ ایزوله.
-          بدون هیچ وابستگی بیرونی، مستقیم با درخواست HTTP.</p>
-          <p style="font-size:11.5pt;color:var(--ink2)">پوشش: اعتبارسنجی و فهرست مجاز، دسترسی
-          در سطح نقش و شیء، سقف نرخ، عدم شمارش کاربران <b>هم در متن و هم در زمان پاسخ</b>،
-          رد فایل با امضای بایتی نادرست، ماشین حالت تأیید، چرخهٔ رمز یک‌بارمصرف.</p>
-        </div>
-        <div>
-          <h3>کارایی — عدد ۹۷ برابر</h3>
-          <p>پردازندهٔ مصرفی برای نخستین بازدید از ده مسیر:</p>
-          <table><tbody>
-            <tr><td>حالت توسعه</td><td><b>۹٫۷ ثانیه</b></td></tr>
-            <tr><td>حالت ساخته‌شده</td><td><b>۰٫۱ ثانیه</b></td></tr>
-          </tbody></table>
-          <p style="font-size:11.5pt;color:var(--ink2);margin-top:3mm">حالت توسعه هر صفحه را
-          لحظهٔ کلیک از نو ترجمه می‌کند. یک تصمیم عملیاتی قابل دفاع، نه جزئیات اجرایی.</p>
-        </div>
-        <div>
-          <h3>سازمان‌دهی کد</h3>
-          <p>۱۳۲ فایل با ۴۰۱ پیوند <code>import</code>، در ۹ لایه.</p>
-          <p style="font-size:11.5pt;color:var(--ink2)">پرارجاع‌ترین فایل‌ها دقیقاً مرحله‌های
-          پایپلاینِ درخواست‌اند: <code>api-log</code> (۳۴)، <code>session</code> (۳۳)،
-          <code>client-ip</code> (۳۲)، <code>rate-limit</code> (۳۲)،
-          <code>db/client</code> (۳۱). یعنی ادعای «یک نقطهٔ ورود به پایگاه داده»
-          <b>قابل بررسی است، نه شعار</b>.</p>
-        </div>
-      </div>
+    <div class="card">
+      <h2>همروندی</h2>
+      <p>ارسال دوباره رکورد دوم نمی‌سازد، تصمیم تأیید تک‌شلیک است، و نظر و میانگین امتیاز در
+      یک تراکنش نوشته می‌شوند.</p>
     </div>
-
-  </div>
-
-  <div class="ft">
-    <svg class="qr" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37"><path class="qrline" stroke="#151a23" d="M2 2.5h7m3 0h1m2 0h2m1 0h6m1 0h1m2 0h7m-33 1h1m5 0h1m2 0h2m2 0h4m1 0h1m2 0h2m3 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h4m1 0h1m1 0h1m4 0h3m3 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h2m1 0h3m1 0h3m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h1m3 0h1m1 0h7m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m5 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h2m1 0h1m3 0h1m3 0h1m1 0h1m1 0h2m-25 1h1m1 0h5m6 0h3m1 0h1m8 0h5m-31 1h1m1 0h1m5 0h2m6 0h1m2 0h3m1 0h1m2 0h2m1 0h2m1 0h1m-29 1h3m1 0h2m2 0h1m2 0h1m2 0h1m1 0h2m2 0h1m3 0h1m1 0h2m-31 1h2m1 0h1m2 0h2m1 0h2m2 0h1m3 0h1m2 0h1m2 0h2m2 0h4m-31 1h1m1 0h4m2 0h3m6 0h1m1 0h1m1 0h2m1 0h1m1 0h3m-28 1h2m1 0h1m2 0h2m1 0h2m1 0h3m1 0h3m5 0h1m2 0h1m1 0h2m-33 1h2m1 0h1m1 0h2m1 0h1m2 0h1m1 0h1m3 0h2m1 0h1m1 0h1m2 0h2m1 0h1m2 0h1m-32 1h1m2 0h1m1 0h1m4 0h1m1 0h3m1 0h1m1 0h4m3 0h3m2 0h1m-31 1h1m5 0h1m3 0h1m2 0h1m2 0h2m1 0h1m2 0h4m1 0h2m3 0h1m-32 1h2m2 0h1m1 0h1m5 0h2m1 0h5m2 0h1m2 0h2m1 0h2m1 0h1m-32 1h2m2 0h5m3 0h5m2 0h1m1 0h1m1 0h5m1 0h2m-30 1h2m1 0h1m1 0h2m2 0h2m2 0h8m2 0h1m1 0h5m-31 1h3m2 0h1m1 0h1m2 0h2m3 0h1m2 0h1m2 0h1m1 0h2m2 0h2m2 0h1m-33 1h2m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1m2 0h1m2 0h7m1 0h1m2 0h1m2 0h1m-33 1h1m2 0h1m2 0h1m2 0h1m3 0h4m7 0h2m3 0h1m1 0h1m-32 1h1m1 0h1m1 0h2m2 0h1m3 0h1m2 0h1m4 0h3m1 0h4m1 0h3m-32 1h1m5 0h2m1 0h2m4 0h1m1 0h1m4 0h1m1 0h8m-24 1h1m1 0h5m4 0h1m1 0h1m1 0h2m3 0h1m1 0h1m1 0h1m-33 1h7m2 0h2m3 0h3m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m1 0h2m1 0h5m4 0h5m3 0h4m-32 1h1m1 0h3m1 0h1m1 0h6m1 0h1m2 0h3m1 0h1m1 0h6m1 0h1m-32 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h1m1 0h3m1 0h2m2 0h3m2 0h1m1 0h3m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h2m2 0h2m1 0h1m1 0h1m3 0h2m-28 1h1m5 0h1m2 0h3m2 0h1m1 0h1m1 0h1m2 0h3m4 0h3m-31 1h7m1 0h3m2 0h1m3 0h1m1 0h1m2 0h4m1 0h1m3 0h1"/></svg>
-
-    <div>
-      <h3 style="margin:0 0 2mm">کد منبع، مستندات فنی و تاریخچهٔ توسعه</h3>
-      <p class="u">github.com/alireza-zareian/Rasamap-Repository</p>
-      <div class="note"><b>برای اجرا:</b> <code>npm install</code> ←
-        <code>npm run db:seed</code> ← <code>npm run demo</code>.
-        تنها پیش‌نیاز <code>Node.js 20</code> است؛ هیچ سرویس بیرونی یا کانتینری لازم نیست.</div>
+    <div class="card">
+      <h2>کارایی</h2>
+      <p style="font-size:52pt;font-weight:800;color:var(--amber);line-height:1.1">۹۷×</p>
+      <p>پردازندهٔ کمتر در حالت ساخته‌شده نسبت به حالت توسعه — اندازه‌گیری‌شده.</p>
     </div>
   </div>
 
+</div>
+
+<div class="ft">
+  <svg class="qr" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37"><path class="qrline" stroke="#151a23" d="M2 2.5h7m3 0h1m2 0h2m1 0h6m1 0h1m2 0h7m-33 1h1m5 0h1m2 0h2m2 0h4m1 0h1m2 0h2m3 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h4m1 0h1m1 0h1m4 0h3m3 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h2m1 0h3m1 0h3m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h1m3 0h1m1 0h7m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m5 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h2m1 0h1m3 0h1m3 0h1m1 0h1m1 0h2m-25 1h1m1 0h5m6 0h3m1 0h1m8 0h5m-31 1h1m1 0h1m5 0h2m6 0h1m2 0h3m1 0h1m2 0h2m1 0h2m1 0h1m-29 1h3m1 0h2m2 0h1m2 0h1m2 0h1m1 0h2m2 0h1m3 0h1m1 0h2m-31 1h2m1 0h1m2 0h2m1 0h2m2 0h1m3 0h1m2 0h1m2 0h2m2 0h4m-31 1h1m1 0h4m2 0h3m6 0h1m1 0h1m1 0h2m1 0h1m1 0h3m-28 1h2m1 0h1m2 0h2m1 0h2m1 0h3m1 0h3m5 0h1m2 0h1m1 0h2m-33 1h2m1 0h1m1 0h2m1 0h1m2 0h1m1 0h1m3 0h2m1 0h1m1 0h1m2 0h2m1 0h1m2 0h1m-32 1h1m2 0h1m1 0h1m4 0h1m1 0h3m1 0h1m1 0h4m3 0h3m2 0h1m-31 1h1m5 0h1m3 0h1m2 0h1m2 0h2m1 0h1m2 0h4m1 0h2m3 0h1m-32 1h2m2 0h1m1 0h1m5 0h2m1 0h5m2 0h1m2 0h2m1 0h2m1 0h1m-32 1h2m2 0h5m3 0h5m2 0h1m1 0h1m1 0h5m1 0h2m-30 1h2m1 0h1m1 0h2m2 0h2m2 0h8m2 0h1m1 0h5m-31 1h3m2 0h1m1 0h1m2 0h2m3 0h1m2 0h1m2 0h1m1 0h2m2 0h2m2 0h1m-33 1h2m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1m2 0h1m2 0h7m1 0h1m2 0h1m2 0h1m-33 1h1m2 0h1m2 0h1m2 0h1m3 0h4m7 0h2m3 0h1m1 0h1m-32 1h1m1 0h1m1 0h2m2 0h1m3 0h1m2 0h1m4 0h3m1 0h4m1 0h3m-32 1h1m5 0h2m1 0h2m4 0h1m1 0h1m4 0h1m1 0h8m-24 1h1m1 0h5m4 0h1m1 0h1m1 0h2m3 0h1m1 0h1m1 0h1m-33 1h7m2 0h2m3 0h3m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m1 0h2m1 0h5m4 0h5m3 0h4m-32 1h1m1 0h3m1 0h1m1 0h6m1 0h1m2 0h3m1 0h1m1 0h6m1 0h1m-32 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h1m1 0h3m1 0h2m2 0h3m2 0h1m1 0h3m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h2m2 0h2m1 0h1m1 0h1m3 0h2m-28 1h1m5 0h1m2 0h3m2 0h1m1 0h1m1 0h1m2 0h3m4 0h3m-31 1h7m1 0h3m2 0h1m3 0h1m1 0h1m2 0h4m1 0h1m3 0h1"/></svg>
+
+  <div>
+    <p class="t">کد منبع و مستندات فنی</p>
+    <p class="u">github.com/alireza-zareian/Rasamap-Repository</p>
+  </div>
+  <div class="run">
+    <b>npm install</b><br>
+    <b>npm run db:seed</b><br>
+    <b>npm run demo</b>
+  </div>
 </div>
 
 <script src="../vendor/mermaid.min.js"></script>
 <script>
 mermaid.initialize({
   startOnLoad:false, theme:"base", securityLevel:"loose",
-  themeVariables:{
-    background:"#FFFFFF", primaryColor:"#EDF3FF", primaryBorderColor:"#2F6BE0",
-    primaryTextColor:"#151A23", lineColor:"#7E8899", textColor:"#151A23",
+  themeVariables:{ background:"#FFFFFF", primaryColor:"#EDF3FF", primaryBorderColor:"#2F6BE0",
+    primaryTextColor:"#101725", lineColor:"#5C6B84", textColor:"#101725",
     mainBkg:"#EDF3FF", nodeBorder:"#2F6BE0",
-    fontFamily:"Vazirmatn, system-ui, sans-serif", fontSize:"17px",
-  },
-  flowchart:{ htmlLabels:true, curve:"basis", padding:20, nodeSpacing:60, rankSpacing:80 },
+    fontFamily:"Vazirmatn, system-ui, sans-serif", fontSize:"22px" },
+  flowchart:{ htmlLabels:true, curve:"basis", padding:26, nodeSpacing:70, rankSpacing:110 },
 });
-mermaid.run({querySelector:".mermaid"})
-  .then(()=>{document.documentElement.dataset.ready="1";});
+mermaid.run({querySelector:".mermaid"}).then(()=>{document.documentElement.dataset.ready="1";});
 </script>
 </body>
 </html>
