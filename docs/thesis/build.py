@@ -310,8 +310,15 @@ DESC = {
 }
 
 def build_codemap():
+    # قالبِ بازتولید در یک بازآراییِ مخزن حذف شد؛ خروجیِ ساخته‌شدهٔ آن،
+    # docs/codemap.html، همچنان در مخزن هست و نسخهٔ معتبر است. تا وقتی قالب
+    # برنگشته، این گام را رد می‌کنیم به‌جای آنکه build را متوقف کند.
+    tpl_path = os.path.join(HERE, "codemap-template.html")
+    if not os.path.exists(tpl_path):
+        print("• codemap: قالب در مخزن نیست — docs/codemap.html دست‌نخورده می‌ماند")
+        return
     data = import_graph()
-    tpl  = io.open(os.path.join(HERE, "codemap-template.html"), encoding="utf-8").read()
+    tpl  = io.open(tpl_path, encoding="utf-8").read()
     out  = (tpl.replace("/*__DATA__*/", json.dumps(data, ensure_ascii=False))
                .replace("/*__DESC__*/", json.dumps(DESC, ensure_ascii=False)))
     dest = os.path.join(DOCS, "codemap.html")
@@ -323,9 +330,9 @@ def build_codemap():
 
 # ══ گراف وابستگی برای چاپ ═══════════════════════════════════════
 LAYER_ORDER = ["edge", "page", "ui", "api", "auth", "lib", "data", "schema"]
-LAYER_FA = {"edge":"نگهبان لبه", "page":"صفحه‌ها", "ui":"مؤلفه‌های رابط",
-            "api":"مسیرهای برنامه‌نویسی", "auth":"احراز هویت",
-            "lib":"ابزارهای مشترک", "data":"لایهٔ داده", "schema":"طرح‌واره"}
+LAYER_FA = {"edge":"Proxy", "page":"صفحه‌ها", "ui":"مؤلفه‌های رابط",
+            "api":"API routes", "auth":"احراز هویت",
+            "lib":"ابزارهای مشترک", "data":"Data Access Layer", "schema":"طرح‌واره"}
 LAYER_COLOR = {"edge":"#2F6BE0","page":"#B57209","ui":"#0E8F5D","api":"#6247C4",
                "auth":"#BE185D","lib":"#C2410C","data":"#0E7490","schema":"#4D7C0F"}
 HUBS = {"lib/api-log.ts":"api-log", "lib/auth/session.ts":"session",
@@ -344,14 +351,28 @@ def build_graph_svg():
     گره‌های کاملاً منفرد (نه وارد می‌کنند نه وارد می‌شوند) کنار گذاشته می‌شوند؛
     این‌ها فایل‌های قراردادی چارچوب‌اند (layout، loading، error) که چارچوب
     خودش صدایشان می‌زند و در گراف import دیده نمی‌شوند.
+
+    کشیدنِ هر ۱۰۵ فایلِ متصل و ۳۹۸ یال، شکل را به یک کلاف تبدیل می‌کرد (۳۴ فایلِ
+    مسیر که هرکدام چند چیز از auth/lib وارد می‌کنند، تنه‌ی این انبوهگی‌اند). پس
+    از هر لایه فقط چند فایلِ بزرگ‌ترش نگه داشته می‌شود، به‌اضافهٔ فایل‌های
+    نام‌گذاری‌شده (HUBS) که استدلالِ متن به آن‌ها ارجاع می‌دهد؛ یال‌ها هم فقط
+    میانِ همین گره‌های نگه‌داشته کشیده می‌شوند.
     """
+    PER_LAYER = 6
     g = import_graph()
     F, E = g["files"], g["edges"]
-    keep = {k for k, v in F.items() if v["usedBy"] or v["deps"]}
+    connected = {k for k, v in F.items() if v["usedBy"] or v["deps"]}
+    keep = {h for h in HUBS if h in connected}
+    for l in LAYER_ORDER:
+        big = sorted((k for k in connected if F[k]["layer"] == l),
+                     key=lambda k: -F[k]["lines"])[:PER_LAYER]
+        keep.update(big)
     edges = [(a, b) for a, b in E if a in keep and b in keep]
-    dropped = len(F) - len(keep)
+    dropped = len(connected) - len(keep)
 
-    W, PAD_R, PAD_L, TOP, BAND = 1020, 150, 30, 26, 74
+    # TOP فضای بالای نوارهاست؛ کلیدِ خواندنِ شکل همان‌جا می‌نشیند تا خواننده
+    # پیش از دیدنِ دایره‌ها بداند اندازه و جای هر دایره چه معنایی دارد.
+    W, PAD_R, PAD_L, TOP, BAND = 1020, 150, 30, 70, 74
     layers = [l for l in LAYER_ORDER if any(F[k]["layer"] == l for k in keep)]
     H = TOP + BAND * len(layers) + 30
     yof = {l: TOP + BAND * i + BAND / 2 for i, l in enumerate(layers)}
@@ -369,7 +390,13 @@ def build_graph_svg():
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" '
            f'font-family="Vazirmatn, sans-serif">',
            '<style>text{font-size:13px;fill:#3E4959}'
-           '.hub{font-size:13.5px;font-weight:700;fill:#141A24}</style>']
+           '.hub{font-size:13.5px;font-weight:700;fill:#141A24}'
+           '.key{font-size:12.5px;fill:#5C6B84}</style>']
+
+    # کلیدِ خواندنِ شکل — یک خط، بالای همهٔ نوارها
+    out.append(f'<text class="key" x="{W-14}" y="40" text-anchor="end">'
+               f'هر دایره یک فایل است؛ هرچه فایل خط بیشتری داشته باشد دایره‌اش بزرگ‌تر است، '
+               f'و هرچه به مرکزِ نوارش نزدیک‌تر باشد فایل‌های بیشتری آن را import می‌کنند.</text>')
 
     for i, l in enumerate(layers):                      # نوار هر لایه
         y = TOP + BAND * i
@@ -377,9 +404,9 @@ def build_graph_svg():
                    f'fill="{"#F7F9FC" if i % 2 else "#FFFFFF"}"/>')
         out.append(f'<text x="{W-14}" y="{y+BAND/2+5:.0f}" text-anchor="end" '
                    f'font-weight="700" fill="{LAYER_COLOR[l]}">{LAYER_FA[l]}</text>')
-        n   = sum(1 for k in keep if F[k]["layer"] == l)
-        tot = sum(1 for k in F   if F[k]["layer"] == l)
-        cnt = f"{fa(n)} فایل" if n == tot else f"{fa(n)} از {fa(tot)} فایل"
+        n   = sum(1 for k in keep      if F[k]["layer"] == l)
+        tot = sum(1 for k in connected if F[k]["layer"] == l)
+        cnt = f"{fa(n)} فایل" if n == tot else f"{fa(n)} از {fa(tot)} فایلِ متصل"
         out.append(f'<text x="{W-14}" y="{y+BAND/2+21:.0f}" text-anchor="end" '
                    f'font-size="11" fill="#8B97A8">{cnt}</text>')
 
@@ -387,7 +414,7 @@ def build_graph_svg():
         x1, y1 = pos[a]; x2, y2 = pos[b]
         out.append(f'<path d="M{x1:.0f},{y1:.0f} C{x1:.0f},{(y1+y2)/2:.0f} '
                    f'{x2:.0f},{(y1+y2)/2:.0f} {x2:.0f},{y2:.0f}" fill="none" '
-                   f'stroke="#B9C6D8" stroke-width="0.7" opacity="0.4"/>')
+                   f'stroke="#AAB8CC" stroke-width="0.9" opacity="0.55"/>')
 
     for k in sorted(keep, key=lambda k: F[k]["usedBy"]):  # گره‌ها
         x, y = pos[k]
@@ -406,7 +433,7 @@ def build_graph_svg():
     dest = os.path.join(HERE, "shots", "import-graph.svg")
     io.open(dest, "w", encoding="utf-8").write("\n".join(out) + "\n")
     print(f"✓ import-graph.svg — {fa(len(keep))} گره، {fa(len(edges))} یال "
-          f"({fa(dropped)} گرهٔ منفرد کنار گذاشته شد)")
+          f"(از {fa(len(connected))} فایلِ متصل؛ {fa(dropped)} فایلِ کوچک‌ترِ هر لایه نمایش داده نشد)")
 
 
 # ══ نام استاد راهنما ════════════════════════════════════════════

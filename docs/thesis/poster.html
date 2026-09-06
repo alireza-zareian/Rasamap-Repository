@@ -188,8 +188,10 @@ p:last-child{ margin-bottom:0 }
         <span>visibility&nbsp;&nbsp;= see<sub>road</sub> × see<sub>type</sub> × (1 + sizeBonus)</span>
         <span class="hi">impressions = opportunity × visibility</span>
       </div>
-      <p>پایه‌اش <b>کلاس معبر</b> است نه جمعیت شهر، خروجی‌اش <b>قطعی و بازتولیدپذیر</b>، و منبع
-      هر ضریب ثبت شده.</p>
+      <p style="font-size:14pt;color:var(--muted);margin-bottom:4mm;line-height:1.5">roadClassBase = ترافیکِ پایهٔ آن نوع معبر · occupancy = سرنشین به‌ازای خودرو ·
+      visibility = چه سهمی واقعاً پیام را می‌بینند</p>
+      <p>پایه‌اش <b>کلاسِ معبر</b> است، نه جمعیتِ شهر؛ خروجی‌اش <b>قطعی و بازتولیدپذیر</b>، و
+      منبعِ هر ضریب در کد ثبت شده.</p>
     </div>
   </div>
 
@@ -198,18 +200,18 @@ p:last-child{ margin-bottom:0 }
     <div class="mermaid">
 flowchart LR
     U["کاربر"]
-    PX["نگهبان لبه"]
-    RSC["ساخت صفحه<br>روی سرور"]
-    API["۴۲ نقطهٔ پایانی"]
-    DAL["لایهٔ دسترسی داده"]
+    PX["Proxy<br>پیش از هر درخواست"]
+    RSC["Server Component<br>صفحه روی سرور"]
+    API["API — ۴۲ نقطهٔ پایانی"]
+    DAL["Data Access Layer<br>تنها راه به دیتابیس"]
     DB[("پایگاه داده")]
     U --> PX
-    PX -->|"درخواست صفحه"| RSC
-    PX -->|"تعامل کاربر"| API
+    PX -->|"درخواستِ صفحه"| RSC
+    PX -->|"تعاملِ کاربر"| API
     RSC --> DAL
     API --> DAL
     DAL --> DB
-    RSC -->|"HTML"| U
+    RSC -->|"HTML آماده"| U
     API -->|"JSON"| U
     classDef s fill:#EDF3FF,stroke:#2F6BE0,color:#101725,font-size:19px
     classDef d fill:#EAF7F1,stroke:#0E8F5D,color:#101725,font-size:19px
