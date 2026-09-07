@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Billboard, typeLabels, statusLabels } from "@/lib/types";
+import { CatalogueItem, typeLabels, statusLabels } from "@/lib/types";
 import { Scale, Megaphone, Monitor, Milestone, Train, Bus, Star, Sparkles } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 
@@ -52,7 +52,7 @@ function fmtViews(n: number): string {
 }
 
 interface BillboardCardProps {
-  billboard: Billboard;
+  billboard: CatalogueItem;
   isSelected: boolean;
   isCompared: boolean;
   onCompare: () => void;

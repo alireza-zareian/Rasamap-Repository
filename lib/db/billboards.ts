@@ -1,7 +1,7 @@
 import type { Billboard as Row, Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 import { prisma } from "./client";
-import type { Billboard, TrafficData } from "../types";
+import type { Billboard, CatalogueItem, TrafficData } from "../types";
 
 /**
  * One invalidation tag for everything derived from the billboards table. The
@@ -83,6 +83,29 @@ export function toPublicBillboard(b: Billboard): Billboard {
   const pub = { ...b };
   delete pub.phone;
   return pub;
+}
+
+/**
+ * Narrow a record to what a catalogue card draws.
+ *
+ * The counterpart to toPublicBillboard for the *page* path rather than the API
+ * path. The API answers with a whole record because a caller may want any part
+ * of it; a card draws a fixed dozen fields, and everything else it is handed
+ * gets serialised into the HTML and downloaded for nothing.
+ *
+ * The phone is not stripped here so much as never selected — the field list is
+ * the guarantee. See CatalogueItem in lib/types.ts for what is left out and why.
+ */
+export function toCatalogueItem(b: Billboard): CatalogueItem {
+  return {
+    id: b.id, slug: b.slug, name: b.name,
+    city: b.city, region: b.region, location: b.location,
+    type: b.type, status: b.status, featured: b.featured,
+    price: b.price, priceYearly: b.priceYearly,
+    width: b.width, height: b.height, faces: b.faces, age: b.age,
+    rating: b.rating, reviewCount: b.reviewCount,
+    images: b.images, allImages: b.allImages, traffic: b.traffic,
+  };
 }
 
 export async function getAllBillboards(): Promise<Billboard[]> {

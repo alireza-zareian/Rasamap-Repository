@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import type { Billboard } from "@/lib/types";
+import type { CatalogueItem } from "@/lib/types";
 import BillboardCard from "@/components/BillboardCard";
 import CompareModal from "@/components/CompareModal";
 import CompareBar from "@/components/CompareBar";
@@ -23,8 +23,8 @@ const COMPARE_KEY = "rasamap_compare";
 
 interface ToastState { msg: string; type: "success" | "error" | "info" }
 
-export default function ExploreResults({ items, view }: { items: Billboard[]; view: "grid" | "list" }) {
-  const [compareList, setCompareList] = useState<Billboard[]>([]);
+export default function ExploreResults({ items, view }: { items: CatalogueItem[]; view: "grid" | "list" }) {
+  const [compareList, setCompareList] = useState<CatalogueItem[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
@@ -34,7 +34,7 @@ export default function ExploreResults({ items, view }: { items: Billboard[]; vi
     try { localStorage.setItem(COMPARE_KEY, JSON.stringify(compareList)); } catch {}
   }, [compareList]);
 
-  const handleCompare = useCallback((b: Billboard) => {
+  const handleCompare = useCallback((b: CatalogueItem) => {
     setCompareList(prev => {
       if (prev.some(x => x.id === b.id)) return prev.filter(x => x.id !== b.id);
       if (prev.length >= MAX_COMPARE) {

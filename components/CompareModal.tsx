@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
-import { Billboard, typeLabels } from "@/lib/types";
+import { CatalogueItem, typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Scale, X, Star } from "lucide-react";
 import { faNum } from "@/lib/format";
 
 interface Props {
-  items: Billboard[];
+  items: CatalogueItem[];
   onClose: () => void;
 }
 
@@ -14,7 +14,7 @@ export default function CompareModal({ items, onClose }: Props) {
   if (items.length < 2) return null;
   const [a, b] = items;
 
-  const rows: [string, (b:Billboard)=>string|number, boolean][] = [
+  const rows: [string, (b:CatalogueItem)=>string|number, boolean][] = [
     ["نوع رسانه", b=>typeLabels[b.type], false],
     ["منطقه", b=>b.region, false],
     ["ابعاد", b=>`${b.width}×${b.height} م`, false],
@@ -31,7 +31,7 @@ export default function CompareModal({ items, onClose }: Props) {
     ["وضعیت", b=>b.status==="available"?"خالی":"مشغول", false],
   ];
 
-  const better = (row: typeof rows[0], val: Billboard) => {
+  const better = (row: typeof rows[0], val: CatalogueItem) => {
     if (!row[2]) return false;
     const fn = row[1];
     const aVal = typeof fn(a)==="string" ? parseFloat(fn(a) as string) : fn(a) as number;

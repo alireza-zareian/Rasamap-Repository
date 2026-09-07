@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { MapPin, Building2 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
-import type { Billboard } from "@/lib/types";
+import type { CatalogueItem } from "@/lib/types";
 
 /**
  * The photo carousel beside the catalogue's search panel.
@@ -20,7 +20,7 @@ import type { Billboard } from "@/lib/types";
 /** How long each slide is held before the next one fades in. */
 const SLIDE_MS = 5500;
 
-export default function ExploreShowcase({ items }: { items: Billboard[] }) {
+export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
   const { theme } = useTheme();
   const dark = theme === "dark";
   const [idx, setIdx] = useState(0);

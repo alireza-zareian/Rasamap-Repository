@@ -79,6 +79,31 @@ export interface Billboard {
   scrapedAt?: string;
 }
 
+/**
+ * A media record as the catalogue ships it to a browser.
+ *
+ * Exactly the fields the cards, the compare tray and the hero carousels
+ * render — nothing else. A Server Component's props travel to the browser
+ * inside the RSC payload, so every field left in is a field downloaded 24
+ * times per page whether or not anything draws it. Measured on /explore: the
+ * full record cost 52 KB of payload, this subset costs about half that.
+ *
+ * Two fields are absent on purpose rather than by accident: `phone`, which is
+ * never public (see toPublicBillboard), and `lat`/`lng`, because handing out
+ * precise coordinates for the whole catalogue in one page is the bulk-copy
+ * problem §20 of docs/engineering-decisions.md is about. The map asks for
+ * those separately.
+ */
+export type CatalogueItem = Pick<
+  Billboard,
+  | "id" | "slug" | "name" | "city" | "region" | "location"
+  | "type" | "status" | "featured"
+  | "price" | "priceYearly"
+  | "width" | "height" | "faces" | "age"
+  | "rating" | "reviewCount"
+  | "images" | "allImages" | "traffic"
+>;
+
 export const typeLabels: Record<BillboardType, string> = {
   billboard: "بیلبورد",
   digital: "دیجیتال",

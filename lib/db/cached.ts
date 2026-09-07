@@ -3,11 +3,11 @@ import {
   CATALOGUE_TAG,
   getFilteredBillboards,
   getShowcaseBillboards,
-  toPublicBillboard,
+  toCatalogueItem,
   type BillboardFilterParams,
 } from "./billboards";
 import { getSiteStats } from "./stats";
-import type { Billboard } from "../types";
+import type { CatalogueItem } from "../types";
 
 /**
  * Catalogue reads, cached across requests.
@@ -38,23 +38,24 @@ const CATALOGUE_TTL = 300;
 const cacheOptions = { revalidate: CATALOGUE_TTL, tags: [CATALOGUE_TAG] };
 
 /**
- * A filtered page of the catalogue, already stripped of private fields.
+ * A filtered page of the catalogue, already narrowed to what a card draws.
  *
  * The projection happens inside the cached function on purpose: what is stored
- * is then exactly what may be sent to a browser, so no caller can forget.
+ * is then exactly what may be sent to a browser, so no caller can forget — and
+ * the cache holds the smaller object rather than the record it came from.
  */
 export const getCachedFilteredBillboards = unstable_cache(
-  async (p: BillboardFilterParams): Promise<{ items: Billboard[]; total: number }> => {
+  async (p: BillboardFilterParams): Promise<{ items: CatalogueItem[]; total: number }> => {
     const { items, total } = await getFilteredBillboards(p);
-    return { items: items.map(toPublicBillboard), total };
+    return { items: items.map(toCatalogueItem), total };
   },
   ["catalogue-page"],
   cacheOptions,
 );
 
 export const getCachedShowcaseBillboards = unstable_cache(
-  async (limit: number): Promise<Billboard[]> =>
-    (await getShowcaseBillboards(limit)).map(toPublicBillboard),
+  async (limit: number): Promise<CatalogueItem[]> =>
+    (await getShowcaseBillboards(limit)).map(toCatalogueItem),
   ["catalogue-showcase"],
   cacheOptions,
 );

@@ -5,11 +5,11 @@ import Footer from "@/components/Footer";
 import CompareModal from "@/components/CompareModal";
 import { TypeIcon } from "@/components/TypeIcon";
 import Link from "next/link";
-import type { Billboard } from "@/lib/types";
+import type { CatalogueItem } from "@/lib/types";
 import { Scale, X, ArrowLeft } from "lucide-react";
 
 export default function ComparePage() {
-  const [compareList, setCompareList] = useState<Billboard[]>([]);
+  const [compareList, setCompareList] = useState<CatalogueItem[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [loaded, setLoaded] = useState(false);
 

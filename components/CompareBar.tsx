@@ -1,10 +1,10 @@
 "use client";
-import { Billboard } from "@/lib/types";
+import { CatalogueItem } from "@/lib/types";
 import { Scale, X, ArrowLeft } from "lucide-react";
 import { TypeIcon } from "@/components/TypeIcon";
 
 interface Props {
-  items: Billboard[];
+  items: CatalogueItem[];
   onRemove: (id:number)=>void;
   onCompare: ()=>void;
   onClear: ()=>void;

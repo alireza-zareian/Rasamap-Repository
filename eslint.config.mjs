@@ -18,6 +18,14 @@ const eslintConfig = defineConfig([
     // Linting a 3 MB minified file is pointless and exhausts the Node heap.
     "docs/vendor/**",
   ]),
+  {
+    // Next.js loads the cache handler with require.resolve() at runtime, so it
+    // has to be CommonJS — see the shape in next/dist/docs .../self-hosting.md.
+    // The rule is right everywhere else in this repo; this file is the one
+    // place the framework dictates the module system.
+    files: ["cache-handler.js"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
 ]);
 
 export default eslintConfig;

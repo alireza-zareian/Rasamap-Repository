@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import type { Billboard, BillboardType } from "@/lib/types";
+import type { CatalogueItem, BillboardType } from "@/lib/types";
 import type { SiteStats } from "@/lib/db/stats";
 import { useTheme } from "@/lib/theme";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
@@ -41,7 +41,7 @@ export default function LandingClient({
 }: {
   stats: SiteStats;
   /** Photographed media, busiest first — the gallery and the ticker. */
-  billboards: Billboard[];
+  billboards: CatalogueItem[];
 }) {
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("تهران");

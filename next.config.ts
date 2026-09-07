@@ -41,7 +41,24 @@ const devOrigins = (
   .map((s) => s.trim())
   .filter(Boolean);
 
+// Where the server keeps rendered pages and cached queries.
+//
+// Unset: Next.js uses its own cache directory under .next/, which is correct
+// for one process on one machine — the demo laptop today.
+// Set:   every instance shares one Redis, so a cache entry written by one is
+//        read by all, an invalidation reaches all, and a redeploy does not
+//        start cold. See cache-handler.js and §25 of docs/engineering-decisions.md.
+//
+// cacheMaxMemorySize: 0 turns off the in-process LRU that would otherwise sit
+// in front of Redis. That layer is faster but private to each process, so it
+// would survive an invalidation the shared store had already honoured — which
+// is the exact bug Redis is being introduced to prevent.
+const redisCache = process.env.REDIS_URL
+  ? { cacheHandler: require.resolve("./cache-handler.js"), cacheMaxMemorySize: 0 }
+  : {};
+
 const nextConfig: NextConfig = {
+  ...redisCache,
   allowedDevOrigins: devOrigins,
   // The test suite builds into its own directory (test/run.mjs sets this), so
   // `npm test` never clobbers the .next that `npm run demo` is serving.
