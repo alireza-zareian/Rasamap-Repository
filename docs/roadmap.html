@@ -2256,11 +2256,11 @@ sequenceDiagram
     </div>
   </div>
 
-<div class="phase-card is-next open">
+<div class="phase-card">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">PREP</div>
-      <div class="ph-title"><h3>آماده‌سازی نهایی ارائه به استاد</h3><p>چک‌لیست کامل قبل از ارائه — چند روز دیگر</p></div>
-      <div class="ph-badge">→ در جریان</div>
+      <div class="ph-title"><h3>آماده‌سازی نهایی ارائه به استاد</h3><p>چک‌لیست ارائه — مهلت به حدود شش ماه تمدید شد، پس این کارت دیگر فوری نیست</p></div>
+      <div class="ph-badge todo">◷ بدون عجله</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--amber); margin-bottom:14px">⭐ قبل از ارائه همه این‌ها رو تیک بزن.</p>
@@ -2280,6 +2280,345 @@ sequenceDiagram
       </div>
     </div>
   </div>
+
+  <!-- ══════════ برنامهٔ شش‌ماهه — از «نمونهٔ کارآمد» به «محصولِ مستقر» ══════════ -->
+  <div class="note" style="margin:34px 0 18px">
+    <span class="t">برنامهٔ شش‌ماهه — مهر ۱۴۰۵ تا اسفند ۱۴۰۵</span>
+    مهلت از چند روز به حدود شش ماه رسید. کارت‌های زیر از یک <b>بازبینی واقعی روی کد</b> بیرون آمده‌اند،
+    نه از فهرست آرزو: هر کدام یک یافتهٔ مشخص با شاهدِ فایل و خط دارد. ترتیب بر اساس
+    «بیشترین اثر به ازای کمترین ریسک» است — کارهای V1 و V2 هیچ زیرساخت تازه‌ای نمی‌خواهند و
+    بزرگ‌ترین بردِ موجودند؛ استقرار و پایگاه دادهٔ تازه بعد از آن می‌آیند.
+    <br><br>
+    <b>وضعیت پایه در آغاز این برنامه:</b> <code>npm run lint</code> بدون هشدار ·
+    <code>npm test</code> ۱۱۳/۱۱۳ سبز در ۱۷٫۴ ثانیه · ۱۴٬۶۳۴ خط کدِ برنامه · بدون بدهیِ ساختاریِ شناخته‌شده.
+  </div>
+
+  <div class="note" style="margin:0 0 18px; border-color:var(--green-mid); background:var(--green-dim)">
+    <span class="t" style="color:var(--green)">اگر تازه این پروژه را تحویل گرفته‌ای — از اینجا شروع کن</span>
+    این بخش طوری نوشته شده که <b>بدون هیچ حافظه‌ای از گفت‌وگوهای قبلی</b> قابلِ اجرا باشد.
+    <br><br>
+    <b>۱ — اول این‌ها را بخوان</b> (به همین ترتیب): <code>CLAUDE.md</code> و <code>AGENTS.md</code> در ریشهٔ مخزن
+    (ده قاعدهٔ غیرقابلِ نقضِ پروژه — به‌خصوص قاعدهٔ ۹ دربارهٔ اتصال، و قاعدهٔ ۹b دربارهٔ آزمون‌ها)،
+    سپس <code>docs/architecture.md</code> (دو مسیرِ داده) و <code>docs/engineering-decisions.md</code>.
+    <br><br>
+    <b>۲ — وضعیت را خودت تأیید کن، به حرفِ این سند اکتفا نکن:</b>
+    <code>npm run lint</code> باید بی‌هشدار باشد و <code>npm test</code> باید <b>۱۱۳/۱۱۳</b> بدهد
+    (حدود ۱۷ ثانیه، روی بیلد تولیدی — هرگز <code>next dev</code>).
+    اگر این دو سبز نبودند، <b>قبل از هر کارِ تازه</b> اول همان را درست کن.
+    <br><br>
+    <b>۳ — قاعدهٔ کارِ این فازها:</b> هر کارت یک «سنجهٔ پذیرش» دارد با عددِ امروز و عددِ هدف.
+    پیش از دست‌زدن به کد، عددِ امروز را <b>خودت دوباره اندازه بگیر</b> (اسکریپتش پایین است)؛
+    بعد از تغییر، دوباره بگیر و <b>هر دو عدد را در همین کارت بنویس</b>.
+    اگر عدد در جهتِ اشتباه رفت، تغییر را برگردان و دلیلش را ثبت کن — فرضِ این سند هم می‌تواند غلط باشد.
+    <br><br>
+    <b>۴ — یکی‌یکی.</b> کارت‌ها به ترتیبِ V1 تا V10 چیده شده‌اند و V1 و V2 پیش‌نیازِ بقیه‌اند
+    (بی‌معنی است سایتی را مستقر کنیم که کاتالوگش برای گوگل نامرئی است). هر فاز یک کامیتِ جدا،
+    با <code>npm test</code>ِ سبز پیش از کامیت.
+  </div>
+
+  <div class="note" style="margin:0 0 18px; border-color:var(--brand); background:#2F6BE008">
+    <span class="t">اندازه‌گیریِ پایه — ۱۶ شهریور ۱۴۰۵، روی بیلد تولیدی</span>
+    این اعداد <b>واقعاً اندازه‌گیری شده‌اند</b>، نه تخمین. روش: <code>npm run build &amp;&amp; npm start</code>،
+    سپس ۱۲۰ بازدید پشت سر هم و خواندنِ زمانِ پردازندهٔ فرایندِ <code>next-server</code> با
+    <code>ps -o time=</code> پیش و پس از آن. اسکریپتش در پایینِ همین کارت آمده تا هر کسی بتواند
+    دوباره اجرا کند. <b>هر عددی که در فازهای زیر ادعا می‌شود باید با همین روش دوباره سنجیده شود.</b>
+    <br><br>
+    <table class="tbl" style="margin-top:6px">
+      <thead><tr><th>مسیر</th><th>CPU سرور به‌ازای یک بازدید</th><th>HTML تحویلی</th><th>محتوای واقعی در HTML</th></tr></thead>
+      <tbody>
+        <tr><td><code>/explore</code> — فقط شِل</td><td>۳٫۳ ms</td><td>۳۳ KB</td><td>—</td></tr>
+        <tr><td><code>/api/billboards?limit=24</code> — فقط داده</td><td>۱۲٫۲ ms</td><td>—</td><td>—</td></tr>
+        <tr style="background:#ef44440a"><td><b><code>/explore</code> — یک بازدید واقعیِ امروز</b> (شِل + API)</td><td><b>۱۳٫۹ ms</b></td><td>۳۳ KB</td><td><b style="color:#C33A3A">صفر</b></td></tr>
+        <tr style="background:#0E8F5D0a"><td><b><code>/billboard/[slug]</code> — که از قبل Server Component است</b></td><td><b style="color:var(--green)">۸٫۷ ms</b></td><td>۱۶۸ KB</td><td><b style="color:var(--green)">۵۶ نشانهٔ قیمت</b></td></tr>
+      </tbody>
+    </table>
+    <br>
+    <b>جاوااسکریپتی که مرورگر برای <code>/explore</code> دانلود می‌کند:</b> ۱۲ تکه، ۶۹۰ کیلوبایتِ فشرده‌نشده.
+    <br><br>
+    <b style="color:var(--amber)">یک صداقتِ روش‌شناختی:</b> این دو صفحه دقیقاً یک کار نمی‌کنند
+    (یکی ۲۴ کارت می‌سازد، دیگری یک صفحهٔ جزئیات با رسانه‌های مرتبط)، پس این مقایسه
+    <b>جهت</b> را نشان می‌دهد نه یک آزمایشِ کنترل‌شده. اثباتِ قطعی بعد از V1 به دست می‌آید،
+    وقتی همان <code>/explore</code> در دو حالت با هم سنجیده شود.
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer; font-size:0.8rem; color:var(--brand)">اسکریپت اندازه‌گیری (برای تکرار)</summary>
+      <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin-top:8px">PID=$(pgrep -f 'next-server' | head -1)
+UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/141.0 Safari/537.36'
+cpu(){ ps -o time= -p $PID | awk -F'[:-]' '{s=0;for(i=1;i&lt;=NF;i++)s=s*60+$i;print s}'; }
+a=$(cpu); for i in $(seq 120); do
+  curl -s -o /dev/null -H "user-agent: $UA" -H "x-forwarded-for: 198.51.$((i/256)).$((i%256+1))" \
+    http://localhost:3000/explore http://localhost:3000/api/billboards?limit=24
+done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"</pre>
+    </details>
+    <br>
+    <b>Lighthouse:</b> نصبِ CLI ممکن نشد (دسترسی به رجیستریِ npm نبود). لازم هم نیست —
+    Lighthouse <b>داخلِ خودِ Chrome DevTools</b> هست: <code>F12</code> ← زبانهٔ Lighthouse ← Analyze.
+    قبل و بعدِ V1 و V2 یک بار اجرا شود و عددِ Performance و SEO همین‌جا ثبت گردد.
+  </div>
+
+  <div class="phase-card is-next open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V1</div>
+      <div class="ph-title"><h3>رندر سمت سرور برای کاتالوگ و صفحهٔ نخست</h3><p>برخلاف تصورِ اولیه، این کار سرور را <b>خنک‌تر</b> می‌کند نه داغ‌تر — با عدد</p></div>
+      <div class="ph-badge">→ اولویت یک</div>
+    </div>
+    <div class="ph-body">
+      <div class="note" style="margin-bottom:14px; border-color:var(--amber-mid); background:var(--amber-dim)">
+        <span class="t" style="color:var(--amber)">اول یک سوءتفاهم را برداریم — چون تصمیمِ اولیه بر پایهٔ آن گرفته شده بود</span>
+        صفحه‌ها عمداً کلاینتی ساخته شدند تا «بارِ سرور کم بماند و لپ‌تاپ داغ نشود». این استدلال
+        برای یک سایتِ <b>ایستا</b> کاملاً درست است — ولی <code>/explore</code> ایستا نیست:
+        مرورگر بلافاصله برمی‌گردد و <code>/api/billboards</code> را صدا می‌زند، و
+        <b>همان پرس‌وجوی Prisma روی همان سرور اجرا می‌شود</b>. پس کارِ دیتابیس حذف نشده، فقط
+        عقب افتاده — و در این مسیر سرور یک درخواستِ HTTP بیشتر، یک بار سریال‌سازیِ JSON، و
+        یک بار اجرای دوبارهٔ <code>proxy.ts</code> را هم می‌پردازد.
+        <br><br>
+        <b>اندازه‌گیریِ واقعی روی همین پروژه (۱۲۰ بازدید، بیلد تولیدی):</b>
+        <table class="tbl" style="margin-top:8px">
+          <tbody>
+            <tr><td>بازدید از <code>/explore</code> امروز = شِل (۳٫۳ ms) + API (۱۲٫۲ ms)</td><td><b style="color:#C33A3A">۱۳٫۹ ms CPU</b></td></tr>
+            <tr><td><code>/billboard/[slug]</code> که همین حالا Server Component است</td><td><b style="color:var(--green)">۸٫۷ ms CPU</b></td></tr>
+          </tbody>
+        </table>
+        <br>
+        یعنی صفحه‌ای که <em>روی سرور HTML می‌سازد</em>، از مسیرِ کلاینتیِ فعلی <b>ارزان‌تر</b> تمام شده است.
+        و این هنوز بدون کش است — با کشِ صفحه، عددِ SSR به سمتِ ۳٫۳ ms می‌رود و
+        <b>دیتابیس اصلاً درگیر نمی‌شود</b>، در حالی که مسیر کلاینتی <b>همیشه</b> به دیتابیس می‌زند.
+        <br><br>
+        این دقیقاً همان چیزی است که فصل ۴ پایان‌نامه با تشبیهِ رستوران گفته:
+        «بشقابِ مهمانِ سرِ میز را از دریچهٔ تحویل بیرون بردن و برگرداندن، کندتر و بی‌فایده است.»
+        V1 آن استدلال را به دو صفحه‌ای می‌آورد که از قلم افتاده بودند.
+      </div>
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">و یافتهٔ دوم — که مهم‌تر است</span>
+        <b><code>/explore</code> امروز ۳۳ کیلوبایت HTML می‌فرستد که <span style="color:#C33A3A">صفر</span> نشانهٔ قیمت در آن هست.</b>
+        در مقابل، <code>/billboard/[slug]</code> صد و شصت‌وهشت کیلوبایت HTML با <b>۵۶ نشانهٔ قیمتِ رندرشده</b> می‌دهد.
+        یعنی گوگل روی صفحهٔ کاتالوگ — قلبِ محصول — یک قابِ خالی می‌بیند.
+        برای سایتی که تمام ادعایش «یک نمای واحد و <em>قابل جست‌وجو</em>» است، این یک شکافِ
+        سطحِ کسب‌وکار است، نه یک ریزه‌کاریِ فنی.
+      </div>
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
+        <b>این بازنویسی نیست.</b> <code>getFilteredBillboards()</code> در <code>lib/db/billboards.ts</code>
+        از پیش وجود دارد و همان چیزی است که <code>/api/billboards</code> صدا می‌زند. صفحه فقط باید
+        به‌جای <code>fetch</code>، مستقیم همان تابع را صدا بزند.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><code>app/explore/page.tsx</code> به مؤلفهٔ سمت سرور تبدیل شود؛ پالایه‌ها از <code>searchParams</code> خوانده و مستقیم به <code>getFilteredBillboards()</code> داده شوند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>فقط کنترل‌های تعاملی (نوار پالایه، کلیدهای مرتب‌سازی) مؤلفهٔ کلاینتِ کوچک بمانند و با تغییرِ <code>searchParams</code> صفحه را دوباره بگیرند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>همین کار برای <code>app/page.tsx</code> — آمار و رسانه‌های شاخص روی سرور رندر شوند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>کش، برای اینکه سرور واقعاً خنک‌تر شود:</b> نتیجهٔ رندر با <code>revalidate</code> کش شود. کاتالوگ روزی چند بار تغییر می‌کند، نه ثانیه‌ای — پس بازدیدهای پیاپیِ یک پالایه نباید هیچ‌کدام به دیتابیس بزنند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>/api/billboards</code> سرِ جایش می‌ماند: هنوز برای صفحه‌بندیِ بدونِ بارگذاریِ دوباره و برای مصرف‌کنندهٔ بیرونی لازم است</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--brand)">
+        <b>سنجهٔ پذیرش — هر سه باید برقرار شوند:</b><br>
+        ۱. <code>curl -s -H "user-agent: Mozilla/5.0 Chrome/141" localhost:3000/explore | grep -c تومان</code> ← امروز <b>۰</b>، بعد از V1 باید <b>۲۴</b> (یا هر چند کارتی که در صفحه هست) باشد.<br>
+        ۲. CPU سرور به‌ازای یک بازدید از <code>/explore</code> با همان اسکریپتِ بالا دوباره سنجیده شود ← امروز <b>۱۳٫۹ ms</b>؛ هدف: <b>کمتر از ۱۰ ms</b> بدونِ کش، و <b>زیر ۵ ms</b> با کش.<br>
+        ۳. Lighthouse در Chrome DevTools روی <code>/explore</code> ← عددِ Performance و SEO پیش و پس ثبت شود.<br>
+        <b>اگر عددِ CPU بالا رفت، فرض غلط بوده و باید همین‌جا متوقف شویم و دوباره فکر کنیم.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V2</div>
+      <div class="ph-title"><h3>تصویرها با <code>next/image</code></h3><p>سایتی که محصولش عکسِ سازه است، هیچ بهینه‌سازی تصویری ندارد</p></div>
+      <div class="ph-badge todo">اولویت دو</div>
+    </div>
+    <div class="ph-body">
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">یافتهٔ بازبینی</span>
+        <b><code>next/image</code> در هیچ فایلی استفاده نشده</b> — ۱۵ تگ <code>&lt;img&gt;</code> خام در
+        <code>app/</code> و <code>components/</code>. یعنی: بدون تبدیل خودکار به WebP/AVIF، بدون
+        <code>srcset</code> (گوشی همان عکسِ بزرگِ دسکتاپ را دانلود می‌کند)، و بدون
+        <code>width/height</code> که یعنی پرشِ چیدمان هنگام بارگذاری (CLS، یکی از سه سنجهٔ اصلیِ
+        Core Web Vitals گوگل).
+        <br><br>
+        انصافاً کد از این موضوع بی‌خبر نیست: <code>decoding="async"</code> همه‌جا هست و
+        <code>loading="lazy"</code> با دقت فقط جایی گذاشته شده که کاربر می‌تواند به آن اسکرول کند (قاعدهٔ §۲۴).
+        فقط قدمِ بعدی برداشته نشده.
+      </div>
+      <div class="note" style="margin-bottom:14px; border-color:var(--amber-mid); background:var(--amber-dim)">
+        <span class="t" style="color:var(--amber)">اینجا نگرانیِ «سرور داغ نشود» واقعاً به‌جاست — برخلاف V1</span>
+        <code>next/image</code> تصویرها را <b>روی سرور</b> تغییر اندازه و فرمت می‌دهد، و این
+        برخلاف V1 یک هزینهٔ پردازشیِ واقعی است. ولی این هزینه <b>یک‌بار به‌ازای هر ترکیبِ
+        (تصویر × اندازه × فرمت)</b> است و نتیجه در <code>.next/cache/images</code> روی دیسک
+        می‌ماند؛ بازدیدهای بعدی فقط یک فایل از دیسک می‌خوانند.
+        <br><br>
+        <b>پس قاعده این است:</b> تعدادِ <code>sizes</code> را کم و مشخص نگه دار (دو یا سه عرض، نه بیشتر)،
+        <code>minimumCacheTTL</code> را بلند بگذار، و <b>بعد از پیاده‌سازی همان اسکریپتِ CPU را دوباره اجرا کن</b>.
+        اگر بارِ ماندگارِ سرور بالا رفت، گزینهٔ میانی این است که تصویرها یک بار به‌صورت
+        دسته‌ای پیش‌پردازش شوند و <code>next/image</code> با <code>unoptimized</code> فقط
+        <code>srcset</code> و ابعاد را بدهد — ۹۰٪ سودِ کار بدون هیچ پردازشِ درخواستی.
+      </div>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><code>images.remotePatterns</code> در <code>next.config.ts</code> برای <code>billboardiha.com</code> و دامنهٔ خودمان</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>۱۵ تگ <code>&lt;img&gt;</code> با <code>&lt;Image&gt;</code> جایگزین شود، با <code>sizes</code> درست برای هر جایگاه (کارت، گالری، بندانگشتی)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>عکسِ اصلیِ صفحهٔ جزئیات <code>priority</code> بگیرد؛ بقیه تنبل بمانند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>قاعدهٔ §۲۴ حفظ شود: هیچ تصویری در نوارِ چرخان یا marquee نباید تنبل بارگذاری شود</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--brand)">
+        <b>سنجهٔ پذیرش:</b><br>
+        ۱. CLS در Lighthouse نزدیکِ صفر (هر <code>&lt;Image&gt;</code> باید <code>width/height</code> یا <code>fill</code> داشته باشد).<br>
+        ۲. حجمِ تصویرهای دانلودیِ <code>/explore</code> روی عرضِ گوشی دستِ‌کم <b>نصف</b> شود — با زبانهٔ Network در DevTools و پروفایلِ موبایل بسنجید.<br>
+        ۳. جاوااسکریپتِ <code>/explore</code> امروز <b>۶۹۰ کیلوبایتِ فشرده‌نشده در ۱۲ تکه</b> است؛ بعد از V1 و V2 دوباره بشمارید — انتظار می‌رود کمتر شود چون منطقِ واکشی از کلاینت بیرون می‌رود.<br>
+        ۴. <b>CPU سرور دوباره سنجیده شود</b> (اسکریپتِ بالای همین بخش) — اگر بارِ ماندگار بالا رفت، سراغِ گزینهٔ پیش‌پردازشِ دسته‌ای بروید.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V3</div>
+      <div class="ph-title"><h3>مهاجرت به PostgreSQL</h3><p>خروج از تک‌فایلی‌بودن — پیش‌نیازِ استقرار و چندنمونه‌ای شدن</p></div>
+      <div class="ph-badge todo">اولویت سه</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
+        این همان چیزی است که پایان‌نامه وعده‌اش را داده: چون همهٔ دسترسیِ داده از <code>lib/db/</code> و
+        Prisma رد می‌شود و هیچ <code>SQL</code> خامی در کد پراکنده نیست، مهاجرت باید «تغییرِ مقصد + اجرای
+        دوبارهٔ مهاجرت‌ها» باشد. <b>این فاز آن ادعا را می‌آزماید.</b>
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><code>provider = "postgresql"</code> در <code>schema.prisma</code> و کنار گذاشتنِ آداپتور <code>better-sqlite3</code> در <code>lib/db/client.ts</code></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>بازبینیِ نوع‌ها: ستون‌های <code>Json</code> (تصویرها، ویژگی‌ها، traffic) در Postgres رفتار متفاوتی دارند — و <code>contains</code> در جست‌وجو باید حساس‌به‌حروف نباشد (<code>mode: "insensitive"</code>)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>اسکریپت انتقال داده: ۳٬۵۳۶ رکورد + کاربران + نظرها + رد ممیزی، با بررسیِ شمارش پیش و پس از انتقال</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>استخر اتصال (connection pool) — بدون آن، هر درخواست یک اتصالِ تازه می‌سازد و Postgres زودتر از SQLite کم می‌آورد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>سنجهٔ پذیرش:</b> همان ۱۱۳ آزمون بدونِ تغییرِ کدِ آزمون، روی Postgres سبز شوند</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V4</div>
+      <div class="ph-title"><h3>دامنه، میزبانی و نخستین استقرار واقعی</h3><p>از «روی لپ‌تاپ اجرا می‌شود» به «یک آدرس که هر کسی باز می‌کند»</p></div>
+      <div class="ph-badge todo">اولویت چهار</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
+        این تنها جمله‌ای است که در کلِ پایان‌نامه با قرمز نوشته شده: «مستقر نشده است». بعد از این فاز
+        آن جمله عوض می‌شود. <b>قاعدهٔ ۹ پروژه اینجا آزمونِ نهایی‌اش را می‌دهد</b> — کوکیِ امن،
+        بررسی مبدأ، و نشانیِ مطلق، هر سه برای همین لحظه نوشته شده‌اند.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>خرید دامنهٔ ارزان (<code>.ir</code> از ایرنیک ارزان‌ترین است؛ <code>.com</code> اگر مخاطبِ بیرونی هم مدنظر است)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>انتخاب میزبان: یک VPS ساده کافی است — پروژه به Node ۲۰ و یک Postgres نیاز دارد و بس</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>HTTPS با گواهیِ رایگان (Let's Encrypt) پشتِ یک reverse proxy؛ بررسی اینکه <code>x-forwarded-proto</code> درست به برنامه می‌رسد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>NEXT_PUBLIC_SITE_URL</code> روی دامنهٔ واقعی؛ کنترل اینکه <code>lib/site-url.ts</code> دیگر هیچ‌جا به <code>localhost</code> برنگردد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>پشتیبان‌گیریِ خودکار روزانه از پایگاه داده + <b>یک بار تمرینِ بازگردانی</b> — پشتیبانی که آزموده نشده، پشتیبان نیست</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک نقطهٔ پایانیِ <code>/api/health</code> برای بررسیِ زنده‌بودن</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>سنجهٔ پذیرش:</b> سایت از شبکهٔ موبایل (نه وای‌فای خانه) باز شود، ورود کار کند، و عکس‌ها بیایند</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V5</div>
+      <div class="ph-title"><h3>سخت‌کردن CSP و پاک‌سازی امنیتی</h3><p>سیاست امنیتی هنوز درهایی را باز گذاشته که دیگر پشتشان چیزی نیست</p></div>
+      <div class="ph-badge todo">اولویت پنج</div>
+    </div>
+    <div class="ph-body">
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">یافتهٔ بازبینی</span>
+        <code>next.config.ts</code> هنوز <code>api.neshan.org</code>، <code>unpkg.com</code>،
+        <code>*.tile.openstreetmap.org</code> و <code>*.basemaps.cartocdn.com</code> را در
+        <code>script-src</code>، <code>style-src</code>، <code>img-src</code> و <code>connect-src</code> مجاز می‌داند —
+        <b>همه بازماندهٔ نقشهٔ Leaflet‌اند که دیگر در پروژه نیست</b> (نقشه الان یک <code>iframe</code> گوگل است).
+        باز گذاشتنِ <code>unpkg.com</code> در <code>script-src</code> یعنی یک سطحِ حملهٔ زنجیرهٔ تأمین که هیچ سودی نمی‌دهد.
+      </div>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>حذفِ هر مبدأیی که دیگر استفاده نمی‌شود از هر چهار دستورِ CSP</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>جایگزینیِ <code>'unsafe-inline'</code> و <code>'unsafe-eval'</code> در <code>script-src</code> با CSP مبتنی بر <code>nonce</code> — اول با <code>Content-Security-Policy-Report-Only</code> تا چیزی نشکند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>حذفِ سرآیندِ <code>X-XSS-Protection</code> — در مرورگرهای امروزی منسوخ است و توصیهٔ رسمی خاموش‌کردنش است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یکی از <code>public/robots.txt</code> و <code>app/robots.ts</code> حذف شود — هر دو وجود دارند و فایلِ <code>public/</code> بر دیگری غلبه می‌کند، پس نسخهٔ کدی بی‌اثر و در معرضِ کهنه‌شدن است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>بازبینیِ متغیرهای مردهٔ <code>NESHAN</code> در <code>lib/env.ts</code> — پیامِ «لایهٔ نقشه غیرفعال می‌شود» دیگر درست نیست</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V6</div>
+      <div class="ph-title"><h3>دیده‌شدن در جست‌وجو و اشتراک‌گذاری</h3><p>بعد از V1 که کاتالوگ قابل خواندن شد، نوبتِ قابلِ فهم شدن است</p></div>
+      <div class="ph-badge todo">اولویت شش</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><b>۷ صفحه بدون <code>metadata</code>:</b> <code>about</code>، <code>analytics</code>، <code>compare</code>، <code>contact</code>، <code>terms</code>، <code>reset-password</code>، <code>admin/login</code> — عنوان و توضیح بگیرند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>opengraph-image</code> برای صفحهٔ نخست و صفحهٔ هر رسانه — الان اشتراک لینک در تلگرام و واتساپ کارتِ خالی می‌دهد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>دادهٔ ساخت‌یافته (JSON-LD)</b> روی صفحهٔ هر رسانه — برای یک کاتالوگ، این تفاوتِ «یک لینکِ آبی» با «نتیجهٔ غنی با عکس و قیمت» در گوگل است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>بررسی اینکه <code>app/sitemap.ts</code> واقعاً هر ۳٬۵۳۶ رسانه را فهرست می‌کند و فقط منتشرشده‌ها را</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>manifest.ts</code> و آیکون‌ها تا سایت روی گوشی قابلِ «افزودن به صفحهٔ اصلی» باشد</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V7</div>
+      <div class="ph-title"><h3>آزمون سرتاسری در مرورگر</h3><p>تنها شکافِ آزمونی که خودِ پایان‌نامه هم به آن اعتراف کرده</p></div>
+      <div class="ph-badge todo">اولویت هفت</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
+        ۱۱۳ آزمونِ فعلی لایهٔ <code>API</code> را خوب پوشش می‌دهند، ولی هیچ‌کدام مرورگر را باز نمی‌کنند.
+        رفتارِ فرمِ پنج‌مرحله‌ای، بارگذاریِ عکس، و مودالِ مقایسه فقط دستی آزموده شده‌اند.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>Playwright روی همان بیلدِ تولیدی که <code>npm test</code> می‌سازد (نه <code>next dev</code> — قاعدهٔ ۹b)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>پنج جریان اصلی: جست‌وجو و پالایش · ورود · دریافت شمارهٔ تماس · ثبت آگهی با عکس · تصمیم کارشناس</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک اجرا روی عرضِ گوشی — چیدمانِ ریسپانسیو تا امروز فقط چشمی بررسی شده</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V8</div>
+      <div class="ph-title"><h3>رصد، هشدار و تازگیِ داده در تولید</h3><p>وقتی سایت بالا باشد، باید بفهمی کِی خراب شده — نه از روی شکایت کاربر</p></div>
+      <div class="ph-badge todo">اولویت هشت</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>جمع‌آوریِ متمرکزِ لاگ‌ها — قالبِ <code>lib/logger.ts</code> از ابتدا یک شیء JSON در هر خط است، پس هیچ تغییرِ کدی لازم نیست</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>بررسیِ در دسترس بودن (uptime) از بیرون + هشدار وقتی <code>/api/health</code> جواب ندهد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>خزندهٔ زمان‌بندی‌شده:</b> تبدیلِ گردآوریِ یک‌باره به به‌روزرسانیِ دوره‌ای، با تشخیصِ تغییر و <b>بدون بازنویسیِ ویرایش‌های دستیِ مدیر</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>سقفِ نرخِ مشترک: انتقالِ شمارنده‌ها از حافظهٔ نمونه به یک انبارهٔ مشترک، تا استقرارِ چندنمونه‌ای ممکن شود</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V9</div>
+      <div class="ph-title"><h3>اصلاحات ریز — یک بعدازظهر کار</h3><p>چیزهای کوچکی که در بازبینی پیدا شدند و ارزش یک کارتِ جدا ندارند</p></div>
+      <div class="ph-badge todo">هر وقت</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><code>app/page.tsx:159</code> — جست‌وجوی صفحهٔ نخست با <code>window.location.href</code> کلِ صفحه را دوباره بار می‌کند؛ باید <code>router.push()</code> باشد. این پرکاربردترین ناوبریِ سایت است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>components/ReviewsSection.tsx:260</code> — <code>&lt;a href="/login"&gt;</code> باید <code>&lt;Link&gt;</code> شود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>/api/admin/auth/me</code> سقفِ نرخ ندارد (تنها مسیرِ خواندنیِ بدونِ سقف که ارزشِ محدودکردن دارد)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>loading.tsx</code> فقط برای <code>dashboard</code> و <code>explore</code> وجود دارد؛ صفحهٔ جزئیات و پنل مدیریت هم لیاقتش را دارند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>به‌روزرسانیِ وابستگی‌ها: <code>jose ۵ → ۶</code> و <code>bcryptjs ۲ → ۳</code> (هر دو نسخهٔ اصلیِ عقب‌مانده دارند)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V10</div>
+      <div class="ph-title"><h3>درگاه پرداخت و پیامکِ زنده</h3><p>هر دو کدشان کامل است و منتظرِ یک چیزِ بیرونی‌اند</p></div>
+      <div class="ph-badge" style="background:var(--violet-dim); border-color:var(--violet-mid); color:var(--violet)">⏸ وابسته به بیرون</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task block-t"><div class="tick">⏸</div><div><b>پیامک:</b> کلِ لایهٔ <code>lib/sms.ts</code> و چرخهٔ رمزِ یک‌بارمصرف پیاده‌سازی شده و آزمون دارد. فقط با گذاشتنِ <code>KAVENEGAR_API_KEY</code> در <code>.env</code> و بدونِ هیچ تغییرِ کدی زنده می‌شود</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div><b>پرداخت:</b> منطقِ پلنِ ویژه از پیش کار می‌کند (تأییدِ دستیِ کارشناس). اتصال به درگاه نیازمندِ نمادِ اعتماد الکترونیکی و شخصیت حقوقی است — یک کارِ حقوقی، نه فنی</div></div>
+      </div>
+    </div>
+  </div>
+
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">DOC</div>
@@ -3204,7 +3543,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۴ شهریور ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۶ شهریور ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>
