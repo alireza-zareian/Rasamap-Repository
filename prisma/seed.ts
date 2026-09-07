@@ -57,7 +57,9 @@ function toRow(b: StaticBillboard) {
     images: b.images as unknown as object,
     allImages: b.allImages ? (b.allImages as unknown as object) : Prisma.JsonNull,
     agency: b.agency,
-    phone: b.phone,
+    // The dataset always carries one; the field is optional on the domain type
+    // because a Billboard that has reached a browser has had it stripped.
+    phone: b.phone ?? "—",
     description: b.description,
     features: b.features as unknown as object,
     nearbyLandmarks: b.nearbyLandmarks as unknown as object,

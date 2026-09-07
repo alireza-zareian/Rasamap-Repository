@@ -59,7 +59,10 @@ export interface Billboard {
   images: string[];
   allImages?: string[];  // all images across all faces — populated by DetailModal from images[]
   agency: string;
-  phone: string;
+  // Optional because a Billboard that has crossed into a browser has no phone:
+  // toPublicBillboard() in lib/db/billboards.ts drops it, and the number is only
+  // handed out by POST /api/billboards/[slug]/contact to a signed-in caller.
+  phone?: string;
   description: string;
   features: string[];
   nearbyLandmarks: string[];

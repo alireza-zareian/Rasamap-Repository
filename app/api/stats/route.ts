@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
-import { prisma } from "@/lib/db/client";
-import { publishedOnly } from "@/lib/db/billboards";
+import { getSiteStats } from "@/lib/db/stats";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 import { withApiLog } from "@/lib/api-log";
 
@@ -12,36 +11,10 @@ async function getHandler(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = publicApiRateLimit(ip);
   if (!rl.allowed) return rateLimited(rl, { endpoint: "stats", ip });
-  const [total, typeCounts, cityCounts, trafficRows] = await Promise.all([
-    prisma.billboard.count({ where: { status: publishedOnly } }),
-    prisma.billboard.groupBy({
-      by: ["type"],
-      where: { status: publishedOnly },
-      _count: { _all: true },
-    }),
-    prisma.billboard.groupBy({
-      by: ["city"],
-      where: { status: publishedOnly },
-      _count: { _all: true },
-    }),
-    prisma.$queryRaw<{ total: number }[]>`
-      SELECT SUM(CAST(json_extract(traffic, '$.daily') AS INTEGER)) as total
-      FROM billboards WHERE status NOT IN ('pending', 'awaiting_payment')
-    `,
-  ]);
-
-  const byType: Record<string, number> = {};
-  for (const row of typeCounts) byType[row.type] = row._count._all;
-
-  const totalDailyReach = Number(trafficRows[0]?.total ?? 0);
+  const stats = await getSiteStats();
 
   return NextResponse.json(
-    {
-      total,
-      cityCount: cityCounts.length,
-      byType,
-      totalDailyReach,
-    },
+    stats,
     { headers: { "Cache-Control": "public, max-age=120, stale-while-revalidate=600" } },
   );
 }

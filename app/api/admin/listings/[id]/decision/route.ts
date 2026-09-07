@@ -7,7 +7,7 @@ import { rateLimited } from "@/lib/api-rate-limit";
 import { hasPermission } from "@/lib/auth/users";
 import { persistAudit } from "@/lib/auth/audit";
 import { prisma } from "@/lib/db/client";
-import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
+import { UNPUBLISHED_STATUSES, revalidateCatalogue } from "@/lib/db/billboards";
 import { withApiLog } from "@/lib/api-log";
 
 /**
@@ -114,6 +114,7 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
     },
     select: { id: true, name: true, status: true, plan: true, featured: true },
   });
+  revalidateCatalogue();
 
   const actorId = Number.parseInt(session.userId, 10);
   await persistAudit({

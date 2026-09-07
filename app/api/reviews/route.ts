@@ -4,7 +4,7 @@ import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
-import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
+import { UNPUBLISHED_STATUSES, revalidateCatalogue } from "@/lib/db/billboards";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
 import { withApiLog } from "@/lib/api-log";
 
@@ -117,6 +117,8 @@ async function POSTHandler(req: NextRequest) {
 
     return saved;
   });
+  // The rating and review count are shown on every catalogue card.
+  revalidateCatalogue();
 
   return NextResponse.json({ review }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }

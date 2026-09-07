@@ -4,6 +4,7 @@ import { rateLimited } from "@/lib/api-rate-limit";
 import { getSession } from "@/lib/auth/session";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
 import { prisma } from "@/lib/db/client";
+import { revalidateCatalogue } from "@/lib/db/billboards";
 import { withApiLog } from "@/lib/api-log";
 
 /**
@@ -62,6 +63,8 @@ async function DELETEHandler(req: NextRequest, { params }: { params: Promise<{ i
       },
     });
   });
+  // The rating and review count are shown on every catalogue card.
+  revalidateCatalogue();
 
   return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }

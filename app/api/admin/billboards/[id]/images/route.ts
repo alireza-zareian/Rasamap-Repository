@@ -8,6 +8,7 @@ import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { hasPermission } from "@/lib/auth/users";
 import { prisma } from "@/lib/db/client";
+import { revalidateCatalogue } from "@/lib/db/billboards";
 import { decodeImageDataUrl, MAX_IMAGE_BYTES } from "@/lib/uploads";
 import { withApiLog } from "@/lib/api-log";
 
@@ -88,6 +89,7 @@ async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: 
     data:  { images: finalUrls, hasImages: finalUrls.length > 0 },
     select: { id: true, images: true },
   });
+  revalidateCatalogue();
 
   return NextResponse.json({ images: updated.images }, { headers: { "Cache-Control": "no-store" } });
 }

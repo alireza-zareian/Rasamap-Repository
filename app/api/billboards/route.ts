@@ -2,17 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
-import { getFilteredBillboards } from "@/lib/db/billboards";
+import { getFilteredBillboards, toPublicBillboard } from "@/lib/db/billboards";
+import { ALLOWED_TYPES, ALLOWED_STATUS, ALLOWED_SORT } from "@/lib/explore-query";
 import { publicApiRateLimit } from "@/lib/auth/rate-limit";
 import { serverError } from "@/lib/api-error";
 import { withApiLog } from "@/lib/api-log";
 
 // Bot user agents are rejected in proxy.ts for every /api/* path, so the
 // per-route copies of that list are gone — one matcher, one place to update.
-
-const ALLOWED_TYPES   = ["billboard", "digital", "bridge", "station", "vehicle"] as const;
-const ALLOWED_STATUS  = ["available", "busy", "reserved", "inactive"] as const;
-const ALLOWED_SORT    = ["price_asc", "price_desc", "traffic_desc", "area_desc"] as const;
 
 const querySchema = z.object({
   search:   z.string().max(100).optional(),
@@ -49,10 +46,7 @@ async function getHandler(req: NextRequest) {
     const { items, total } = await getFilteredBillboards({ ...rest, cityIn });
     const limit = parsed.data.limit ?? 24;
     const page  = parsed.data.page  ?? 1;
-    // Owner/agency phone is never in a public response — see
-    // POST /api/billboards/[slug]/contact (signed-in only). JSON.stringify drops
-    // the undefined value, so no `phone` key ships.
-    const publicItems = items.map((b) => ({ ...b, phone: undefined }));
+    const publicItems = items.map(toPublicBillboard);
     return NextResponse.json(
       { items: publicItems, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) },
       { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } },

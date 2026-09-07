@@ -2337,8 +2337,13 @@ sequenceDiagram
     <br><br>
     <b style="color:var(--amber)">یک صداقتِ روش‌شناختی:</b> این دو صفحه دقیقاً یک کار نمی‌کنند
     (یکی ۲۴ کارت می‌سازد، دیگری یک صفحهٔ جزئیات با رسانه‌های مرتبط)، پس این مقایسه
-    <b>جهت</b> را نشان می‌دهد نه یک آزمایشِ کنترل‌شده. اثباتِ قطعی بعد از V1 به دست می‌آید،
-    وقتی همان <code>/explore</code> در دو حالت با هم سنجیده شود.
+    <b>جهت</b> را نشان می‌دهد نه یک آزمایشِ کنترل‌شده.
+    <br><br>
+    <b style="color:var(--green)">این آزمایشِ کنترل‌شده بعداً انجام شد و نتیجه‌اش در کارتِ V1 است:</b>
+    همان <code>/explore</code> در دو بیلد، هم‌زمان، متناوب. جهتی که این جدول نشان می‌داد
+    <b>درست نبود</b> — SSR برای این صفحه گران‌تر است، نه ارزان‌تر، و کشِ کوئری است که هزینه‌اش را
+    می‌پوشاند. جدولِ بالا سرِ جایش می‌ماند تا معلوم باشد تصمیم بر چه پایه‌ای گرفته شد و
+    اندازه‌گیری چه چیزش را رد کرد.
     <details style="margin-top:10px">
       <summary style="cursor:pointer; font-size:0.8rem; color:var(--brand)">اسکریپت اندازه‌گیری (برای تکرار)</summary>
       <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin-top:8px">PID=$(pgrep -f 'next-server' | head -1)
@@ -2355,11 +2360,11 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     قبل و بعدِ V1 و V2 یک بار اجرا شود و عددِ Performance و SEO همین‌جا ثبت گردد.
   </div>
 
-  <div class="phase-card is-next open">
+  <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V1</div>
-      <div class="ph-title"><h3>رندر سمت سرور برای کاتالوگ و صفحهٔ نخست</h3><p>برخلاف تصورِ اولیه، این کار سرور را <b>خنک‌تر</b> می‌کند نه داغ‌تر — با عدد</p></div>
-      <div class="ph-badge">→ اولویت یک</div>
+      <div class="ph-title"><h3>رندر سمت سرور برای کاتالوگ و صفحهٔ نخست</h3><p>انجام شد — و اندازه‌گیری، نیمی از فرضِ این کارت را رد کرد. عددها پایین آمده‌اند</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <div class="note" style="margin-bottom:14px; border-color:var(--amber-mid); background:var(--amber-dim)">
@@ -2401,27 +2406,71 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
         به‌جای <code>fetch</code>، مستقیم همان تابع را صدا بزند.
       </p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><code>app/explore/page.tsx</code> به مؤلفهٔ سمت سرور تبدیل شود؛ پالایه‌ها از <code>searchParams</code> خوانده و مستقیم به <code>getFilteredBillboards()</code> داده شوند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>فقط کنترل‌های تعاملی (نوار پالایه، کلیدهای مرتب‌سازی) مؤلفهٔ کلاینتِ کوچک بمانند و با تغییرِ <code>searchParams</code> صفحه را دوباره بگیرند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>همین کار برای <code>app/page.tsx</code> — آمار و رسانه‌های شاخص روی سرور رندر شوند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>کش، برای اینکه سرور واقعاً خنک‌تر شود:</b> نتیجهٔ رندر با <code>revalidate</code> کش شود. کاتالوگ روزی چند بار تغییر می‌کند، نه ثانیه‌ای — پس بازدیدهای پیاپیِ یک پالایه نباید هیچ‌کدام به دیتابیس بزنند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>/api/billboards</code> سرِ جایش می‌ماند: هنوز برای صفحه‌بندیِ بدونِ بارگذاریِ دوباره و برای مصرف‌کنندهٔ بیرونی لازم است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/explore/page.tsx</code> حالا مؤلفهٔ سمت سرور است؛ پالایه‌ها از <code>searchParams</code> خوانده و از راهِ <code>lib/explore-query.ts</code> (فهرستِ مجازها، بدون استثنا) به کوئری داده می‌شوند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>فقط کنترل‌ها کلاینتی ماندند — <code>ExploreControls.tsx</code> و <code>ExploreResults.tsx</code>. هیچ‌کدام نسخه‌ای از وضعیتِ پالایه ندارند: آدرس تنها مرجع است، پس هر نمای پالایه‌شده نشانی، دکمهٔ برگشت و اشتراک‌گذاری دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>صفحهٔ نخست هم: <code>app/page.tsx</code> سروری شد و <code>LandingClient.tsx</code> فقط رفتارِ مرورگری را نگه داشت. آمار و گالری از پایگاه داده می‌آیند — عددِ «۳۵۰۰+»ِ حدسی رفت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>کش:</b> <code>lib/db/cached.ts</code> با <code>unstable_cache</code> و عمرِ ۵ دقیقه (نه <code>revalidate</code>ِ صفحه: <code>searchParams</code> صفحه را پویا می‌کند، و <code>use cache</code>ِ Next 16 به <code>cacheComponents</code> نیاز دارد که <code>revalidate</code>ِ sitemap و stats را حذف می‌کند). هر نوشتنی روی کاتالوگ برچسب را باطل می‌کند، پس مدیر تغییرش را در همان بازدید بعدی می‌بیند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>/api/billboards</code> دست‌نخورده ماند و حالا فهرستِ مجازها و حذفِ شمارهٔ تماس را با صفحه‌ها شریک است (<code>toPublicBillboard()</code> — یک جا، تا هیچ مسیری فراموشش نکند)</div></div>
       </div>
       <div class="proof" style="border-color:var(--brand)">
-        <b>سنجهٔ پذیرش — هر سه باید برقرار شوند:</b><br>
-        ۱. <code>curl -s -H "user-agent: Mozilla/5.0 Chrome/141" localhost:3000/explore | grep -c تومان</code> ← امروز <b>۰</b>، بعد از V1 باید <b>۲۴</b> (یا هر چند کارتی که در صفحه هست) باشد.<br>
-        ۲. CPU سرور به‌ازای یک بازدید از <code>/explore</code> با همان اسکریپتِ بالا دوباره سنجیده شود ← امروز <b>۱۳٫۹ ms</b>؛ هدف: <b>کمتر از ۱۰ ms</b> بدونِ کش، و <b>زیر ۵ ms</b> با کش.<br>
-        ۳. Lighthouse در Chrome DevTools روی <code>/explore</code> ← عددِ Performance و SEO پیش و پس ثبت شود.<br>
-        <b>اگر عددِ CPU بالا رفت، فرض غلط بوده و باید همین‌جا متوقف شویم و دوباره فکر کنیم.</b>
+        <b>سنجهٔ پذیرش — نتیجهٔ اندازه‌گیری، ۱۶ شهریور ۱۴۰۵</b><br>
+        روش: دو بیلدِ تولیدی هم‌زمان روی یک لپ‌تاپ (<code>NEXT_DIST_DIR</code> جدا، پورت‌های ۳۰۰۱ و ۳۰۰۲)،
+        ۵ دورِ متناوب × ۲۰۰ بازدید، تا نوسانِ حرارتی به هر دو یکسان بخورد. اسکریپتش همان اسکریپتِ کارتِ بالاست.
+        <br><br>
+        <table class="tbl" style="margin-top:4px">
+          <thead><tr><th>سنجه</th><th>پیش از V1</th><th>پس از V1</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>نشانهٔ قیمتِ رندرشده در HTMLِ <code>/explore</code></td><td><b style="color:#C33A3A">۰</b></td><td><b style="color:var(--green)">۲۴</b></td><td>✓</td></tr>
+            <tr><td>حجم HTMLِ <code>/explore</code></td><td>۳۳ KB</td><td>۱۷۶ KB</td><td>✓</td></tr>
+            <tr><td>آمار و گالریِ واقعی در HTMLِ صفحهٔ نخست</td><td><b style="color:#C33A3A">نه</b> (عدد ثابتِ «۳۵۰۰+»)</td><td><b style="color:var(--green)">بله</b> (۳٬۵۳۲ و ۱۲ کارت)</td><td>✓</td></tr>
+            <tr style="background:#0E8F5D0a"><td><b>CPU صفحهٔ نخست به‌ازای یک بازدید</b></td><td><b>۱۶٫۵ ms</b></td><td><b style="color:var(--green)">۱٫۹ ms</b></td><td>✓ −۸۸٪</td></tr>
+            <tr style="background:#f59e0b0a"><td><b>CPU <code>/explore</code> به‌ازای یک بازدید</b></td><td><b>۱۲٫۹۶ ms</b></td><td><b>۱۲٫۶۹ ms</b></td><td>≈ بی‌تغییر</td></tr>
+            <tr><td>جاوااسکریپتِ <code>/explore</code></td><td>۶۹۰ KB / ۱۲ تکه</td><td>۶۸۲ KB / ۱۲ تکه</td><td>≈ بی‌تغییر</td></tr>
+          </tbody>
+        </table>
+        <br>
+        <b style="color:var(--amber)">صفحهٔ نخست هدف را رد کرد؛ <code>/explore</code> نه — و دلیلش مهم است.</b>
+        هدفِ این کارت «زیر ۱۰ ms» بود و <code>/explore</code> روی ۱۲٫۷ ماند. برای فهمیدنِ علت، سه بیلد کنار هم سنجیده شد:
+        <table class="tbl" style="margin-top:8px">
+          <tbody>
+            <tr><td>مسیرِ قدیمی (شِلِ خالی + فراخوانیِ API)</td><td><b>۱۲٫۹۶ ms</b></td></tr>
+            <tr><td>V1 <b>بدونِ</b> کش (همان کوئری، هر بازدید)</td><td><b style="color:#C33A3A">۲۰٫۳۵ ms</b></td></tr>
+            <tr><td>V1 با کش</td><td><b>۱۲٫۲۷ ms</b></td></tr>
+            <tr><td>کوئریِ کاتالوگ به‌تنهایی (<code>findMany 24 + count</code>، ۲۰۰ بار)</td><td>۸٫۱۵ ms</td></tr>
+          </tbody>
+        </table>
+        <br>
+        یعنی رندرکردنِ ۲۴ کارت روی سرور حدود <b>۷ ms</b> خرج دارد که شِلِ خالیِ قدیمی هرگز نمی‌پرداخت،
+        و کش دقیقاً همان ۸٫۱ میلی‌ثانیهٔ کوئری را پس می‌دهد. جمعش می‌شود سر‌به‌سر.
+        <b>پس فرضِ اولیهٔ این کارت — «SSR ارزان‌تر تمام می‌شود» — برای <code>/explore</code> غلط بود؛
+        درست‌ش این است: SSR گران‌تر است، و کشِ کوئری هزینه‌اش را تماماً می‌پوشاند.</b>
+        بدون بندِ چهارمِ این کارت، V1 یک پس‌رفتِ ۵۷ درصدی می‌شد.
+        <br><br>
+        چرا صفحهٔ نخست این‌قدر بهتر شد: چون <code>searchParams</code> ندارد، Next آن را
+        <b>ایستا</b> می‌سازد و هر ۵ دقیقه تازه می‌کند (<code>○ / 5m</code> در خروجیِ build) — بازدیدکننده
+        فایلِ آماده می‌گیرد و نه دیتابیس درگیر می‌شود نه رندر.
+        <br><br>
+        <b>دو تصحیح در خودِ متنِ سنجه:</b>
+        (۱) <code>grep -c تومان</code> هرگز ۲۴ نمی‌شد، چون کارتِ کاتالوگ «<code>ت/ماه</code>» می‌نویسد نه «تومان»؛
+        سنجهٔ درست شمارشِ همان برچسبِ قیمت است، که ۲۴ شد. copyِ کارت برای راضی‌کردنِ یک grep عوض نشد.
+        (۲) <code>grep -c</code> تعدادِ <em>خط</em> را می‌شمارد و HTMLِ Next یک خط است؛
+        <code>grep -o … | wc -l</code> درست است.
+        <br><br>
+        <b>Lighthouse:</b> هنوز اجرا نشده — نیاز به یک مرورگرِ دستی دارد.
+        <code>F12</code> ← زبانهٔ Lighthouse ← Analyze، پیش و پس، و عدد Performance و SEO همین‌جا ثبت شود.
+        <br><br>
+        <b>گامِ بعدی اگر ۱۲٫۷ کافی نبود:</b> آنچه مانده رندرِ ری‌اکت است، نه دیتابیس — و تنها راهِ حذفش
+        کش‌کردنِ <em>خروجیِ رندر</em> است، یعنی <code>cacheComponents</code> و <code>use cache</code>.
+        آن یک مهاجرتِ جداست (<code>revalidate</code>ِ فعلی را حذف می‌کند) و باید کارتِ خودش را داشته باشد.
       </div>
     </div>
   </div>
 
-  <div class="phase-card">
+  <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V2</div>
       <div class="ph-title"><h3>تصویرها با <code>next/image</code></h3><p>سایتی که محصولش عکسِ سازه است، هیچ بهینه‌سازی تصویری ندارد</p></div>
-      <div class="ph-badge todo">اولویت دو</div>
+      <div class="ph-badge">→ در جریان</div>
     </div>
     <div class="ph-body">
       <div class="note warn" style="margin-bottom:14px">

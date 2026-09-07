@@ -1,6 +1,32 @@
 import type { Billboard as Row, Prisma } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 import { prisma } from "./client";
 import type { Billboard, TrafficData } from "../types";
+
+/**
+ * One invalidation tag for everything derived from the billboards table. The
+ * cached readers in ./cached.ts store under it; the mutations below drop it, so
+ * an approved listing shows up on /explore on the next refresh instead of when
+ * the cache happens to expire. Declared here rather than in ./cached.ts to keep
+ * the dependency one-way: the cache knows the data layer, not the reverse.
+ */
+export const CATALOGUE_TAG = "billboards";
+
+/**
+ * Every caller is a route handler — the request context revalidateTag() needs.
+ * Exported for the handful of routes that write to the table through Prisma
+ * directly (an image swap, a listing decision, a review's rating rollup)
+ * instead of through the mutations below.
+ */
+export function revalidateCatalogue(): void {
+  // `{ expire: 0 }` rather than the recommended "max" profile: "max" marks the
+  // entry stale and serves it once more while it refreshes behind the visitor,
+  // so an admin who has just approved a listing would still not see it on the
+  // next refresh. Expiring outright makes that next read a blocking miss, which
+  // is the point of calling this from a write. (The one-argument form does the
+  // same thing but is deprecated in Next.js 16.)
+  revalidateTag(CATALOGUE_TAG, { expire: 0 });
+}
 
 function fromRow(row: Row): Billboard {
   return {
@@ -42,6 +68,21 @@ function fromRow(row: Row): Billboard {
     structureCode: row.structureCode ?? undefined,
     scrapedAt: row.scrapedAt ?? undefined,
   };
+}
+
+/**
+ * Strip the fields no browser may receive.
+ *
+ * The owner/agency phone is the product: it is handed out one record at a time
+ * by POST /api/billboards/[slug]/contact, to a signed-in caller, and logged as
+ * a lead. Anything that ships a catalogue to a client — the JSON API, and since
+ * V1 the server-rendered pages, whose props travel to the browser inside the
+ * RSC payload — passes through here first, so there is one place to check.
+ */
+export function toPublicBillboard(b: Billboard): Billboard {
+  const pub = { ...b };
+  delete pub.phone;
+  return pub;
 }
 
 export async function getAllBillboards(): Promise<Billboard[]> {
@@ -124,6 +165,23 @@ export async function getFilteredBillboards(
   ]);
 
   return { items: rows.map(fromRow), total };
+}
+
+/**
+ * The photographed, busiest media items behind the landing gallery and the
+ * catalogue's hero carousel.
+ *
+ * `hasImages` is filtered in the query rather than by fetching a wider page and
+ * dropping the imageless rows in JS: the carousels show photos and nothing
+ * else, so a record without one is not a near-miss, it is not a candidate.
+ */
+export async function getShowcaseBillboards(limit: number): Promise<Billboard[]> {
+  const rows = await prisma.billboard.findMany({
+    where:   { status: publishedOnly, hasImages: true },
+    orderBy: [{ featured: "desc" }, { estimatedViews: "desc" }],
+    take:    limit,
+  });
+  return rows.map(fromRow);
 }
 
 // Admin table listing — filter, sort and paginate in the DB (not by loading
@@ -332,6 +390,7 @@ export async function createBillboard(data: BillboardCreateInput): Promise<Billb
       source: "manual",
     },
   });
+  revalidateCatalogue();
   return fromRow(row);
 }
 
@@ -485,6 +544,7 @@ export async function resubmitListing(
   });
   if (count === 0) return null;
 
+  revalidateCatalogue();
   const row = await prisma.billboard.findUnique({ where: { id } });
   return row ? fromRow(row) : null;
 }
@@ -524,6 +584,7 @@ export async function updateBillboard(id: number, data: BillboardUpdateInput): P
       where: { id },
       data: area === undefined ? data : { ...data, area },
     });
+    revalidateCatalogue();
     return fromRow(row);
   } catch {
     return null;
@@ -533,6 +594,7 @@ export async function updateBillboard(id: number, data: BillboardUpdateInput): P
 export async function deleteBillboard(id: number): Promise<boolean> {
   try {
     await prisma.billboard.delete({ where: { id } });
+    revalidateCatalogue();
     return true;
   } catch {
     return false;
