@@ -53,14 +53,13 @@ function fmtViews(n: number): string {
 
 interface BillboardCardProps {
   billboard: CatalogueItem;
-  isSelected: boolean;
   isCompared: boolean;
   onCompare: () => void;
   listMode?: boolean;
 }
 
 export default function BillboardCard({
-  billboard: b, isSelected, isCompared, onCompare, listMode = false,
+  billboard: b, isCompared, onCompare, listMode = false,
 }: BillboardCardProps) {
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -82,12 +81,12 @@ export default function BillboardCard({
           margin: "6px 0",
           borderRadius: 10,
           background: "var(--bg-surface)",
-          border: `1px solid ${isSelected ? "var(--accent)" : isCompared ? "var(--accent-warm)" : hovered ? "var(--border-hi)" : "var(--border)"}`,
+          border: `1px solid ${isCompared ? "var(--accent-warm)" : hovered ? "var(--border-hi)" : "var(--border)"}`,
           cursor: "default",
           transition: "border-color 0.18s ease, box-shadow 0.18s ease",
           overflow: "hidden",
           display: "flex",
-          boxShadow: isSelected ? "0 0 0 2px var(--accent)" : hovered ? "0 6px 20px rgba(0,0,0,0.28)" : "none",
+          boxShadow: hovered ? "0 6px 20px rgba(0,0,0,0.28)" : "none",
         }}>
         {/* Square thumb */}
         <div style={{ width: 88, height: 88, flexShrink: 0, position: "relative", background: "var(--bg-card)", overflow: "hidden" }}>
@@ -143,15 +142,11 @@ export default function BillboardCard({
         position: "relative",
         borderRadius: 12,
         background: "var(--bg-surface)",
-        border: `1px solid ${isSelected ? "var(--accent)" : isCompared ? "var(--accent-warm)" : hovered ? "var(--border-hi)" : "var(--border)"}`,
+        border: `1px solid ${isCompared ? "var(--accent-warm)" : hovered ? "var(--border-hi)" : "var(--border)"}`,
         cursor: "default",
         transition: "border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease",
-        transform: hovered && !isSelected ? "translateY(-4px)" : "translateY(0)",
-        boxShadow: isSelected
-          ? "0 0 0 2px var(--accent), 0 4px 24px var(--accent-glow)"
-          : hovered
-            ? "0 12px 32px rgba(0,0,0,0.38), 0 4px 18px var(--accent-glow)"
-            : "none",
+        transform: hovered ? "translateY(-4px)" : "translateY(0)",
+        boxShadow: hovered ? "0 12px 32px rgba(0,0,0,0.38), 0 4px 18px var(--accent-glow)" : "none",
         overflow: "hidden",
       }}>
       {/* Square image area */}

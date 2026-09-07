@@ -21,14 +21,14 @@ export const ALLOWED_STATUS = ["available", "busy", "reserved", "inactive"] as c
 export const ALLOWED_SORT   = ["price_asc", "price_desc", "traffic_desc", "area_desc"] as const;
 
 export type SortKey = (typeof ALLOWED_SORT)[number];
-export type StatusKey = (typeof ALLOWED_STATUS)[number];
+type StatusKey = (typeof ALLOWED_STATUS)[number];
 
 /** Price slider ceiling, in millions of toman. At the ceiling there is no cap. */
 export const MAX_PRICE = 500;
 export const MIN_PRICE = 10;
 export const PAGE_SIZE = 24;
 /** Matches the ceiling GET /api/billboards enforces — an anti-scraping limit. */
-export const MAX_PAGE = 200;
+const MAX_PAGE = 200;
 
 export interface ExploreFilters {
   search:   string;
@@ -42,7 +42,7 @@ export interface ExploreFilters {
   page:     number;
 }
 
-export const DEFAULT_FILTERS: ExploreFilters = {
+const DEFAULT_FILTERS: ExploreFilters = {
   search: "", type: "all", status: "", maxPrice: MAX_PRICE,
   sortBy: "price_asc", province: "", city: "", view: "grid", page: 1,
 };

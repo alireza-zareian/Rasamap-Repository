@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck } from "lucide-react";
-import { getBillboardBySlug, UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
+import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
 import { getCachedBillboardBySlug, getCachedRelatedBillboards } from "@/lib/db/cached";
 import { getSession } from "@/lib/auth/session";
 import BillboardGallery from "@/components/BillboardGallery";
@@ -27,8 +27,13 @@ const RELATED_COUNT = 12;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const b = await getBillboardBySlug(slug);
-  if (!b) return { title: "رسانه یافت نشد | رسامپ" };
+  // The same cached read the page itself makes, so the two share one entry
+  // instead of querying for the same record twice per visit. Always the public
+  // view: a title and a social preview are for crawlers and shared links, and a
+  // listing still under review has neither.
+  const found = await getCachedBillboardBySlug(slug, false);
+  if (!found) return { title: "رسانه یافت نشد | رسامپ" };
+  const b = found.billboard;
   return {
     title: `${b.name} | رسامپ`,
     description: `${TYPE_LABEL[b.type] ?? b.type} در ${b.city} — ${b.width}×${b.height} متر — ${faNum(b.price)} میلیون تومان/ماه`,

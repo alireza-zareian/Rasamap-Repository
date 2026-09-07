@@ -59,7 +59,6 @@ export default function ExploreResults({ items, view }: { items: CatalogueItem[]
           <BillboardCard
             key={b.id}
             billboard={b}
-            isSelected={false}
             isCompared={compareList.some(x => x.id === b.id)}
             onCompare={() => handleCompare(b)}
             listMode={view === "list"}

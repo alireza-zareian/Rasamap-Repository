@@ -765,14 +765,19 @@ flowchart TB
   </figure>
 
   <h3>دو مسیر، یک لایهٔ داده</h3>
-  <p><b>مسیر یکم — سرور خودش از پایگاه داده می‌خواند.</b> صفحهٔ جزئیاتِ هر رسانه یک
-  <span dir="ltr">Server Component</span> است: کدی که فقط روی سرور اجرا می‌شود و کدش هرگز به
-  مرورگر نمی‌رود. سرور هنگام ساختنِ صفحه، خودش تابعِ لایهٔ داده را صدا می‌زند و
-  <span dir="ltr">HTML</span>ِ آماده را برمی‌گرداند؛ فقط یک پرش، از سرور به پایگاه داده.</p>
-  <p><b>مسیر دوم — مرورگر از یک آدرسِ <code>/api/</code> می‌خواند.</b> پس از آنکه صفحه باز
-  شد، هر کارِ تعاملیِ کاربر (پالایشِ فهرست، رفتن به صفحهٔ بعد، ثبت آگهی، هر عملیاتِ پنل
-  مدیریت) با <code>fetch</code> به یکی از مسیرهای <code>/api/</code> می‌رود و پاسخِ
-  <span dir="ltr">JSON</span> می‌گیرد.</p>
+  <p><b>مسیر یکم — سرور خودش از پایگاه داده می‌خواند.</b> سه صفحهٔ عمومیِ سامانه — صفحهٔ
+  نخست، کاتالوگِ جست‌وجو و صفحهٔ جزئیاتِ هر رسانه — <span dir="ltr">Server Component</span>
+  هستند: کدی که فقط روی سرور اجرا می‌شود و کدش هرگز به مرورگر نمی‌رود. سرور هنگام ساختنِ
+  صفحه، خودش تابعِ لایهٔ داده را صدا می‌زند و <span dir="ltr">HTML</span>ِ آماده را
+  برمی‌گرداند؛ فقط یک پرش، از سرور به پایگاه داده. در کاتالوگ، پالایه‌ها از خودِ نشانیِ صفحه
+  خوانده می‌شوند، پس هر نمای پالایه‌شده یک نشانیِ واقعی دارد که هم قابل اشتراک‌گذاری است و
+  هم برای موتور جست‌وجو خواندنی.</p>
+  <p><b>مسیر دوم — مرورگر از یک آدرسِ <code>/api/</code> می‌خواند.</b> هر کارِ تعاملی که
+  <em>حالتِ</em> کاربر را عوض می‌کند یا به نشستِ او وابسته است (ثبت‌نام و ورود، ثبت آگهی،
+  ثبت دیدگاه، گرفتنِ شمارهٔ تماسِ صاحب رسانه، و تمامِ عملیاتِ پنل مدیریت) با
+  <code>fetch</code> به یکی از مسیرهای <code>/api/</code> می‌رود و پاسخِ
+  <span dir="ltr">JSON</span> می‌گیرد. همین مسیر، واسطِ عمومیِ سامانه برای مصرف‌کنندهٔ
+  بیرونی هم هست.</p>
   <p>نکتهٔ کلیدی این است که هر دو مسیر <b>یک لایهٔ داده</b> را صدا می‌زنند. پس منطقِ پرس‌وجو
   یک بار نوشته شده، در دو جا تکرار نشده، و هیچ‌گاه پیش نمی‌آید که صفحه یک چیز نشان دهد و
   آدرسِ <code>/api/</code> چیزِ دیگری.</p>
@@ -988,9 +993,9 @@ erDiagram
     <div class="tree"><ul>
       <li><span class="d">app/</span><span class="n">صفحه‌ها و مسیرهای برنامه‌نویسی — چارچوب از روی <b>نام پوشه</b> نشانی می‌سازد</span>
         <ul>
-          <li><span class="f">page.tsx</span><span class="n">صفحهٔ نخست ‹/›</span></li>
-          <li><span class="d">explore/</span><span class="f">page.tsx</span><span class="n">جست‌وجو ‹/explore›</span></li>
-          <li><span class="d">billboard/[slug]/</span><span class="f">page.tsx</span><span class="n">جزئیات — <b>تنها <span dir="ltr">Server Component</span></b></span></li>
+          <li><span class="f">page.tsx</span><span class="n">صفحهٔ نخست ‹/› — <span dir="ltr">Server Component</span></span></li>
+          <li><span class="d">explore/</span><span class="f">page.tsx</span><span class="n">جست‌وجو ‹/explore› — <span dir="ltr">Server Component</span></span></li>
+          <li><span class="d">billboard/[slug]/</span><span class="f">page.tsx</span><span class="n">جزئیات — <span dir="ltr">Server Component</span></span></li>
           <li><span class="d">admin/</span><span class="f">page.tsx</span><span class="n">پنل مدیریت</span></li>
           <li><span class="d">api/</span><span class="n"><b>۳۴ فایل</b> <span class="f">route.ts</span> — هر کدام یک نقطهٔ ورود HTTP</span>
             <ul>
@@ -1028,20 +1033,20 @@ flowchart TB
     U["کاربر شهری را انتخاب می‌کند"]
     PX["proxy.ts"]
     PG["app/explore/page.tsx"]
-    RT["app/api/billboards/route.ts"]
+    RT["app/api/billboards/route.ts<br>(واسط عمومی — مصرف‌کنندهٔ بیرونی)"]
     DAL["lib/db/billboards.ts"]
     CL["lib/db/client.ts"]
     DB[("پایگاه داده")]
     LG["lib/api-log.ts"]
     U --> PX
     PX -->|"اجازهٔ عبور"| PG
-    PG -->|"fetch"| RT
-    RT -->|"سقف نرخ ← اعتبارسنجی"| DAL
+    PG -->|"پالایه‌ها از نشانی"| DAL
     DAL --> CL --> DB
+    RT -->|"سقف نرخ ← اعتبارسنجی"| DAL
     RT -.->|"یک سطر گزارش برای هر درخواست"| LG
     DB -->|"ردیف‌ها"| DAL
-    DAL -->|"JSON"| PG
-    PG -->|"شبکهٔ نتایج"| U
+    DAL -->|"ردیف‌ها"| PG
+    PG -->|"HTMLِ آماده"| U
     classDef srv fill:#EDF3FF,stroke:#2F6BE0,color:#151A23
     classDef sto fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
     classDef usr fill:#FFF8E8,stroke:#B57209,color:#151A23
@@ -1052,9 +1057,10 @@ flowchart TB
     class LG aux
     </div></div>
     <figcaption><span class="lbl"></span> سفر یک درخواست، از کلیکِ کاربر تا پایگاه داده و
-    برگشت. صفحهٔ جزئیاتِ رسانه تنها استثناست: چون <span dir="ltr">Server Component</span>
-    است، خودِ سرور مستقیم <code>lib/db/billboards.ts</code> را صدا می‌زند و از جعبه‌های
-    <code>page.tsx</code> و <code>route.ts</code> در وسط عبور نمی‌کند.</figcaption>
+    برگشت. صفحه خودش لایهٔ داده را صدا می‌زند و <span dir="ltr">HTML</span>ِ آماده را
+    برمی‌گرداند؛ <code>route.ts</code> روی این مسیر نیست و همان لایهٔ داده را برای
+    مصرف‌کنندهٔ بیرونی سرو می‌کند. انتخابِ شهر نشانیِ صفحه را عوض می‌کند، نه یک
+    <code>fetch</code> را.</figcaption>
   </figure>
 
   <h2>گراف وابستگی پروژه</h2>
