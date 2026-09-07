@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2, CheckCircle2, Plus, Menu, X as XIcon, Sparkles } from "lucide-react";
 import Topbar from "@/components/Topbar";
@@ -219,10 +220,9 @@ export default function Dashboard() {
                       <div key={l.id} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
                         <div style={{ display: "flex", alignItems: "center" }}>
                           {/* Thumbnail */}
-                          <div style={{ width: 64, height: 64, flexShrink: 0, background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", borderLeft: "1px solid var(--border)" }}>
+                          <div style={{ width: 64, height: 64, flexShrink: 0, position: "relative", background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", borderLeft: "1px solid var(--border)" }}>
                             {l.image ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={l.image} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              <Image src={l.image} alt="" fill sizes="64px" loading="lazy" decoding="async" style={{ objectFit: "cover" }} />
                             ) : (
                               (() => { const Icon = TYPE_ICON[l.type] ?? Megaphone; return <Icon size={20} />; })()
                             )}

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { CatalogueItem, typeLabels, statusLabels } from "@/lib/types";
 import { Scale, Megaphone, Monitor, Milestone, Train, Bus, Star, Sparkles } from "lucide-react";
@@ -91,10 +92,11 @@ export default function BillboardCard({
         {/* Square thumb */}
         <div style={{ width: 88, height: 88, flexShrink: 0, position: "relative", background: "var(--bg-card)", overflow: "hidden" }}>
           {showImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={b.images[0]} alt={b.name} onError={() => setImgError(true)}
-              loading="lazy" decoding="async"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            // 88 CSS pixels, so `sizes` lets the loader hand over the 256-wide
+            // variant instead of the 500-wide source — enough even at 2x.
+            <Image src={b.images[0]} alt={b.name} onError={() => setImgError(true)}
+              fill sizes="88px" loading="lazy" decoding="async"
+              style={{ objectFit: "cover" }} />
           ) : (
             <NoImagePlaceholder type={b.type} />
           )}
@@ -157,10 +159,12 @@ export default function BillboardCard({
         overflow: "hidden",
       }}>
         {showImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={b.images[0]} alt={b.name}
+          // A grid card is 320–400 CSS px wide, so at 1x the 384 variant fits
+          // and at 2x the 500-wide source is the largest that exists.
+          <Image src={b.images[0]} alt={b.name}
+            fill sizes="(max-width: 700px) 100vw, 384px"
             loading="lazy" decoding="async"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            style={{ objectFit: "cover" }}
             onError={() => setImgError(true)} />
         ) : (
           <NoImagePlaceholder type={b.type} />

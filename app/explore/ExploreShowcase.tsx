@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { MapPin, Building2 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import type { CatalogueItem } from "@/lib/types";
@@ -39,12 +40,16 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
         <>
           {/* key triggers fadeIn on each slide change */}
           <div key={idx} style={{ position: "absolute", inset: 0, animation: "fadeIn 0.6s ease" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={current.images[0]}
               alt={current.name}
+              fill
+              sizes="(max-width: 900px) 100vw, 360px"
               decoding="async"
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              /* eager for the same reason the strip below the fold is: only the
+                 current slide is in the DOM and it is already on screen. */
+              loading="eager"
+              style={{ objectFit: "cover" }}
             />
             {/* Dark gradient for text legibility — always dark since image fills entirely */}
             <div style={{

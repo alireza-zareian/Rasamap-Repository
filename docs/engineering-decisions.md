@@ -911,6 +911,75 @@ production difference until the day it matters.
 
 ---
 
+### 22c. `next/image` without an image server
+
+**The gap.** `next/image` was used nowhere: seventeen raw `<img>` tags. That
+means no `srcset` — a phone downloads whatever a desktop downloads — and no
+stated dimensions, so every image shifted the layout as it arrived. Layout
+shift is one of the three metrics Google actually ranks on.
+
+**The catch, and why the obvious fix was the wrong one.** `next/image` resizes
+on demand through `/_next/image`. That is real CPU on the machine serving the
+page — the one thing §22 exists to avoid, on a fanless laptop that a reviewer
+will be browsing from a phone. Adopting the component the usual way would have
+traded a client-side problem for a server-side one.
+
+So: a custom loader (`image-loader.js`) and pre-built files
+(`scripts/build-image-variants.py`, `npm run images:variants`). The loader does
+no work — it maps a requested width to a file that already exists on disk. The
+`/_next/image` endpoint is never reached; a check for it in the served HTML
+returns zero.
+
+**Half the premise was wrong, and measuring said so first.** The plan assumed
+phones were being handed oversized desktop images. Every one of the 4,165
+scraped images is **exactly 500×500**. There is nothing to downscale for a
+high-density phone, which wants 500 or more for a full-width card and gets
+exactly that. The saving is real only where the display box is genuinely
+smaller than the source — an 88-pixel list thumbnail, a 230-pixel related card,
+and any 1× display. Two variants, 256 and 384, cover all of those.
+
+**The weight was somewhere else entirely.** The landing page shipped 1,918 KB of
+images, and **1,585 KB of it was five PNG files**. The 231 PNGs left alone by
+§22a — correctly, since all 231 carry real transparency — average 298 KB each
+against 50 KB for the JPEGs: 26% of the image bytes in 5.5% of the files. WebP
+keeps the alpha channel at about 26 KB a picture. So a PNG gets a third variant
+at its own 500 pixels: not a resize, a re-container. It is the only rung that
+helps a 2× phone, because a 2× phone was already asking for 500.
+
+**Measured, per device, by resolving each `srcset` the way a browser does
+(`npm run images:check`):**
+
+| page | before | phone 390px @2× | laptop 1440px @1× |
+|---|---|---|---|
+| landing | 1918 KB | **475 KB** | **292 KB** |
+| catalogue, grid | 1155 KB | 1155 KB | **671 KB** |
+| catalogue, list | 1155 KB | **384 KB** | **365 KB** |
+| media detail | 640 KB | 640 KB | **209 KB** |
+
+Layout shift is gone everywhere: every image either states its own box or fills
+a parent that already reserves one.
+
+**What it costs.** Two production builds, alternating, 250 measured visits each:
+`/explore` went from **10.30 to 10.70 ms** of server CPU. The extra 0.4 ms is
+the `srcset` attributes in the HTML — 4 KB more markup, which is §26's rule
+showing up again on the other side of the ledger. Four tenths of a millisecond
+for between 42% and 75% fewer image bytes is not a close call.
+
+**The operational catch, written down because it will bite someone.** The
+variants live under `public/images/scraped/`, which is git-ignored along with
+the images themselves. A fresh clone has none of them and the loader will point
+at files that are not there. `npm run images:variants` builds what is missing
+(95 seconds from cold, seconds thereafter) and `npm run images:check` proves
+every image every page asks for actually resolves. Both are in the pre-deploy
+checklist in `RUNBOOK.md`.
+
+**One accepted limit.** A PNG-sourced image is served only as WebP. Every
+browser since Safari 14 (2020) reads it; anything older sees a broken image on
+5.5% of the catalogue. Given the demo runs on current mobile Chrome, that is a
+trade worth taking rather than shipping both formats.
+
+---
+
 ## 23. A CRM, evaluated — and why the answer was 40 lines of schema, not a second application
 
 The question that started this was concrete: *Atomic CRM* (Marmelab, MIT) is a
@@ -1174,3 +1243,4 @@ only thing measured so far that actually works.
 | 2026-09-07 | **Shared cache (dormant)** | §25 — `cache-handler.js`: Redis-backed cache with a per-process memory tier and pub/sub tag invalidation, verified across two processes. Inert until `REDIS_URL`. |
 | 2026-09-07 | **Payload narrowing** | `CatalogueItem` — cards receive the twenty fields they draw instead of the whole record. `/explore` RSC payload 52.4 → 39.4 KB; coordinates no longer shipped for the whole result set (§20). |
 | 2026-09-07 | **Cache Components, evaluated** | §26 — built, measured at 10.24 → 10.32 ms on `/explore`, reverted. The media page's record and related-media reads were kept and are now cached. |
+| 2026-09-07 | **V2 — images** | §22c — `next/image` on a custom loader over pre-built variants, no `/_next/image`. Landing on a phone 1918 → 475 KB; catalogue list 1155 → 384 KB; layout shift eliminated. Cost: +0.4 ms CPU on `/explore`. `npm run images:variants` / `images:check`. |

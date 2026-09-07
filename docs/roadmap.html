@@ -2629,11 +2629,11 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     </div>
   </div>
 
-  <div class="phase-card is-next open">
+  <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V2</div>
-      <div class="ph-title"><h3>تصویرها با <code>next/image</code></h3><p>سایتی که محصولش عکسِ سازه است، هیچ بهینه‌سازی تصویری ندارد</p></div>
-      <div class="ph-badge">→ در جریان</div>
+      <div class="ph-title"><h3>تصویرها با <code>next/image</code></h3><p>انجام شد — بدون هیچ پردازشِ تصویری روی سرور. و باز هم نیمی از فرضِ کارت غلط بود</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <div class="note warn" style="margin-bottom:14px">
@@ -2662,26 +2662,76 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
         <code>srcset</code> و ابعاد را بدهد — ۹۰٪ سودِ کار بدون هیچ پردازشِ درخواستی.
       </div>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><code>images.remotePatterns</code> در <code>next.config.ts</code> برای <code>billboardiha.com</code> و دامنهٔ خودمان</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>۱۵ تگ <code>&lt;img&gt;</code> با <code>&lt;Image&gt;</code> جایگزین شود، با <code>sizes</code> درست برای هر جایگاه (کارت، گالری، بندانگشتی)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>عکسِ اصلیِ صفحهٔ جزئیات <code>priority</code> بگیرد؛ بقیه تنبل بمانند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>قاعدهٔ §۲۴ حفظ شود: هیچ تصویری در نوارِ چرخان یا marquee نباید تنبل بارگذاری شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>remotePatterns</code> لازم نشد — همهٔ تصویرها محلی‌اند. به‌جایش <code>loader: "custom"</code> و <code>loaderFile</code> تنظیم شد، به‌علاوهٔ <code>imageSizes</code>/<code>deviceSizes</code> که فقط عرض‌هایی را نام می‌برند که واقعاً روی دیسک وجود دارند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>۱۷ تگ بود، نه ۱۵. یازده‌تای عمومی به <code>&lt;Image&gt;</code> رفتند با <code>sizes</code>ِ اندازه‌گیری‌شده برای هر جایگاه؛ شش‌تای باقی‌مانده پیش‌نمایشِ <code>blob:</code>ِ فرم‌های بارگذاری‌اند و عمداً <code>&lt;img&gt;</code> ماندند — <code>next/image</code> برایشان کاری نمی‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>عکسِ اصلیِ گالری <code>priority</code> گرفت؛ شبکه و بندانگشتی‌ها تنبل ماندند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>قاعدهٔ §۲۴ حفظ شد: اسلایدشوی کاتالوگ، گالریِ صفحهٔ نخست و نوارِ «رسانه‌های مرتبط» همه <code>loading="eager"</code> دارند</div></div>
+      </div>
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">دوباره: اندازه‌گیری، نیمی از فرضِ این کارت را رد کرد</span>
+        این کارت فرض کرده بود «گوشی همان عکسِ بزرگِ دسکتاپ را دانلود می‌کند».
+        هر ۴۱۶۵ تصویرِ خزیده‌شده دقیقاً <b>۵۰۰×۵۰۰</b> است. برای گوشیِ ۲x که برای یک کارتِ
+        تمام‌عرض دستِ‌کم ۵۰۰ می‌خواهد، <b>هیچ چیزی برای کوچک‌کردن وجود ندارد</b>.
+        صرفه فقط جایی هست که قابِ نمایش واقعاً از منبع کوچک‌تر است: بندانگشتیِ ۸۸ پیکسلی،
+        کارتِ ۲۳۰ پیکسلی، و هر نمایشگرِ ۱x.
+        <br><br>
+        <b>و وزنِ واقعی جای دیگری بود:</b> صفحهٔ نخست ۱۹۱۸ کیلوبایت تصویر می‌فرستاد که
+        <b>۱۵۸۵ تای آن فقط پنج فایلِ PNG بود</b>. همان ۲۳۱ فایلی که §۲۲a — به‌درستی، چون
+        شفافیتِ واقعی دارند — دست‌نخورده گذاشته بود: ۲۶٪ حجمِ تصویرها در ۵٫۵٪ فایل‌ها.
+        WebP شفافیت را نگه می‌دارد و همان عکس را <b>۹۱٪ کوچک‌تر</b> می‌کند.
+      </div>
+      <div class="note" style="margin-bottom:14px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">و نگرانیِ «سرور داغ نشود» جدی گرفته شد</span>
+        <code>next/image</code> به‌طور پیش‌فرض تصویرها را در زمانِ درخواست از راهِ
+        <code>/_next/image</code> تغییر اندازه می‌دهد — دقیقاً همان کارِ پردازنده‌ای که §۲۲
+        دربارهٔ آن است. پس هیچ‌وقت به آن نقطه نمی‌رسیم: یک
+        <b>loaderِ سفارشی</b> (<code>image-loader.js</code>) فقط نشانیِ فایلی را برمی‌گرداند که
+        <code>npm run images:variants</code> از قبل ساخته. شمارشِ <code>_next/image</code> در
+        HTMLِ سِروشده: <b>صفر</b>.
       </div>
       <div class="proof" style="border-color:var(--brand)">
-        <b>سنجهٔ پذیرش:</b><br>
-        ۱. CLS در Lighthouse نزدیکِ صفر (هر <code>&lt;Image&gt;</code> باید <code>width/height</code> یا <code>fill</code> داشته باشد).<br>
-        ۲. حجمِ تصویرهای دانلودیِ <code>/explore</code> روی عرضِ گوشی دستِ‌کم <b>نصف</b> شود — با زبانهٔ Network در DevTools و پروفایلِ موبایل بسنجید.<br>
-        ۳. جاوااسکریپتِ <code>/explore</code> امروز <b>۶۹۰ کیلوبایتِ فشرده‌نشده در ۱۲ تکه</b> است؛ بعد از V1 و V2 دوباره بشمارید — انتظار می‌رود کمتر شود چون منطقِ واکشی از کلاینت بیرون می‌رود.<br>
-        ۴. <b>CPU سرور دوباره سنجیده شود</b> (اسکریپتِ بالای همین بخش) — اگر بارِ ماندگار بالا رفت، سراغِ گزینهٔ پیش‌پردازشِ دسته‌ای بروید.
+        <b>سنجهٔ پذیرش — نتیجه:</b> با <code>npm run images:check</code>، که <code>srcset</code>
+        را همان‌طور که مرورگر حل می‌کند حل می‌کند (شرطِ رسانه، درصدِ viewport، چگالیِ پیکسل).
+        <table class="tbl" style="margin-top:6px">
+          <thead><tr><th>صفحه</th><th>قبل (همه)</th><th>گوشی ۳۹۰px @۲x</th><th>لپ‌تاپ ۱۴۴۰px @۱x</th></tr></thead>
+          <tbody>
+            <tr><td>صفحهٔ نخست</td><td>۱۹۱۸ KB</td><td><b style="color:var(--green)">۴۷۵ KB</b></td><td><b style="color:var(--green)">۲۹۲ KB</b></td></tr>
+            <tr><td>کاتالوگ — شبکه</td><td>۱۱۵۵ KB</td><td>۱۱۵۵ KB</td><td><b style="color:var(--green)">۶۷۱ KB</b></td></tr>
+            <tr><td>کاتالوگ — فهرست</td><td>۱۱۵۵ KB</td><td><b style="color:var(--green)">۳۸۴ KB</b></td><td><b style="color:var(--green)">۳۶۵ KB</b></td></tr>
+            <tr><td>جزئیات رسانه</td><td>۶۴۰ KB</td><td>۶۴۰ KB</td><td><b style="color:var(--green)">۲۰۹ KB</b></td></tr>
+          </tbody>
+        </table>
+        <br>
+        <b>۱. پرشِ چیدمان (CLS):</b> برطرف شد — هر تصویر یا ابعادِ خودش را اعلام می‌کند یا
+        قابی را پر می‌کند که فضایش را از قبل گرفته. سنجه: <b>۱۰۰٪</b> تصویرها در هر چهار صفحه.<br>
+        <b>۲. حجمِ تصویر:</b> هدف «دستِ‌کم نصف روی گوشی» برای فهرست و صفحهٔ نخست محقق شد؛
+        برای شبکه و جزئیات روی گوشیِ ۲x <b>محقق نشد و نمی‌شود</b> — چون منبع ۵۰۰ پیکسل است
+        و گوشی همان را می‌خواهد. روی ۱x همه‌جا بین ۴۲٪ تا ۶۸٪ کم شد.<br>
+        <b>۳. جاوااسکریپت:</b> بی‌تغییر ماند (<code>next/image</code> خودش کدِ کلاینتی دارد و
+        جای کدِ حذف‌شده را می‌گیرد).<br>
+        <b>۴. CPU سرور:</b> دو بیلد، متناوب، ۲۵۰ بازدید هرکدام →
+        <code>/explore</code> از <b>۱۰٫۳۰</b> به <b>۱۰٫۷۰ ms</b>. آن ۰٫۴ میلی‌ثانیه، همان
+        ۴ کیلوبایت <code>srcset</code>ِ اضافه در HTML است — یعنی قاعدهٔ §۲۶ این بار از سمتِ
+        دیگرِ ترازو. چهار دهمِ میلی‌ثانیه در برابر ۴۲ تا ۷۵ درصد کاهشِ حجمِ تصویر، انتخابِ سختی نیست.
+      </div>
+      <div class="note warn" style="margin-bottom:0; margin-top:14px">
+        <span class="t">تلهٔ عملیاتی — این یکی حتماً کسی را می‌گیرد</span>
+        نسخه‌های از پیش‌ساخته زیر <code>public/images/scraped/</code> هستند که همراهِ خودِ
+        عکس‌ها در <code>.gitignore</code> است. <b>یک clone تازه هیچ‌کدامشان را ندارد</b> و
+        loader به فایل‌هایی اشاره می‌کند که وجود ندارند — و <code>next build</code> این را
+        نمی‌گیرد. پس بعد از هر clone یا بازیابی:
+        <code>npm run images:variants</code> (۹۵ ثانیه از صفر) و بعد
+        <code>npm run images:check</code>. هر دو در چک‌لیستِ پیش از استقرارِ
+        <code>RUNBOOK.md</code> هم آمده‌اند.
       </div>
     </div>
   </div>
 
-  <div class="phase-card">
+  <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V3</div>
       <div class="ph-title"><h3>مهاجرت به PostgreSQL</h3><p>خروج از تک‌فایلی‌بودن — پیش‌نیازِ استقرار و چندنمونه‌ای شدن</p></div>
-      <div class="ph-badge todo">اولویت سه</div>
+      <div class="ph-badge">→ در جریان</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { ImageOff, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
@@ -40,8 +41,8 @@ export default function BillboardGallery({ images, name }: Props) {
         style={{ position: "relative", width: "100%", aspectRatio: "16/9", borderRadius: 16, overflow: "hidden", cursor: "zoom-in", background: "var(--bg-surface)" }}
         onClick={() => setLightbox(true)}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={images[active]} alt={name} decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <Image src={images[active]} alt={name} fill sizes="(max-width: 900px) 100vw, 640px"
+          decoding="async" priority style={{ objectFit: "cover" }} />
         {images.length > 1 && (
           <div style={{ position: "absolute", bottom: 12, left: 12, background: "rgba(0,0,0,0.55)", borderRadius: 20, padding: "3px 12px", fontSize: "0.72rem", color: "#fff", backdropFilter: "blur(4px)" }}>
             {active + 1} / {images.length}
@@ -59,8 +60,8 @@ export default function BillboardGallery({ images, name }: Props) {
               onClick={() => setActive(i)}
               style={{ flexShrink: 0, width: 72, height: 52, borderRadius: 9, overflow: "hidden", border: i === active ? "2px solid var(--accent)" : "2px solid var(--border)", padding: 0, cursor: "pointer", background: "var(--bg-surface)" }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <Image src={src} alt="" width={72} height={52} sizes="72px" loading="lazy" decoding="async"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </button>
           ))}
         </div>
@@ -73,8 +74,8 @@ export default function BillboardGallery({ images, name }: Props) {
           onClick={() => setLightbox(false)}
         >
           <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={images[active]} alt={name} style={{ width: "90vw", maxHeight: "88vh", objectFit: "contain", borderRadius: 12, display: "block" }} />
+            <Image src={images[active]} alt={name} width={500} height={500} sizes="90vw"
+              style={{ width: "90vw", height: "auto", maxHeight: "88vh", objectFit: "contain", borderRadius: 12, display: "block" }} />
             {images.length > 1 && (
               <>
                 <button onClick={prev} style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={22} /></button>

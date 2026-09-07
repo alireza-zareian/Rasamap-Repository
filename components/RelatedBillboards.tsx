@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import Image from "next/image";
 import type { CatalogueItem } from "@/lib/types";
 import { typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
@@ -56,10 +57,11 @@ export default function RelatedBillboards({ items }: { items: CatalogueItem[] })
               >
                 <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--bg-surface)" }}>
                   {b.images?.[0] ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
+                    <Image
                       src={b.images[0]}
                       alt={b.name}
+                      fill
+                      sizes="230px"
                       decoding="async"
                       /* Not lazy: this strip scrolls itself with a CSS animation
                          inside overflow:hidden, so a card off to the side never
@@ -67,7 +69,8 @@ export default function RelatedBillboards({ items }: { items: CatalogueItem[] })
                          the same fault that left the landing carousel and the
                          detail map blank on a phone (§24). At most a dozen photos,
                          all of which scroll past within one loop. */
-                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                      loading="eager"
+                      style={{ objectFit: "cover" }}
                     />
                   ) : (
                     <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", opacity: 0.5 }}>

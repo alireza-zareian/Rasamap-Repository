@@ -66,6 +66,24 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
+  images: {
+    // No /_next/image endpoint: every size is a file on disk, written once by
+    // scripts/build-image-variants.py. See image-loader.js for why.
+    loader: "custom",
+    loaderFile: "./image-loader.js",
+    // The only widths that exist: two pre-built variants and the 500-wide
+    // source. Split across the two lists the way Next reads them — `imageSizes`
+    // holds sizes below the smallest device width, for small fixed slots like a
+    // 72 px thumbnail; `deviceSizes` is the ladder used once a `sizes` string
+    // mentions a viewport fraction.
+    //
+    // The split matters more than it looks. With everything in `deviceSizes`,
+    // Next filters the candidates to those at least as wide as the *smallest*
+    // device size, so a single entry of 500 silently threw both variants away
+    // and every image shipped at full size again.
+    imageSizes: [256],
+    deviceSizes: [384, 500],
+  },
   productionBrowserSourceMaps: false,
   // /api-docs renders docs/api.md at runtime — make sure the standalone/prod
   // build ships that file (it lives outside app/ and public/).

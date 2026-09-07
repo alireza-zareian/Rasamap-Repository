@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import type { CatalogueItem, BillboardType } from "@/lib/types";
 import type { SiteStats } from "@/lib/db/stats";
@@ -226,8 +227,7 @@ export default function LandingClient({
                         all of them are needed inside a minute anyway. decoding
                         stays async: it costs nothing and keeps decode off the main
                         thread. Vertically scrolling lists keep their lazy loading. */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={b.images[0]} alt={b.name} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                    <Image src={b.images[0]} alt={b.name} fill sizes="280px" decoding="async" loading="eager" style={{ objectFit: "cover" }} />
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(5,10,22,0.9) 0%, rgba(5,10,22,0.25) 50%, transparent 100%)" }} />
                     <div style={{ position: "absolute", bottom: 0, right: 0, left: 0, padding: "16px 14px 18px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 5 }}>

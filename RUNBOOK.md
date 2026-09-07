@@ -107,6 +107,22 @@ sqlite3 /tmp/restore-test.db "PRAGMA integrity_check; SELECT count(*) FROM billb
 Last run: row counts matched the source (3532 billboards / users / listings),
 `integrity_check` returned `ok`.
 
+### Images — after any fresh clone or restore
+
+`next/image` here serves pre-built files rather than resizing on demand (§22c),
+and those files live under `public/images/scraped/`, which is git-ignored along
+with the photos themselves. **A fresh clone has none of them**, and the site
+will show broken images until they are built:
+
+```bash
+npm run images:variants   # ~95 s from cold, seconds when only a few are missing
+npm run images:check      # walks the public pages, fetches every src and every
+                          # srcset candidate, fails loudly on the first 404
+```
+
+Re-run `images:variants` whenever new photos land in `public/images/scraped/`.
+It skips what already exists, so running it again is cheap.
+
 ### Running more than one instance (the shared cache)
 
 Single process on one machine: do nothing. The cache lives in `.next/cache` and
@@ -159,6 +175,10 @@ Run through this every time before deploying or before a live demo. Tick each li
 - [ ] Production database file is **not** the same file used in development.
 
 ### 2. Build & static
+
+- [ ] `npm run images:variants` — the pre-built image sizes exist on the target.
+- [ ] `npm run images:check` — every image on every public page resolves (this
+      catches a missing variant directory, which a build will not).
 - [ ] `npm ci` completes clean.
 - [ ] `npm run lint` passes.
 - [ ] `npm run build` passes with no errors.

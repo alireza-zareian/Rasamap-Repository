@@ -4,6 +4,7 @@ import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import CompareModal from "@/components/CompareModal";
 import { TypeIcon } from "@/components/TypeIcon";
+import Image from "next/image";
 import Link from "next/link";
 import type { CatalogueItem } from "@/lib/types";
 import { Scale, X, ArrowLeft } from "lucide-react";
@@ -69,8 +70,7 @@ export default function ComparePage() {
                 return (
                 <div key={b.id} style={{ background: "var(--bg-surface)", border: `1px solid ${compareList.indexOf(b) < 2 ? "var(--accent)" : "var(--border)"}`, borderRadius: 12, overflow: "hidden", position: "relative" }}>
                   {thumb && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={thumb} alt={b.name} loading="lazy" decoding="async" style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
+                    <Image src={thumb} alt={b.name} width={256} height={110} loading="lazy" decoding="async" sizes="256px" style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
                   )}
                   {!thumb && (
                     <div style={{ width: "100%", height: 80, background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
