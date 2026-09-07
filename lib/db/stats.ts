@@ -1,5 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "./client";
 import { publishedOnly } from "./billboards";
+import { isPostgres } from "./engine";
 
 export interface SiteStats {
   total: number;
@@ -16,8 +18,22 @@ export interface SiteStats {
  * the four aggregate queries are written once.
  *
  * `totalDailyReach` is raw SQL because the daily footfall lives inside the
- * `traffic` JSON column and Prisma cannot sum through a JSON path.
+ * `traffic` JSON column and Prisma cannot sum through a JSON path. Reading
+ * inside JSON is the one thing the two engines spell differently, so the
+ * fragment — and only the fragment — is chosen by engine.
  */
+/** SUM of traffic.daily across published rows — the only engine-specific SQL. */
+function dailyReachQuery(): Prisma.Sql {
+  const daily = isPostgres()
+    ? Prisma.sql`(traffic ->> 'daily')::bigint`
+    : Prisma.sql`CAST(json_extract(traffic, '$.daily') AS INTEGER)`;
+  return Prisma.sql`
+    SELECT SUM(${daily}) AS total
+    FROM billboards
+    WHERE status NOT IN ('pending', 'awaiting_payment')
+  `;
+}
+
 export async function getSiteStats(): Promise<SiteStats> {
   const [total, typeCounts, cityCounts, trafficRows] = await Promise.all([
     prisma.billboard.count({ where: { status: publishedOnly } }),
@@ -31,10 +47,7 @@ export async function getSiteStats(): Promise<SiteStats> {
       where: { status: publishedOnly },
       _count: { _all: true },
     }),
-    prisma.$queryRaw<{ total: number }[]>`
-      SELECT SUM(CAST(json_extract(traffic, '$.daily') AS INTEGER)) as total
-      FROM billboards WHERE status NOT IN ('pending', 'awaiting_payment')
-    `,
+    prisma.$queryRaw<{ total: number | bigint | null }[]>(dailyReachQuery()),
   ]);
 
   const byType: Record<string, number> = {};

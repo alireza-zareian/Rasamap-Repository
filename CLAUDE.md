@@ -46,7 +46,12 @@ npm run build | lint
 npm run db:migrate | db:seed | db:studio | db:dedupe | db:backfill-coords
 npm run images:variants   # pre-build the image sizes next/image serves (git-ignored)
 npm run images:check      # prove every image every page asks for resolves
+npm run db:to-postgres -- <url>   # move to PostgreSQL (§27) · db:to-sqlite to return
 ```
+
+> The database engine is chosen by `DATABASE_URL` alone (`lib/db/engine.ts`).
+> It is SQLite and stays SQLite (§14); the PostgreSQL path is built and proven
+> but dormant, like SMS (§16) and the shared cache (§25).
 
 > **🔴 Standing rule — say this out loud to the user whenever it is relevant.**
 > `npm run dev` costs **9.7 s of CPU** for a first visit to ten routes;
@@ -139,7 +144,7 @@ The documentation was consolidated: what used to be 24 files is now these.
 | File | What it carries |
 |---|---|
 | `docs/architecture.md` | the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API |
-| `docs/engineering-decisions.md` | 24 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted) |
+| `docs/engineering-decisions.md` | 24 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected) |
 | `docs/api.md` | full HTTP API reference (42 endpoints) **+ the route-writing pattern** (was `api-patterns.md`) |
 | `docs/codemap.html` | interactive file map generated from the real import graph — supersedes the old hand-written `project-reference.md` |
 | `docs/STATUS.md` | project state, production-readiness triage, 13-layer assessment, remaining work, security audit (was `STATUS.md` + `PLAN.md` + `AUDIT.md` + `next-tasks.md` + `security-audit.md`) |

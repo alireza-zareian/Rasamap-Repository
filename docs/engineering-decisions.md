@@ -1207,6 +1207,77 @@ only thing measured so far that actually works.
 
 ---
 
+## 27. PostgreSQL, ready but not connected
+
+**The position.** The project runs on SQLite, and §14 argues why that is the
+right answer for one process on one laptop with a catalogue of 3,532 rows. The
+limitation the thesis states honestly is that it is one instance. This section
+is about closing the distance between "we know how we would move" and "we have
+moved and moved back", without actually moving.
+
+**What was made possible.** The engine is now read from the connection string
+and nothing else (`lib/db/engine.ts`). `file:` selects the SQLite adapter,
+`postgresql:` the PostgreSQL one, and an unrecognised scheme is an error rather
+than a default — a typo that silently opened an empty SQLite file next to the
+app would look exactly like data loss. The PostgreSQL adapter is required
+lazily, so the SQLite path never loads it.
+
+**Two places the engines actually differ, both now handled.**
+
+1. *Reading inside JSON.* `totalDailyReach` sums `traffic.daily`, which lives in
+   a JSON column, and the two engines spell that differently —
+   `json_extract(traffic, '$.daily')` against `(traffic ->> 'daily')::bigint`.
+   Only the fragment is chosen by engine; the query around it is shared.
+2. *Case in `contains`.* SQLite's `LIKE` ignores case for ASCII, PostgreSQL's
+   does not. A search for `billboardiha` finds `Billboardiha` today and would
+   have quietly stopped after a migration — not an error, just fewer results.
+   The PostgreSQL path asks for `mode: "insensitive"` so the two behave the
+   same. Persian has no case; this matters for the Latin agency names.
+
+**The move itself is one command.** `npm run db:to-postgres -- <url>` reads
+every table out of SQLite, points the schema at PostgreSQL, creates the tables,
+copies parents before children in batches, advances each id sequence past the
+highest copied id, and then counts both sides and refuses to report success
+unless every table matches. Any failure puts the schema file back on SQLite
+before exiting. The SQLite database is only ever read, so it remains the
+rollback — `npm run db:to-sqlite` returns the schema and the generated client.
+
+**Two things learned by running it rather than reasoning about it.**
+
+- *It has to be two processes.* The generated Prisma client is built for one
+  provider, and regenerating it on disk does not change the copy already
+  imported into a running process. A single-process version reads SQLite fine
+  and then fails at the first insert with "adapter based on postgres is not
+  compatible with the provider sqlite". The parent now dumps and re-points; a
+  child, started afterwards, writes.
+- *The id sequences have to be advanced.* SQLite's ids came from the seed and
+  were deliberately preserved. PostgreSQL keeps a counter per table, and a fresh
+  counter still at 1 makes the very next insert collide with row number one —
+  a unique-constraint error on a table with obvious room in it.
+
+**Verified end to end, not asserted.** Against a PostgreSQL 16 container:
+3,562 rows moved with every table's count matching on both sides, then the
+application was built and served against it. The same questions to both engines
+returned identical answers — 3,532 published media, 101 cities, a daily reach of
+204,018,788, the same four type counts, 2,781 results for `billboardiha` in
+either capitalisation, and 24 rendered prices on `/explore`. Then the schema was
+switched back and `npm test` returned 113/113 on SQLite.
+
+**Still on SQLite on purpose.** Nothing about the running project changed:
+`DATABASE_URL` is still a file, `prisma/schema.prisma` still says `sqlite`, and
+the demo still needs no service running beside it. The dormant-by-default shape
+is the same one used for SMS (§16) and the shared cache (§25) — the work is
+done and measured, and switching is a decision rather than a project.
+
+**What is deliberately not done.** `prisma/migrations/` holds SQLite SQL. The
+PostgreSQL side is created with `db push` from the same schema rather than a
+parallel migration history, because keeping two histories in step by hand is a
+worse failure mode than regenerating one. If PostgreSQL ever becomes the primary
+engine, the migration history should be regenerated against it once, and this
+paragraph deleted.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -1244,3 +1315,4 @@ only thing measured so far that actually works.
 | 2026-09-07 | **Payload narrowing** | `CatalogueItem` — cards receive the twenty fields they draw instead of the whole record. `/explore` RSC payload 52.4 → 39.4 KB; coordinates no longer shipped for the whole result set (§20). |
 | 2026-09-07 | **Cache Components, evaluated** | §26 — built, measured at 10.24 → 10.32 ms on `/explore`, reverted. The media page's record and related-media reads were kept and are now cached. |
 | 2026-09-07 | **V2 — images** | §22c — `next/image` on a custom loader over pre-built variants, no `/_next/image`. Landing on a phone 1918 → 475 KB; catalogue list 1155 → 384 KB; layout shift eliminated. Cost: +0.4 ms CPU on `/explore`. `npm run images:variants` / `images:check`. |
+| 2026-09-07 | **V3 — PostgreSQL, dormant** | §27 — engine read from `DATABASE_URL`; the two engine-specific spots (JSON path, `contains` case) handled; `npm run db:to-postgres` / `db:to-sqlite`. Proved against PostgreSQL 16: 3,562 rows moved, counts matched, app served, identical answers from both engines, switched back, 113/113. Still on SQLite. |

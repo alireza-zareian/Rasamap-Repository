@@ -123,6 +123,39 @@ npm run images:check      # walks the public pages, fetches every src and every
 Re-run `images:variants` whenever new photos land in `public/images/scraped/`.
 It skips what already exists, so running it again is cheap.
 
+### Switching the database engine
+
+SQLite is the engine and is meant to stay it (§14). The PostgreSQL path exists,
+is proven, and is one command away — nothing switches on its own.
+
+```bash
+# a target to move to (any PostgreSQL; this is the one used for the trial run)
+docker start rasamap-pg     # or: docker run -d --name rasamap-pg \
+                            #       -e POSTGRES_PASSWORD=… -e POSTGRES_DB=rasamap \
+                            #       -p 55432:5432 postgres:16-alpine
+
+npm run db:to-postgres -- --dry-run postgresql://…   # read and plan, no writes
+npm run db:to-postgres -- postgresql://…             # copy, fix sequences, verify
+```
+
+It reads every table out of SQLite, creates them on the target, copies parents
+before children, advances the id sequences, and **counts both sides** — it will
+not report success unless every table matches. Any failure puts the schema file
+back on SQLite before exiting, and the SQLite database is only ever read.
+
+Then put the new URL in `.env.local`, `npm run build && npm test`, and keep the
+SQLite file: it is the rollback.
+
+```bash
+npm run db:to-sqlite        # schema and generated client back on SQLite
+```
+
+Two things that will bite if this is ever done by hand instead: the Prisma
+client is generated per provider, so it must be regenerated after switching
+(both commands do it); and PostgreSQL id sequences start at 1 regardless of the
+ids you copied in, so without the sequence step the next insert collides with
+row one. §27 has the detail.
+
 ### Running more than one instance (the shared cache)
 
 Single process on one machine: do nothing. The cache lives in `.next/cache` and

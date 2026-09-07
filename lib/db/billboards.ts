@@ -1,6 +1,7 @@
 import type { Billboard as Row, Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 import { prisma } from "./client";
+import { isPostgres } from "./engine";
 import type { Billboard, CatalogueItem, TrafficData } from "../types";
 
 /**
@@ -149,6 +150,20 @@ const SORT_MAP: Record<string, Prisma.BillboardOrderByWithRelationInput[]> = {
   area_desc:    [{ featured: "desc" }, { hasImages: "desc" }, { area: "desc" }],
 };
 
+/**
+ * The one place the two engines disagree about behaviour rather than syntax.
+ *
+ * SQLite's LIKE ignores case for ASCII, so `contains: "billboardiha"` finds
+ * "Billboardiha" today. PostgreSQL's does not, and would quietly return fewer
+ * results for the same search after a migration — the kind of difference that
+ * shows up as "search got worse" rather than as an error. Asking Postgres for
+ * the behaviour SQLite already has keeps the two the same.
+ *
+ * Persian has no case, so this changes nothing for most searches; it matters
+ * for the agency names, which are Latin.
+ */
+const caseInsensitive = isPostgres() ? { mode: "insensitive" as const } : {};
+
 function buildWhere(p: BillboardFilterParams): Prisma.BillboardWhereInput {
   const where: Prisma.BillboardWhereInput = {};
   if (p.type)      where.type   = p.type;
@@ -163,10 +178,10 @@ function buildWhere(p: BillboardFilterParams): Prisma.BillboardWhereInput {
   if (p.search) {
     const s = p.search.trim();
     where.OR = [
-      { name:     { contains: s } },
-      { city:     { contains: s } },
-      { location: { contains: s } },
-      { agency:   { contains: s } },
+      { name:     { contains: s, ...caseInsensitive } },
+      { city:     { contains: s, ...caseInsensitive } },
+      { location: { contains: s, ...caseInsensitive } },
+      { agency:   { contains: s, ...caseInsensitive } },
     ];
   }
   return where;
@@ -229,11 +244,11 @@ export async function getAdminBillboardPage(
   if (p.status) where.status = p.status;
   if (p.q) {
     where.OR = [
-      { name:     { contains: p.q } },
-      { location: { contains: p.q } },
+      { name:     { contains: p.q, ...caseInsensitive } },
+      { location: { contains: p.q, ...caseInsensitive } },
       // A slug, so pasting the tail of a public URL finds the row — which is
       // what "edit this listing" on the staff bar does.
-      { slug:     { contains: p.q } },
+      { slug:     { contains: p.q, ...caseInsensitive } },
     ];
   }
 

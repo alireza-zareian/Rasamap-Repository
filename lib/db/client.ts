@@ -24,13 +24,15 @@
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { DB_ENGINE } from "./engine";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 // journal_mode=WAL persists in the DB file header — set it once via a
 // temporary connection so every subsequent connection (including Prisma's)
-// automatically uses WAL mode without further configuration.
-if (!globalForPrisma.prisma) {
+// automatically uses WAL mode without further configuration. PostgreSQL has
+// its own write-ahead log and needs none of this.
+if (!globalForPrisma.prisma && DB_ENGINE === "sqlite") {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
     const SQLite3 = require("better-sqlite3") as any;
@@ -43,12 +45,28 @@ if (!globalForPrisma.prisma) {
   }
 }
 
+/**
+ * The driver for whichever engine DATABASE_URL names.
+ *
+ * The PostgreSQL adapter is required lazily rather than imported at the top:
+ * on the SQLite path — which is every run today — the module is then never
+ * loaded, and no connection pool is constructed for a database nobody asked
+ * for. See lib/db/engine.ts and §27.
+ */
+function createAdapter() {
+  if (DB_ENGINE === "postgresql") {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { PrismaPg } = require("@prisma/adapter-pg");
+    return new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+  }
+  return new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
+}
+
 function createClient(): PrismaClient {
   // Built here rather than at module scope so re-importing the module does not
   // construct an adapter it will not use.
-  const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
   return new PrismaClient({
-    adapter,
+    adapter: createAdapter(),
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 }

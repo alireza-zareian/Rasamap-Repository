@@ -2727,33 +2727,83 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     </div>
   </div>
 
-  <div class="phase-card is-next open">
+  <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V3</div>
-      <div class="ph-title"><h3>مهاجرت به PostgreSQL</h3><p>خروج از تک‌فایلی‌بودن — پیش‌نیازِ استقرار و چندنمونه‌ای شدن</p></div>
-      <div class="ph-badge">→ در جریان</div>
+      <div class="ph-title"><h3>مهاجرت به PostgreSQL — آماده، آزموده، و وصل‌نشده</h3><p>یک دکمه. پروژه روی SQLite می‌ماند تا روزی که خودمان بخواهیم</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
         این همان چیزی است که پایان‌نامه وعده‌اش را داده: چون همهٔ دسترسیِ داده از <code>lib/db/</code> و
         Prisma رد می‌شود و هیچ <code>SQL</code> خامی در کد پراکنده نیست، مهاجرت باید «تغییرِ مقصد + اجرای
-        دوبارهٔ مهاجرت‌ها» باشد. <b>این فاز آن ادعا را می‌آزماید.</b>
+        دوبارهٔ مهاجرت‌ها» باشد. <b>این فاز آن ادعا را آزمود — و ادعا درست بود، با دو استثنا که پیدا و بسته شدند.</b>
       </p>
+      <div class="note" style="margin-bottom:14px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">پروژه روی SQLite ماند — عمداً</span>
+        هیچ‌چیزِ برنامهٔ در حالِ اجرا عوض نشد: <code>DATABASE_URL</code> هنوز یک فایل است،
+        <code>schema.prisma</code> هنوز <code>sqlite</code> می‌گوید، و دمو هنوز به هیچ سرویسی
+        که کنارش اجرا شود نیاز ندارد (§۱۴). موتور <b>فقط</b> از روی رشتهٔ اتصال خوانده می‌شود
+        (<code>lib/db/engine.ts</code>) — نه از <code>NODE_ENV</code>، نه از متغیر دومی که
+        بتواند با آن اختلاف پیدا کند. همان شکلِ «ساخته، آزموده، خفته»ی پیامک (§۱۶) و کشِ مشترک (§۲۵).
+      </div>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><code>provider = "postgresql"</code> در <code>schema.prisma</code> و کنار گذاشتنِ آداپتور <code>better-sqlite3</code> در <code>lib/db/client.ts</code></div></div>
-        <div class="task todo-t"><div class="tick"></div><div>بازبینیِ نوع‌ها: ستون‌های <code>Json</code> (تصویرها، ویژگی‌ها، traffic) در Postgres رفتار متفاوتی دارند — و <code>contains</code> در جست‌وجو باید حساس‌به‌حروف نباشد (<code>mode: "insensitive"</code>)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>اسکریپت انتقال داده: ۳٬۵۳۶ رکورد + کاربران + نظرها + رد ممیزی، با بررسیِ شمارش پیش و پس از انتقال</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>استخر اتصال (connection pool) — بدون آن، هر درخواست یک اتصالِ تازه می‌سازد و Postgres زودتر از SQLite کم می‌آورد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>سنجهٔ پذیرش:</b> همان ۱۱۳ آزمون بدونِ تغییرِ کدِ آزمون، روی Postgres سبز شوند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>موتور از روی <code>DATABASE_URL</code> انتخاب می‌شود؛ <code>file:</code> آداپتور SQLite و <code>postgresql:</code> آداپتور Postgres. طرحِ ناشناخته <b>خطا</b> می‌دهد نه پیش‌فرض — یک غلط تایپی که بی‌صدا یک فایلِ SQLite خالی باز کند، عیناً شبیهِ ازدست‌رفتنِ داده است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>دقیقاً <b>دو</b> جا فرق داشتند و هر دو بسته شدند: (۱) خواندن از داخل JSON — <code>json_extract(traffic, '$.daily')</code> در برابر <code>(traffic -&gt;&gt; 'daily')::bigint</code>؛ فقط همان تکه بر اساس موتور انتخاب می‌شود. (۲) <code>contains</code> در SQLite به حروف حساس نیست و در Postgres هست — جست‌وجوی <code>billboardiha</code> بی‌سروصدا نتیجهٔ کمتری می‌داد؛ <code>mode: "insensitive"</code> دو طرف را یکسان کرد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>npm run db:to-postgres -- &lt;url&gt;</code> — می‌خواند، جدول‌ها را می‌سازد، والدها را پیش از فرزندها دسته‌ای کپی می‌کند، شمارنده‌های <code>id</code> را جلو می‌برد، و <b>تا وقتی شمارشِ هر جدول در دو طرف یکی نشود موفقیت اعلام نمی‌کند</b>. هر شکستی schema را به sqlite برمی‌گرداند؛ پایگاه دادهٔ SQLite فقط خوانده می‌شود، پس خودش نسخهٔ برگشت است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>استخر اتصال از خودِ <code>@prisma/adapter-pg</code> می‌آید (روی <code>pg.Pool</code> سوار است) و همان تک‌نمونه‌ایِ <code>lib/db/client.ts</code> که برای SQLite ساخته شده بود، اینجا هم یک استخر به‌ازای هر پروسه نگه می‌دارد</div></div>
+      </div>
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">دو چیزی که فقط با <em>اجرا کردن</em> فهمیده شدند، نه با فکر کردن</span>
+        <b>۱ — باید دو پروسه باشد.</b> کلاینتِ تولیدشدهٔ Prisma برای یک موتور ساخته می‌شود، و
+        تولیدِ دوباره‌اش روی دیسک، نسخه‌ای را که قبلاً در حافظهٔ پروسه بارگذاری شده عوض نمی‌کند.
+        نسخهٔ تک‌پروسه‌ای SQLite را درست می‌خواند و بعد سرِ اولین درج می‌شکند:
+        <code>adapter based on postgres is not compatible with the provider sqlite</code>.
+        <br><br>
+        <b>۲ — شمارنده‌های <code>id</code> باید جلو برده شوند.</b> شناسه‌های SQLite از seed آمده‌اند
+        و عمداً حفظ شده‌اند؛ Postgres شمارندهٔ خودش را دارد و شمارنده‌ای که هنوز روی ۱ ایستاده،
+        باعث می‌شود <b>اولین درجِ بعدی با ردیف شمارهٔ یک تصادف کند</b> — خطای یکتایی روی جدولی که
+        آشکارا جا دارد.
+      </div>
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">و یک ایرادِ واقعی که <code>db push</code> ایجاد می‌کرد</span>
+        یک <b>ایندکسِ یکتای شرطی</b> (<code>listings_submitter_name_city_key</code>) فقط در
+        <code>SQL</code>ِ مهاجرت‌ها وجود دارد، چون Prisma نمی‌تواند <code>WHERE</code> روی ایندکس
+        بنویسد. پایگاه دادهٔ ساخته‌شده از <code>schema.prisma</code> بی‌صدا فاقدش می‌شد — و این
+        همان کفِ محافظ در برابر آگهیِ دوبار‌ثبت‌شده است (§۸). یعنی «بی‌صدا فاقدش می‌شد» ترجمه‌اش
+        می‌شود ردیف‌های تکراری که کسی تا مدت‌ها نمی‌بیند. اسکریپت حالا این ایندکس را جداگانه
+        می‌سازد و <b>وجودش را هم راستی‌آزمایی می‌کند</b>؛ شمارشِ درستِ ردیف‌ها ثابت نمی‌کند که
+        محدودیت‌ها هم آمده‌اند. (<code>test/reset-db.mjs</code> دقیقاً به همین دلیل
+        <code>migrate deploy</code> می‌زند نه <code>db push</code>.)
+      </div>
+      <div class="proof">
+        <b>سنجهٔ پذیرش — واقعاً اجرا شد، روی PostgreSQL 16:</b><br>
+        ✓ <b>۳٬۵۶۲ ردیف</b> منتقل شد و شمارشِ هر ده جدول در دو طرف یکی بود.<br>
+        ✓ ایندکسِ یکتای شرطی ساخته شد و <b>واقعاً اجرا می‌شود</b> — درجِ دومِ همان آگهی با نامِ
+        همان محدودیت رد شد.<br>
+        ✓ برنامه روی Postgres <b>build و سِرو شد</b> و همان پرسش‌ها <b>عیناً همان پاسخ‌ها</b> را دادند:
+        ۳٬۵۳۲ رسانهٔ منتشرشده، ۱۰۱ شهر، تردد روزانهٔ ۲۰۴٬۰۱۸٬۷۸۸، همان چهار شمارشِ نوع،
+        ۲٬۷۸۱ نتیجه برای <code>billboardiha</code> با هر دو نوع حروف، و ۲۴ برچسبِ قیمت روی
+        <code>/explore</code>.<br>
+        ✓ بعد schema برگردانده شد و <code>npm test</code> روی SQLite <b>۱۱۳/۱۱۳</b> داد.
+        <br><br>
+        <b style="color:var(--amber)">آنچه انجام نشد و عمدی است:</b> سنجهٔ اولیهٔ این کارت گفته بود
+        «همان ۱۱۳ آزمون روی Postgres سبز شوند». این <b>محقق نشد</b>: هارنسِ آزمون پایگاه دادهٔ
+        SQLiteِ خودش را با <code>migrate deploy</code> می‌سازد، و تاریخچهٔ مهاجرت‌ها SQL مخصوصِ
+        SQLite است. اجرای آزمون‌ها روی Postgres نیازمندِ یک تاریخچهٔ مهاجرتِ موازی است، و
+        نگه‌داشتنِ دو تاریخچه هم‌گام با دست، حالتِ شکستِ بدتری از بازتولیدِ یکی است. اگر روزی
+        Postgres موتورِ اصلی شد، تاریخچه باید یک‌بار روی آن بازتولید شود. به‌جایش، معادلِ
+        عملیِ همان ادعا اثبات شد: برنامه روی Postgres ساخته و سِرو شد و پاسخ‌هایش با SQLite
+        بایت‌به‌بایت یکی بود. جزئیات در §۲۷.
       </div>
     </div>
   </div>
 
-  <div class="phase-card">
+  <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V4</div>
       <div class="ph-title"><h3>دامنه، میزبانی و نخستین استقرار واقعی</h3><p>از «روی لپ‌تاپ اجرا می‌شود» به «یک آدرس که هر کسی باز می‌کند»</p></div>
-      <div class="ph-badge todo">اولویت چهار</div>
+      <div class="ph-badge">→ در جریان</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
