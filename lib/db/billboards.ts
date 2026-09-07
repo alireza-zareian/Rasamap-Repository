@@ -296,7 +296,10 @@ export async function getBillboardBySlug(
  * found nothing, every page fell through to one national list, and the same
  * dozen Tehran billboards were suggested under every listing in the country.
  */
-export async function getRelatedBillboards(ref: Billboard, limit = 12): Promise<Billboard[]> {
+export async function getRelatedBillboards(
+  ref: Pick<Billboard, "id" | "city" | "type">,
+  limit = 12,
+): Promise<Billboard[]> {
   const orderBy: Prisma.BillboardOrderByWithRelationInput[] = [
     { featured: "desc" }, { hasImages: "desc" }, { estimatedViews: "desc" },
   ];

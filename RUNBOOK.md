@@ -107,9 +107,35 @@ sqlite3 /tmp/restore-test.db "PRAGMA integrity_check; SELECT count(*) FROM billb
 Last run: row counts matched the source (3532 billboards / users / listings),
 `integrity_check` returned `ok`.
 
+### Running more than one instance (the shared cache)
+
+Single process on one machine: do nothing. The cache lives in `.next/cache` and
+that is the right answer — Redis is measurably *slower* on one box (§25).
+
+The moment there is a second instance — two containers, a rolling deploy, a
+load balancer — turn it on, or they will disagree about the catalogue:
+
+```bash
+brew services start redis          # or: redis-server --daemonize yes
+# .env.local
+REDIS_URL=redis://127.0.0.1:6379   # REDIS_PREFIX= if the Redis is shared
+npm run demo
+```
+
+Verify it is actually being used, and that invalidation reaches every instance:
+
+```bash
+redis-cli --scan --pattern 'rasamap:cache:*' | head     # entries appear after a visit
+redis-cli SMEMBERS rasamap:cache:tag:billboards         # what an admin write will clear
+```
+
+If Redis goes away, the app keeps serving — pages render uncached and one line
+is logged. Nothing to do but restart Redis.
+
 ### Contacts / where things live
 
 - Env vars: `.env.local` (never committed). Template: `.env.example`.
+- Cache handler: `cache-handler.js` (loaded only when `REDIS_URL` is set).
 - Schema: `prisma/schema.prisma`. Migrations: `prisma/migrations/`.
 - Seed: `npm run db:seed` (full) · `npm run db:seed:demo` (presentation dataset).
 - Deploy gate: `RUNBOOK.md`.

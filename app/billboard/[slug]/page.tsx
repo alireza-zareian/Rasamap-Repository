@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck } from "lucide-react";
-import { getBillboardBySlug, getRelatedBillboards, UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
+import { getBillboardBySlug, UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
+import { getCachedBillboardBySlug, getCachedRelatedBillboards } from "@/lib/db/cached";
 import { getSession } from "@/lib/auth/session";
 import BillboardGallery from "@/components/BillboardGallery";
 import RelatedBillboards from "@/components/RelatedBillboards";
@@ -20,6 +21,9 @@ const STATUS_LABEL = statusLabels as Record<string, string>;
 const STATUS_COLOR: Record<string, string> = {
   available: "#22c55e", busy: "#ef4444", reserved: "#f59e0b", inactive: "#6b7280",
 };
+
+/** Suggestions at the foot of the page — one marquee's worth. */
+const RELATED_COUNT = 12;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -47,22 +51,18 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
   const session = await getSession();
   const isStaff = !!session && session.role !== "user";
 
-  const raw = await getBillboardBySlug(slug, { includeUnpublished: isStaff });
-  if (!raw) notFound();
+  // isStaff is part of the cache key, not something read inside the cached
+  // function: a reviewer's view of a listing still under review can never be
+  // handed to a visitor, because they are different entries.
+  const found = await getCachedBillboardBySlug(slug, isStaff);
+  if (!found) notFound();
+  const { billboard: b, phoneAvailable } = found;
 
-  const unpublished = UNPUBLISHED_STATUSES.includes(raw.status);
-
-  // The owner/agency phone must never reach the client (it would end up in the
-  // page HTML / RSC payload). Keep only whether one exists; the number itself
-  // is served by POST /api/billboards/[slug]/contact to signed-in users, on
-  // an explicit click, which also records the lead (§23).
-  const phoneAvailable = !!(raw.phone && raw.phone !== "—" && raw.phone.trim());
-  const b = { ...raw, phone: "" };
+  const unpublished = UNPUBLISHED_STATUSES.includes(b.status);
 
   // Suggestions for the foot of the page — same neighbourhood or same media
-  // type. Each owner phone is stripped here too: these rows also travel to the
-  // client in the RSC payload.
-  const related = (await getRelatedBillboards(raw, 12)).map(r => ({ ...r, phone: "" }));
+  // type, narrowed to what those cards draw.
+  const related = await getCachedRelatedBillboards(b, RELATED_COUNT);
 
   const allImgs: string[] = [
     ...(b.images ?? []),
@@ -84,7 +84,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               <ShieldCheck size={15} /> پیش‌نمایش همکاران
             </span>
             <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.9 }}>
-              این آگهی هنوز <b style={{ color: "var(--text-main)" }}>{STATUS_LABEL[raw.status] ?? raw.status}</b> است و برای بازدیدکنندگان دیده نمی‌شود.
+              این آگهی هنوز <b style={{ color: "var(--text-main)" }}>{STATUS_LABEL[b.status] ?? b.status}</b> است و برای بازدیدکنندگان دیده نمی‌شود.
             </span>
             <Link href="/admin?tab=listings" style={{ marginRight: "auto", fontSize: "0.75rem", color: "#8B7BE0", textDecoration: "none", border: "1px solid rgba(98,71,196,0.4)", borderRadius: 8, padding: "5px 13px", whiteSpace: "nowrap" }}>
               رفتن به صف تأیید ←

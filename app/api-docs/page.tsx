@@ -5,6 +5,7 @@
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -91,14 +92,27 @@ function mdToHtml(md: string): string {
   return out.join("\n");
 }
 
+/**
+ * docs/api.md is shipped with the build and cannot change while the server is
+ * up, so reading and converting it once and holding the result is exactly
+ * right — every visit was otherwise re-reading the file and re-running the
+ * renderer over it.
+ */
+const renderApiDocs = unstable_cache(
+  async (): Promise<string> => {
+    try {
+      return mdToHtml(await readFile(join(process.cwd(), "docs", "api.md"), "utf8"));
+    } catch {
+      return "<p>مرجع API در دسترس نیست.</p>";
+    }
+  },
+  ["api-docs-html"],
+  // The file ships with the build and cannot change while the server is up.
+  { revalidate: false },
+);
+
 export default async function ApiDocsPage() {
-  let html = "";
-  try {
-    const md = await readFile(join(process.cwd(), "docs", "api.md"), "utf8");
-    html = mdToHtml(md);
-  } catch {
-    html = "<p>مرجع API در دسترس نیست.</p>";
-  }
+  const html = await renderApiDocs();
 
   return (
     <div style={{ direction: "rtl", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", background: "var(--bg-deep, #0b0f17)", color: "var(--text-main, #e6e9ef)", minHeight: "100vh" }}>

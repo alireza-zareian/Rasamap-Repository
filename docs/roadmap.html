@@ -2466,6 +2466,135 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     </div>
   </div>
 
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V1a</div>
+      <div class="ph-title"><h3>کشِ مشترک بین چند نمونه — Redis، نوشته‌شده و خاموش</h3><p>مسئله سرعت نیست؛ درستی است. و اندازه‌گیری، طرحِ اولیه را عوض کرد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="note" style="margin-bottom:14px">
+        <span class="t">چرا اصلاً لازم است — و چرا دلیلش سرعت نیست</span>
+        سرور چیزی را که یک بار حساب کرده نگه می‌دارد: صفحهٔ نخستِ رندرشده و هر کوئریِ کاتالوگ.
+        امروز این انبار یک پوشه است داخل <code>.next/cache</code> — که برای <b>یک</b> پروسه روی
+        <b>یک</b> لپ‌تاپ کاملاً درست است. سه چیز به‌محضِ وجودِ نمونهٔ دوم می‌شکند، و هر سه
+        مسئلهٔ <b>درستی</b> است نه کارایی:
+        <br><br>
+        ۱. چیزی که نمونهٔ A ساخته برای B نامرئی است، پس همان کار به‌ازای هر نمونه تکرار می‌شود.<br>
+        ۲. هر استقرار کلِ کش را دور می‌ریزد و همهٔ نمونه‌ها هم‌زمان سرد شروع می‌کنند — بدترین لحظهٔ ممکن.<br>
+        ۳. و آنکه واقعاً کسی را گمراه می‌کند: مدیری که آگهی‌ای را تأیید می‌کند،
+        <code>revalidateCatalogue()</code> را روی <b>همان نمونه‌ای که درخواستش را گرفت</b> اجرا می‌کند.
+        بقیهٔ نمونه‌ها کاتالوگِ قدیمی را سِرو می‌کنند تا وقتی نسخهٔ خودشان منقضی شود. مدیر
+        تغییر را می‌بیند، رفرش می‌کند، باز می‌بیند — و هیچ راهی ندارد بفهمد نیمی از
+        بازدیدکننده‌ها نمی‌بینند.
+      </div>
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">اندازه‌گیری‌ای که طرح را عوض کرد</span>
+        نسخهٔ اول دقیقاً مثل مثالِ مستنداتِ Next نوشته شد: هر خواندن از Redis.
+        روی همین لپ‌تاپ و روی loopback، صفحهٔ نخست از <b>۱٫۹</b> به <b>۶٫۲ میلی‌ثانیه</b> رفت —
+        یعنی یک کشِ مشترک که <b>سه برابر کندتر</b> از چیزی است که جایش را گرفته.
+        این پایه نیست، پس‌رفت است.
+        <br><br>
+        پس هندلر یک <b>لایهٔ حافظه‌ایِ کراندار</b> به‌ازای هر پروسه جلوی Redis گذاشت، و
+        باطل‌سازیِ برچسب‌ها را روی یک کانالِ Redis <b>publish</b> می‌کند که همهٔ نمونه‌ها
+        مشترکش هستند. لایهٔ حافظه‌ای جواب می‌دهد؛ کانال آن را صادق نگه می‌دارد.
+        نتیجه: <b>۳٫۴ میلی‌ثانیه</b>، با حفظِ همان درستیِ بین‌نمونه‌ای.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>cache-handler.js</code> — پیاده‌سازی رابطِ کشِ Next روی Redis، با <code>get/set/revalidateTag/resetRequestCache</code> و مجموعه‌های برچسب برای باطل‌سازی بدون پیمایشِ کل کلیدها</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>لایهٔ حافظه‌ای + <code>PUBLISH</code>/<code>SUBSCRIBE</code> برای باطل‌سازیِ بین‌پروسه‌ای — <b>با دو پروسهٔ واقعی آزمایش شد:</b> B برچسب را باطل می‌کند، حافظهٔ خودِ A در خواندنِ بعدی miss می‌دهد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>خاموش به‌صورت پیش‌فرض</b> — <code>next.config.ts</code> فقط وقتی <code>REDIS_URL</code> ست باشد این فایل را نام می‌برد؛ وگرنه هیچ‌کدام از این کد بارگذاری نمی‌شود. همان شکلِ «ساخته‌شده، آزموده، خفته»ی لایهٔ پیامک در §۱۶</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>اگر Redis در دسترس نباشد: <b>یک بار</b> لاگ می‌شود (نه به‌ازای هر درخواست) و صفحه بدون کش رندر می‌شود. کشی که خراب شود باید تأخیر بدهد، نه دسترس‌پذیری</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>.env.example</code> و <code>RUNBOOK.md</code>: چطور روشنش کنیم و چطور تأیید کنیم واقعاً دارد استفاده می‌شود</div></div>
+      </div>
+      <div class="proof">
+        <b>تأیید:</b> ۱۱۳/۱۱۳ تست، <b>هم با <code>REDIS_URL</code> و هم بدونش</b>.
+        روی سرورِ زنده: بعد از سه بازدید، ۶ کلید در Redis (۴ ورودیِ برچسب‌خورده + صفحهٔ ISR + مجموعهٔ برچسب)،
+        TTL درست، بدون هیچ خطایی در لاگ. باطل‌سازیِ انتخابی هم آزمایش شد:
+        <code>revalidateTag('billboards')</code> ورودیِ برچسب‌دار را پاک کرد و ورودیِ دیگر را دست‌نخورده گذاشت.
+        <br><br>
+        <b style="color:var(--amber)">توصیهٔ صادقانه:</b> <code>REDIS_URL</code> را خالی بگذارید تا
+        وقتی واقعاً نمونهٔ دوم وجود داشته باشد. روی یک ماشین قابلِ اندازه‌گیری کندتر است و
+        مسئله‌هایی که حل می‌کند هنوز وجود ندارند. اینجاست تا روزی که جواب عوض شد،
+        کار از قبل انجام و سنجیده شده باشد. جزئیات در §۲۵.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">V1b</div>
+      <div class="ph-title"><h3>کش‌کردنِ خودِ رندر — ساخته شد، سنجیده شد، برگردانده شد</h3><p>یک نتیجهٔ منفی، با عدد. و درسی که فراتر از این فریم‌ورک است</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="note" style="margin-bottom:14px">
+        <span class="t">فرضیه</span>
+        V1 نشان داد <code>/explore</code> حدود ۱۰ میلی‌ثانیه CPU می‌گیرد که دیتابیس (~۸) از قبل
+        کش شده. باقی‌مانده، چیدنِ ۲۴ کارت توسط ری‌اکت است. Next 16 می‌تواند <b>آن</b> را هم کش کند:
+        <code>cacheComponents: true</code> به‌علاوهٔ دستورِ <code>use cache</code> خروجیِ رندر را
+        نگه می‌دارد، نه فقط کوئری را. روی کاغذ باید <code>/explore</code> را به ~۲ میلی‌ثانیه برساند —
+        همان‌جایی که صفحهٔ نخست هست.
+      </div>
+      <div class="note" style="margin-bottom:14px">
+        <span class="t">فقط بررسی نشد — ساخته شد</span>
+        فلگ روشن شد، دو <code>export const revalidate</code> به <code>cacheLife</code> مهاجرت کردند،
+        <code>usePathname()</code> در <code>StaffBar</code> و کارِ زمانِ-درخواستِ صفحهٔ رسانه داخل
+        <code>&lt;Suspense&gt;</code> رفتند، <code>lib/db/cached.ts</code> از <code>unstable_cache</code>
+        به <code>use cache</code> تبدیل شد، و کاتالوگ طوری بازچینی شد که خروجیِ رندرشدهٔ یک
+        مجموعه پالایه، خودش یک ورودیِ کش با کلیدِ همان پالایه‌ها باشد. build سبز شد و
+        هر دو مسیر Partial Prerender شدند.
+      </div>
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">اندازه‌گیری — دو بیلد، هرکدام تنها، با ۶۰ درخواست گرم‌کردن و ۲۵۰ بازدیدِ سنجیده</span>
+        <table class="tbl" style="margin-top:6px">
+          <thead><tr><th>مسیر</th><th>بدون Cache Components</th><th>با Cache Components</th></tr></thead>
+          <tbody>
+            <tr><td><code>/explore</code></td><td>۱۰٫۲۴ ms</td><td>۱۰٫۳۲ ms</td></tr>
+            <tr><td><code>/billboard/[slug]</code></td><td>۱۳٫۹۲ ms</td><td>۱۴٫۵۲ ms</td></tr>
+            <tr><td><code>/</code></td><td>۱٫۹۵ ms</td><td>۲٫۰۵ ms</td></tr>
+          </tbody>
+        </table>
+        <br>
+        <b>هیچ. حتی کمی بدتر.</b>
+      </div>
+      <div class="note" style="margin-bottom:14px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">چرا — و این بخشی است که ارزشِ نگه‌داشتن دارد</span>
+        کش‌کردنِ یک درختِ ری‌اکت، <b>پاسخ</b> را کش نمی‌کند. در یک cache hit، Next هنوز باید آن
+        درخت را به بایت‌های HTML تبدیل و استریم کند؛ و برای صفحه‌ای که خروجی‌اش ۱۶۵ کیلوبایت است،
+        <b>همین تبدیل، خودِ هزینه است</b>. دلیلِ سریع‌بودنِ صفحهٔ نخست هم همین است:
+        <code>/</code> در زمانِ build به یک فایل رندر می‌شود و به‌صورت بایت سِرو می‌گردد،
+        بدون هیچ کارِ ری‌اکتی به‌ازای درخواست.
+        <br><br>
+        <b>و درس، از این فریم‌ورک فراتر می‌رود:</b> هزینهٔ یک صفحهٔ رندرشده روی سرور با
+        <b>اندازهٔ چیزی که بیرون می‌دهد</b> بالا می‌رود، نه با کاری که پشتش است.
+      </div>
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">چرا برگردانده شد، به‌جای اینکه به‌عنوان تغییرِ خنثی بماند</span>
+        چون خنثی نبود. <code>use cache</code> رابطِ هندلرِ <b>دیگری</b> می‌خواند
+        (<code>cacheHandlers</code>، جمع) که <code>cache-handler.js</code> پیاده‌اش نکرده —
+        یعنی پذیرفتنش کشِ کاتالوگ را غیرقابلِ اشتراک می‌کرد و V1a را باطل.
+        ضمناً هر صفحهٔ آینده را موظف به رعایتِ Suspense می‌کند، چیزی که کامپایلر در زمانِ build
+        اجبار می‌کند. پرداختِ این بها در ازای بردِ صفر، معاملهٔ بدی است.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><b>آنچه از این تلاش نگه داشته شد</b> — چون مستقلاً ارزش داشت: صفحهٔ رسانه رکورد خودش و فهرستِ «رسانه‌های مرتبط» را از کش می‌خواند به‌جای کوئری در هر بازدید</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>getRelatedBillboards()</code> حالا فقط سه فیلدی را می‌گیرد که رویشان تطبیق می‌دهد، نه کلِ رکورد — تا بشود منطقی کلیدگذاری‌اش کرد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>/api-docs</code> دیگر <code>docs/api.md</code> را در هر درخواست از دیسک نمی‌خواند و دوباره رندر نمی‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>CatalogueItem</code> — کارت‌ها همان بیست فیلدی را می‌گیرند که می‌کشند، نه کلِ رکورد. بارِ RSC صفحهٔ <code>/explore</code> از ۵۲٫۴ به ۳۹٫۴ کیلوبایت؛ و مختصاتِ دقیق دیگر برای کلِ نتایج یک‌جا فرستاده نمی‌شود (بردِ کوچکی برای §۲۰)</div></div>
+      </div>
+      <div class="proof">
+        <b>وضعیت نهایی، همین بیلد:</b> <code>/</code> ۱٫۹ ms · <code>/explore</code> ۹٫۶ ms ·
+        <code>/billboard/[slug]</code> ۱۴٫۲ ms · lint بی‌هشدار · ۱۱۳/۱۱۳ تست.
+        <br><br>
+        <b>اگر روزی دوباره سراغش رفتیم:</b> اهرم، کش‌کردنِ بیشتر نیست — <b>کمتر بیرون‌دادن</b> است،
+        یا یک‌بار بیرون‌دادن. پیش‌رندرِ پربازدیدترین صفحه‌های رسانه با
+        <code>generateStaticParams</code> آن‌ها را به همان کلاسِ <code>/</code> می‌برد، که تنها چیزی
+        است که تا حالا سنجیده شده و واقعاً کار می‌کند. جزئیات در §۲۶.
+      </div>
+    </div>
+  </div>
+
   <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V2</div>

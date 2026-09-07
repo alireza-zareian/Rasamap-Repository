@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
-import type { Billboard } from "@/lib/types";
+import type { CatalogueItem } from "@/lib/types";
 import { typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
 import SwipeMarquee from "@/components/SwipeMarquee";
@@ -16,7 +16,7 @@ const TYPE_LABEL = typeLabels as Record<string, string>;
  * the animation stops and `.related-marquee` becomes a normal scroll container
  * (rules live in globals.css).
  */
-export default function RelatedBillboards({ items }: { items: Billboard[] }) {
+export default function RelatedBillboards({ items }: { items: CatalogueItem[] }) {
   if (!items || items.length === 0) return null;
 
   // Duplicated once for the seamless -50% loop. Scale the duration with the

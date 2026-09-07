@@ -1029,6 +1029,115 @@ not.
 
 ---
 
+## 25. Where the cache lives — and why Redis is written but switched off
+
+**The question.** The server keeps what it has already worked out: the rendered
+landing page, and every catalogue query behind `/explore` and each media page.
+Today that store is a directory inside `.next/cache`. Should it be Redis?
+
+**Why it matters, and it is not speed.** One process on one laptop is served
+perfectly well by a directory. Three things break the moment there is a second
+instance, and all three are correctness rather than performance:
+
+1. An entry built by instance A is invisible to B, so the same work is done
+   once per instance instead of once.
+2. A redeploy throws the whole cache away and every instance starts cold at the
+   same moment — the worst possible time.
+3. The one that actually misleads someone: an admin approving a listing calls
+   `revalidateCatalogue()`, which clears the cache **on the instance that
+   handled the request**. Every other instance keeps serving the old catalogue
+   until its copy expires on its own. The admin sees the change, refreshes, sees
+   it again, and has no way to know that half the visitors do not.
+
+**What was built.** `cache-handler.js` implements Next's cache-handler interface
+over Redis, and `next.config.ts` names it only when `REDIS_URL` is set. With the
+variable empty, nothing in the file is loaded and Next uses its own directory —
+the same *built, tested, dormant* shape as the SMS layer in §16. Switching it on
+is an environment variable, not a code change.
+
+**The measurement that changed the design.** The first version put every read
+through Redis, as the documentation's example does. On the demo laptop, over
+loopback, that made the landing page go from **1.9 ms to 6.2 ms of CPU per
+visit** — a shared cache three times slower than the directory it replaced,
+because a page that used to be handed over from memory now costs a round-trip.
+A foundation that is a 3× regression on the hot path is not a foundation.
+
+So the handler keeps a bounded in-memory tier per process in front of Redis, and
+publishes every tag invalidation on a Redis channel that all instances
+subscribe to. The memory tier answers the read; the channel is what keeps it
+honest. That brings the landing page to **3.4 ms** while preserving the
+cross-instance behaviour the single-tier version was buying at that price.
+Verified with two processes: B calls `revalidateTag`, and A's own memory misses
+on the next read.
+
+If Redis is unreachable the handler logs once — not once per request — and
+returns null, so pages render uncached. A cache that fails should cost latency,
+never availability.
+
+**The honest recommendation.** Leave `REDIS_URL` empty until there really is a
+second instance. On one machine it is measurably slower, and the problems it
+solves do not exist yet. It is here so that the day the answer changes, the
+work is already done and already measured.
+
+---
+
+## 26. Caching the render, evaluated — and reverted
+
+**The idea.** §22 and V1 established that `/explore` costs about 10 ms of server
+CPU per visit, of which the database is roughly 8 and is already cached away.
+What remains is React laying out twenty-four cards. Next.js 16 can cache that
+too: `cacheComponents: true` plus the `use cache` directive stores the rendered
+output, not just the query. On paper it should take `/explore` to about 2 ms,
+the way the landing page already is.
+
+**It was built, not just considered.** The flag was enabled, the two
+`export const revalidate` declarations were migrated to `cacheLife`, `usePathname`
+in `StaffBar` and the request-time work on the media page were wrapped in
+Suspense boundaries, `lib/db/cached.ts` was converted from `unstable_cache` to
+`use cache`, and the catalogue was restructured so the rendered result of one
+set of filters became a cache entry keyed by those filters. The build passed and
+both routes became Partial Prerender.
+
+**The measurement.** Two production builds, alternating, each run alone with a
+60-request warm-up and 250 measured visits:
+
+| | without Cache Components | with Cache Components |
+|---|---|---|
+| `/explore` | 10.24 ms | 10.32 ms |
+| `/billboard/[slug]` | 13.92 ms | 14.52 ms |
+| `/` | 1.95 ms | 2.05 ms |
+
+Nothing. Slightly worse, in fact, on both dynamic routes.
+
+**Why — the part worth keeping.** Caching a React tree does not cache the
+*response*. On a cache hit Next still has to turn that tree into HTML bytes and
+stream them, and for a page whose output is 165 KB that serialisation is the
+cost. It is why the landing page is fast and these two are not: `/` is
+prerendered to a file at build time and served as bytes, with no per-request
+React work at all. The lesson generalises past this framework — **the cost of a
+server-rendered page tracks the size of what it emits, not the work behind it.**
+
+**Why it was reverted rather than kept as a neutral change.** It was not
+neutral. `use cache` reads a different handler interface — `cacheHandlers`,
+plural — than `cache-handler.js` implements, so adopting it would have left the
+catalogue cache unshareable and undone §25. It also makes every future page
+carry a Suspense obligation the compiler enforces at build time. Paying that for
+zero measured gain is a bad trade.
+
+**What was kept from the attempt,** because it stood on its own: the media page
+now reads its record and its "related media" through the cache instead of
+querying on every visit, `getRelatedBillboards()` takes the three fields it
+matches on rather than a whole record so it can be keyed sensibly, and
+`/api-docs` no longer re-reads and re-renders `docs/api.md` from disk per
+request.
+
+**If this is revisited,** the lever is not caching more — it is emitting less,
+or emitting it once. Prerendering the most-visited media pages with
+`generateStaticParams` would move them into the same class as `/`, which is the
+only thing measured so far that actually works.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -1061,3 +1170,7 @@ not.
 | 2026-09-02 | **Performance — demo mode** | §22 — measured `next dev` at 9.7 s CPU vs `next start` at 0.1 s for the same ten routes (~97×). Added `npm run demo`. Red-flagged in README, `docs/STATUS.md`, `defense.md`, `defense.md`, `RUNBOOK.md`, `docs/STATUS.md`, `CLAUDE.md` and `docs/roadmap.html` because it is the rule most easily forgotten. |
 | 2026-09-02 | **Performance — image weight** | §22a — 1332 fully-opaque PNGs re-encoded to progressive JPEG offline (Pillow): 493 MB → 64 MB (87%), RMSE 2.37/255, dimensions unchanged, 231 transparent PNGs untouched, references rewritten from an explicit map in both DB and seed JSON. `/explore` page image weight 4.0 MB → 1.09 MB. `loading="lazy"` + `decoding="async"` on every thumbnail. |
 | 2026-09-02 | **Performance — always-on animation** | Cursor-parallax and scroll-linked SVG redraw removed from `BackgroundPattern` (vines now draw once on mount); landing page stopped re-rendering on every scroll frame (continuous `scrollY` state → one `scrolled` boolean at a 60 px threshold); decorative animation pauses via `visibilitychange` while the tab is hidden. |
+| 2026-09-07 | **V1 — server-rendered catalogue** | `/explore` and `/` became Server Components reading the DB directly; the query string is the single source of truth for the catalogue. Prices in `/explore` HTML 0 → 24. `/` CPU 16.5 → 1.9 ms (prerendered). `/explore` CPU flat — see the V1 card in `docs/roadmap.html` for why the "SSR is cheaper" premise was half wrong. |
+| 2026-09-07 | **Shared cache (dormant)** | §25 — `cache-handler.js`: Redis-backed cache with a per-process memory tier and pub/sub tag invalidation, verified across two processes. Inert until `REDIS_URL`. |
+| 2026-09-07 | **Payload narrowing** | `CatalogueItem` — cards receive the twenty fields they draw instead of the whole record. `/explore` RSC payload 52.4 → 39.4 KB; coordinates no longer shipped for the whole result set (§20). |
+| 2026-09-07 | **Cache Components, evaluated** | §26 — built, measured at 10.24 → 10.32 ms on `/explore`, reverted. The media page's record and related-media reads were kept and are now cached. |
