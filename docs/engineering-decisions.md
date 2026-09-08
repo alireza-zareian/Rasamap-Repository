@@ -1260,7 +1260,8 @@ rollback — `npm run db:to-sqlite` returns the schema and the generated client.
 application was built and served against it. The same questions to both engines
 returned identical answers — 3,532 published media, 101 cities, a daily reach of
 204,018,788, the same four type counts, 2,781 results for `billboardiha` in
-either capitalisation, and 24 rendered prices on `/explore`. Then the schema was
+either capitalisation, and 24 rendered prices on `/explore`. The partial unique
+index was confirmed present on the target with its `WHERE` clause intact. Then the schema was
 switched back and `npm test` returned 113/113 on SQLite.
 
 **Still on SQLite on purpose.** Nothing about the running project changed:
@@ -1269,12 +1270,23 @@ the demo still needs no service running beside it. The dormant-by-default shape
 is the same one used for SMS (§16) and the shared cache (§25) — the work is
 done and measured, and switching is a decision rather than a project.
 
+**The one thing `db push` does not carry across.** A schema file cannot express
+a partial index — Prisma has no way to put a `WHERE` clause on one — so the
+unique index that stops a listing being submitted twice lives in migration SQL
+instead. A database built from `schema.prisma` alone silently lacks it, and
+"silently" is the problem: the symptom is duplicate rows nobody notices until
+someone looks. `test/reset-db.mjs` already runs `migrate deploy` rather than
+`db push` for exactly this reason. The migration script now creates it
+explicitly after pushing, and verifies it is there before reporting success. If
+another index of this kind is ever added, it has to be added to that list too —
+the script says so at the definition.
+
 **What is deliberately not done.** `prisma/migrations/` holds SQLite SQL. The
-PostgreSQL side is created with `db push` from the same schema rather than a
-parallel migration history, because keeping two histories in step by hand is a
-worse failure mode than regenerating one. If PostgreSQL ever becomes the primary
-engine, the migration history should be regenerated against it once, and this
-paragraph deleted.
+PostgreSQL side is created with `db push` from the same schema plus the explicit
+index above, rather than a parallel migration history, because keeping two
+histories in step by hand is a worse failure mode than regenerating one. If
+PostgreSQL ever becomes the primary engine, the migration history should be
+regenerated against it once, and this paragraph deleted.
 
 ---
 
