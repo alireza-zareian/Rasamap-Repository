@@ -1335,10 +1335,39 @@ three apparently unrelated things break — the session cookie ships without
 lands in one rate-limit bucket. That is §24's bug class arriving exactly where
 it was predicted to, so the reasons are written next to the directives.
 
-**What is genuinely not done.** No domain, no host, no live site. The
-acceptance test — open it from mobile data, sign in, see the photos — cannot be
-run until there is something to open. Everything it depends on is in place and
-tested locally.
+**The acceptance test was run, without buying anything.** `npm run demo` plus
+`cloudflared tunnel --url http://localhost:3000` puts the site on a real
+`https://….trycloudflare.com` address: real TLS, a real reverse proxy, and a
+host that is not `localhost`. That is precisely the environment §24 says this
+class of bug only appears in, and it costs nothing and takes five minutes.
+
+The result that matters is rule 9 finally verified against a real proxy rather
+than reasoned about. One build, one process, two connections: the session cookie
+came back with `Secure` over the tunnel and **without** it over
+`http://localhost`. `isSecureRequest()` is reading `x-forwarded-proto`, not
+guessing from `NODE_ENV`.
+
+| checked remotely | result |
+|---|---|
+| eight public routes (landing, catalogue, detail, compare, login, health, robots, sitemap) | all 200 |
+| login with a demo account, then `/api/auth/me` with that cookie | works — the session survives the proxy |
+| cookie flags over HTTPS | `HttpOnly SameSite=Strict Secure` |
+| cookie flags over `http://localhost` | the same, without `Secure` |
+| hotlink protection: own referer / another site / no referer | 200 / 403 / 200 |
+| `npm run images:check <public url>` | every image on every page resolves |
+| price markers in `/explore` HTML | 24 — the catalogue is readable to a crawler |
+| cross-origin state-changing POST with no cookie | 401, and `SameSite=Strict` means a browser would not send one |
+
+**The one thing it surfaced.** `robots.txt` and `sitemap.xml` still advertised
+`https://rasamap.ir`, because `NEXT_PUBLIC_BASE_URL` was unset and
+`lib/site-url.ts` defaults to it. Not a bug — a documented default — but on any
+other host it points crawlers at a domain that is not the one they are reading,
+and nothing complains. It is the first variable to fill in on a new server, and
+it is now in the pre-deploy checklist with that reason attached.
+
+**What is still genuinely not done.** No domain and no rented host, so nothing
+survives closing the laptop. Everything the site does once it is reachable has
+now been exercised over a real proxy.
 
 ---
 
@@ -1450,5 +1479,5 @@ promised "the map layer will be disabled", which had not been true since §20.
 | 2026-09-07 | **Cache Components, evaluated** | §26 — built, measured at 10.24 → 10.32 ms on `/explore`, reverted. The media page's record and related-media reads were kept and are now cached. |
 | 2026-09-07 | **V2 — images** | §22c — `next/image` on a custom loader over pre-built variants, no `/_next/image`. Landing on a phone 1918 → 475 KB; catalogue list 1155 → 384 KB; layout shift eliminated. Cost: +0.4 ms CPU on `/explore`. `npm run images:variants` / `images:check`. |
 | 2026-09-07 | **V3 — PostgreSQL, dormant** | §27 — engine read from `DATABASE_URL`; the two engine-specific spots (JSON path, `contains` case) handled; `npm run db:to-postgres` / `db:to-sqlite`. Proved against PostgreSQL 16: 3,562 rows moved, counts matched, app served, identical answers from both engines, switched back, 113/113. Still on SQLite. |
-| 2026-09-08 | **V4 — deployment surface** | §28 — `/api/health` (real DB ping, exempt from the bot filter, 3 tests); `backup-db.sh` made engine-aware after §27 and both paths exercised; restore rehearsed; `deploy/` nginx + systemd + backup timer; RUNBOOK deployment order. Domain and host still to buy. |
+| 2026-09-08 | **V4 — deployment surface** | §28 — `/api/health` (real DB ping, exempt from the bot filter, 3 tests); `backup-db.sh` made engine-aware after §27 and both paths exercised; restore rehearsed; `deploy/` nginx + systemd + backup timer; RUNBOOK deployment order. Acceptance test run over a `trycloudflare` tunnel: rule 9 verified against a real proxy (`Secure` present over HTTPS, absent over localhost, same build). Domain and host still to buy. |
 | 2026-09-08 | **V5 — CSP and security cleanup** | §29 — six dead origins removed from the CSP (incl. `unpkg.com` in `script-src`); `'unsafe-eval'` dropped after proving zero `eval(` in the bundle; `X-XSS-Protection` removed; `robots.txt` reduced to one generated source whose `Sitemap` follows `SITE_URL`; dead `NEXT_PUBLIC_NESHAN_KEY` removed and `NESHAN_API_KEY` demoted to optional. Nonce-based `script-src` measured at 1.86 → 8.30 ms on the landing page and declined. |

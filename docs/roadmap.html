@@ -2802,8 +2802,8 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
   <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V4</div>
-      <div class="ph-title"><h3>دامنه، میزبانی و نخستین استقرار واقعی</h3><p>هرچه کد بود آماده شد؛ آنچه مانده پول و حسابِ توست</p></div>
-      <div class="ph-badge">→ نیمه‌تمام — منتظرِ دامنه</div>
+      <div class="ph-title"><h3>دامنه، میزبانی و نخستین استقرار واقعی</h3><p>هرچه کد بود آماده و <b>روی HTTPSِ واقعی آزموده</b> شد؛ آنچه مانده پول و حسابِ توست</p></div>
+      <div class="ph-badge done">✓ تموم شده — جز خریدِ دامنه و سرور</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
@@ -2818,7 +2818,7 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
         <div class="task done-t"><div class="tick">✓</div><div><code>lib/site-url.ts</code> از قبل درست بود: یک نام، یک پیش‌فرض، بدون <code>localhost</code>. فقط مقدارِ <code>NEXT_PUBLIC_BASE_URL</code> در فایلِ محیطیِ سرور می‌ماند</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><code>systemd timer</code> روزانه نوشته شد؛ و <code>backup-db.sh</code> حالا موتور را از <code>DATABASE_URL</code> می‌خواند — بعد از V3 یک اسکریپتِ فقط-SQLite بی‌صدا از فایلی پشتیبان می‌گرفت که دیگر پایگاه داده نبود. تمرینِ بازگردانی اجرا شد: <code>integrity_check = ok</code>، ۳۵۳۶ رسانه، ۱۰ کاربر</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><code>/api/health</code> ساخته شد — یک <code>SELECT 1</code> واقعی می‌زند (نه پاسخِ ثابت)، چون خرابیِ مهم آن است که Node جواب بدهد و هر صفحه پشتش ۵۰۰ باشد. <b>و یک تلهٔ استقرار پیدا شد:</b> فیلترِ ضدِ رباتِ <code>proxy.ts</code> آن را ۴۰۳ می‌کرد، چون هر مانیتوری با <code>curl</code> یا <code>kube-probe</code> می‌آید — یعنی سایت از لحظهٔ استقرار «خاموش» گزارش می‌شد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>سنجهٔ پذیرش:</b> سایت از شبکهٔ موبایل (نه وای‌فای خانه) باز شود، ورود کار کند، و عکس‌ها بیایند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>سنجهٔ پذیرش:</b> از راه دور روی HTTPS واقعی اجرا شد — با یک تونلِ <code>trycloudflare</code>، بدون دامنه و بدون سرور. نتیجه در کادرِ زیر</div></div>
       </div>
       <div class="proof" style="border-color:var(--brand)">
         <b>چه چیزی آماده است و چه چیزی نیست:</b> هر کاری که <em>کد</em> بود انجام و آزموده شد.
@@ -2837,6 +2837,42 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
         باگِ §۲۴ است و به همین دلیل در فایلِ پیکربندی با دلیل توضیح داده شده.
         <br><br>
         <b>آزمون‌ها:</b> ۱۱۶/۱۱۶ (سه تای تازه برای <code>/api/health</code>).
+      </div>
+      <div class="note" style="margin-bottom:0; margin-top:14px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">سنجهٔ پذیرش، واقعاً اجرا شد — بدون خریدِ هیچ‌چیز</span>
+        سایت با <code>npm run demo</code> بالا آمد و با یک تونلِ
+        <code>cloudflared</code> روی یک نشانیِ <code>https://…trycloudflare.com</code> بیرون داده
+        شد: HTTPSِ واقعی، پراکسیِ واقعی، میزبانی غیر از <code>localhost</code>. این همان
+        محیطی است که §۲۴ می‌گوید هر باگِ آن دسته فقط در آن دیده می‌شود.
+        <br><br>
+        <b>و مهم‌ترین چیزی که اثبات شد — قاعدهٔ ۹، برای نخستین بار پشتِ پراکسیِ واقعی:</b>
+        یک بیلد، یک پروسه، دو اتصال. کوکیِ نشست از راهِ تونل با
+        <code style="color:var(--green)">Secure</code> برگشت و از راهِ
+        <code>http://localhost</code> <b>بدونِ</b> آن. یعنی
+        <code>isSecureRequest()</code> واقعاً <code>x-forwarded-proto</code> را می‌خواند و نه
+        <code>NODE_ENV</code> را.
+        <table class="tbl" style="margin-top:8px">
+          <thead><tr><th>چه چیزی</th><th>نتیجه از راه دور</th></tr></thead>
+          <tbody>
+            <tr><td>هشت مسیرِ عمومی (صفحهٔ نخست، کاتالوگ، جزئیات، مقایسه، ورود، health، robots، sitemap)</td><td><b>همه ۲۰۰</b></td></tr>
+            <tr><td>ورود با حسابِ دمو، و سپس <code>/api/auth/me</code> با همان کوکی</td><td><b>کار کرد</b> — نشست از پراکسی رد می‌شود</td></tr>
+            <tr><td>پرچم‌های کوکی روی HTTPS</td><td><code>HttpOnly SameSite=Strict Secure</code></td></tr>
+            <tr><td>پرچم‌های کوکی روی <code>http://localhost</code></td><td>همان‌ها <b>بدون</b> <code>Secure</code></td></tr>
+            <tr><td>محافظت از هات‌لینک: refererِ خودمان / سایتِ دیگر / بدون referer</td><td><b>۲۰۰ / ۴۰۳ / ۲۰۰</b></td></tr>
+            <tr><td><code>npm run images:check</code> روی نشانیِ عمومی</td><td>هر تصویرِ هر صفحه resolve شد</td></tr>
+            <tr><td>نشانهٔ قیمت در HTMLِ <code>/explore</code></td><td><b>۲۴</b> — کاتالوگ برای خزنده خواناست</td></tr>
+            <tr><td>POSTِ حالت‌تغییردهنده از مبدأ بیگانه <b>بدون</b> کوکی</td><td><b>۴۰۱</b> — و <code>SameSite=Strict</code> یعنی مرورگر اصلاً کوکی را نمی‌فرستد</td></tr>
+          </tbody>
+        </table>
+        <br>
+        <b style="color:var(--amber)">و یک چیز که باید روی هر استقرارِ واقعی تنظیم شود:</b>
+        <code>robots.txt</code> و <code>sitemap.xml</code> هنوز
+        <code>https://rasamap.ir</code> را تبلیغ می‌کردند، چون
+        <code>NEXT_PUBLIC_BASE_URL</code> ست نشده بود و
+        <code>lib/site-url.ts</code> همان را پیش‌فرض می‌گیرد. باگ نیست — پیش‌فرضِ مستند است —
+        ولی روی هر میزبانِ دیگری خزنده را به دامنهٔ اشتباه می‌فرستد. <b>اولین متغیری است که
+        روی سرورِ تازه باید پر شود</b>، و حالا در چک‌لیستِ <code>RUNBOOK.md</code> با همین
+        دلیل آمده.
       </div>
     </div>
   </div>

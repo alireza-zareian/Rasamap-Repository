@@ -146,6 +146,16 @@ cp deploy/rasamap-backup.* /etc/systemd/system/
 systemctl daemon-reload && systemctl enable --now rasamap-backup.timer
 ```
 
+**Rehearse all of this before renting anything.** A tunnel gives a real HTTPS
+address, a real reverse proxy and a non-localhost host for free, which is every
+condition the §24 bug class needs to show itself:
+
+```bash
+npm run demo
+cloudflared tunnel --url http://localhost:3000     # prints an https://… URL
+npm run images:check https://<that url>
+```
+
 **Then verify, from a phone on mobile data — not the office Wi-Fi:**
 
 ```bash
@@ -262,6 +272,9 @@ Run through this every time before deploying or before a live demo. Tick each li
 
 ### 2. Build & static
 
+- [ ] `NEXT_PUBLIC_BASE_URL` is the real address. Unset, `lib/site-url.ts`
+      defaults to `https://rasamap.ir`, and `robots.txt` and `sitemap.xml` then
+      advertise a domain that is not the one being served — silently.
 - [ ] `npm run images:variants` — the pre-built image sizes exist on the target.
 - [ ] `npm run images:check` — every image on every public page resolves (this
       catches a missing variant directory, which a build will not).
