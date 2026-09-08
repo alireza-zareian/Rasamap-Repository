@@ -2927,21 +2927,40 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     </div>
   </div>
 
-  <div class="phase-card">
+  <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V6</div>
-      <div class="ph-title"><h3>دیده‌شدن در جست‌وجو و اشتراک‌گذاری</h3><p>بعد از V1 که کاتالوگ قابل خواندن شد، نوبتِ قابلِ فهم شدن است</p></div>
-      <div class="ph-badge todo">اولویت شش</div>
+      <div class="ph-title"><h3>دیده‌شدن در جست‌وجو و اشتراک‌گذاری</h3><p>انجام شد — و فارسی دو بار، به دو شکلِ متفاوت، کارت اشتراک‌گذاری را شکست</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><b>۷ صفحه بدون <code>metadata</code>:</b> <code>about</code>، <code>analytics</code>، <code>compare</code>، <code>contact</code>، <code>terms</code>، <code>reset-password</code>، <code>admin/login</code> — عنوان و توضیح بگیرند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>opengraph-image</code> برای صفحهٔ نخست و صفحهٔ هر رسانه — الان اشتراک لینک در تلگرام و واتساپ کارتِ خالی می‌دهد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>دادهٔ ساخت‌یافته (JSON-LD)</b> روی صفحهٔ هر رسانه — برای یک کاتالوگ، این تفاوتِ «یک لینکِ آبی» با «نتیجهٔ غنی با عکس و قیمت» در گوگل است</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>بررسی اینکه <code>app/sitemap.ts</code> واقعاً هر ۳٬۵۳۶ رسانه را فهرست می‌کند و فقط منتشرشده‌ها را</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>manifest.ts</code> و آیکون‌ها تا سایت روی گوشی قابلِ «افزودن به صفحهٔ اصلی» باشد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>هر هفت صفحه عنوان و توضیح گرفتند. پنج‌تایشان مؤلفهٔ کلاینت‌اند و نمی‌توانند <code>metadata</code> صادر کنند، پس همان <code>layout.tsx</code>ِ کوچکی را گرفتند که <code>/explore</code> از قبل داشت. سه‌تا عمداً <code>noindex</code> شدند — سینیِ مقایسه از انتخابِ یک بازدیدکننده ساخته می‌شود، و بازیابیِ رمز و ورودِ کارکنان اصلاً محتوا نیستند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>کارتِ صفحهٔ نخست ساخته می‌شود و آمارِ واقعی رویش است. صفحهٔ هر رسانه <b>عکسِ خودش</b> را کارت می‌کند که از هر تصویرِ ساختگی بهتر است — محصول، خودِ عکس است. سه تلاش برد؛ دلیلش در کادرِ زیر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>Product</code> با <code>Offer</code> — چون صفحه دقیقاً همین است: چیزی با قیمت، اجاره‌ای و ماهانه. <b>تبدیلِ واحد نکتهٔ ظریفش بود:</b> کاتالوگ «میلیون تومان» ذخیره می‌کند و schema.org کدِ ISO می‌خواهد که تومان نیست. کدِ ایران <code>IRR</code> (ریال) است و هر تومان ده ریال — پس ضریبِ ده میلیون. نوشتنِ <code>۶۵</code> کنارِ <code>IRR</code> یعنی تبلیغِ بیلبورد به شش تومان</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>از قبل درست بود، و حالا این را می‌دانیم نه اینکه فرض کنیم:</b> ۳٬۵۳۲ ردیفِ منتشرشده در پایگاه داده، ۳٬۵۳۲ نشانیِ <code>/billboard/</code> در نقشه، چهار مسیرِ ایستا، و <b>صفر</b> بار ظاهر شدنِ آگهی‌ای که هنوز در صفِ تأیید است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>manifest.ts</code> با آیکون‌های ۱۹۲ و ۵۱۲. <code>display: "standalone"</code> اینجا بیشتر از حدِ معمول اهمیت دارد: کلِ برنامه راست‌به‌چپ است و نوارِ نشانی تنها تکه‌ای است که نیست. آیکون‌ها از همان مختصاتِ <code>app/icon.svg</code> کشیده شدند، به‌جای افزودنِ یک rasterizerِ SVG به ابزارها برای دو فایل</div></div>
       </div>
-    </div>
+      <div class="note warn" style="margin-bottom:0; margin-top:14px">
+        <span class="t">فارسی دو بار کارت را شکست — و هر دو بار فقط با <b>نگاه کردن</b> به خروجی معلوم شد</span>
+        <b>۱ — فونت.</b> اگر فونتی داده نشود، <code>next/og</code> از Google Fonts می‌گیرد؛ روی
+        ماشینی که دسترسی ندارد شکست می‌خورد و <b>بی‌صدا</b> کارتی می‌سازد که فارسی‌اش
+        جعبه‌های خالی است — از نداشتنِ کارت بدتر. woff2 و فونتِ متغیر را هم نمی‌خواند. پس
+        <code>scripts/build-og-fonts.py</code> محورِ وزن را ثابت می‌کند و دو TTFِ ایستا از همان
+        Vazirmatnِ داخلِ <code>node_modules</code> می‌سازد.
+        <br><br>
+        <b>۲ — چیدمانِ دوجهته وجود ندارد.</b> Satori حروف را درست شکل می‌دهد و بعد کلمه‌ها را
+        چپ‌به‌راست می‌چیند. نتیجه: «بیلبوردهای ایران، یک‌جا و قابل جست‌وجو» با ترتیبِ وارونهٔ
+        کلمات. <code>dir="rtl"</code> هم درستش نمی‌کند. حالا هر خط صریح چیده می‌شود — یک
+        عنصر به‌ازای هر کلمه، در یک جعبهٔ <code>row-reverse</code>.
+        <br><br>
+        <b>۳ — و همان وارونگی، یک لایه پایین‌تر.</b> فارسی اجزای یک کلمه را با
+        <b>نیم‌فاصله</b> به هم می‌چسباند، و «یک‌جا» شد «جایک». حالا هر کلمه روی همان نویسه هم
+        شکسته و اجزایش بدونِ فاصله وارونه می‌شوند — که دقیقاً معنیِ خودِ نیم‌فاصله است.
+        <br><br>
+        <b>درسِ عمومی‌اش:</b> برای رابطِ فارسی، «بیلد سبز شد» و «تست پاس شد» هیچ‌کدام کافی
+        نیستند. این سه ایراد از هیچ خطایی معلوم نمی‌شدند — فقط از دیدنِ خودِ تصویر.
+      </div>    </div>
   </div>
 
   <div class="phase-card">

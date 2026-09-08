@@ -13,7 +13,8 @@ import TrafficMeter from "@/components/TrafficMeter";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import BillboardContact from "@/components/BillboardContact";
-import { typeLabels, statusLabels } from "@/lib/types";
+import { typeLabels, statusLabels, type Billboard } from "@/lib/types";
+import { SITE_URL } from "@/lib/site-url";
 import { faNum } from "@/lib/format";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
@@ -24,6 +25,73 @@ const STATUS_COLOR: Record<string, string> = {
 
 /** Suggestions at the foot of the page — one marquee's worth. */
 const RELATED_COUNT = 12;
+
+
+/**
+ * Structured data for one media item.
+ *
+ * A catalogue page in a search result is either a blue link or a card with the
+ * photo, the price and the rating on it. This is the difference between the
+ * two, and for a directory it is close to the whole SEO argument.
+ *
+ * Modelled as a Product with an Offer because that is what the page is: a
+ * thing with a price and an availability, rented by the month.
+ *
+ * The price needs care. The catalogue stores millions of Toman — `price: 65`
+ * means 65 million Toman a month — and schema.org wants an ISO 4217 currency,
+ * of which Toman is not one. Iran's ISO code is IRR, the Rial, and one Toman is
+ * ten Rial: hence the factor of ten million. Publishing 65 against "IRR" would
+ * advertise a billboard for six Toman.
+ */
+function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
+  const url = `${SITE_URL}/billboard/${b.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: b.name,
+    description: b.description || `${TYPE_LABEL[b.type] ?? b.type} در ${b.city} — ${b.width}×${b.height} متر`,
+    url,
+    ...(b.images?.[0] ? { image: `${SITE_URL}${b.images[0]}` } : {}),
+    category: TYPE_LABEL[b.type] ?? b.type,
+    ...(b.agency ? { brand: { "@type": "Organization", name: b.agency } } : {}),
+    additionalProperty: [
+      { "@type": "PropertyValue", name: "ابعاد", value: `${b.width}×${b.height} متر` },
+      { "@type": "PropertyValue", name: "مساحت", value: `${area} مترمربع` },
+      { "@type": "PropertyValue", name: "تردد روزانه", value: String(b.traffic?.daily ?? 0) },
+    ],
+    offers: {
+      "@type": "Offer",
+      url,
+      priceCurrency: "IRR",
+      price: b.price * 10_000_000,
+      // The listed rate is per month; the unit is what stops a crawler reading
+      // it as a one-off purchase price.
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        priceCurrency: "IRR",
+        price: b.price * 10_000_000,
+        unitCode: "MON",
+      },
+      availability:
+        b.status === "available"
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      areaServed: { "@type": "City", name: b.city },
+      ...(phoneAvailable ? { seller: { "@type": "Organization", name: b.agency || "رسامپ" } } : {}),
+    },
+    // Only when real reviews exist — a rating invented for the crawler is the
+    // kind of thing that gets a site's rich results removed.
+    ...(b.reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: b.rating,
+            reviewCount: b.reviewCount,
+          },
+        }
+      : {}),
+  };
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -78,6 +146,15 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+      {/* Escaping "<" is not decoration: without it a name containing
+          "</script>" would end the tag early and turn catalogue data into
+          markup. Nothing in the data does today, and that is not a guarantee. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(mediaJsonLd(b, area, phoneAvailable)).replace(/</g, "\\u003c"),
+        }}
+      />
       <Topbar />
 
       {/* Staff preview banner — only ever rendered for a staff session, because

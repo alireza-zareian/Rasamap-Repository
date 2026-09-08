@@ -1441,6 +1441,66 @@ promised "the map layer will be disabled", which had not been true since §20.
 
 ---
 
+## 30. Being findable, and the two things Persian breaks on the way
+
+V1 made the catalogue readable to a crawler. This is the rest of it: a title on
+every page, a card when the link is shared, and structured data so a media page
+can appear as a result with a photo and a price rather than a blue link.
+
+**Seven pages had no title.** `about`, `contact`, `terms`, `analytics`,
+`compare`, `reset-password` and `admin/login` all rendered under the root
+layout's site-wide title. Five of them are client components, which cannot
+export `metadata`, so each got the same tiny `layout.tsx` `/explore` already
+used. Three are marked `robots: { index: false }` on purpose: a comparison tray
+is built from what one visitor happened to pick, and a password reset and a
+staff login are not content — indexing them puts a dead or private page in
+front of someone who searched for media.
+
+**The share card, and why it took three attempts.** `next/og` renders it, and
+Persian broke it twice in ways only visible by looking at the output.
+
+1. *No font.* Given none, the renderer fetches one from Google Fonts, which
+   fails on a machine that cannot reach it and silently produces a card whose
+   Persian is blank boxes — worse than no card. It also cannot read the woff2
+   this project self-hosts, nor a variable axis. `scripts/build-og-fonts.py`
+   pins the weight axis and writes two static TTFs from the same Vazirmatn that
+   is already in `node_modules`.
+2. *No bidirectional layout.* Satori shapes the glyphs correctly and then places
+   the words left to right, so «بیلبوردهای ایران، یک‌جا و قابل جست‌وجو» came out
+   with its words reversed. `dir="rtl"` does not fix it. A line is now laid out
+   explicitly — one element per word in a `row-reverse` flex box.
+3. *The same reversal one level down.* Persian joins parts of a word with a
+   zero-width non-joiner, and «یک‌جا» became «جایک». Each word is now split on
+   that character too and its parts reversed in place with no gap, which is
+   exactly what the character means.
+
+A media page keeps its own photograph as the card instead, which is better than
+anything generated: the product is the picture.
+
+**Structured data.** A media page now carries a `Product` with an `Offer` —
+what it actually is: a thing with a price, rented by the month. The price
+needed care. The catalogue stores millions of Toman (`price: 65` is 65 million
+Toman a month) and schema.org wants ISO 4217, of which Toman is not one. Iran's
+code is IRR and one Toman is ten Rial, hence a factor of ten million; publishing
+`65` against `IRR` would have advertised a billboard for six Toman. `aggregateRating`
+appears only when real reviews exist — a rating invented for the crawler is how
+a site loses rich results altogether. The JSON is escaped at `<`, because a name
+containing `</script>` would otherwise close the tag and turn catalogue data
+into markup.
+
+**The sitemap was already right, and now that is known rather than assumed.**
+3,532 published rows in the database, 3,532 `/billboard/` URLs in the sitemap,
+four static routes, and zero appearances of a slug that is still awaiting
+review.
+
+**A manifest, so the catalogue can live on a home screen.** `display: "standalone"`
+matters more here than usual: the app is RTL and the address bar is the one
+piece of UI that is not. The two PNG icons are drawn from the same coordinates
+as `app/icon.svg` rather than by adding an SVG rasteriser to the toolchain for
+two files.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -1481,3 +1541,4 @@ promised "the map layer will be disabled", which had not been true since §20.
 | 2026-09-07 | **V3 — PostgreSQL, dormant** | §27 — engine read from `DATABASE_URL`; the two engine-specific spots (JSON path, `contains` case) handled; `npm run db:to-postgres` / `db:to-sqlite`. Proved against PostgreSQL 16: 3,562 rows moved, counts matched, app served, identical answers from both engines, switched back, 113/113. Still on SQLite. |
 | 2026-09-08 | **V4 — deployment surface** | §28 — `/api/health` (real DB ping, exempt from the bot filter, 3 tests); `backup-db.sh` made engine-aware after §27 and both paths exercised; restore rehearsed; `deploy/` nginx + systemd + backup timer; RUNBOOK deployment order. Acceptance test run over a `trycloudflare` tunnel: rule 9 verified against a real proxy (`Secure` present over HTTPS, absent over localhost, same build). Domain and host still to buy. |
 | 2026-09-08 | **V5 — CSP and security cleanup** | §29 — six dead origins removed from the CSP (incl. `unpkg.com` in `script-src`); `'unsafe-eval'` dropped after proving zero `eval(` in the bundle; `X-XSS-Protection` removed; `robots.txt` reduced to one generated source whose `Sitemap` follows `SITE_URL`; dead `NEXT_PUBLIC_NESHAN_KEY` removed and `NESHAN_API_KEY` demoted to optional. Nonce-based `script-src` measured at 1.86 → 8.30 ms on the landing page and declined. |
+| 2026-09-08 | **V6 — findability** | §30 — titles on the seven pages that had none (three `noindex`); generated Open Graph card with the project's own font, explicit RTL word order and ZWNJ handling; `Product`/`Offer` JSON-LD on media pages with Toman→IRR conversion; sitemap verified at 3,532/3,532 with no unpublished leak; `manifest.ts` + 192/512 icons. |

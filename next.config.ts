@@ -106,6 +106,10 @@ const nextConfig: NextConfig = {
   // build ships that file (it lives outside app/ and public/).
   outputFileTracingIncludes: {
     "/api-docs": ["./docs/api.md"],
+    // The Open Graph card rasterises Persian text, so the font has to travel
+    // with the build — it lives outside app/ and public/, which is exactly the
+    // set of files the tracer would otherwise leave behind.
+    "/opengraph-image": ["./assets/fonts/*.ttf"],
   },
 };
 
