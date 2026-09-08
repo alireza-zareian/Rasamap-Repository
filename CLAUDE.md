@@ -62,7 +62,8 @@ npm run db:to-postgres -- <url>   # move to PostgreSQL (§27) · db:to-sqlite to
 > coding. Any report, article or thesis text generated from this repo must carry
 > the rule and the 97× figure.
 
-Required env: `DATABASE_URL` · `AUTH_SECRET` · `ADMIN_EMAIL` · `ADMIN_PASSWORD_HASH` · `ADMIN_NAME` · `NESHAN_API_KEY`
+Required env: `DATABASE_URL` · `AUTH_SECRET` · `ADMIN_EMAIL` · `ADMIN_PASSWORD_HASH` · `ADMIN_NAME`
+(`NESHAN_API_KEY` is optional — only `prisma/backfill-coordinates.ts` reads it, §29)
 
 ## Roadmap Tracking (always do this)
 
@@ -144,7 +145,7 @@ The documentation was consolidated: what used to be 24 files is now these.
 | File | What it carries |
 |---|---|
 | `docs/architecture.md` | the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API |
-| `docs/engineering-decisions.md` | 24 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected, §28 = the deployment surface) |
+| `docs/engineering-decisions.md` | 24 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected, §28 = the deployment surface, §29 = CSP tightening and why script-src keeps 'unsafe-inline') |
 | `docs/api.md` | full HTTP API reference (42 endpoints) **+ the route-writing pattern** (was `api-patterns.md`) |
 | `docs/codemap.html` | interactive file map generated from the real import graph — supersedes the old hand-written `project-reference.md` |
 | `docs/STATUS.md` | project state, production-readiness triage, 13-layer assessment, remaining work, security audit (was `STATUS.md` + `PLAN.md` + `AUDIT.md` + `next-tasks.md` + `security-audit.md`) |

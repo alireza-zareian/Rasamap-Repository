@@ -147,8 +147,8 @@ npm run demo                   # build + start → http://localhost:3000
 ```
 
 متغیرهای لازم (نام‌ها در `.env.example`): `DATABASE_URL`، `AUTH_SECRET` (دست‌کم ۳۲ نویسه)،
-`ADMIN_EMAIL`، `ADMIN_PASSWORD_HASH`، `ADMIN_NAME`، و برای لایهٔ نقشه `NESHAN_API_KEY` و
-`NEXT_PUBLIC_NESHAN_KEY`. اگر یکی از موارد الزامی نباشد، سرور همان هنگام بالا آمدن با
+`ADMIN_EMAIL`، `ADMIN_PASSWORD_HASH` و `ADMIN_NAME`. (`NESHAN_API_KEY` اختیاری است و فقط
+اسکریپتِ آفلاینِ تکمیلِ مختصات می‌خواندش — §۲۹.) اگر یکی از موارد الزامی نباشد، سرور همان هنگام بالا آمدن با
 پیامی روشن متوقف می‌شود ([`lib/env.ts`](./lib/env.ts)) — به‌جای آنکه وسط کار کاربر خراب شود.
 
 حساب‌های آمادهٔ آزمون: [`RUNBOOK.md`](./RUNBOOK.md)

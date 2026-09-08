@@ -1342,6 +1342,76 @@ tested locally.
 
 ---
 
+## 29. Tightening the Content-Security-Policy — and the one line left loose on purpose
+
+**What was wrong.** The policy still allowed `unpkg.com` in `script-src`,
+`unpkg.com` in `style-src`, and `api.neshan.org`, `*.tile.openstreetmap.org`,
+`*.basemaps.cartocdn.com`, `*.neshan.org`, `map.ir` and `billboardiha.com`
+across `img-src` and `connect-src`. Every one was left over from the Leaflet map
+layer removed in §20. An allowed origin that nothing uses is not neutral: it is
+a supply-chain hole that buys nothing, and a CDN in `script-src` is the worst
+kind, because a compromise there executes as first-party code. Verified dead
+before removing — no import, no fetch, no image URL, and no row in the database
+with an off-site image. The policy now names only origins the app contacts: the
+Google Maps frame on a media page, and itself.
+
+`X-XSS-Protection: 1; mode=block` went too. It drove a filter every current
+browser has removed, and in the browsers that did honour it the filter itself
+introduced vulnerabilities — which is why the guidance is to send `0` or
+nothing. The CSP is the control that does this job.
+
+**`'unsafe-eval'` is gone, on evidence rather than hope.** A 200 from the server
+proves nothing about whether a browser can run the page, so the check was made
+against the shipped bundle instead: zero occurrences of `eval(` or
+`new Function(` across every chunk in `.next/static/chunks`.
+
+**`'unsafe-inline'` in `script-src` stays, and this is the decision worth
+recording.** Removing it means a per-request nonce, and Next.js is explicit that
+a nonce requires dynamic rendering — a prerendered page is built before any
+request exists, so there is no nonce to inject.
+
+Measured, two builds, alternating, 250 visits each:
+
+| landing page | CPU per visit |
+|---|---|
+| prerendered (today) | **1.86 ms** |
+| forced dynamic, as a nonce requires | **8.30 ms** |
+
+Four and a half times the CPU on the most-visited page in the site, and it
+would undo the prerendering V1 earned. Against what? `'unsafe-inline'` in
+`script-src` matters when an attacker can get script into the page — and there
+is nowhere to put it. React escapes everything it renders; the single
+`dangerouslySetInnerHTML` in the codebase renders `docs/api.md`, a file shipped
+with the build, through an escape pass first. There is no user-controlled HTML
+anywhere in the application.
+
+So: pay 4.5x on the hot path to harden a vector that does not exist, on a
+fanless laptop whose CPU budget is the subject of §22. Declined, with the
+numbers, the way §26 was. If user-generated HTML is ever introduced — a rich
+description field, an embedded advert — this decision inverts and the nonce
+becomes worth its cost. That is the trigger to watch for, not the calendar.
+
+**One source for `robots.txt`.** There were two, `app/robots.ts` and
+`public/robots.txt`, and a file in `public/` wins — so the rich rules lived in
+the static one and the generated route was dead code waiting to go stale. The
+generated route was kept rather than the file, for a reason that only appears on
+deployment day: the static file hardcoded
+`Sitemap: https://rasamap.ir/sitemap.xml`. Served from a staging host, a free
+subdomain or the tunnel used to test from a phone, it pointed crawlers at a
+domain that was not the one they were reading, and nothing would have reported
+it. It now comes from `SITE_URL` — rule 9 again, in the one file where it had
+been missed.
+
+**A required environment variable that nothing required.** `NESHAN_API_KEY` was
+documented as mandatory while the running application never reads it; only the
+offline coordinate backfill does. A required variable with no reader is a
+deployment that refuses to start for no reason. It is optional now, documented
+as belonging to the maintenance script. `NEXT_PUBLIC_NESHAN_KEY` was genuinely
+dead — there is no client-side map any more — and went with the warning that
+promised "the map layer will be disabled", which had not been true since §20.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -1381,3 +1451,4 @@ tested locally.
 | 2026-09-07 | **V2 — images** | §22c — `next/image` on a custom loader over pre-built variants, no `/_next/image`. Landing on a phone 1918 → 475 KB; catalogue list 1155 → 384 KB; layout shift eliminated. Cost: +0.4 ms CPU on `/explore`. `npm run images:variants` / `images:check`. |
 | 2026-09-07 | **V3 — PostgreSQL, dormant** | §27 — engine read from `DATABASE_URL`; the two engine-specific spots (JSON path, `contains` case) handled; `npm run db:to-postgres` / `db:to-sqlite`. Proved against PostgreSQL 16: 3,562 rows moved, counts matched, app served, identical answers from both engines, switched back, 113/113. Still on SQLite. |
 | 2026-09-08 | **V4 — deployment surface** | §28 — `/api/health` (real DB ping, exempt from the bot filter, 3 tests); `backup-db.sh` made engine-aware after §27 and both paths exercised; restore rehearsed; `deploy/` nginx + systemd + backup timer; RUNBOOK deployment order. Domain and host still to buy. |
+| 2026-09-08 | **V5 — CSP and security cleanup** | §29 — six dead origins removed from the CSP (incl. `unpkg.com` in `script-src`); `'unsafe-eval'` dropped after proving zero `eval(` in the bundle; `X-XSS-Protection` removed; `robots.txt` reduced to one generated source whose `Sitemap` follows `SITE_URL`; dead `NEXT_PUBLIC_NESHAN_KEY` removed and `NESHAN_API_KEY` demoted to optional. Nonce-based `script-src` measured at 1.86 → 8.30 ms on the landing page and declined. |

@@ -47,10 +47,11 @@ single process, single DB file.
    - Stale WAL: stop the app, `sqlite3 dev.db "PRAGMA wal_checkpoint(TRUNCATE);"`,
      restart.
 
-5. **Map is blank / "API Key Required"?**
-   - `NEXT_PUBLIC_NESHAN_KEY` missing or invalid, or Neshan is unreachable. The rest of
-     the site is unaffected — for a demo, use the grid/list view and say the map layer
-     depends on an external provider.
+5. **The location map on a media page is blank?**
+   - It is a Google Maps `iframe`, so it only appears if Google is reachable from the
+     visitor's connection — on an Iranian mobile line it often is not. Nothing to fix:
+     the coordinates and a "open in your map app" link are printed underneath for
+     exactly this case. The rest of the page is unaffected.
 
 6. **Data looks wrong (missing billboards, 0 prices)?**
    - Do **not** re-seed against the live DB in a panic. Restore from backup (below) into
@@ -252,8 +253,8 @@ Run through this every time before deploying or before a live demo. Tick each li
 ### 1. Config & secrets
 - [ ] `NODE_ENV=production` for the running process.
 - [ ] `.env.local` (or the server's real env) has: `DATABASE_URL`, `AUTH_SECRET`
-      (≥32 random chars), `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_NAME`,
-      `NESHAN_API_KEY`, `NEXT_PUBLIC_NESHAN_KEY`.
+      (≥32 random chars), `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_NAME`.
+      `NESHAN_API_KEY` is optional — only the offline coordinate backfill reads it (§29).
 - [ ] No secret is hardcoded in source: `git grep -nE "AUTH_SECRET|PASSWORD_HASH|API_KEY" -- '*.ts' '*.tsx'`
       returns only `process.env.*` references.
 - [ ] `.env*` is git-ignored; only `.env.example` is tracked.

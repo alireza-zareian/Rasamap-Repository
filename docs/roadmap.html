@@ -2841,11 +2841,11 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     </div>
   </div>
 
-  <div class="phase-card">
+  <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V5</div>
-      <div class="ph-title"><h3>سخت‌کردن CSP و پاک‌سازی امنیتی</h3><p>سیاست امنیتی هنوز درهایی را باز گذاشته که دیگر پشتشان چیزی نیست</p></div>
-      <div class="ph-badge todo">اولویت پنج</div>
+      <div class="ph-title"><h3>سخت‌کردن CSP و پاک‌سازی امنیتی</h3><p>شش مبدأ مرده بسته شد؛ و یک در، با عدد، عمداً باز ماند</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <div class="note warn" style="margin-bottom:14px">
@@ -2857,11 +2857,36 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
         باز گذاشتنِ <code>unpkg.com</code> در <code>script-src</code> یعنی یک سطحِ حملهٔ زنجیرهٔ تأمین که هیچ سودی نمی‌دهد.
       </div>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>حذفِ هر مبدأیی که دیگر استفاده نمی‌شود از هر چهار دستورِ CSP</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>جایگزینیِ <code>'unsafe-inline'</code> و <code>'unsafe-eval'</code> در <code>script-src</code> با CSP مبتنی بر <code>nonce</code> — اول با <code>Content-Security-Policy-Report-Only</code> تا چیزی نشکند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>حذفِ سرآیندِ <code>X-XSS-Protection</code> — در مرورگرهای امروزی منسوخ است و توصیهٔ رسمی خاموش‌کردنش است</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>یکی از <code>public/robots.txt</code> و <code>app/robots.ts</code> حذف شود — هر دو وجود دارند و فایلِ <code>public/</code> بر دیگری غلبه می‌کند، پس نسخهٔ کدی بی‌اثر و در معرضِ کهنه‌شدن است</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>بازبینیِ متغیرهای مردهٔ <code>NESHAN</code> در <code>lib/env.ts</code> — پیامِ «لایهٔ نقشه غیرفعال می‌شود» دیگر درست نیست</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>هر شش مبدأ حذف شد — <code>unpkg.com</code>، <code>api.neshan.org</code>، <code>*.tile.openstreetmap.org</code>، <code>*.basemaps.cartocdn.com</code>، <code>map.ir</code> و <code>billboardiha.com</code>. پیش از حذف، مرده‌بودنشان تأیید شد: نه importی، نه fetchی، و نه حتی یک ردیف در پایگاه داده با تصویرِ بیرونی. حالا سیاست فقط خودمان را نام می‌برد و یک استثنا: قابِ نقشهٔ گوگل</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>'unsafe-eval'</code> حذف شد — با شاهد، نه امید: صفر مورد <code>eval(</code> یا <code>new Function(</code> در تمامِ تکه‌های باندلِ تولیدی. <b><code>'unsafe-inline'</code> عمداً ماند</b>؛ دلیلش با عدد در کادرِ زیر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>X-XSS-Protection</code> حذف شد. فیلتری را روشن می‌کرد که هر مرورگرِ امروزی برداشته، و در همان‌هایی که رعایتش می‌کردند خودِ فیلتر آسیب‌پذیری می‌ساخت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>public/robots.txt</code> حذف شد و <b>نسخهٔ کدی</b> نگه داشته شد (نه برعکس) — چون فایلِ ایستا <code>Sitemap: https://rasamap.ir/…</code> را hardcode کرده بود. روی هر میزبانِ دیگری — استیجینگ، زیردامنهٔ رایگان، یا تونلی که با آن از موبایل تست می‌کنیم — خزنده را به دامنه‌ای می‌فرستاد که نمی‌خواندش، و هیچ‌کس خبردار نمی‌شد. حالا از <code>SITE_URL</code> می‌آید؛ قاعدهٔ ۹، در تنها فایلی که از قلم افتاده بود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>NEXT_PUBLIC_NESHAN_KEY</code> واقعاً مرده بود و با همان پیامِ نادرست حذف شد. و یک یافتهٔ اضافه: <code>NESHAN_API_KEY</code> در مستندات <b>الزامی</b> معرفی شده بود در حالی که برنامهٔ در حالِ اجرا هرگز نمی‌خواندش — فقط اسکریپتِ آفلاینِ ژئوکد. یک متغیرِ الزامیِ بی‌خواننده یعنی استقراری که بی‌دلیل بالا نمی‌آید</div></div>
+      </div>
+      <div class="note warn" style="margin-bottom:0; margin-top:14px">
+        <span class="t">چرا <code>'unsafe-inline'</code> ماند — با عدد، نه با سلیقه</span>
+        برداشتنش یعنی <code>nonce</code> به‌ازای هر درخواست، و مستنداتِ Next صریح است:
+        nonce <b>رندرِ داینامیک لازم دارد</b>، چون صفحهٔ پیش‌ساخته پیش از وجودِ هر درخواستی
+        ساخته می‌شود و nonceای برای تزریق نیست.
+        <table class="tbl" style="margin-top:8px">
+          <thead><tr><th>صفحهٔ نخست</th><th>CPU به‌ازای هر بازدید</th></tr></thead>
+          <tbody>
+            <tr><td>پیش‌ساخته (امروز)</td><td><b style="color:var(--green)">۱٫۸۶ ms</b></td></tr>
+            <tr><td>داینامیکِ اجباری، آن‌طور که nonce می‌خواهد</td><td><b style="color:#C33A3A">۸٫۳۰ ms</b></td></tr>
+          </tbody>
+        </table>
+        <br>
+        <b>۴٫۵ برابر CPU روی پربازدیدترین صفحهٔ سایت</b> — و بی‌اثر کردنِ همان پیش‌رندری که
+        V1 به دست آورد. در ازای چه؟ <code>'unsafe-inline'</code> وقتی اهمیت دارد که مهاجم
+        بتواند اسکریپت را <em>داخلِ</em> صفحه بگذارد، و اینجا هیچ جایی برای گذاشتن نیست:
+        ری‌اکت هرچه رندر می‌کند را escape می‌کند، و تنها
+        <code>dangerouslySetInnerHTML</code>ِ پروژه، <code>docs/api.md</code> را رندر می‌کند —
+        فایلی که با خودِ build می‌آید و از یک پاسِ escape هم رد شده. <b>هیچ HTMLِ
+        کاربرساخته‌ای در سامانه نیست.</b>
+        <br><br>
+        پس رد شد، با همان انضباطِ §۲۶. <b>و ماشهٔ بازبینی مشخص است، نه تقویم:</b> اگر روزی
+        HTMLِ کاربرساخته وارد شد — توضیحِ غنی، تبلیغِ جاسازی‌شده — این تصمیم برعکس می‌شود و
+        nonce ارزشِ هزینه‌اش را پیدا می‌کند. جزئیات در §۲۹.
       </div>
     </div>
   </div>

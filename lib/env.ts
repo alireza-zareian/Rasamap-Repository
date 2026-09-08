@@ -16,10 +16,10 @@ const required = z.object({
 });
 
 const optional = z.object({
-  // Map / geocoding — only the scraper and the client map need these; the core
-  // app runs without them (the map layer degrades, nothing else).
+  // Geocoding, for the offline coordinate backfill only
+  // (prisma/backfill-coordinates.ts). The running app never reads it: there is
+  // no client-side map any more, so NEXT_PUBLIC_NESHAN_KEY is gone with it.
   NESHAN_API_KEY: z.string().optional(),
-  NEXT_PUBLIC_NESHAN_KEY: z.string().optional(),
   // Logging (see lib/logger.ts)
   LOG_DIR: z.string().optional(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
@@ -46,11 +46,6 @@ export function validateEnv(): void {
   if (!opt.success) {
     const lines = opt.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`);
     throw new Error("Invalid optional environment variable:\n" + lines.join("\n"));
-  }
-
-  if (!process.env.NEXT_PUBLIC_NESHAN_KEY) {
-    // Not fatal — surfaced once so it isn't a silent "why is the map blank".
-    console.warn("[env] NEXT_PUBLIC_NESHAN_KEY is not set — the map layer will be disabled.");
   }
 
   done = true;

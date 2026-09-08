@@ -6,20 +6,37 @@ const securityHeaders = [
   { key: "X-Content-Type-Options",        value: "nosniff" },
   { key: "Referrer-Policy",               value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy",            value: "camera=(), microphone=(), geolocation=(self)" },
-  { key: "X-XSS-Protection",             value: "1; mode=block" },
+  // X-XSS-Protection is deliberately absent. It drove a filter that every
+  // current browser has removed, and in the browsers that still honoured it the
+  // filter itself introduced vulnerabilities — which is why the guidance is now
+  // to send `0` or nothing at all. The Content-Security-Policy below is the
+  // control that actually does this job.
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
   {
+    // Every origin here is one the app actually contacts. The list used to
+    // carry Leaflet's CDN, the OpenStreetMap and Carto tile servers and the
+    // Neshan API, all left over from a map layer that was removed — an allowed
+    // origin nothing uses is a supply-chain hole that buys nothing, and
+    // `unpkg.com` in script-src was the worst of them.
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.neshan.org https://unpkg.com",
-      "style-src 'self' 'unsafe-inline' https://unpkg.com",
+      // 'unsafe-inline' stays: the App Router streams its payload through inline
+      // <script> tags, and the alternative — a per-request nonce — makes every
+      // page dynamic, which would undo the prerendered landing page (§29).
+      "script-src 'self' 'unsafe-inline'",
+      // Required by the project's own convention: styling is inline style={{}}
+      // objects (rule 5), which are inline styles as far as CSP is concerned.
+      "style-src 'self' 'unsafe-inline'",
       "font-src 'self'",
-      "img-src 'self' data: blob: https://billboardiha.com https://*.tile.openstreetmap.org https://*.neshan.org https://*.basemaps.cartocdn.com https://unpkg.com",
-      "connect-src 'self' https://api.neshan.org https://map.ir https://*.basemaps.cartocdn.com https://unpkg.com",
+      // data: and blob: are the upload previews, which exist only in the
+      // browser that made them.
+      "img-src 'self' data: blob:",
+      "connect-src 'self'",
+      // The one embedded third party: the location map on a media page.
       "frame-src https://maps.google.com https://www.google.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",
