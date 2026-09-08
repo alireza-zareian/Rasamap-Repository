@@ -1,0 +1,21 @@
+# RASAMAP — a daily database backup
+#
+#   sudo cp deploy/rasamap-backup.* /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now rasamap-backup.timer
+#   systemctl list-timers rasamap-backup
+#
+# A backup nobody has restored is not a backup. RUNBOOK.md has the drill;
+# do it once after the first deploy, and then when anything about the
+# database changes.
+
+[Unit]
+Description=Daily Rasamap database backup
+
+[Timer]
+OnCalendar=daily
+# Machines that were asleep at 00:00 still get their backup.
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

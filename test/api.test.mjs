@@ -118,6 +118,34 @@ test("a scraper user-agent is refused on the public API", async () => {
   assert.equal(status, 403);
 });
 
+// ── Health ────────────────────────────────────────────────────────────────
+// The endpoint a reverse proxy, systemd or an uptime pinger asks before it
+// decides the site is up.
+
+test("GET /api/health reports ok and says nothing else", async () => {
+  const { status, json } = await api("/api/health");
+  assert.equal(status, 200);
+  // Bare on purpose: a public endpoint that reports the engine, the version or
+  // the uptime is a fingerprint handed to whoever asks.
+  assert.deepEqual(json, { status: "ok" });
+});
+
+test("health answers the user agents that actually poll it", async () => {
+  // The bot filter that (correctly) refuses python-requests on the catalogue
+  // above would refuse every one of these, and a liveness check that only
+  // answers browsers reports the site as down the moment it is deployed.
+  for (const ua of ["curl/8.4.0", "kube-probe/1.29", "Go-http-client/2.0", ""]) {
+    const { status } = await api("/api/health", { headers: { "user-agent": ua } });
+    assert.equal(status, 200, `health refused user-agent ${JSON.stringify(ua)}`);
+  }
+});
+
+test("health is never cached", async () => {
+  // A cached health check reports the health of the cache.
+  const { headers } = await api("/api/health");
+  assert.match(headers.get("cache-control") ?? "", /no-store/);
+});
+
 test("GET /api/billboards rejects an unknown type", async () => {
   const { status } = await api("/api/billboards?type=notatype");
   assert.equal(status, 400);

@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/auth/session";
 
 const ADMIN_PAGE_PATTERN = /^\/admin(\/|$)/;
+/** Exempt from the bot-UA filter — see the note at the top of proxy(). */
+const HEALTH_PATH        = "/api/health";
 const ADMIN_API_PATTERN  = /^\/api\/admin(\/|$)/;
 const USER_PAGE_PATTERN  = /^\/(dashboard|list-media)(\/|$)/;
 const USER_API_PATTERN   = /^\/api\/listings(\/.*)?$/;
@@ -41,6 +43,16 @@ function addSecurityHeaders(res: NextResponse, isAdmin = false): NextResponse {
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // ── Health, before anything else ──
+  // Whatever watches this process — a reverse proxy's upstream check, systemd,
+  // an uptime pinger — identifies itself as curl, Go-http-client, kube-probe or
+  // nothing at all, every one of which the bot filter below is built to reject.
+  // A liveness check that only answers browsers reports the site as down the
+  // moment it is deployed. The endpoint returns a status and no data, so
+  // exempting it gives a scraper nothing.
+  if (pathname === HEALTH_PATH) return NextResponse.next();
+
   const ua = req.headers.get("user-agent") ?? "";
   const isSearchBot = SEARCH_BOT.test(ua);
 

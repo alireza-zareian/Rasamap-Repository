@@ -1,0 +1,47 @@
+# RASAMAP — the app as a service
+#
+#   sudo cp deploy/rasamap.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now rasamap
+#   systemctl status rasamap · journalctl -u rasamap -f
+#
+# `next start`, never `next dev`: §22 measured dev mode at ~97x the CPU for the
+# same ten routes. On a small VPS that is the difference between idle and hot.
+
+[Unit]
+Description=Rasamap
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rasamap
+WorkingDirectory=/srv/rasamap
+
+# Secrets live in a file root owns and the service user only reads — not in
+# this unit, which is world-readable.
+EnvironmentFile=/etc/rasamap/env
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+ExecStart=/usr/bin/npm run start
+
+Restart=always
+RestartSec=5
+# A crash loop should not hammer the database; back off after five tries.
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+# The app writes exactly two places: the SQLite file (if that is the engine)
+# and public/uploads. Everything else can be read-only.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/srv/rasamap /var/log/rasamap
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rasamap
+
+[Install]
+WantedBy=multi-user.target

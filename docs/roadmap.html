@@ -2802,8 +2802,8 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
   <div class="phase-card is-next open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">V4</div>
-      <div class="ph-title"><h3>دامنه، میزبانی و نخستین استقرار واقعی</h3><p>از «روی لپ‌تاپ اجرا می‌شود» به «یک آدرس که هر کسی باز می‌کند»</p></div>
-      <div class="ph-badge">→ در جریان</div>
+      <div class="ph-title"><h3>دامنه، میزبانی و نخستین استقرار واقعی</h3><p>هرچه کد بود آماده شد؛ آنچه مانده پول و حسابِ توست</p></div>
+      <div class="ph-badge">→ نیمه‌تمام — منتظرِ دامنه</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
@@ -2814,11 +2814,29 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
       <div class="task-list">
         <div class="task todo-t"><div class="tick"></div><div>خرید دامنهٔ ارزان (<code>.ir</code> از ایرنیک ارزان‌ترین است؛ <code>.com</code> اگر مخاطبِ بیرونی هم مدنظر است)</div></div>
         <div class="task todo-t"><div class="tick"></div><div>انتخاب میزبان: یک VPS ساده کافی است — پروژه به Node ۲۰ و یک Postgres نیاز دارد و بس</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>HTTPS با گواهیِ رایگان (Let's Encrypt) پشتِ یک reverse proxy؛ بررسی اینکه <code>x-forwarded-proto</code> درست به برنامه می‌رسد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>NEXT_PUBLIC_SITE_URL</code> روی دامنهٔ واقعی؛ کنترل اینکه <code>lib/site-url.ts</code> دیگر هیچ‌جا به <code>localhost</code> برنگردد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>پشتیبان‌گیریِ خودکار روزانه از پایگاه داده + <b>یک بار تمرینِ بازگردانی</b> — پشتیبانی که آزموده نشده، پشتیبان نیست</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>یک نقطهٔ پایانیِ <code>/api/health</code> برای بررسیِ زنده‌بودن</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>پیکربندیِ nginx نوشته شد (<code>deploy/nginx.conf.example</code>) و هر سه هدرِ لازم را ست می‌کند؛ فرمانِ <code>certbot</code> هم در RUNBOOK آمده. <b>اجرا روی سرورِ واقعی مانده.</b></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>lib/site-url.ts</code> از قبل درست بود: یک نام، یک پیش‌فرض، بدون <code>localhost</code>. فقط مقدارِ <code>NEXT_PUBLIC_BASE_URL</code> در فایلِ محیطیِ سرور می‌ماند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>systemd timer</code> روزانه نوشته شد؛ و <code>backup-db.sh</code> حالا موتور را از <code>DATABASE_URL</code> می‌خواند — بعد از V3 یک اسکریپتِ فقط-SQLite بی‌صدا از فایلی پشتیبان می‌گرفت که دیگر پایگاه داده نبود. تمرینِ بازگردانی اجرا شد: <code>integrity_check = ok</code>، ۳۵۳۶ رسانه، ۱۰ کاربر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>/api/health</code> ساخته شد — یک <code>SELECT 1</code> واقعی می‌زند (نه پاسخِ ثابت)، چون خرابیِ مهم آن است که Node جواب بدهد و هر صفحه پشتش ۵۰۰ باشد. <b>و یک تلهٔ استقرار پیدا شد:</b> فیلترِ ضدِ رباتِ <code>proxy.ts</code> آن را ۴۰۳ می‌کرد، چون هر مانیتوری با <code>curl</code> یا <code>kube-probe</code> می‌آید — یعنی سایت از لحظهٔ استقرار «خاموش» گزارش می‌شد</div></div>
         <div class="task todo-t"><div class="tick"></div><div><b>سنجهٔ پذیرش:</b> سایت از شبکهٔ موبایل (نه وای‌فای خانه) باز شود، ورود کار کند، و عکس‌ها بیایند</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--brand)">
+        <b>چه چیزی آماده است و چه چیزی نیست:</b> هر کاری که <em>کد</em> بود انجام و آزموده شد.
+        سه کارِ باقی‌مانده پول و حسابِ شخصی می‌خواهند و از دستِ کسِ دیگری برنمی‌آید:
+        خریدِ دامنه، اجارهٔ VPS، و اجرای همان فرمان‌ها روی آن.
+        <br><br>
+        <b>قالب‌ها در <code>deploy/</code>:</b> <code>nginx.conf.example</code> ·
+        <code>rasamap.service</code> · <code>rasamap-backup.{service,timer}</code>،
+        و ترتیبِ کاملِ فرمان‌ها در <code>RUNBOOK.md</code>.
+        <br><br>
+        <b>مهم‌ترین چیزی که در این فاز کشف شد:</b> پیکربندیِ nginx <b>باید</b> هر سه هدرِ
+        <code>X-Forwarded-Proto</code>، <code>X-Forwarded-Host</code> و
+        <code>X-Forwarded-For</code> را بفرستد، وگرنه سه چیزِ به‌ظاهر بی‌ربط می‌شکنند:
+        کوکیِ نشست بدونِ <code>Secure</code> فرستاده می‌شود، بررسیِ مبدأ فرم‌های سالم را رد
+        می‌کند، و همهٔ بازدیدکننده‌ها در یک سطلِ سقفِ نرخ می‌افتند. این دقیقاً همان کلاسِ
+        باگِ §۲۴ است و به همین دلیل در فایلِ پیکربندی با دلیل توضیح داده شده.
+        <br><br>
+        <b>آزمون‌ها:</b> ۱۱۶/۱۱۶ (سه تای تازه برای <code>/api/health</code>).
       </div>
     </div>
   </div>

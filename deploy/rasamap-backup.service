@@ -1,0 +1,12 @@
+[Unit]
+Description=Rasamap database backup
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=rasamap
+WorkingDirectory=/srv/rasamap
+EnvironmentFile=/etc/rasamap/env
+# The script reads DATABASE_URL and picks sqlite3 or pg_dump accordingly.
+Environment=BACKUP_DIR=/var/backups/rasamap
+ExecStart=/usr/bin/npm run db:backup

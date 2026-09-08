@@ -1290,6 +1290,58 @@ regenerated against it once, and this paragraph deleted.
 
 ---
 
+## 28. The deployment surface, prepared and mostly proven
+
+The one sentence the thesis prints in red is "not deployed". Closing it needs a
+domain and a rented machine, which is a purchase rather than a piece of work.
+What could be done was everything on this side of that purchase, so that the
+remaining part is copying commands rather than making decisions.
+
+**`/api/health`.** A liveness check that returns a constant answers the easy
+question. The failure worth catching is the other one — Node accepting
+connections while every page behind it is a 500 — so the endpoint runs
+`SELECT 1` and answers 503 if the database is unreachable. The body is bare
+`{"status":"ok"}` on purpose: this is a public URL, and an unauthenticated
+endpoint that reports the engine, the version or the uptime hands a fingerprint
+to anyone who asks. The reason for a failure goes to the log. It is also the one
+route that does not go through `withApiLog` — polled every few seconds, it would
+bury the requests that matter under thousands of daily lines of "still fine".
+
+**A trap that would have cost an afternoon on deployment day.** The first live
+call returned **403**. `proxy.ts` blocks bot user agents on `/api/*`, and every
+monitor there is identifies itself as `curl`, `Go-http-client`, `kube-probe`, or
+nothing at all. A liveness check that only answers browsers reports the site as
+down from the moment it is deployed — and the obvious diagnosis would have been
+"the app is broken", not "the bot filter is working". `/api/health` is now
+exempt, before any other rule runs. It returns a status and no data, so the
+exemption gives a scraper nothing; the catalogue still 403s for `curl`, and a
+test holds both halves in place.
+
+**The backup script had gone quietly wrong.** §27 made the engine a matter of
+`DATABASE_URL`, and `backup-db.sh` still copied a SQLite file unconditionally.
+On a PostgreSQL deployment it would have kept producing a healthy-looking
+backup of a file that was no longer the database — worse than no backup,
+because it looks like one. It now reads the same connection string
+`lib/db/engine.ts` reads, uses `pg_dump` for PostgreSQL, and refuses an
+unrecognised scheme instead of guessing. Both paths were exercised, and a
+restore was rehearsed: `integrity_check = ok`, 3,536 media, 10 users.
+
+**Templates rather than prose.** `deploy/` holds an nginx server block, a
+systemd unit, and a backup timer, and `RUNBOOK.md` holds the order to apply
+them in. The nginx file carries the part that matters and is easy to get wrong:
+it must set `X-Forwarded-Proto`, `X-Forwarded-Host` and `X-Forwarded-For`, or
+three apparently unrelated things break — the session cookie ships without
+`Secure`, the origin check rejects legitimate form posts, and every visitor
+lands in one rate-limit bucket. That is §24's bug class arriving exactly where
+it was predicted to, so the reasons are written next to the directives.
+
+**What is genuinely not done.** No domain, no host, no live site. The
+acceptance test — open it from mobile data, sign in, see the photos — cannot be
+run until there is something to open. Everything it depends on is in place and
+tested locally.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -1328,3 +1380,4 @@ regenerated against it once, and this paragraph deleted.
 | 2026-09-07 | **Cache Components, evaluated** | §26 — built, measured at 10.24 → 10.32 ms on `/explore`, reverted. The media page's record and related-media reads were kept and are now cached. |
 | 2026-09-07 | **V2 — images** | §22c — `next/image` on a custom loader over pre-built variants, no `/_next/image`. Landing on a phone 1918 → 475 KB; catalogue list 1155 → 384 KB; layout shift eliminated. Cost: +0.4 ms CPU on `/explore`. `npm run images:variants` / `images:check`. |
 | 2026-09-07 | **V3 — PostgreSQL, dormant** | §27 — engine read from `DATABASE_URL`; the two engine-specific spots (JSON path, `contains` case) handled; `npm run db:to-postgres` / `db:to-sqlite`. Proved against PostgreSQL 16: 3,562 rows moved, counts matched, app served, identical answers from both engines, switched back, 113/113. Still on SQLite. |
+| 2026-09-08 | **V4 — deployment surface** | §28 — `/api/health` (real DB ping, exempt from the bot filter, 3 tests); `backup-db.sh` made engine-aware after §27 and both paths exercised; restore rehearsed; `deploy/` nginx + systemd + backup timer; RUNBOOK deployment order. Domain and host still to buy. |

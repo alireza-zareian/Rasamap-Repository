@@ -1,0 +1,87 @@
+# ============================================================================
+# RASAMAP — nginx in front of `next start`
+#
+#   sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/rasamap
+#   sudo ln -s /etc/nginx/sites-available/rasamap /etc/nginx/sites-enabled/
+#   sudo certbot --nginx -d rasamap.ir -d www.rasamap.ir
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# certbot rewrites this file to add the TLS block and the :80 → :443 redirect.
+#
+# ── The three headers that are not optional ─────────────────────────────────
+# Rule 9 in AGENTS.md exists because the app must never infer a property of the
+# *connection* from the environment it was built in. It reads these instead, so
+# a proxy that does not set them breaks things that look unrelated:
+#
+#   X-Forwarded-Proto  the session cookie's Secure flag (lib/auth/…). Missing →
+#                      the cookie is sent without Secure over a real HTTPS site.
+#   X-Forwarded-Host   the origin check on state-changing requests. Missing →
+#                      the app compares against its own bind address and refuses
+#                      legitimate form posts.
+#   X-Forwarded-For    the client IP behind every rate limit and audit line.
+#                      Missing → every visitor shares one bucket, and the first
+#                      burst locks out the rest.
+#
+# Set TRUSTED_PROXY_COUNT=1 in the app's environment to match exactly one proxy
+# in front. See §24.
+# ============================================================================
+
+server {
+    listen 80;
+    server_name rasamap.ir www.rasamap.ir;
+
+    # Uploaded and scraped photos are large and immutable; let nginx serve them
+    # so Node never wakes up for a picture. Paths are relative to the checkout.
+    root /srv/rasamap/public;
+
+    client_max_body_size 12M;   # listing photo uploads
+
+    # Next's build output is content-hashed, so it can be cached forever.
+    location /_next/static/ {
+        alias /srv/rasamap/.next/static/;
+        access_log off;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # The pre-built image variants (npm run images:variants). Same story.
+    location /images/ {
+        try_files $uri @app;
+        access_log off;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    # Kept out of the access log: it is polled every few seconds forever.
+    location = /api/health {
+        access_log off;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+
+        proxy_read_timeout 60s;
+    }
+
+    location @app {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    }
+}

@@ -107,6 +107,58 @@ sqlite3 /tmp/restore-test.db "PRAGMA integrity_check; SELECT count(*) FROM billb
 Last run: row counts matched the source (3532 billboards / users / listings),
 `integrity_check` returned `ok`.
 
+### First deployment to a real host
+
+Templates are in `deploy/`. The order matters — the last step proves the three
+headers rule 9 depends on actually arrive.
+
+```bash
+# on the server, as root
+adduser --system --group --home /srv/rasamap rasamap
+apt install -y nodejs npm nginx certbot python3-certbot-nginx sqlite3
+
+# the code
+git clone <repo> /srv/rasamap && cd /srv/rasamap
+npm ci
+npm run images:variants          # ← git-ignored; without this, images 404
+
+# secrets, readable only by the service user
+install -d -m 750 -o root -g rasamap /etc/rasamap
+cp .env.example /etc/rasamap/env && chmod 640 /etc/rasamap/env
+# fill in: DATABASE_URL AUTH_SECRET ADMIN_* NESHAN_API_KEY
+#          NEXT_PUBLIC_BASE_URL=https://<your domain>
+#          TRUSTED_PROXY_COUNT=1        ← exactly one nginx in front
+chown root:rasamap /etc/rasamap/env
+
+npm run db:migrate && npm run db:seed
+npm run build
+
+cp deploy/rasamap.service /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now rasamap
+
+cp deploy/nginx.conf.example /etc/nginx/sites-available/rasamap
+ln -s /etc/nginx/sites-available/rasamap /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+certbot --nginx -d <your domain>        # HTTPS, and the :80 redirect
+
+cp deploy/rasamap-backup.* /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now rasamap-backup.timer
+```
+
+**Then verify, from a phone on mobile data — not the office Wi-Fi:**
+
+```bash
+curl -s https://<domain>/api/health                  # {"status":"ok"}
+curl -sI https://<domain>/ | grep -i strict-transport # HTTPS really terminated
+```
+
+- [ ] the site opens, and the catalogue shows photos
+- [ ] signing in works **and stays signed in** — if it does not, `X-Forwarded-Proto`
+      is not reaching the app and the session cookie is being dropped (§24)
+- [ ] submitting a listing works — if it 403s, `X-Forwarded-Host` is missing
+- [ ] `npm run images:check https://<domain>` passes against the live site
+- [ ] restore a backup into a scratch file and count the rows (drill below)
+
 ### Images — after any fresh clone or restore
 
 `next/image` here serves pre-built files rather than resizing on demand (§22c),
