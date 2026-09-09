@@ -1501,6 +1501,85 @@ two files.
 
 ---
 
+## 31. Opening a browser: the gap the API tests could not see
+
+**The gap the thesis already admitted.** 116 tests cover the API well and not
+one of them opens a browser. Everything between "the server answered correctly"
+and "the visitor saw the right thing" — hydration, a form that submits, a
+Persian layout at phone width — was checked by hand and therefore checked once.
+
+**No new dependency.** `npm i -D @playwright/test` failed on this machine
+twice, and the browser download is ~150 MB besides. But Chrome is already
+installed, and it speaks the DevTools protocol over a WebSocket, which is all a
+test driver needs. `test/browser.mjs` is 359 lines: launch, navigate, wait,
+fill, click, screenshot. It borrows the harness `npm test` already uses —
+production build, isolated database, own port (§22b) — so `npm run test:e2e`
+reseeds `prisma/e2e.db`, builds into `.next-e2e/`, serves on 3200 and runs
+eight flows: catalogue and filter, unpublished rows staying hidden, sign-in,
+a rejected sign-in, the contact number behind that sign-in, submitting a
+listing, the admin door refusing a customer, and the catalogue at 390px.
+
+**Failures write a screenshot,** and that is most of the value. "Expected a
+card, found none" is nearly useless; a picture of what the browser actually had
+on screen answered every question below in one look.
+
+**What it found immediately.**
+
+1. *A 403, before any test could run.* Headless Chrome announces itself as
+   `HeadlessChrome/…`, which `proxy.ts` blocks along with selenium, puppeteer
+   and playwright. Every page test got the anti-scraping refusal — the same
+   surprise `/api/health` produced in §28, and the same right answer: the tests
+   browse with an ordinary visitor's user agent, because that is who they stand
+   in for. The filter is not weakened; it is being obeyed.
+2. *A broken-image icon on four surfaces.* About 43% of the catalogue has no
+   photograph, and only the catalogue card had a placeholder for that. The hero
+   carousel, the landing gallery, the related strip and the detail gallery all
+   rendered the browser's torn-page icon. §5 says the unhappy path is a designed
+   screen; `components/MediaImage.tsx` now holds the one definition of it, for
+   a record with no photo and for a photo that fails to load.
+3. *Latin digits in a Persian interface.* A screenshot showed "4000M تومان"
+   directly beneath "۴ رسانه یافت شد". The detail page, the related strip and
+   the analytics tab formatted prices through `faNum`; the catalogue card, the
+   carousel, the landing page, compare and the dashboard did not — so the same
+   price read differently on the card and on the page it linked to. Two
+   hand-rolled "compact number" helpers had the same problem, and are now one
+   `faCompact` beside `faNum`.
+
+**Four rounds of flakiness, and none of them were flaky.** The suite went 8/8,
+then 6/8, then 7/8 with a different test failing each time. Each cause was real:
+
+- *One IP for eight tests.* The deliberate wrong-password test spent the
+  account's brute-force budget, and the later tests that need a genuine sign-in
+  waited out a lockout. Each browser now arrives from its own address, as
+  `test/helpers.mjs` has always done for API calls, and each failed attempt
+  inside one test gets its own too.
+- *A random debugging port.* Each test launches its own Chrome on
+  `9000 + random(1000)`. When that collided with a Chrome still shutting down,
+  the new test connected to the **old** browser and drove the previous test's
+  page — which is exactly why a different assertion failed each run.
+  `--remote-debugging-port=0` and reading `DevToolsActivePort` ends it.
+- *Waiting for the wrong document.* `Page.navigate` resolves when the request is
+  sent, and `readyState === "complete"` was still true of the page being left.
+  `goto()` now stamps the outgoing document and waits for that stamp to be
+  gone — which also survives a redirect, and one test asks for `/admin` as a
+  visitor precisely to be sent to `/admin/login`.
+- *Waiting for a neighbour instead of the thing asserted.* Next streams the
+  route's `loading.tsx` and then swaps the content in; for a few frames the
+  cards are present and the fallback has not been removed. A selector wait was
+  satisfied by the first, while the page text still said "در حال بارگذاری".
+  `waitForText()` waits for the phrase being asserted.
+
+The habit worth keeping: **a flaky test is a race that has not been read
+carefully yet.** Four in a row here were four real defects — three in the
+harness, one in the product's own protection working as designed. Sixteen
+consecutive green runs since.
+
+**What it does not cover.** Payment (there is none), SMS (dormant, §16), and
+the map iframe (a third party that may not load from Iran at all). Eight flows
+is a floor, not a finish.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -1541,4 +1620,5 @@ two files.
 | 2026-09-07 | **V3 — PostgreSQL, dormant** | §27 — engine read from `DATABASE_URL`; the two engine-specific spots (JSON path, `contains` case) handled; `npm run db:to-postgres` / `db:to-sqlite`. Proved against PostgreSQL 16: 3,562 rows moved, counts matched, app served, identical answers from both engines, switched back, 113/113. Still on SQLite. |
 | 2026-09-08 | **V4 — deployment surface** | §28 — `/api/health` (real DB ping, exempt from the bot filter, 3 tests); `backup-db.sh` made engine-aware after §27 and both paths exercised; restore rehearsed; `deploy/` nginx + systemd + backup timer; RUNBOOK deployment order. Acceptance test run over a `trycloudflare` tunnel: rule 9 verified against a real proxy (`Secure` present over HTTPS, absent over localhost, same build). Domain and host still to buy. |
 | 2026-09-08 | **V5 — CSP and security cleanup** | §29 — six dead origins removed from the CSP (incl. `unpkg.com` in `script-src`); `'unsafe-eval'` dropped after proving zero `eval(` in the bundle; `X-XSS-Protection` removed; `robots.txt` reduced to one generated source whose `Sitemap` follows `SITE_URL`; dead `NEXT_PUBLIC_NESHAN_KEY` removed and `NESHAN_API_KEY` demoted to optional. Nonce-based `script-src` measured at 1.86 → 8.30 ms on the landing page and declined. |
+| 2026-09-09 | **V7 — browser tests** | §31 — `test/browser.mjs`, a 359-line CDP driver over the installed Chrome, no new dependency. `npm run test:e2e`: 8 flows on the production build, screenshots on failure. Found the headless-UA 403, missing image placeholders on four surfaces (`MediaImage`), and Latin digits in prices (`faCompact`/`faNum`). Four flakiness causes diagnosed and fixed, 16 green runs since. |
 | 2026-09-08 | **V6 — findability** | §30 — titles on the seven pages that had none (three `noindex`); generated Open Graph card with the project's own font, explicit RTL word order and ZWNJ handling; `Product`/`Offer` JSON-LD on media pages with Toman→IRR conversion; sitemap verified at 3,532/3,532 with no unpublished leak; `manifest.ts` + 192/512 icons. |

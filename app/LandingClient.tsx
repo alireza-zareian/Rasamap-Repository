@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import MediaImage from "@/components/MediaImage";
 import Link from "next/link";
 import type { CatalogueItem, BillboardType } from "@/lib/types";
 import type { SiteStats } from "@/lib/db/stats";
@@ -182,7 +182,7 @@ export default function LandingClient({
                 <div className="ticker-strip" style={{ display: "flex", gap: 22, animation: "tickerScroll 22s linear infinite", whiteSpace: "nowrap" }}>
                   {[...billboards, ...billboards].map((b, i) => (
                     <a key={i} href={`/billboard/${b.slug}`} style={{ fontSize: "0.67rem", color: "var(--text-muted)", textDecoration: "none", flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
-                      <span style={{ color: "var(--accent-warm)", fontWeight: 700 }}>{b.price}M</span>
+                      <span style={{ color: "var(--accent-warm)", fontWeight: 700 }}>{faNum(b.price)}M</span>
                       {b.name.substring(0, 22)}
                       <span style={{ color: "var(--border)" }}>·</span>
                     </a>
@@ -227,7 +227,7 @@ export default function LandingClient({
                         all of them are needed inside a minute anyway. decoding
                         stays async: it costs nothing and keeps decode off the main
                         thread. Vertically scrolling lists keep their lazy loading. */}
-                    <Image src={b.images[0]} alt={b.name} fill sizes="280px" decoding="async" loading="eager" style={{ objectFit: "cover" }} />
+                    <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="280px" eager />
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(5,10,22,0.9) 0%, rgba(5,10,22,0.25) 50%, transparent 100%)" }} />
                     <div style={{ position: "absolute", bottom: 0, right: 0, left: 0, padding: "16px 14px 18px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 5 }}>
@@ -236,7 +236,7 @@ export default function LandingClient({
                       </div>
                       <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "#fff", lineHeight: 1.3, marginBottom: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>{b.name}</div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-warm)" }}>{b.price}M</span>
+                        <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-warm)" }}>{faNum(b.price)}M</span>
                         <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.5)" }}>تومان/ماه</span>
                       </div>
                     </div>

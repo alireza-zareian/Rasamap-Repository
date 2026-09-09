@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ImagePlus, X, Check, Lightbulb, CircleCheckBig, ArrowRight, ArrowLeft, ChevronLeft } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
+import { faNum } from "@/lib/format";
 
 const steps = ["اطلاعات اصلی","موقعیت و نوع","قیمت‌گذاری","تصاویر","انتخاب پلن","تأیید"];
 const SUBMIT_STEP = 4;   // the plan step is the last one with a submit button
@@ -181,7 +182,7 @@ export default function ListMediaPage() {
       {sel("تعداد وجوه","faces",["1","2","4","6"])}
       {inp("قیمت پایه ماهانه (میلیون تومان)","price","مثال: 85","number")}
       {form.price && <div style={{background:"rgba(255,179,0,0.08)",border:"1px solid rgba(255,179,0,0.3)",borderRadius:8,padding:"10px 14px",fontSize:"0.8rem",color:"var(--accent-warm)",display:"flex",alignItems:"center",gap:7}}>
-        <Lightbulb size={14} style={{flexShrink:0}} /> قیمت هفتگی: ~{Math.round(+form.price/4)}M · سه‌ماهه (۱۰٪ تخفیف): ~{Math.round(+form.price*3*0.9)}M
+        <Lightbulb size={14} style={{flexShrink:0}} /> قیمت هفتگی: ~{faNum(Math.round(+form.price/4))}M · سه‌ماهه (۱۰٪ تخفیف): ~{faNum(Math.round(+form.price*3*0.9))}M
       </div>}
     </div>,
     <div key={3}>
@@ -311,6 +312,7 @@ export default function ListMediaPage() {
               <div style={{display:"flex",gap:8}}>
                 {step>0 && <button onClick={()=>{setError("");setStep(s=>s-1);}} style={{border:"1px solid var(--border)",background:"none",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.82rem",padding:"9px 18px",borderRadius:8,cursor:"pointer",flex:1,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><ArrowRight size={14} /> قبلی</button>}
                 <button
+                  data-testid="wizard-next"
                   onClick={step===SUBMIT_STEP ? handleSubmit : goNext}
                   disabled={submitting}
                   className="btn-sheen"

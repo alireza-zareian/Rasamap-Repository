@@ -1,6 +1,7 @@
 "use client";
 import { BarChart2, Car, Footprints, Clock, Info } from "lucide-react";
 import { TrafficData } from "@/lib/types";
+import { faCompact } from "@/lib/format";
 
 interface TrafficMeterProps {
   traffic: TrafficData;
@@ -10,9 +11,6 @@ interface TrafficMeterProps {
 export default function TrafficMeter({ traffic, compact = false }: TrafficMeterProps) {
   const score = traffic.viewabilityScore;
   const scoreColor = score >= 80 ? "var(--green)" : score >= 60 ? "var(--accent-warm)" : "var(--accent)";
-
-  const formatNum = (n: number) =>
-    n >= 1000000 ? `${(n / 1000000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(0)}K` : n.toString();
 
   if (compact) {
     return (
@@ -32,7 +30,7 @@ export default function TrafficMeter({ traffic, compact = false }: TrafficMeterP
         <div>
           <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>دیده می‌شوید توسط</div>
           <div style={{ fontSize: "0.88rem", fontWeight: 700, color: scoreColor }}>
-            ~{formatNum(traffic.estimatedViews)} نفر/روز
+            ~{faCompact(traffic.estimatedViews)} نفر/روز
           </div>
         </div>
       </div>
@@ -74,12 +72,12 @@ export default function TrafficMeter({ traffic, compact = false }: TrafficMeterP
 
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: "1.4rem", fontWeight: 800, color: scoreColor }}>
-            ~{formatNum(traffic.estimatedViews)}
+            ~{faCompact(traffic.estimatedViews)}
           </div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: 6 }}>بازدید تخمینی روزانه</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.72rem", color: "var(--text-muted)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}><Car size={12} />{formatNum(traffic.daily)} وسیله نقلیه در روز</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}><Footprints size={12} />{formatNum(traffic.pedestrian)} عابر پیاده در روز</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}><Car size={12} />{faCompact(traffic.daily)} وسیله نقلیه در روز</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}><Footprints size={12} />{faCompact(traffic.pedestrian)} عابر پیاده در روز</div>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}><Clock size={12} />اوج ترافیک: {traffic.peakHour}</div>
           </div>
         </div>

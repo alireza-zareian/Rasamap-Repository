@@ -1,56 +1,11 @@
 "use client";
 import { useState } from "react";
-import Image from "next/image";
+import MediaImage from "@/components/MediaImage";
 import Link from "next/link";
 import { CatalogueItem, typeLabels, statusLabels } from "@/lib/types";
-import { Scale, Megaphone, Monitor, Milestone, Train, Bus, Star, Sparkles } from "lucide-react";
+import { Scale, Star, Sparkles } from "lucide-react";
 import { useTheme } from "@/lib/theme";
-
-const TYPE_THEMES: Record<string, { grad: string; ring: string; glow: string }> = {
-  billboard: { grad: "linear-gradient(135deg,#2d1b69 0%,#11093a 100%)", ring: "rgba(129,140,248,0.3)",  glow: "rgba(129,140,248,0.7)" },
-  digital:   { grad: "linear-gradient(135deg,#0c3d52 0%,#041520 100%)", ring: "rgba(56,189,248,0.3)",   glow: "rgba(56,189,248,0.7)"  },
-  bridge:    { grad: "linear-gradient(135deg,#4a1535 0%,#1a0514 100%)", ring: "rgba(244,114,182,0.3)",  glow: "rgba(244,114,182,0.7)" },
-  station:   { grad: "linear-gradient(135deg,#4a2b08 0%,#1a0e02 100%)", ring: "rgba(251,191,36,0.3)",   glow: "rgba(251,191,36,0.7)"  },
-  vehicle:   { grad: "linear-gradient(135deg,#0d3d1f 0%,#04140b 100%)", ring: "rgba(74,222,128,0.3)",   glow: "rgba(74,222,128,0.7)"  },
-};
-const DEFAULT_THEME = { grad: "linear-gradient(135deg,#1a2640 0%,#0d1520 100%)", ring: "rgba(148,163,184,0.25)", glow: "rgba(148,163,184,0.6)" };
-
-const TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
-  billboard: Megaphone,
-  digital:   Monitor,
-  bridge:    Milestone,
-  station:   Train,
-  vehicle:   Bus,
-};
-
-function NoImagePlaceholder({ type }: { type: string }) {
-  const t = TYPE_THEMES[type] ?? DEFAULT_THEME;
-  const Icon = TYPE_ICONS[type] ?? Megaphone;
-  return (
-    <div style={{ position: "absolute", inset: 0, background: t.grad, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.07 }} aria-hidden="true">
-        <defs>
-          <pattern id={`p-${type}`} width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="18" stroke="white" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill={`url(#p-${type})`} />
-      </svg>
-      <div style={{ position: "relative", width: 72, height: 72, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ position: "absolute", inset: -8, borderRadius: "50%", background: t.ring, boxShadow: `0 0 24px 6px ${t.ring}` }} />
-        <span style={{ position: "relative", filter: `drop-shadow(0 0 12px ${t.glow})` }}>
-          <Icon size={34} color="rgba(255,255,255,0.92)" />
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function fmtViews(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1000) return `${Math.round(n / 1000)}K`;
-  return String(n);
-}
+import { faNum, faCompact } from "@/lib/format";
 
 interface BillboardCardProps {
   billboard: CatalogueItem;
@@ -66,16 +21,15 @@ export default function BillboardCard({
   const dark = theme === "dark";
   const statusColor = b.status === "available" ? "var(--green-accent)" : b.status === "busy" ? "var(--red)" : "var(--accent-warm)";
   const statusLabel = `● ${statusLabels[b.status] ?? b.status}`;
-  const [imgError, setImgError] = useState(false);
   // Hover lift/shadow only — 2 renders per hover, nothing on mousemove.
   const [hovered, setHovered] = useState(false);
-  const showImage = !!(b.images && b.images.length > 0) && !imgError;
   const views = b.traffic?.estimatedViews ?? 0;
 
   // ── List mode: compact horizontal card ──────────────────────────
   if (listMode) {
     return (
       <div
+        data-testid="billboard-card"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
@@ -91,15 +45,9 @@ export default function BillboardCard({
         }}>
         {/* Square thumb */}
         <div style={{ width: 88, height: 88, flexShrink: 0, position: "relative", background: "var(--bg-card)", overflow: "hidden" }}>
-          {showImage ? (
-            // 88 CSS pixels, so `sizes` lets the loader hand over the 256-wide
-            // variant instead of the 500-wide source — enough even at 2x.
-            <Image src={b.images[0]} alt={b.name} onError={() => setImgError(true)}
-              fill sizes="88px" loading="lazy" decoding="async"
-              style={{ objectFit: "cover" }} />
-          ) : (
-            <NoImagePlaceholder type={b.type} />
-          )}
+          {/* 88 CSS pixels, so `sizes` lets the loader hand over the 256-wide
+              variant instead of the 500-wide source — enough even at 2x. */}
+          <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="88px" iconSize={26} />
         </div>
 
         {/* Body */}
@@ -111,9 +59,9 @@ export default function BillboardCard({
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
               {views > 0 && (
-                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>~{fmtViews(views)} نفر/روز ·</span>
+                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>~{faCompact(views)} نفر/روز ·</span>
               )}
-              <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-warm)" }}>{b.price}M</span>
+              <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-warm)" }}>{faNum(b.price)}M</span>
               <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>ت/ماه</span>
             </div>
             <div style={{ display: "flex", gap: 5 }}>
@@ -137,6 +85,7 @@ export default function BillboardCard({
   // ── Grid mode: full card ─────────────────────────────────────────
   return (
     <div
+      data-testid="billboard-card"
       className={b.featured ? "gradient-frame" : undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -158,17 +107,10 @@ export default function BillboardCard({
         background: "var(--bg-card)",
         overflow: "hidden",
       }}>
-        {showImage ? (
-          // A grid card is 320–400 CSS px wide, so at 1x the 384 variant fits
-          // and at 2x the 500-wide source is the largest that exists.
-          <Image src={b.images[0]} alt={b.name}
-            fill sizes="(max-width: 700px) 100vw, 384px"
-            loading="lazy" decoding="async"
-            style={{ objectFit: "cover" }}
-            onError={() => setImgError(true)} />
-        ) : (
-          <NoImagePlaceholder type={b.type} />
-        )}
+        {/* A grid card is 320–400 CSS px wide, so at 1x the 384 variant fits
+            and at 2x the 500-wide source is the largest that exists. */}
+        <MediaImage src={b.images?.[0]} alt={b.name} type={b.type}
+          sizes="(max-width: 700px) 100vw, 384px" />
 
         {/* Type badge */}
         <div style={{ position: "absolute", top: 8, right: 8, background: dark ? "rgba(10,14,26,0.78)" : "rgba(255,255,255,0.82)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 9px", fontSize: "0.7rem", color: "var(--text-muted)", backdropFilter: "blur(4px)" }}>
@@ -200,9 +142,9 @@ export default function BillboardCard({
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5, minWidth: 0 }}>
             {views > 0 && (
-              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>~{fmtViews(views)} نفر/روز ·</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>~{faCompact(views)} نفر/روز ·</span>
             )}
-            <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-warm)", whiteSpace: "nowrap" }}>{b.price}M</span>
+            <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-warm)", whiteSpace: "nowrap" }}>{faNum(b.price)}M</span>
             <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>ت/ماه</span>
           </div>
           <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>

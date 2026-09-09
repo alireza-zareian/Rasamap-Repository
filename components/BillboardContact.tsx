@@ -76,6 +76,7 @@ export default function BillboardContact({ hasPhone, agency, slug }: Props) {
         ) : (
           <>
             <button
+              data-testid="reveal-phone"
               onClick={reveal}
               disabled={busy}
               style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: busy ? "var(--bg-surface)" : "rgba(34,197,94,0.08)", border: `1.5px solid ${busy ? "var(--border)" : "rgba(34,197,94,0.3)"}`, borderRadius: 10, padding: "9px 12px", color: busy ? "var(--text-muted)" : "#22c55e", fontFamily: "inherit", fontWeight: 700, fontSize: "0.85rem", cursor: busy ? "default" : "pointer" }}

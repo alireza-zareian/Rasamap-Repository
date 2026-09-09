@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
-import Image from "next/image";
+import MediaImage from "@/components/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
 import { typeLabels } from "@/lib/types";
-import { TypeIcon } from "@/components/TypeIcon";
 import SwipeMarquee from "@/components/SwipeMarquee";
 import { faNum } from "@/lib/format";
 
@@ -56,27 +55,10 @@ export default function RelatedBillboards({ items }: { items: CatalogueItem[] })
                 style={{ flexShrink: 0, width: 230, borderRadius: 14, overflow: "hidden", textDecoration: "none", color: "var(--text-main)", background: "var(--bg-card)", border: "1px solid var(--border)", display: "block" }}
               >
                 <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--bg-surface)" }}>
-                  {b.images?.[0] ? (
-                    <Image
-                      src={b.images[0]}
-                      alt={b.name}
-                      fill
-                      sizes="230px"
-                      decoding="async"
-                      /* Not lazy: this strip scrolls itself with a CSS animation
-                         inside overflow:hidden, so a card off to the side never
-                         enters the viewport and a lazy image is never requested —
-                         the same fault that left the landing carousel and the
-                         detail map blank on a phone (§24). At most a dozen photos,
-                         all of which scroll past within one loop. */
-                      loading="eager"
-                      style={{ objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", opacity: 0.5 }}>
-                      <TypeIcon type={b.type} size={34} />
-                    </div>
-                  )}
+                  {/* Not lazy: this strip scrolls itself with a CSS animation inside
+                      overflow:hidden, so a card off to the side never enters the
+                      viewport and a lazy image is never requested (§24). */}
+                  <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="230px" eager iconSize={28} />
                   <span style={{ position: "absolute", top: 8, right: 8, fontSize: "0.62rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "rgba(255,77,0,0.12)", color: "var(--accent)", backdropFilter: "blur(4px)" }}>
                     {TYPE_LABEL[b.type] ?? b.type}
                   </span>

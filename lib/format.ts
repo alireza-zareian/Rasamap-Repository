@@ -16,3 +16,22 @@
 export function faNum(n: number): string {
   return n.toLocaleString("fa-IR");
 }
+
+/**
+ * A large number shortened for a tight space (۱٫۲M, ۵K), in Persian digits.
+ *
+ * Two hand-rolled copies of this existed — `fmtViews` in BillboardCard and
+ * `formatNum` in TrafficMeter — and both emitted Latin digits into a Persian
+ * interface, so a card read "~5K نفر/روز" beside a count that read "۴ رسانه".
+ * The browser tests caught it in a screenshot; no request-level assertion
+ * could, because the server answered 200 and the markup was "correct".
+ *
+ * The M and K suffixes stay Latin on purpose: they are read as symbols here,
+ * the way "km" is, and the Persian abbreviations are not in common use on
+ * price tags.
+ */
+export function faCompact(n: number): string {
+  if (n >= 1_000_000) return `${faNum(Math.round(n / 100_000) / 10)}M`;
+  if (n >= 1_000) return `${faNum(Math.round(n / 1_000))}K`;
+  return faNum(n);
+}

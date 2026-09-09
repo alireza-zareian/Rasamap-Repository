@@ -8,6 +8,7 @@ import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import { statusLabels, planLabels } from "@/lib/types";
 import EditListingModal, { type EditableListing } from "@/components/EditListingModal";
+import { faNum } from "@/lib/format";
 
 // One of the user's own submissions, in whatever state the review left it.
 // The editable fields are carried too so a "needs_revision" listing can be
@@ -234,7 +235,7 @@ export default function Dashboard() {
                             ) : (
                               <div style={{ fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.name}</div>
                             )}
-                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>{l.city} · {l.price}M تومان/ماه · {created}</div>
+                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>{l.city} · {faNum(l.price)}M تومان/ماه · {created}</div>
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, padding: "12px 14px", flexShrink: 0 }}>
                             <Badge text={statusLabels[l.status] ?? l.status} color={sc} bg={sbg} />

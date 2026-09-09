@@ -229,7 +229,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
               <label htmlFor="explore-price" style={labelStyle}>حداکثر قیمت</label>
-              <span style={{ fontSize: "0.75rem", color: "var(--accent-warm)", fontWeight: 600 }}>{price}M تومان/ماه</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--accent-warm)", fontWeight: 600 }}>{faNum(price)}M تومان/ماه</span>
             </div>
             <input
               id="explore-price"

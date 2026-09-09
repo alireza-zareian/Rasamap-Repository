@@ -71,3 +71,7 @@ __pycache__/
 
 # test-suite build output (test/run.mjs builds here, not into .next)
 /.next-test/
+# browser-test build output + its database and failure screenshots
+/.next-e2e/
+/prisma/e2e.db*
+/test/screenshots/

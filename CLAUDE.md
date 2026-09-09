@@ -43,6 +43,8 @@ Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Pris
 npm run demo    # ← build + start. USE THIS to view or demo the site.
 npm run dev     # ONLY while writing code (hot-reload). 97× more CPU.
 npm run build | lint
+npm test          # 116 API tests on a production build (~18 s)
+npm run test:e2e  # 8 browser flows over the installed Chrome; screenshots on failure
 npm run db:migrate | db:seed | db:studio | db:dedupe | db:backfill-coords
 npm run images:variants   # pre-build the image sizes next/image serves (git-ignored)
 npm run images:check      # prove every image every page asks for resolves
@@ -146,7 +148,7 @@ The documentation was consolidated: what used to be 24 files is now these.
 | File | What it carries |
 |---|---|
 | `docs/architecture.md` | the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API |
-| `docs/engineering-decisions.md` | 24 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected, §28 = the deployment surface, §29 = CSP tightening and why script-src keeps 'unsafe-inline', §30 = findability and what Persian breaks in an OG card) |
+| `docs/engineering-decisions.md` | 24 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected, §28 = the deployment surface, §29 = CSP tightening and why script-src keeps 'unsafe-inline', §30 = findability and what Persian breaks in an OG card, §31 = browser tests and the four races behind a flaky suite) |
 | `docs/api.md` | full HTTP API reference (42 endpoints) **+ the route-writing pattern** (was `api-patterns.md`) |
 | `docs/codemap.html` | interactive file map generated from the real import graph — supersedes the old hand-written `project-reference.md` |
 | `docs/STATUS.md` | project state, production-readiness triage, 13-layer assessment, remaining work, security audit (was `STATUS.md` + `PLAN.md` + `AUDIT.md` + `next-tasks.md` + `security-audit.md`) |

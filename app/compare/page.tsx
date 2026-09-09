@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CatalogueItem } from "@/lib/types";
 import { Scale, X, ArrowLeft } from "lucide-react";
+import { faNum } from "@/lib/format";
 
 export default function ComparePage() {
   const [compareList, setCompareList] = useState<CatalogueItem[]>([]);
@@ -87,7 +88,7 @@ export default function ComparePage() {
                     <div style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: 3 }}>{b.name}</div>
                     <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: 8 }}>{b.region}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
-                      <span style={{ color: "var(--accent-warm)", fontWeight: 700 }}>{b.price}M ت/ماه</span>
+                      <span style={{ color: "var(--accent-warm)", fontWeight: 700 }}>{faNum(b.price)}M ت/ماه</span>
                       <span style={{ color: "var(--text-muted)" }}>{b.width}×{b.height}م</span>
                     </div>
                   </div>

@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import MediaImage from "@/components/MediaImage";
 import { MapPin, Building2 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import type { CatalogueItem } from "@/lib/types";
+import { faNum } from "@/lib/format";
 
 /**
  * The photo carousel beside the catalogue's search panel.
@@ -40,16 +41,14 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
         <>
           {/* key triggers fadeIn on each slide change */}
           <div key={idx} style={{ position: "absolute", inset: 0, animation: "fadeIn 0.6s ease" }}>
-            <Image
-              src={current.images[0]}
+            {/* eager for the same reason the strip below the fold is: only the
+                current slide is in the DOM and it is already on screen. */}
+            <MediaImage
+              src={current.images?.[0]}
               alt={current.name}
-              fill
+              type={current.type}
               sizes="(max-width: 900px) 100vw, 360px"
-              decoding="async"
-              /* eager for the same reason the strip below the fold is: only the
-                 current slide is in the DOM and it is already on screen. */
-              loading="eager"
-              style={{ objectFit: "cover" }}
+              eager
             />
             {/* Dark gradient for text legibility — always dark since image fills entirely */}
             <div style={{
@@ -77,7 +76,7 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
                 <MapPin size={11} /> {current.region} · {current.location.substring(0, 35)}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginRight: 8 }}>
-                <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--accent-warm)" }}>{current.price}M تومان</span>
+                <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--accent-warm)" }}>{faNum(current.price)}M تومان</span>
                 <a href={`/billboard/${current.slug}`} style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", background: "var(--accent)", padding: "3px 10px", borderRadius: 6, textDecoration: "none", whiteSpace: "nowrap" }}>مشاهده رسانه ←</a>
               </div>
             </div>
