@@ -3156,14 +3156,19 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     <br><br>
     <b>پاسخ کوتاه: بله، و مدرکش اندازه‌گیری است نه ادعا.</b> اما هفت ایراد پیدا شد که
     <b>هیچ‌کدام معماری نیستند</b> — همه در لایهٔ پرداخت و پولیش‌اند. به ترتیبِ
-    «بیشترین اثر بر کاربر» چیده شده‌اند: از A1 شروع کن، به A7 برس.
+    «بیشترین اثر بر کاربر» چیده شده‌اند.
+    <br><br>
+    <b style="color:var(--green)">وضعیت: A1 تا A6 انجام شدند.</b> A7 یک تحلیل است نه یک کار،
+    و A0 چیزی است که از قبل تمام بود. تنها کارِ باقی‌مانده در کلِ این بخش، اجرای
+    <b>Lighthouse</b> و نوشتنِ عددش در کارتِ A4 است — که عمداً دستِ خودت مانده،
+    چون عددی که <em>خودت</em> گرفته باشی همان چیزی است که می‌توانی جلوی داور تکرار کنی.
     <br><br>
     <b>وضعیتِ سنجیده‌شده در لحظهٔ این ممیزی:</b>
     <table class="tbl" style="margin-top:8px">
       <tbody>
         <tr><td><code>npm run lint</code></td><td><b style="color:var(--green)">بدون هیچ هشدار</b></td></tr>
         <tr><td><code>npx tsc --noEmit</code></td><td><b style="color:var(--green)">بدون خطا</b></td></tr>
-        <tr><td><code>npm test</code></td><td><b style="color:var(--green)">۱۱۶ از ۱۱۶</b> در ۱۸٫۸ ثانیه، روی بیلد تولیدی</td></tr>
+        <tr><td><code>npm test</code></td><td><b style="color:var(--green)">۱۱۸ از ۱۱۸</b> روی بیلد تولیدی — دو آزمونِ نگهبانِ تازه از همین ممیزی</td></tr>
         <tr><td><code>npm run build</code></td><td><b style="color:var(--green)">موفق</b> — ۴۲ مسیر API، ۲۰ صفحه</td></tr>
         <tr><td>حجمِ کد</td><td>۱۵٬۷۱۱ خط · ۱۵۸ فایل · بزرگ‌ترین فایل <b>۶۹۹ خط</b></td></tr>
         <tr><td>جاوااسکریپتِ مشترکِ هر صفحه</td><td>۱۲۹٫۲ کیلوبایتِ فشرده</td></tr>
@@ -3257,11 +3262,11 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     </div>
   </div>
 
-  <div class="phase-card is-next open" style="border-color:var(--amber-mid)">
+  <div class="phase-card is-done open" style="border-color:var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">A4</div>
-      <div class="ph-title"><h3>دسترس‌پذیری — نازک‌ترین لایهٔ پروژه</h3><p>۱۰۴ دکمه در کلِ اپ، و فقط ۱۰ تا <code>aria-label</code> دارند</p></div>
-      <div class="ph-badge todo">→ کارِ بعدی</div>
+      <div class="ph-title"><h3>دسترس‌پذیری — نازک‌ترین لایهٔ پروژه</h3><p>انجام شد ✓ — ۲۹ دکمهٔ بی‌نام به صفر رسید، و دو کنترل که با کیبورد دست‌نیافتنی بودند</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
@@ -3275,11 +3280,17 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
         «فکرش را نکرده بودم» گران تمام می‌شود. ضمناً ارزان‌ترین بردِ باقی‌مانده است.
       </p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>فهرست‌کردنِ دکمه‌های فقط-آیکون و دادنِ <code>aria-label</code>ِ فارسی به هرکدام — شروع از <code>LandingClient</code> (تغییر تم، فلش‌های گالری) و <code>Topbar</code></div></div>
-        <div class="task todo-t"><div class="tick"></div><div>مودال‌ها: <code>role="dialog"</code> + <code>aria-modal="true"</code> + بستن با <code>Escape</code> + بازگرداندنِ فوکوس به دکمه‌ای که بازش کرد (<code>CompareModal</code>، <code>EditListingModal</code>، لایت‌باکسِ <code>ImageManager</code> و <code>ListingsPanel</code>)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>حلقهٔ فوکوس در مودالِ باز، تا <code>Tab</code> از پشتِ آن بیرون نزند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>یک پاسِ کیبورد روی مسیرِ اصلی: صفحهٔ نخست → جست‌وجو → کارت → جزئیات → دکمهٔ تماس، <b>بدون دست‌زدن به ماوس</b>. هرچه نرسیدی، یادداشت کن</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>اجرای زبانهٔ Lighthouse در Chrome DevTools و ثبتِ عددِ Accessibility <b>قبل و بعد</b> در همین کارت — دقیقاً مثلِ سایر سنجه‌های این سند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>۲۹ دکمهٔ فقط-آیکون → صفر.</b> تغییر تم، هر دو فلشِ گالری، بستنِ هر شش مودال، ستاره‌های امتیازدهی، نمایش/پنهان‌کردنِ رمز در هر دو صفحهٔ ورود، حذفِ عکس، صفحه‌بندیِ پنل مدیریت، و جابه‌جاییِ تصویر — هرکدام یک <code>aria-label</code>ِ فارسی گرفت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>دو کنترل که با کیبورد <em>اصلاً</em> دست‌یافتنی نبودند:</b> تصویرِ اصلیِ صفحهٔ رسانه یک <code>&lt;div onClick&gt;</code> بود، پس لایت‌باکس — که کلِ هدفِ آن عکس‌هاست — بی‌ماوس باز نمی‌شد؛ و ناحیهٔ آپلودِ فرمِ ثبتِ آگهی، که <b>تنها راهِ پیوست‌کردنِ عکس است</b>. هر دو <code>&lt;button&gt;</code>ِ واقعی شدند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b><code>lib/useModalA11y.ts</code> — یک جا، نه هفت کپی.</b> بستن با <code>Escape</code>، بردنِ فوکوس به داخل و <b>برگرداندنش به دکمه‌ای که بازش کرد</b>، و حلقهٔ <code>Tab</code> تا از پشتِ مودال بیرون نزند و محتوایی را نخواند که کاربر نمی‌بیند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>هر شش دیالوگ <code>role="dialog"</code> و <code>aria-modal="true"</code> و یک نامِ فارسی دارند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>آزمونِ نگهبان</b> — «هر دکمهٔ فقط-آیکون نام دارد». شمارش را روی صفر نگه می‌دارد: برچسب، یا متنِ فارسی در هر جای درونِ دکمه (حتی داخلِ ternary)، یا متنی که از آرایهٔ داده می‌آید را می‌پذیرد — که همان شکلی است که چیپ‌های نوعِ رسانه و زبانه‌های ورود از قبل نام می‌گیرند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>تنها کارِ باقی‌مانده — دستِ خودت:</b> زبانهٔ Lighthouse در Chrome DevTools (<code>F12</code> ← Lighthouse ← Analyze) را روی <code>/</code> و <code>/billboard/[slug]</code> بزن و عددِ Accessibility را همین‌جا بنویس. اندازه‌گیریِ ماشینی جای آزمونِ واقعیِ کیبورد را نمی‌گیرد، ولی عددی می‌دهد که داور می‌تواند جلوی چشمت تکرارش کند</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--green-mid)">
+        <b>تأیید — ۲۰ شهریور ۱۴۰۵:</b> شمارشِ خودکار از ۲۹ به ۰ رسید (سه موردِ باقی‌مانده مثبتِ کاذب‌اند:
+        متنشان از آرایهٔ داده می‌آید). <code>lint</code> بی‌هشدار · <code>tsc</code> بی‌خطا ·
+        <code>npm test</code> <b>۱۱۸/۱۱۸</b> — دو آزمونِ نگهبانِ تازه هم در همین عدد هست.
       </div>
       <div class="note" style="margin-top:12px">
         <span class="t">چرا این کار برای دفاع ارزش دارد</span>
@@ -3293,8 +3304,8 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
   <div class="phase-card" style="border-color:var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">A5</div>
-      <div class="ph-title"><h3>حالتِ بارگذاری فقط برای دو صفحه از شش صفحه</h3><p>صفحهٔ جزئیات و پنل مدیریت، هنگام بار شدن هیچ نمی‌گویند</p></div>
-      <div class="ph-badge todo">⚪ پولیش</div>
+      <div class="ph-title"><h3>حالتِ بارگذاری فقط برای دو صفحه از شش صفحه</h3><p>انجام شد ✓ — و یک محدودیتِ Next.js را آشکار کرد که باید ثبت می‌شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
@@ -3307,18 +3318,35 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
         ایران، فاصلهٔ بین کلیک و ظاهرشدنِ صفحه جایی است که کاربر فکر می‌کند سایت خراب است.
       </p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><code>app/billboard/[slug]/loading.tsx</code> — اسکلتِ گالری + عنوان + بلوکِ قیمت، هم‌اندازهٔ چیزی که جایش می‌آید تا صفحه <b>نپرد</b></div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>app/admin/loading.tsx</code> — اسکلتِ جدول</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>یک‌دست‌کردن با دو اسکلتِ موجود، تا سه شکلِ متفاوتِ «در حال بارگذاری» نداشته باشیم (قاعدهٔ ۱۰: یک راه، نه چهار تا)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b><code>components/PageSkeleton.tsx</code> — یک منبع، نه چهار کپی.</b> دو اسکلتِ موجود همان اسپینرِ وسطِ صفحه بودند که فقط پیامشان فرق داشت و هرکدام نسخهٔ خودش از <code>@keyframes</code> را تزریق می‌کرد؛ دو تای دیگر یعنی چهار املای یک چیز (قاعدهٔ ۱۰)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>شکل‌ها <b>هم‌اندازهٔ صفحهٔ واقعی</b>اند (شبکهٔ کارت، جدول، ستونِ جزئیات) تا محتوا تقریباً همان‌جا بنشیند که جای‌نگه‌دار بود — هزینه‌ای که اسپینرِ خالی نمی‌پردازد ولی خواننده می‌پردازد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/admin/loading.tsx</code> ساخته شد؛ <code>explore</code> و <code>dashboard</code> به همان منبع وصل شدند</div></div>
+      </div>
+      <div class="note warn" style="margin-top:14px">
+        <span class="t">یافتهٔ واقعیِ این کارت — و دلیلِ اینکه صفحهٔ جزئیات عمداً اسکلت ندارد</span>
+        <code>app/billboard/[slug]/loading.tsx</code> ساخته شد و <b>یک آزمون بلافاصله قرمز شد</b>:
+        «آگهیِ منتشرنشده برای مهمان و مشتری ۴۰۴ می‌ماند» — که ۲۰۰ برگرداند.
+        <br><br>
+        <b>چرا:</b> یک <code>loading.tsx</code> مسیر را در یک مرزِ <code>Suspense</code> می‌پیچد، و
+        Next آن‌وقت پوسته را — <b>همراه با خطِ وضعیت</b> — پیش از اجرای خودِ صفحه می‌فرستد.
+        <code>notFound()</code> که بعداً صدا زده می‌شود دیگر نمی‌تواند کدِ وضعیت را عوض کند،
+        پس پاسخ می‌شود <b>۲۰۰ با محتوای «یافت نشد»</b>.
+        <br><br>
+        <b>و این آرایشی نیست:</b> آگهیِ در انتظارِ تأیید باید از آگهیِ ناموجود <em>غیرقابلِ تشخیص</em>
+        باشد، و ۲۰۰ به خزنده می‌گوید این نشانی واقعی است. فایل حذف شد و محدودیت
+        <b>در بالای <code>PageSkeleton.tsx</code> مستند شد</b> تا نفرِ بعدی دوباره اضافه‌اش نکند.
+        <br><br>
+        <b style="color:var(--green)">این همان چیزی است که مجموعهٔ آزمون برایش هست.</b>
+        تغییری که بی‌ضرر به‌نظر می‌رسید، یک نشتِ اطلاعاتی ساخت و در ۱۹ ثانیه گیر افتاد.
       </div>
     </div>
   </div>
 
-  <div class="phase-card" style="border-color:var(--amber-mid)">
+  <div class="phase-card is-done" style="border-color:var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">A6</div>
-      <div class="ph-title"><h3>یک مسیرِ خواندنی بدونِ سقفِ نرخ</h3><p><code>/api/admin/auth/me</code> — تنها موردِ باقی‌مانده</p></div>
-      <div class="ph-badge todo">⚪ ریز</div>
+      <div class="ph-title"><h3>یک مسیرِ خواندنی بدونِ سقفِ نرخ</h3><p>انجام شد ✓ — و یک آزمونِ نگهبان که نگذارد دوباره پیش بیاید</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
@@ -3331,8 +3359,9 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
         قاعده دیگر قاعده نیست.
       </p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>افزودنِ <code>adminApiRateLimit</code> به <code>app/api/admin/auth/me/route.ts</code>، با همان کمکِ مشترکِ <code>rateLimited()</code> که بقیه استفاده می‌کنند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>یک آزمونِ نگهبان که بگوید «هر مسیرِ <code>/api/admin/*</code> سقفِ نرخ دارد» — مثلِ نگهبان‌هایی که همین حالا برای کوکیِ Secure و بررسیِ مبدأ وجود دارند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>adminApiRateLimit</code> به <code>app/api/admin/auth/me/route.ts</code> اضافه شد، با همان کمکِ مشترکِ <code>rateLimited()</code> که بقیه استفاده می‌کنند — ترتیب <code>session → rate limit</code>، طبقِ قاعدهٔ ۲</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>آزمونِ نگهبان:</b> «هر مسیرِ <code>/api/admin/*</code> سقفِ نرخ دارد». حالا فراموشیِ بعدی مجموعهٔ آزمون را قرمز می‌کند، به‌جای اینکه منتظرِ ممیزیِ بعدی بماند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>یک استثنا، و صریح:</b> <code>logout</code> عمداً معاف است و <b>در خودِ آزمون با دلیلش</b> نوشته شده — محدودکردنِ خروج در جهتِ خطرناک شکست می‌خورد: به کسی که «خروج» زده می‌گوید صبر کن و <em>واردش نگه می‌دارد</em></div></div>
       </div>
     </div>
   </div>
