@@ -3170,45 +3170,67 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
   <div class="phase-card is-next open" style="border-color:#C33A3A">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px; background:#C33A3A22; color:#C33A3A; border-color:#C33A3A44">B1</div>
-      <div class="ph-title"><h3>سرور نمی‌داند درخواست از کیست — همه «unknown»اند</h3><p>ریشهٔ همه‌چیز. تا این درست نشود، B2 و B3 روی شن ساخته می‌شوند</p></div>
+      <div class="ph-title"><h3>هر سقفِ نرخ روی عددی بسته شده که <em>خودِ فرستنده</em> انتخابش می‌کند</h3><p>یک هدر اضافه کن، و قفلِ ورود، سقفِ ثبت‌نام و کلِ ضدِ اسکرپ دور زده می‌شوند</p></div>
       <div class="ph-badge todo">→ اول از همه</div>
     </div>
     <div class="ph-body">
       <div class="note warn" style="margin-bottom:14px">
-        <span class="t">آنچه واقعاً اتفاق می‌افتد</span>
-        <code>lib/auth/client-ip.ts</code> آدرسِ کاربر را از هدرِ <code>X-Forwarded-For</code>
-        می‌خواند، و اگر نبود به <code>x-real-ip</code> و بعد به رشتهٔ <b><code>"unknown"</code></b> می‌افتد.
+        <span class="t">تصحیحِ یک تشخیصِ غلط — بخوان، چون نسخهٔ اولِ این کارت اشتباه بود</span>
+        نسخهٔ نخستِ این کارت می‌گفت «<code>getClientIp</code> به <code>"unknown"</code> می‌افتد و
+        همهٔ بازدیدکننده‌ها یک سطل می‌گیرند». <b>این غلط بود.</b> بررسیِ
+        <code>node_modules/next/dist/server/base-server.js</code> نشان داد Next.js 16 خودش
+        این کار را می‌کند:
+        <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:8px 0">req.headers['x-forwarded-for'] ??= originalRequest?.socket?.remoteAddress;</pre>
+        یعنی وقتی هدری نباشد، Next <b>نشانیِ واقعیِ سوکت</b> را می‌گذارد. پس هر دستگاهی روی
+        Wi-Fi نشانیِ خودش را دارد و آن هفت درخواستِ آزمایشی فقط به این دلیل یک سطل داشتند
+        که <b>واقعاً از یک ماشین</b> آمده بودند.
         <br><br>
-        <b>و در آرایشِ دمو هیچ‌کدام از آن دو هدر وجود ندارد.</b> <code>npm run demo</code>
-        یعنی <code>next start</code> به‌تنهایی — هیچ nginx، هیچ پروکسی، هیچ‌کس که آن هدرها را بگذارد.
-        پس <b>هر بازدیدکننده کلیدِ یکسانِ <code>"unknown"</code> می‌گیرد</b>: گوشیِ داور،
-        لپ‌تاپِ تو، گوشیِ استاد — برای سرور <b>یک نفرند</b> و یک سطلِ سقفِ نرخ را بین خودشان خرج می‌کنند.
+        <b>ولی همان آزمون چیزِ بدتری را لو داد،</b> و کارت دربارهٔ آن بازنویسی شده.
       </div>
-      <div class="note" style="margin-bottom:14px; border-color:var(--green-mid); background:var(--green-dim)">
-        <span class="t" style="color:var(--green)">اثباتِ تجربی — روی بیلد تولیدی، ۲۰ شهریور ۱۴۰۵</span>
-        سرور روی پورت ۳۱۹۹ بالا آمد و هفت تلاشِ ورودِ ناموفق با <b>هفت ایمیلِ متفاوت</b> فرستاده شد:
-        <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:8px 0">attempt 1 (person1@example.com): HTTP 401
-attempt 2 (person2@example.com): HTTP 401
-attempt 3 (person3@example.com): HTTP 401
-attempt 4 (person4@example.com): HTTP 401
-attempt 5 (person5@example.com): HTTP 401
-attempt 6 (person6@example.com): HTTP 429  ← قفل شد
-attempt 7 (person7@example.com): HTTP 429</pre>
-        هفت <em>حسابِ مختلف</em>، یک قفلِ مشترک. و بعد همان درخواست <b>با</b> هدرِ
-        <code>X-Forwarded-For: 203.0.113.77</code> فرستاده شد و <b>۴۰۰ گرفت نه ۴۲۹</b> —
-        یعنی سطلِ تازه. این ثابت می‌کند بدونِ پروکسی همه در یک سطلِ <code>"unknown"</code> نشسته‌اند.
+
+      <div class="note" style="margin-bottom:14px; border-color:#C33A3A; background:#C33A3A0A">
+        <span class="t" style="color:#C33A3A">ایرادِ واقعی: <code>??=</code> یعنی «فقط اگر نباشد»</span>
+        اگر فرستنده <em>خودش</em> هدرِ <code>X-Forwarded-For</code> را بفرستد، Next دست نمی‌زند و
+        <code>getClientIp</code> همان را می‌خواند. بدونِ یک پروکسیِ واقعی جلوی برنامه،
+        <b>کلیدِ سقفِ نرخ را خودِ درخواست‌کننده تعیین می‌کند.</b>
+        <br><br>
+        <b>اثباتِ تجربی — ۲۰ شهریور ۱۴۰۵، روی بیلد تولیدی:</b> اول سطل با شش تلاشِ ناموفق قفل شد،
+        بعد <em>همان</em> درخواست با یک هدرِ ساختگی فرستاده شد:
+        <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:8px 0">بدون هدر            -> HTTP 429   (قفل)
+x-forwarded-for: 203.0.113.77 -> HTTP 400   (سطلِ تازه — قفل دور زده شد)</pre>
+        و لاگِ ممیزی هم همین را ثبت کرد: درخواستِ بی‌هدر با <code>"ip":"::ffff:127.0.0.1"</code>
+        نوشته شد و درخواستِ هدردار با <code>"ip":"198.51.100.222"</code> — <b>یعنی عددی که
+        خودِ فرستنده انتخاب کرده بود، مستقیم به لاگِ ممیزی هم رفت.</b>
       </div>
-      <b style="font-size:0.88rem">دقیقاً چه باید کرد</b>
+
+      <div class="note" style="margin-bottom:14px; border-color:var(--amber-mid); background:var(--amber-dim)">
+        <span class="t" style="color:var(--amber)">چه چیزی با این یک هدر از کار می‌افتد</span>
+        <ul style="margin:6px 0 0; padding-right:18px; font-size:0.83rem; line-height:2">
+          <li><b>قفلِ ورود</b> — تنگ‌ترین کنترلِ کلِ برنامه. حدس‌زنِ رمز هر بار یک عدد تازه می‌فرستد و هرگز قفل نمی‌شود</li>
+          <li><b>سقفِ ثبت‌نام</b> — ساختِ انبوهِ حساب، بدونِ محدودیت</li>
+          <li><b>سقفِ ارسالِ کدِ یک‌بارمصرف بر اساس IP</b> — پیامک هزینه دارد</li>
+          <li><b>سقفِ خواندنِ کاتالوگ (§۲۰)</b> — اسکرپرِ انبوه آزاد می‌شود</li>
+        </ul>
+        <br>
+        و کامنتِ خودِ <code>lib/auth/client-ip.ts</code> ادعا می‌کند دقیقاً جلوی همین را گرفته:
+        «مقدارِ سمتِ چپ جعل‌شدنی است… پس ورودیِ <code>TRUSTED_PROXY_COUNT</code> تا از راست را می‌گیریم».
+        <b>آن دفاع فقط وقتی کار می‌کند که پروکسی واقعاً وجود داشته باشد</b> — چون nginx نشانیِ
+        واقعیِ همتا را به انتهای زنجیره <em>اضافه</em> می‌کند. بدونِ پروکسی چیزی اضافه نمی‌شود
+        و رشتهٔ جعلی، تنها عضوِ زنجیره است. کامنت این شرط را نمی‌گوید.
+      </div>
+
+      <b style="font-size:0.88rem">دقیقاً چه باید کرد — دو نیمه، و نیمهٔ دوم مهم‌تر است</b>
       <div class="task-list" style="margin-top:8px">
-        <div class="task todo-t"><div class="tick"></div><div>وقتی هیچ هدرِ پروکسی نیست، <b>به نشانیِ واقعیِ سوکت برگرد</b> به‌جای رشتهٔ ثابتِ <code>"unknown"</code>. در Next.js 16 این از <code>request.headers</code> در دسترس نیست — باید از <code>NextRequest</code> یا در بدترین حالت از یک هدرِ تنظیم‌شده در <code>next.config.ts</code> گرفته شود. <b>اول در <code>node_modules/next/dist/docs/</code> بگرد</b> (قاعدهٔ صفرِ پروژه)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>اگر نشانیِ سوکت هم در دسترس نبود، <b>هرگز همه را در یک سطل نریز.</b> یک شناسهٔ پایدارِ هر-مرورگر (کوکیِ تصادفیِ <code>HttpOnly</code>، بدونِ اطلاعاتِ شخصی) به‌عنوانِ <em>بُعدِ دوم</em> کنارِ آدرس بگذار — نه جایگزینش، چون کوکی پاک‌شدنی است</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>TRUSTED_PROXY_COUNT</code> در <code>.env.example</code> باید <b>صریح بگوید</b> که مقدارِ درست برای اجرای بدونِ پروکسی چیست، و چه اتفاقی می‌افتد اگر غلط باشد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>آزمونِ نگهبان:</b> دو درخواست بدونِ هیچ هدرِ پروکسی، از دو اتصالِ متفاوت، نباید یک کلید بگیرند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>۱ — کامنت راست بگوید.</b> در <code>lib/auth/client-ip.ts</code> بنویس که دفاعِ ضدِ جعل <b>مشروط به وجودِ یک پروکسیِ واقعی</b> است، و بدونِ آن هیچ مقدارِ هدری قابلِ اعتماد نیست. کامنتی که دفاعی را ادعا کند که ندارد، از نبودِ کامنت بدتر است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>۲ — <code>.env.example</code> صریح شود:</b> اجرای <code>next start</code> بدونِ پروکسی، <b>پیکربندیِ تولیدیِ پشتیبانی‌شده نیست</b>. <code>deploy/</code> پیکربندیِ nginx را از قبل دارد و همان <code>X-Forwarded-For</code>ِ قابلِ اعتماد را می‌سازد. این را به کارتِ B9 گره بزن</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>۳ — و نیمهٔ واقعی: هیچ محافظتی نباید فقط روی IP بایستد.</b> این دقیقاً کارتِ <b>B2</b> است. قفلی که روی <em>حساب</em> بسته شود با هیچ هدری دور نمی‌خورد. <b>اگر فقط یک کار می‌کنی، B2 را بکن</b> — B1 سخت‌کردنِ پیکربندی است، B2 درمان است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>۴ — لاگِ ممیزی نشانیِ جعلی را مثلِ واقعی ثبت می‌کند.</b> دستِ‌کم علامت بزن که این مقدار از هدر آمده و تأییدنشده است، وگرنه ردیفِ ممیزی شواهدی ارائه می‌دهد که شاهد نیست</div></div>
       </div>
       <div class="proof" style="border-color:var(--amber-mid)">
-        <b>سنجهٔ پذیرش:</b> همان آزمونِ هفت‌تاییِ بالا را تکرار کن.
-        <b>امروز:</b> تلاشِ ششم ۴۲۹ می‌گیرد. <b>هدف:</b> هر هفت تلاش ۴۰۱ بگیرند
-        (چون هفت حسابِ متفاوت‌اند)، و قفل فقط وقتی بیفتد که <em>یک حساب</em> پشتِ سرِ هم غلط بخورد — که کارِ B2 است.
+        <b>سنجهٔ پذیرش:</b> سطلِ ورود را با پنج تلاشِ ناموفق قفل کن، بعد همان درخواست را
+        با <code>x-forwarded-for</code>ِ ساختگی بفرست.<br>
+        <b>امروز:</b> <code>HTTP 400</code> — سطلِ تازه، قفل بی‌اثر.<br>
+        <b>هدف:</b> پس از B2، حتی با سطلِ تازهٔ IP، <b>قفلِ حساب هم‌چنان جلویش را بگیرد</b>.
       </div>
     </div>
   </div>
@@ -3239,14 +3261,23 @@ attempt 7 (person7@example.com): HTTP 429</pre>
       </div>
       <div class="note" style="margin-bottom:14px; border-color:var(--green-mid); background:var(--green-dim)">
         <span class="t" style="color:var(--green)">اثباتِ تجربی — ۲۰ شهریور ۱۴۰۵</span>
-        پس از شش تلاشِ ناموفق با ایمیل‌های <em>بی‌ربط</em>، <b>ادمینِ واقعیِ پروژه</b>
+        <b>کِی چند نفر یک نشانی دارند:</b> روی Wi-Fiِ خانه یا دفتر، هر دستگاه نشانیِ
+        محلیِ خودش را دارد و این مسئله پیش نمی‌آید (کارتِ B1 را ببین — Next نشانیِ
+        سوکت را می‌گذارد). <b>ولی در تولید، پشتِ nginx، هر بازدیدکننده‌ای که از یک
+        دانشگاه، یک شرکت یا یک اپراتورِ موبایل بیاید پشتِ یک نشانیِ عمومیِ مشترک است</b> —
+        و آن‌وقت دقیقاً همین اتفاق می‌افتد.
+        <br><br>
+        پس از شش تلاشِ ناموفق با ایمیل‌های <em>بی‌ربط</em> از یک نشانی، <b>ادمینِ واقعیِ پروژه</b>
         (<code>ADMIN_EMAIL</code>ِ خودِ <code>.env.local</code>) تلاش کرد وارد شود:
         <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:8px 0">REAL admin attempt: HTTP 429
 {"error":"درخواست‌های زیادی فرستاده شده...","retryAfter":852}</pre>
         <b>۸۵۲ ثانیه — چهارده دقیقه قفل، با رمزِ درست، بدونِ اینکه خودش حتی یک بار اشتباه زده باشد.</b>
         <br><br>
-        و ثبت‌نام: ششمین حسابِ تازه از یک آدرس <b>۶۰ دقیقه</b> قفل خورد. روزِ ارائه،
-        اگر شش داور بخواهند حساب بسازند تا سایت را امتحان کنند، ششمی یک ساعت بیرون می‌ماند.
+        و ثبت‌نام: ششمین حسابِ تازه از یک نشانی <b>۶۰ دقیقه</b> قفل خورد.
+        <br><br>
+        <b>این آزمون چه چیزی را ثابت می‌کند:</b> شکستِ حسابِ «الف» حسابِ «ب» را قفل می‌کند.
+        هر جا دو کاربرِ واقعی یک نشانی داشته باشند — که در تولید قاعده است نه استثنا —
+        یکی می‌تواند دیگری را بیرون بیندازد.
       </div>
       <div class="note" style="margin-bottom:14px; border-color:var(--amber-mid); background:var(--amber-dim)">
         <span class="t" style="color:var(--amber)">چرا این فقط یک آزار نیست، بلکه یک ضعفِ امنیتی است</span>
@@ -3609,13 +3640,18 @@ attempt 7 (person7@example.com): HTTP 429</pre>
 
       <b style="font-size:0.9rem; display:block; margin-top:18px">۶ — چند نفر هم‌زمان (شبیه‌سازیِ خودِ روزِ ارائه)</b>
       <div class="note warn" style="margin:8px 0 10px">
-        <span class="t">این دسته را حتماً برو — و اگر شکست، کارت‌های B1 و B2 هنوز انجام نشده‌اند</span>
-        روزِ ارائه چند نفر هم‌زمان روی یک Wi-Fi هستند. اگر B1/B2 انجام نشده باشد،
-        <b>همهٔ آن‌ها برای سرور یک نفرند</b> و بودجهٔ یکدیگر را خرج می‌کنند.
+        <span class="t">این دسته را حتماً برو</span>
+        روی Wi-Fiِ محلی هر دستگاه نشانیِ خودش را دارد، پس بودجه‌ها جدا هستند و این
+        دسته باید <b>بی‌دردسر رد شود</b>. اگر رد نشد، یعنی چیزی عمیق‌تر از آنچه
+        B1/B2 توصیف می‌کنند در جریان است و باید دنبالش بگردی.
+        <br><br>
+        <b>آزمونِ دوم در این فهرست مهم‌ترین است</b>: دو حسابِ متفاوت از یک نشانی.
+        آن یکی همان چیزی را می‌سنجد که B2 درست می‌کند، و روی همین لپ‌تاپ هم قابلِ
+        بازتولید است (هر دو تلاش را از خودِ لپ‌تاپ بزن، نه از دو دستگاه).
       </div>
       <div class="task-list">
         <div class="task todo-t"><div class="tick"></div><div>با <b>سه دستگاه</b> هم‌زمان (لپ‌تاپ + دو گوشی) سایت را بگرد — کسی ۴۲۹ نگیرد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>روی یک گوشی <b>عمداً ۵ بار رمز را غلط بزن</b>، بعد از گوشیِ دیگر با رمزِ <b>درست</b> وارد شو — <b>باید بتوانی</b>. اگر ۴۲۹ گرفتی، B2 انجام نشده</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>مهم‌ترینِ این فهرست:</b> از <b>یک دستگاه</b> پنج بار با یک ایمیل/شمارهٔ <em>الکی</em> رمزِ غلط بزن، بعد <b>از همان دستگاه</b> با حسابِ واقعی و رمزِ <b>درست</b> وارد شو — <b>باید بتوانی</b>. اگر ۴۲۹ گرفتی، B2 انجام نشده و شکستِ یک حساب، حسابِ دیگر را قفل می‌کند</div></div>
         <div class="task todo-t"><div class="tick"></div><div>یک صفحه را ۲۰ بار پشتِ سرِ هم رفرش کن — سایت نباید تو را ببندد</div></div>
         <div class="task todo-t"><div class="tick"></div><div>در حالی که مدیر در پنل کار می‌کند، از گوشیِ دیگر سایت را بگرد — هیچ‌کدام دیگری را کند یا مسدود نکند</div></div>
       </div>
