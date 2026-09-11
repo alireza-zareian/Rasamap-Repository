@@ -1301,18 +1301,29 @@ sequenceDiagram
 <div class="phase-card" style="border-color: var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">S4</div>
-      <div class="ph-title"><h3>OTP ندارد — ثبت‌نام با شماره تأیید نشده</h3><p>هر کسی می‌تواند با هر شماره‌ای ثبت‌نام کند بدون تأیید SMS</p></div>
-      <div class="ph-badge todo">🟡 security</div>
+      <div class="ph-title"><h3>OTP — زیرساخت ساخته شد؛ ثبت‌نام هنوز پشتش نیست</h3><p>بازیابی رمز با کد یک‌بارمصرف کار می‌کند، ولی ثبت‌نام شماره را تأیید نمی‌کند</p></div>
+      <div class="ph-badge todo">🟡 نیمه‌کاره</div>
     </div>
     <div class="ph-body">
+      <div class="note" style="margin-bottom:12px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">تصحیح — ۲۰ شهریور ۱۴۰۵</span>
+        این کارت می‌گفت «OTP ندارد». <b>دیگر درست نیست.</b> بازبینی روی کد نشان داد
+        زیرساخت کامل ساخته و آزموده شده و بازیابی رمز از آن استفاده می‌کند؛ آنچه مانده
+        فقط <b>بستنِ ثبت‌نام</b> به آن است. کارت به همان چیزی که واقعاً باقی مانده
+        محدود شد تا فهرستِ کارها با وضعیتِ مخزن یکی باشد.
+      </div>
       <p style="font-size:0.83rem; color:var(--muted); line-height:1.8; margin-bottom:12px">
-        <b>مشکل:</b> سایت‌های ایرانی واقعی (Divar، Snapp، Billboardiha) همه OTP دارند. بدون OTP: هر کسی با شماره دیگران ثبت‌نام می‌کند، شماره‌های جعلی وارد DB می‌شوند.<br>
-        <b>راه‌حل:</b> یک جدول <code>otp_codes</code> + endpoint ارسال SMS + تأیید کد ۶ رقمی (Kavenegar یا Ghasedak API).
+        <b>مشکلِ باقی‌مانده:</b> سایت‌های ایرانی واقعی (Divar، Snapp، Billboardiha) همه OTP دارند. تا وقتی
+        <code>POST /api/auth/register</code> کد را نخواهد، هر کسی می‌تواند با شمارهٔ دیگران حساب بسازد و
+        شماره‌های جعلی وارد پایگاه داده می‌شوند.<br>
+        <b>پیش‌نیازِ واقعی:</b> نه کد — <b>یک سرویس پیامکِ فعال</b>. لایهٔ پیامک نوشته شده و با
+        <code>KAVENEGAR_API_KEY</code> روشن می‌شود (§۱۶)؛ بدون کلید، کد فقط در لاگ می‌نشیند.
       </p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>جدول <code>otp_codes (phone, code, expiresAt, used)</code> در Prisma schema</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>ساخت <code>POST /api/auth/otp/send</code> و <code>POST /api/auth/otp/verify</code></div></div>
-        <div class="task todo-t"><div class="tick"></div><div>تغییر flow ثبت‌نام: شماره → OTP → رمز → ثبت‌نام</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>جدول <code>otp_codes</code> در schema — کدِ خام ذخیره نمی‌شود، فقط <code>HMAC-SHA256</code>؛ عمر کوتاه، مصرفِ یک‌بار، سقفِ ۵ تلاش (<code>prisma/schema.prisma</code> مدل <code>OtpCode</code>)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>POST /api/auth/otp/send</code> و <code>POST /api/auth/otp/verify</code> ساخته شدند، با سقفِ نرخِ جدا برای هر شماره و هر IP (<code>otpSendRateLimit</code>، <code>otpSendIpRateLimit</code>، <code>otpVerifyRateLimit</code>)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>صفحهٔ <code>/reset-password</code> کلِ چرخه را می‌رود: شماره → کد → رمز تازه. این مسیر امروز زنده است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>تنها کارِ باقی‌مانده:</b> بستنِ ثبت‌نام به همان چرخه — <code>purpose</code> فعلاً فقط <code>"password_reset"</code> را می‌پذیرد؛ باید <code>"register"</code> اضافه شود و <code>app/api/auth/register/route.ts</code> پیش از ساختِ حساب کد را تأیید کند</div></div>
         <div class="task todo-t"><div class="tick"></div><div><b>دیوارِ ورود روی جستجو (ضدِ اسکرپ) — برای مقاله ثبت شد، پیاده‌سازی نشد:</b> الان دسترسی به سایت <b>آزاد</b> است و هر کسی می‌تواند بدون حساب کارت‌ها را ببیند. وقتی OTP آماده شد، درست بعد از صفحهٔ اول: کاربر تا وارد صفحهٔ اصلی جستجو می‌شود یک پاپ‌آپ می‌آید که همان‌جا خودش را ثبت‌نام می‌کند (شماره → OTP). تا این کار انجام نشود، اجازهٔ دیدن کارت‌ها را ندارد. هدف: جلوگیری از اسکرپِ انبوهِ دادهٔ ما از روی صفحهٔ اول جستجو. <b>پیش‌نیاز:</b> OTP و سرویس پیامک که هنوز نداریم — تا آن موقع اجرا نمی‌شود.</div></div>
       </div>
     </div>
@@ -1387,26 +1398,39 @@ sequenceDiagram
 <div class="phase-card">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F1</div>
-      <div class="ph-title"><h3>بازیابی رمز / فراموشی رمز</h3><p>کاربری که رمز فراموش کرده هیچ راهی ندارد</p></div>
-      <div class="ph-badge todo">⚪ feature</div>
+      <div class="ph-title"><h3>بازیابی رمز / فراموشی رمز</h3><p>چرخهٔ کامل با کد یک‌بارمصرف — زنده است</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
     </div>
     <div class="ph-body">
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><code>POST /api/auth/otp/send</code> (پیش‌نیاز S4) + reset flow با OTP جدید</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>صفحه "فراموشی رمز" در login page</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>POST /api/auth/otp/send</code> و <code>POST /api/auth/otp/verify</code> ساخته شدند — کد هش‌شده ذخیره می‌شود، یک‌بار مصرف، با سقفِ تلاش</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>صفحهٔ <code>app/reset-password/</code> — شماره → کد → رمز تازه، با پیام خطای فارسی در هر مرحله</div></div>
+      </div>
+      <div class="proof">
+        <b>تأیید — ۲۰ شهریور ۱۴۰۵:</b> مسیرها در خروجیِ <code>npm run build</code> هستند
+        (<code>ƒ /api/auth/otp/send</code>، <code>ƒ /api/auth/otp/verify</code>، <code>○ /reset-password</code>)
+        و آزمون‌های OTP در <code>npm test</code> سبزند. بدون <code>KAVENEGAR_API_KEY</code> پیامکی
+        فرستاده نمی‌شود و کد فقط در لاگ می‌نشیند — که همان حالتِ خواستهٔ دموست (§۱۶).
       </div>
     </div>
   </div>
 <div class="phase-card">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F2</div>
-      <div class="ph-title"><h3>اعلان SMS/ایمیل بعد از رزرو</h3><p>کاربر رزرو می‌کند، هیچ notification نمی‌رسد — باید تماس تلفنی منتظر بماند</p></div>
-      <div class="ph-badge todo">⚪ feature</div>
+      <div class="ph-title"><h3>اعلان SMS بعد از رزرو</h3><p>منتفی شد — رزرو از محصول حذف شد، پس چیزی برای اعلان ماندن نیست</p></div>
+      <div class="ph-badge" style="background:var(--paper); color:var(--muted); border:1px solid var(--line)">⊘ منتفی</div>
     </div>
     <div class="ph-body">
-      <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>بعد از <code>prisma.reservation.create</code>: ارسال SMS تأیید به کاربر (Kavenegar/Ghasedak)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>بعد از admin تأیید: SMS به کاربر که رزرو confirm شد</div></div>
+      <div class="note" style="margin-bottom:12px">
+        <span class="t">چرا این کارت دیگر کاری نیست — ۲۰ شهریور ۱۴۰۵</span>
+        این کارت از دورانی مانده که پلتفرم <code>Reservation</code> داشت. آن مدل در بازبینیِ
+        ۱۱ شهریور <b>عمداً حذف شد</b>: رسامپ یک <em>فهرست</em> است، مالکِ رسانه‌ها نیست و
+        نمی‌تواند موجودی‌ای را بفروشد که در اختیار ندارد (§۱۷). به‌جای رزرو، شمارهٔ صاحبِ
+        رسانه به کاربرِ واردشده داده می‌شود و همان لحظه یک <code>ContactRequest</code> ثبت می‌شود.
+        <br><br>
+        <b>پس این کارت حذف نشد، منتفی اعلام شد</b> — تاریخچه بخشی از روایتِ پروژه است و
+        «ساختیم، سنجیدیم، برداشتیم» خودش یک یافتهٔ قابلِ دفاع است.
+        جانشینِ واقعی‌اش کارتِ <b>«سرنخ‌ها»</b>ست.
       </div>
     </div>
   </div>
@@ -1456,14 +1480,16 @@ sequenceDiagram
 <div class="phase-card">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:12px">F6</div>
-      <div class="ph-title"><h3>پرداخت آنلاین</h3><p>رزرو "pending" می‌ماند — هیچ flow پرداختی وجود ندارد</p></div>
-      <div class="ph-badge todo">⚪ feature</div>
+      <div class="ph-title"><h3>پرداخت آنلاین</h3><p>هدفش عوض شد — دیگر برای رزرو نیست، برای ارتقای آگهی است</p></div>
+      <div class="ph-badge todo">⚪ بازتعریف‌شده</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); margin-bottom:8px">بزرگ‌ترین تفاوت با سایت‌های واقعی. نیاز به درگاه پرداخت (ZarinPal یا Mellat).</p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>اضافه کردن <code>paymentStatus</code> و <code>invoiceAmount</code> به Reservation schema</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>ادغام ZarinPal SDK: <code>POST /api/payments/initiate</code> + callback verify</div></div>
+        <div class="task block-t"><div class="tick"></div><div><s>اضافه کردن <code>paymentStatus</code> و <code>invoiceAmount</code> به Reservation schema</s> — <b>منتفی:</b> مدلِ <code>Reservation</code> در بازبینیِ ۱۱ شهریور حذف شد (§۱۷). چیزی برای پرداخت‌کردن در آن سمت نمانده</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>شکلِ تازه:</b> آنچه واقعاً پول دارد، سمتِ <em>عرضه</em> است نه تقاضا — پلنِ <code>featured</code> روی آگهی. امروز مدیر پرداخت را دستی تأیید می‌کند و <code>featured</code> را می‌دهد (§۱۸)؛ درگاه فقط همان تأییدِ دستی را خودکار می‌کند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>ادغام ZarinPal: <code>POST /api/payments/initiate</code> + callback verify → روی موفقیت، <code>featured=true</code> و <code>status</code> از <code>awaiting_payment</code> خارج شود</div></div>
+        <div class="task block-t"><div class="tick"></div><div><b>سدِ واقعی، فنی نیست:</b> درگاه پرداخت به نمادِ اعتماد و مجوزِ کسب‌وکار نیاز دارد. تا آن نباشد، این کارت قابلِ اجرا نیست — نه اینکه سخت باشد</div></div>
       </div>
     </div>
   </div>
@@ -2320,7 +2346,9 @@ sequenceDiagram
     بزرگ‌ترین بردِ موجودند؛ استقرار و پایگاه دادهٔ تازه بعد از آن می‌آیند.
     <br><br>
     <b>وضعیت پایه در آغاز این برنامه:</b> <code>npm run lint</code> بدون هشدار ·
-    <code>npm test</code> ۱۱۳/۱۱۳ سبز در ۱۷٫۴ ثانیه · ۱۴٬۶۳۴ خط کدِ برنامه · بدون بدهیِ ساختاریِ شناخته‌شده.
+    <code>npm test</code> ۱۱۶/۱۱۶ سبز در ۱۸٫۸ ثانیه · ۱۵٬۷۱۱ خط کدِ برنامه در ۱۵۸ فایل ·
+    بزرگ‌ترین فایل ۶۹۹ خط · <code>tsc --noEmit</code> بی‌خطا · ۱۲۹ کیلوبایتِ فشردهٔ جاوااسکریپتِ مشترک.
+    <br><small style="color:var(--muted)">اعداد دوباره اندازه گرفته شدند — ۲۰ شهریور ۱۴۰۵. عددهای قبلی (۱۱۳ تست، ۱۴٬۶۳۴ خط) مربوط به ۱۶ شهریور بودند.</small>
   </div>
 
   <div class="note" style="margin:0 0 18px; border-color:var(--green-mid); background:var(--green-dim)">
@@ -2332,8 +2360,8 @@ sequenceDiagram
     سپس <code>docs/architecture.md</code> (دو مسیرِ داده) و <code>docs/engineering-decisions.md</code>.
     <br><br>
     <b>۲ — وضعیت را خودت تأیید کن، به حرفِ این سند اکتفا نکن:</b>
-    <code>npm run lint</code> باید بی‌هشدار باشد و <code>npm test</code> باید <b>۱۱۳/۱۱۳</b> بدهد
-    (حدود ۱۷ ثانیه، روی بیلد تولیدی — هرگز <code>next dev</code>).
+    <code>npm run lint</code> باید بی‌هشدار باشد و <code>npm test</code> باید <b>۱۱۶/۱۱۶</b> بدهد
+    (حدود ۱۹ ثانیه، روی بیلد تولیدی — هرگز <code>next dev</code>).
     اگر این دو سبز نبودند، <b>قبل از هر کارِ تازه</b> اول همان را درست کن.
     <br><br>
     <b>۳ — قاعدهٔ کارِ این فازها:</b> هر کارت یک «سنجهٔ پذیرش» دارد با عددِ امروز و عددِ هدف.
@@ -3096,11 +3124,11 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     </div>
     <div class="ph-body">
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><code>app/page.tsx:159</code> — جست‌وجوی صفحهٔ نخست با <code>window.location.href</code> کلِ صفحه را دوباره بار می‌کند؛ باید <code>router.push()</code> باشد. این پرکاربردترین ناوبریِ سایت است</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>components/ReviewsSection.tsx:260</code> — <code>&lt;a href="/login"&gt;</code> باید <code>&lt;Link&gt;</code> شود</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>/api/admin/auth/me</code> سقفِ نرخ ندارد (تنها مسیرِ خواندنیِ بدونِ سقف که ارزشِ محدودکردن دارد)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>loading.tsx</code> فقط برای <code>dashboard</code> و <code>explore</code> وجود دارد؛ صفحهٔ جزئیات و پنل مدیریت هم لیاقتش را دارند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>به‌روزرسانیِ وابستگی‌ها: <code>jose ۵ → ۶</code> و <code>bcryptjs ۲ → ۳</code> (هر دو نسخهٔ اصلیِ عقب‌مانده دارند)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>جست‌وجوی صفحهٔ نخست با <code>window.location.href</code> کلِ صفحه را دوباره بار می‌کرد → <code>router.push()</code> شد. <b>انجام شد در ممیزیِ ۲۰ شهریور (کارت A2)</b> — آدرس در <code>app/LandingClient.tsx</code> بود، نه <code>app/page.tsx</code>، چون V1 صفحه را به سرور برد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>components/ReviewsSection.tsx</code> — <code>&lt;a href="/login"&gt;</code> به <code>&lt;Link&gt;</code> تبدیل شد. <b>انجام شد در ممیزیِ ۲۰ شهریور (کارت A2)</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>/api/admin/auth/me</code> سقفِ نرخ ندارد — <b>هنوز باز است؛ جزئیات و دلیلش در کارت A6</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>loading.tsx</code> فقط برای <code>dashboard</code> و <code>explore</code> وجود دارد — <b>هنوز باز است؛ جزئیاتش در کارت A5</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>به‌روزرسانیِ وابستگی‌ها: <code>jose ۵٫۱۰٫۰ → ۶</code> و <code>bcryptjs ۲٫۴٫۳ → ۳</code>. <b>نکتهٔ عملی:</b> <code>npm outdated</code> روی اینترنتِ ایران به رجیستری نمی‌رسد و بی‌پاسخ می‌ماند — نسخه‌های نصب‌شده را از <code>node_modules/&lt;نام&gt;/package.json</code> بخوان</div></div>
       </div>
     </div>
   </div>
@@ -3115,6 +3143,328 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
       <div class="task-list">
         <div class="task block-t"><div class="tick">⏸</div><div><b>پیامک:</b> کلِ لایهٔ <code>lib/sms.ts</code> و چرخهٔ رمزِ یک‌بارمصرف پیاده‌سازی شده و آزمون دارد. فقط با گذاشتنِ <code>KAVENEGAR_API_KEY</code> در <code>.env</code> و بدونِ هیچ تغییرِ کدی زنده می‌شود</div></div>
         <div class="task block-t"><div class="tick">⏸</div><div><b>پرداخت:</b> منطقِ پلنِ ویژه از پیش کار می‌کند (تأییدِ دستیِ کارشناس). اتصال به درگاه نیازمندِ نمادِ اعتماد الکترونیکی و شخصیت حقوقی است — یک کارِ حقوقی، نه فنی</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ممیزی مستقل — ۲۰ شهریور ۱۴۰۵ ══════════ -->
+  <div class="note" style="margin:38px 0 18px; border-color:var(--brand); background:#2F6BE008">
+    <span class="t">ممیزی مستقلِ کلِ پروژه — ۲۰ شهریور ۱۴۰۵</span>
+    مهلت از «چند روز» به <b>سه تا چهار ماه</b> رسید. این بخش نتیجهٔ یک بازبینیِ تازه روی
+    <b>کلِ مخزن</b> است — نه ادامهٔ فهرستِ قبلی. هدف یک سؤال بود:
+    <em>«آیا معماری این پروژه با سایت‌های ترازِ اولِ دنیا برابری می‌کند؟»</em>
+    <br><br>
+    <b>پاسخ کوتاه: بله، و مدرکش اندازه‌گیری است نه ادعا.</b> اما هفت ایراد پیدا شد که
+    <b>هیچ‌کدام معماری نیستند</b> — همه در لایهٔ پرداخت و پولیش‌اند. به ترتیبِ
+    «بیشترین اثر بر کاربر» چیده شده‌اند: از A1 شروع کن، به A7 برس.
+    <br><br>
+    <b>وضعیتِ سنجیده‌شده در لحظهٔ این ممیزی:</b>
+    <table class="tbl" style="margin-top:8px">
+      <tbody>
+        <tr><td><code>npm run lint</code></td><td><b style="color:var(--green)">بدون هیچ هشدار</b></td></tr>
+        <tr><td><code>npx tsc --noEmit</code></td><td><b style="color:var(--green)">بدون خطا</b></td></tr>
+        <tr><td><code>npm test</code></td><td><b style="color:var(--green)">۱۱۶ از ۱۱۶</b> در ۱۸٫۸ ثانیه، روی بیلد تولیدی</td></tr>
+        <tr><td><code>npm run build</code></td><td><b style="color:var(--green)">موفق</b> — ۴۲ مسیر API، ۲۰ صفحه</td></tr>
+        <tr><td>حجمِ کد</td><td>۱۵٬۷۱۱ خط · ۱۵۸ فایل · بزرگ‌ترین فایل <b>۶۹۹ خط</b></td></tr>
+        <tr><td>جاوااسکریپتِ مشترکِ هر صفحه</td><td>۱۲۹٫۲ کیلوبایتِ فشرده</td></tr>
+      </tbody>
+    </table>
+    <br>
+    <b style="color:var(--green)">چرا «کد اسپاگتی» نیست — معیارِ قابلِ بررسی:</b>
+    گرافِ وابستگی <b>یک‌طرفه</b> است (<code>types</code> ← <code>db</code> ← <code>cached</code> ←
+    صفحه‌ها و مسیرها)، هیچ حلقهٔ import ندارد، هیچ فایلی از ۷۰۰ خط رد نکرده، و
+    کامنت‌ها <b>«چرا»</b> را ثبت می‌کنند نه «چه». این آخری معیارِ واقعیِ خوانایی است:
+    چند ایجنت که پشت سر هم کار کرده باشند کامنتِ «چه» می‌نویسند؛ کسی که باگ را دیده،
+    ریشه‌اش را می‌نویسد.
+  </div>
+
+  <div class="phase-card is-next open" style="border-color:#C33A3A">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:#C33A3A22; color:#C33A3A; border-color:#C33A3A44">A1</div>
+      <div class="ph-title"><h3>فلشِ سفید در تمِ تاریک — قابل‌مشاهده‌ترین نقصِ سایت</h3><p>اصلاح شد ✓ — تم حالا پیش از نخستین رنگ‌آمیزی اعمال می‌شود</p></div>
+      <div class="ph-badge done">✓ همین ممیزی درستش کرد</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <b>ایراد:</b> <code>lib/theme.tsx</code> تم را داخل <code>useEffect</code> اعمال می‌کرد —
+        یعنی <b>بعد از</b> اینکه مرورگر صفحه را رنگ کرده بود. کاربری که تمِ تاریک را
+        انتخاب کرده، در <b>هر بار بارگذاریِ هر صفحه</b> یک فلشِ سفید می‌دید.
+        <br>
+        <b>چرا مهم است:</b> این تنها ایرادی بود که <em>هر بازدیدکننده در هر بازدید</em> می‌دید.
+        هیچ سایتِ ترازِ اولی این را ندارد؛ همه با یک اسکریپتِ inline پیش از paint حلش می‌کنند.
+        روی موبایل — که داور با آن دمو را باز می‌کند — از لپ‌تاپ هم آشکارتر است.
+      </p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>اسکریپتِ مسدودکنندهٔ inline در <code>&lt;head&gt;</code>ِ <code>app/layout.tsx</code>: مقدارِ ذخیره‌شده را می‌خواند و <code>data-theme</code> و <code>colorScheme</code> را <b>پیش از نخستین رنگ‌آمیزی</b> می‌نشاند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>THEME_STORAGE_KEY</code> از <code>lib/theme.tsx</code> صادر شد تا اسکریپت و پرووایدر <b>یک کلید</b> داشته باشند و نتوانند از هم جدا بیفتند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>ThemeProvider</code> دیگر <code>localStorage</code> را دوباره نمی‌خواند — <code>data-theme</code>ی را می‌خواند که اسکریپت گذاشته. یک تفسیرکنندهٔ مقدارِ ذخیره‌شده، نه دو تا</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>colorScheme</code> روی <code>&lt;html&gt;</code> هم‌گام شد تا نوارِ پیمایش و کنترل‌های خودِ مرورگر زیرِ صفحهٔ تاریک روشن نمانند</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--green-mid)">
+        <b>تأیید:</b> <code>lint</code> بی‌هشدار · <code>tsc --noEmit</code> بی‌خطا ·
+        <code>npm test</code> <b>۱۱۶/۱۱۶</b> پس از تغییر.
+        سیاستِ CSP اجازه می‌دهد — <code>script-src</code> به‌خاطرِ خودِ App Router
+        <code>'unsafe-inline'</code> را نگه داشته (§۲۹)، پس این اسکریپت هیچ سوراخِ تازه‌ای باز نمی‌کند.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done" style="border-color:#C33A3A">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:#C33A3A22; color:#C33A3A; border-color:#C33A3A44">A2</div>
+      <div class="ph-title"><h3>سه ناوبری که کلِ صفحه را دوباره بار می‌کردند</h3><p>اصلاح شد ✓ — یکی‌شان پرکاربردترین دکمهٔ سایت بود</p></div>
+      <div class="ph-badge done">✓ همین ممیزی درستش کرد</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <b>ایراد:</b> سه جا به‌جای ناوبریِ نرمِ Next، از <code>window.location.href</code> یا
+        <code>&lt;a&gt;</code>ِ خام استفاده شده بود. هرکدام یعنی: دور انداختنِ کلِ برنامه،
+        دانلودِ دوبارهٔ ۱۲۹ کیلوبایت جاوااسکریپت، و یک صفحهٔ سفید در میانه.
+        <br>
+        <b>چرا مهم است:</b> اولی <b>زدنِ Enter در جست‌وجوی صفحهٔ نخست</b> بود — یعنی
+        پرکاربردترین ناوبریِ کلِ سایت. روی اینترنتِ کندِ موبایل، تفاوتش بینِ «فوری» و
+        «یک ثانیه صفحهٔ سفید» است.
+      </p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/LandingClient.tsx</code> — <code>window.location.href</code> → <code>router.push()</code>. ضمناً آدرس یک‌بار ساخته می‌شود (<code>exploreUrl</code>) تا کلیدِ Enter و دکمهٔ کنارش <b>نتوانند</b> سرِ مقصد اختلاف پیدا کنند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>components/ReviewsSection.tsx</code> — <code>&lt;a href="/login"&gt;</code> → <code>&lt;Link&gt;</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>app/list-media/page.tsx</code> — هدایتِ ۴۰۱ به صفحهٔ ورود حالا <code>router.push()</code> است؛ فرمِ نیمه‌پرشدهٔ کاربر دیگر با بارگذاریِ کامل از بین نمی‌رود</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--green-mid)"><b>تأیید:</b> <code>lint</code> بی‌هشدار · <code>tsc</code> بی‌خطا · <code>npm test</code> ۱۱۶/۱۱۶.</div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done" style="border-color:var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">A3</div>
+      <div class="ph-title"><h3>سه کامنت که عددشان با کد نمی‌خواند</h3><p>اصلاح شد ✓ — دقیقاً همان چیزی که قاعدهٔ ۱۰ خودِ پروژه منع کرده</p></div>
+      <div class="ph-badge done">✓ همین ممیزی درستش کرد</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <b>ایراد:</b> در <code>lib/auth/rate-limit.ts</code> سه کامنت عددی می‌گفتند که کد آن را
+        نمی‌گفت — کامنت «۱۲۰ در دقیقه»، کد ۶۰۰؛ کامنت «۶۰ در دقیقه با cooldownِ دو دقیقه»،
+        کد ۳۰۰ با cooldownِ صفر؛ کامنت «۶۰ در دقیقه با قفلِ ده‌دقیقه‌ای»، کد ۶۰۰ بدون قفل.
+        <br>
+        <b>چرا مهم است:</b> این باگِ اجرایی نیست — باگِ <em>اعتماد</em> است. کسی که کد را
+        سرد باز می‌کند کامنت را باور می‌کند. قاعدهٔ ۱۰ در <code>AGENTS.md</code> این را با
+        همین جمله منع کرده: «عددِ hardcode شده‌ای که عددِ واقعی را تکرار کند، drift می‌کند.»
+      </p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>هر سه کامنت بازنویسی شدند تا <b>دلیل</b> را بگویند نه عدد را — عدد دو خط پایین‌تر در خودِ کد هست و دیگر نمی‌تواند از آن جدا بیفتد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>دلیلِ واقعیِ سقف‌های بالا هم ثبت شد: چند نفر پشتِ یک NAT (دفتر، دانشگاه) یک بودجه را بین خودشان خرج می‌کنند</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-next open" style="border-color:var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">A4</div>
+      <div class="ph-title"><h3>دسترس‌پذیری — نازک‌ترین لایهٔ پروژه</h3><p>۱۰۴ دکمه در کلِ اپ، و فقط ۱۰ تا <code>aria-label</code> دارند</p></div>
+      <div class="ph-badge todo">→ کارِ بعدی</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <b>ایراد:</b> شمارش شد: ۱۰۴ عنصرِ <code>&lt;button&gt;</code> بدون <code>aria-label</code>.
+        بسیاری از آن‌ها متنِ فارسی دارند و مشکلی ندارند — ولی دکمه‌هایی که <b>فقط آیکون</b>اند
+        (تغییر تم، ناوبریِ گالری، بستنِ مودال، بزرگ‌نماییِ عکس) برای صفحه‌خوان
+        <b>بی‌نام</b> اعلام می‌شوند.
+        <br>
+        <b>چرا در این رتبه:</b> از A1 و A2 کم‌اثرتر است چون بیشترِ کاربران متوجهش نمی‌شوند —
+        ولی برای یک پروژهٔ دانشگاهی، <b>داور ممکن است دقیقاً همین را بپرسد</b>، و پاسخِ
+        «فکرش را نکرده بودم» گران تمام می‌شود. ضمناً ارزان‌ترین بردِ باقی‌مانده است.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>فهرست‌کردنِ دکمه‌های فقط-آیکون و دادنِ <code>aria-label</code>ِ فارسی به هرکدام — شروع از <code>LandingClient</code> (تغییر تم، فلش‌های گالری) و <code>Topbar</code></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>مودال‌ها: <code>role="dialog"</code> + <code>aria-modal="true"</code> + بستن با <code>Escape</code> + بازگرداندنِ فوکوس به دکمه‌ای که بازش کرد (<code>CompareModal</code>، <code>EditListingModal</code>، لایت‌باکسِ <code>ImageManager</code> و <code>ListingsPanel</code>)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>حلقهٔ فوکوس در مودالِ باز، تا <code>Tab</code> از پشتِ آن بیرون نزند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک پاسِ کیبورد روی مسیرِ اصلی: صفحهٔ نخست → جست‌وجو → کارت → جزئیات → دکمهٔ تماس، <b>بدون دست‌زدن به ماوس</b>. هرچه نرسیدی، یادداشت کن</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>اجرای زبانهٔ Lighthouse در Chrome DevTools و ثبتِ عددِ Accessibility <b>قبل و بعد</b> در همین کارت — دقیقاً مثلِ سایر سنجه‌های این سند</div></div>
+      </div>
+      <div class="note" style="margin-top:12px">
+        <span class="t">چرا این کار برای دفاع ارزش دارد</span>
+        دسترس‌پذیری تنها بخشی از «کیفیت» است که یک عددِ رسمی دارد و داور می‌تواند
+        <b>جلوی چشمِ خودت</b> اندازه بگیرد. عددِ قبل و بعد در همین کارت، همان کاری را
+        می‌کند که جدولِ CPUِ V1 کرد.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card" style="border-color:var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">A5</div>
+      <div class="ph-title"><h3>حالتِ بارگذاری فقط برای دو صفحه از شش صفحه</h3><p>صفحهٔ جزئیات و پنل مدیریت، هنگام بار شدن هیچ نمی‌گویند</p></div>
+      <div class="ph-badge todo">⚪ پولیش</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <b>ایراد:</b> <code>loading.tsx</code> فقط در <code>app/explore/</code> و
+        <code>app/dashboard/</code> هست. <code>app/billboard/[slug]/</code> —
+        که سنگین‌ترین صفحهٔ سایت است (گالری، نظرها، رسانه‌های مرتبط، نقشه) — هیچ ندارد.
+        <br>
+        <b>چرا مهم است:</b> §۵ خودِ پروژه می‌گوید «مسیرِ ناخوشایند را بساز: بارگذاری، خالی،
+        شکست، تلاشِ دوباره». این دقیقاً همان بندِ اول است، نصفه‌کاره مانده. روی اینترنتِ
+        ایران، فاصلهٔ بین کلیک و ظاهرشدنِ صفحه جایی است که کاربر فکر می‌کند سایت خراب است.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><code>app/billboard/[slug]/loading.tsx</code> — اسکلتِ گالری + عنوان + بلوکِ قیمت، هم‌اندازهٔ چیزی که جایش می‌آید تا صفحه <b>نپرد</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>app/admin/loading.tsx</code> — اسکلتِ جدول</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک‌دست‌کردن با دو اسکلتِ موجود، تا سه شکلِ متفاوتِ «در حال بارگذاری» نداشته باشیم (قاعدهٔ ۱۰: یک راه، نه چهار تا)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card" style="border-color:var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">A6</div>
+      <div class="ph-title"><h3>یک مسیرِ خواندنی بدونِ سقفِ نرخ</h3><p><code>/api/admin/auth/me</code> — تنها موردِ باقی‌مانده</p></div>
+      <div class="ph-badge todo">⚪ ریز</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <b>ایراد:</b> همهٔ مسیرهای دیگر سقفِ نرخ دارند؛ این یکی ندارد. خطرِ عملی‌اش کم است
+        (پشتِ <code>proxy.ts</code> است و نشست می‌خواهد) ولی <b>استثناست</b>، و استثنای
+        بی‌دلیل همان چیزی است که بازبینِ بعدی وقتش را سرش تلف می‌کند.
+        <br>
+        <b>چرا مهم است:</b> قاعدهٔ ۲ پروژه می‌گوید ترتیبِ
+        <code>session → rate limit → Zod</code> غیرقابلِ مذاکره است. یک استثنا یعنی
+        قاعده دیگر قاعده نیست.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>افزودنِ <code>adminApiRateLimit</code> به <code>app/api/admin/auth/me/route.ts</code>، با همان کمکِ مشترکِ <code>rateLimited()</code> که بقیه استفاده می‌کنند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک آزمونِ نگهبان که بگوید «هر مسیرِ <code>/api/admin/*</code> سقفِ نرخ دارد» — مثلِ نگهبان‌هایی که همین حالا برای کوکیِ Secure و بررسیِ مبدأ وجود دارند</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">A0</div>
+      <div class="ph-title"><h3>کلیدِ روشن‌کردن — Redis و PostgreSQL، در یک نگاه</h3><p>هر دو نوشته و آزموده‌اند. این کارت فقط همه‌جا را یک‌جا جمع می‌کند</p></div>
+      <div class="ph-badge" style="background:var(--violet-dim); border-color:var(--violet-mid); color:var(--violet)">⏻ آمادهٔ روشن‌شدن</div>
+    </div>
+    <div class="ph-body">
+      <div class="note" style="margin-bottom:14px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">بررسی شد — ۲۰ شهریور ۱۴۰۵: این کار از قبل تمام است</span>
+        نیازی به ساختنِ چیزی نیست. هر دو مسیر <b>نوشته، آزموده و خاموش</b>اند و با
+        یک متغیرِ محیطی روشن می‌شوند — بدون هیچ تغییرِ کدی. تنها چیزی که کم بود،
+        یک جای واحد برای دیدنِ همه‌شان بود؛ همین کارت.
+      </div>
+
+      <b style="font-size:0.88rem">۱ — PostgreSQL</b>
+      <p style="font-size:0.82rem; color:var(--muted); line-height:1.9; margin:6px 0 10px">
+        موتور <b>فقط</b> از روی <code>DATABASE_URL</code> تعیین می‌شود (<code>lib/db/engine.ts</code>) —
+        نه از <code>NODE_ENV</code>، نه از متغیرِ دومی که بتواند با آن اختلاف پیدا کند.
+      </p>
+      <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:0 0 12px">npm run db:to-postgres -- --dry-run postgresql://…   # می‌خواند و نقشه می‌کشد، چیزی نمی‌نویسد
+npm run db:to-postgres -- postgresql://…             # کپی، اصلاح sequence، و شمارشِ دو طرف
+# سپس DATABASE_URL را در .env.local بگذار، و:  npm run build &amp;&amp; npm test
+npm run db:to-sqlite                                 # برگشت — فایل SQLite دست‌نخورده مانده</pre>
+      <p style="font-size:0.8rem; color:var(--muted); line-height:1.9; margin:0 0 16px">
+        <b>آزمودهٔ واقعی:</b> روی PostgreSQL 16، ۳٬۵۶۲ رکورد منتقل شد، شمارشِ هر جدول
+        در دو طرف یکی بود، اپ سرو شد، هر دو موتور پاسخِ یکسان دادند، و بعد برگشت به SQLite.
+        <b>دو تله‌ای که دستی انجام‌دادن را خراب می‌کند:</b> کلاینتِ Prisma برای هر provider
+        جداگانه تولید می‌شود (هر دو دستور خودشان این کار را می‌کنند)، و sequenceهای
+        PostgreSQL از ۱ شروع می‌کنند فارغ از idهایی که کپی شده — بدونِ گامِ اصلاحِ sequence،
+        اولین درجِ بعدی با سطرِ یک تصادف می‌کند.
+      </p>
+
+      <b style="font-size:0.88rem">۲ — Redis (کشِ مشترک)</b>
+      <p style="font-size:0.82rem; color:var(--muted); line-height:1.9; margin:6px 0 10px">
+        <code>next.config.ts</code> فقط وقتی <code>cache-handler.js</code> را صدا می‌زند که
+        <code>REDIS_URL</code> ست شده باشد. بدونِ آن، هیچ‌کدامِ این کد اصلاً بار نمی‌شود.
+      </p>
+      <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:0 0 12px">REDIS_URL=redis://127.0.0.1:6379     # در .env.local
+npm run demo
+redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک بازدید باید پر شود</pre>
+      <div class="note warn" style="margin:0 0 16px">
+        <span class="t">مهم — روشنش نکن مگر نمونهٔ دوم داشته باشی</span>
+        روی <b>یک</b> ماشین، Redis <b>کندتر</b> است: صفحهٔ نخست از ۱٫۹ به ۶٫۲ میلی‌ثانیه رفت،
+        چون صفحه‌ای که از حافظه تحویل می‌شد حالا یک رفت‌وبرگشت هزینه می‌دهد.
+        این یک <b>انتخاب</b> است، نه کارِ ناتمام. لحظه‌ای که ارزشش را پیدا می‌کند،
+        لحظه‌ای است که <b>نمونهٔ دوم</b> بالا بیاید — وگرنه مدیری که آگهی را تأیید می‌کند
+        کشِ نمونهٔ A را پاک می‌کند و نمونهٔ B همچنان کاتالوگِ کهنه را سرو می‌کند.
+      </div>
+
+      <b style="font-size:0.88rem">۳ — کجا نوشته شده‌اند</b>
+      <table class="tbl" style="margin-top:6px">
+        <tbody>
+          <tr><td><code>.env.example</code></td><td>هر دو متغیر، با توضیحِ کاملِ کنارشان</td></tr>
+          <tr><td><code>RUNBOOK.md</code></td><td>«Switching the database engine» و «Running more than one instance» — دستورهای گام‌به‌گام</td></tr>
+          <tr><td><code>docs/engineering-decisions.md</code></td><td>§۲۵ (چرا Redis خاموش است) و §۲۷ (مهاجرتِ PostgreSQL، با اعداد)</td></tr>
+          <tr><td><code>cache-handler.js</code> · <code>scripts/to-postgres.mjs</code></td><td>خودِ پیاده‌سازی</td></tr>
+          <tr><td><code>lib/db/engine.ts</code></td><td>تنها جایی که موتور تعیین می‌شود</td></tr>
+        </tbody>
+      </table>
+      <div class="task-list" style="margin-top:12px">
+        <div class="task block-t"><div class="tick">⏸</div><div><b>هیچ کاری لازم نیست.</b> این کارت عمداً هیچ گامِ باز ندارد — وقتی میزبانی خریدی و نمونهٔ دوم لازم شد، از همین‌جا شروع کن</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">A7</div>
+      <div class="ph-title"><h3>فاصله تا سایت‌های ترازِ اولِ دنیا — و اینکه کدامش را باید پر کرد</h3><p>AdQuick، Blip، Vistar: چه دارند که رسامپ ندارد، و کدامش واقعاً به درد اینجا می‌خورد</p></div>
+      <div class="ph-badge" style="background:var(--violet-dim); border-color:var(--violet-mid); color:var(--violet)">◈ تحلیل</div>
+    </div>
+    <div class="ph-body">
+      <div class="note" style="margin-bottom:14px">
+        <span class="t">صادقانه: فاصله در معماری نیست، در <em>عمقِ محصول</em> است</span>
+        پلتفرم‌های جهانیِ تبلیغاتِ محیطی (AdQuick با ۱٫۶ میلیون نقطه در ۳۸ کشور،
+        Blip با ۳٬۵۰۰ نمایشگر، Vistar به‌عنوان زیرساختِ برنامه‌ای) از رسامپ
+        <b>معماریِ بهتری ندارند</b> — همان Server Component، همان کشِ برچسب‌دار،
+        همان صفحه‌بندیِ سمتِ پایگاه داده. تفاوت در چیزهایی است که <b>مدلِ کسب‌وکار</b>
+        اجازه می‌دهد، نه چیزهایی که کد اجازه می‌دهد.
+      </div>
+      <table class="tbl">
+        <thead><tr><th>آن‌ها دارند</th><th>رسامپ چه دارد</th><th>قضاوت</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>تقویمِ در دسترس بودن — «این تابلو اسفند آزاد است؟»</td>
+            <td>فقط <code>status</code>: آزاد / پر / رزروشده</td>
+            <td><b style="color:#C33A3A">منتفی</b> — رسامپ مالکِ موجودی نیست، پس تقویمی ندارد که نشان دهد (§۱۷). ادعایش <em>دروغ</em> می‌شد</td>
+          </tr>
+          <tr>
+            <td>جست‌وجوی شعاعی — «نزدیکِ شعبه‌های رقیبم»</td>
+            <td>فیلترِ شهر و استان</td>
+            <td><b style="color:var(--green)">ارزشش را دارد</b> — مختصات همین حالا در پایگاه داده هست (<code>lat</code>/<code>lng</code>) و <code>getMapPins</code> آماده است. فرمولِ هاورساین در SQL، بدون هیچ سرویسِ بیرونی</td>
+          </tr>
+          <tr>
+            <td>ساختِ «پلن» — چند ده تابلو در یک سبد، اشتراک‌گذاریِ پلن با مشتری</td>
+            <td>مقایسهٔ دوتایی</td>
+            <td><b style="color:var(--amber)">شاید</b> — بردِ واقعی دارد، ولی کارِ کمی نیست. بعد از A1 تا A6</td>
+          </tr>
+          <tr>
+            <td>CPM و ایمپرشنِ استاندارد</td>
+            <td>مدلِ تخمینِ بازدید (ساخته‌شده و مستند)</td>
+            <td><b style="color:var(--green)">داریم</b> — و چون فرمولش شفاف است، از «عددِ جعبه‌سیاه»ِ آن‌ها برای دفاع <em>بهتر</em> است</td>
+          </tr>
+          <tr>
+            <td>جست‌وجوی ذخیره‌شده و هشدارِ رسانهٔ تازه</td>
+            <td>ندارد</td>
+            <td><b style="color:var(--amber)">وابسته به پیامک</b> — بدونِ <code>KAVENEGAR_API_KEY</code> راهی برای اطلاع‌دادن نیست (§۱۶)</td>
+          </tr>
+          <tr>
+            <td>نقشهٔ تعاملی با خوشه‌بندی و رسمِ ناحیه</td>
+            <td>نقشهٔ ایران، استان‌به‌استان، با نقطه‌های واقعی</td>
+            <td><b style="color:var(--green)">داریم — و بهتر</b>: هیچ سرویسِ نقشه‌ای صدا زده نمی‌شود، پس روی اینترنتِ ایران <em>همیشه</em> بار می‌شود. AdQuick با VPNِ خاموش باز نمی‌شود</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note" style="margin-top:14px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">پاسخِ آمادهٔ داور، اگر پرسید «چرا مثلِ AdQuick نیست؟»</span>
+        «چون AdQuick واسطهٔ خریدِ رسانه است و ما فهرست هستیم. آن‌ها موجودی را می‌فروشند
+        چون قرارداد واسطه‌گری دارند؛ ما نداریم، پس به‌جای پرداخت، شمارهٔ صاحبِ رسانه را
+        می‌دهیم و تقاضا را ثبت می‌کنیم. این <b>انتخاب</b> است نه کمبود — و §۱۷ سندِ
+        تصمیم‌های مهندسی، تاریخِ همان روزی را دارد که مدلِ رزرو را <em>برداشتیم</em>.»
+        <br><br>
+        و یک نکتهٔ برتری که باید بگویی: <b>رسامپ با VPNِ خاموش کار می‌کند.</b> هیچ CDN،
+        هیچ سرویسِ نقشه، هیچ فونتِ بیرونی، هیچ SaaS. برای کاربرِ ایرانی این از همهٔ
+        ویژگی‌های AdQuick مهم‌تر است.
+      </div>
+      <div class="task-list" style="margin-top:14px">
+        <div class="task todo-t"><div class="tick"></div><div><b>تنها موردی که از این جدول ارزشِ ساختن دارد:</b> جست‌وجوی شعاعی. <code>lat</code>/<code>lng</code> موجود است، هاورساین در SQL نوشته می‌شود، و هیچ وابستگیِ تازه‌ای نمی‌خواهد. بعد از A4 تا A6</div></div>
       </div>
     </div>
   </div>
