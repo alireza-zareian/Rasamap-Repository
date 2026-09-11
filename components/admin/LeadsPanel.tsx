@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { C } from "./constants";
 import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";
@@ -67,13 +68,11 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
     if (busyId) return;                        // one write in flight at a time
     setBusyId(id); setError("");
     try {
-      const res = await fetch(`/api/admin/leads/${id}`, {
+      const data = await fetchJson<{ lead: Lead }>(`/api/admin/leads/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در ثبت تغییر"); return; }
 
       const saved: Lead = data.lead;
       // A status change can move the row out of the current filter — drop it
@@ -85,8 +84,8 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
       // The per-status counts changed; re-read them rather than guessing.
       const fresh = await fetch(`/api/admin/leads?status=${filter}&limit=1`).then(r => r.ok ? r.json() : null).catch(() => null);
       if (fresh) { setCounts(fresh.counts ?? {}); setTotal(fresh.total ?? 0); }
-    } catch {
-      setError("خطای شبکه");
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
       setBusyId(null);
     }

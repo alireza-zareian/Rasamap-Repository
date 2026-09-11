@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import type { UserRole } from "@/lib/auth/session";
 import { C, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
@@ -89,13 +90,11 @@ function AdminAccounts() {
   const patch = async (id: number, body: { role?: UserRole; active?: boolean }) => {
     setBusyId(id); setError("");
     try {
-      const res = await fetch(`/api/admin/users/${id}`, {
+      const data = await fetchJson<{ admin: AdminRow }>(`/api/admin/users/${id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در تغییر"); return; }
       setRows(prev => prev.map(r => r.id === id ? data.admin : r));
-    } catch { setError("خطای شبکه"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setBusyId(null); }
   };
 
@@ -326,14 +325,12 @@ function AddAdminModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     if (form.password.length < 8) { setError("رمز عبور حداقل ۸ نویسه"); return; }
     setError(""); setSaving(true);
     try {
-      const res = await fetch("/api/admin/users", {
+      const data = await fetchJson<{ admin: AdminRow }>("/api/admin/users", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name.trim(), email: form.email.trim(), role: form.role, password: form.password }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در ساخت کاربر"); setSaving(false); return; }
       onCreated(data.admin);
-    } catch { setError("خطای شبکه"); setSaving(false); }
+    } catch (err) { setError(errorMessage(err)); setSaving(false); }
   };
 
   return (

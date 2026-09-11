@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, Suspense } from "react";
+import { fetchJson, FetchError, errorMessage } from "@/lib/fetch-json";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, AlertTriangle, ArrowRight } from "lucide-react";
@@ -51,17 +52,23 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin/auth/login", {
+      await fetchJson("/api/admin/auth/login", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
-
-      const data: { error?: string; ok?: boolean } = await res.json();
-
-      if (res.status === 429) {
+      router.push(nextPath);
+      router.refresh();
+    } catch (err) {
+      // A refusal for too many attempts is the one failure worth more than a
+      // sentence: the form disables itself and counts down, so nobody sits
+      // retyping a password into a box that will refuse it either way.
+      // `retryAfter` comes from the response body rather than the Retry-After
+      // header — rateLimited() sends both, and the body is what survives going
+      // through fetchJson.
+      if (err instanceof FetchError && err.status === 429) {
+        const retryAfter = Number((err.body as { retryAfter?: number } | undefined)?.retryAfter) || 900;
         setLocked(true);
-        const retryAfter = parseInt(res.headers.get("Retry-After") ?? "900");
         setRetryIn(retryAfter);
         setError(`تعداد تلاش‌ها بیش از حد مجاز است. ${Math.ceil(retryAfter / 60)} دقیقه صبر کنید.`);
         const iv = setInterval(() => {
@@ -70,14 +77,9 @@ function LoginForm() {
             return t - 1;
           });
         }, 1000);
-      } else if (!res.ok) {
-        setError(data.error ?? "خطای ناشناخته");
       } else {
-        router.push(nextPath);
-        router.refresh();
+        setError(errorMessage(err));
       }
-    } catch {
-      setError("خطا در ارتباط با سرور. اتصال اینترنت را بررسی کنید.");
     } finally {
       setLoading(false);
     }

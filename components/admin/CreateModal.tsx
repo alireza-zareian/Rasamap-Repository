@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { useModalA11y } from "@/lib/useModalA11y";
 import type { Billboard } from "@/lib/types";
 import { C, TYPE_LABEL } from "./constants";
@@ -41,12 +42,14 @@ export function CreateModal({ onClose, onCreated }: { onClose: () => void; onCre
         ...(form.lat ? { lat: parseFloat(form.lat) } : {}),
         ...(form.lng ? { lng: parseFloat(form.lng) } : {}),
       };
-      const res = await fetch("/api/admin/billboards", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در ایجاد"); setSaving(false); return; }
+      const data = await fetchJson<{ billboard: Billboard }>("/api/admin/billboards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
       onCreated(data.billboard);
       onClose();
-    } catch { setError("خطای شبکه"); setSaving(false); }
+    } catch (err) { setError(errorMessage(err)); setSaving(false); }
   };
 
   return (

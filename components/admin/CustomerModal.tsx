@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { useModalA11y } from "@/lib/useModalA11y";
 import { copyText } from "@/lib/clipboard";
 import { C } from "./constants";
@@ -74,27 +75,23 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
     if (!dirty) return;
     setSaving(true); setError(""); setSavedOk(false);
     try {
-      const res = await fetch(`/api/admin/customers/${userId}`, {
+      const j = await fetchJson<{ user: { name: string; phone: string } }>(`/api/admin/customers/${userId}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), phone: phone.trim() }),
       });
-      const j = await res.json();
-      if (!res.ok) { setError(j.error ?? "خطا در ذخیره"); return; }
       setData(d => d ? { ...d, name: j.user.name, phone: j.user.phone } : d);
       setSavedOk(true);
       onSaved?.();
-    } catch { setError("خطای شبکه"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setSaving(false); }
   };
 
   const resetPassword = async () => {
     setResetting(true); setError(""); setNewPassword(""); setCopied(false);
     try {
-      const res = await fetch(`/api/admin/customers/${userId}/reset-password`, { method: "POST" });
-      const j = await res.json();
-      if (!res.ok) { setError(j.error ?? "خطا در بازنشانی رمز"); return; }
+      const j = await fetchJson<{ password: string }>(`/api/admin/customers/${userId}/reset-password`, { method: "POST" });
       setNewPassword(j.password);
-    } catch { setError("خطای شبکه"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setResetting(false); }
   };
 

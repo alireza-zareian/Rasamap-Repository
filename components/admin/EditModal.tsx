@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { useModalA11y } from "@/lib/useModalA11y";
 import type { Billboard } from "@/lib/types";
 import { C, TYPE_LABEL, STATUS_LABEL } from "./constants";
@@ -69,14 +70,12 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
         ...(form.height ? { height: parseFloat(form.height) } : {}),
         ...(form.faces  ? { faces:  parseInt(form.faces, 10) } : {}),
       };
-      const res = await fetch(`/api/admin/billboards/${billboard.id}`, {
+      const data = await fetchJson<{ billboard: Billboard }>(`/api/admin/billboards/${billboard.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در ذخیره‌سازی"); setSaving(false); return; }
       setSaved(true); onSaved(data.billboard);
       setTimeout(() => { setSaved(false); onClose(); }, 900);
-    } catch { setError("خطای شبکه"); setSaving(false); }
+    } catch (err) { setError(errorMessage(err)); setSaving(false); }
   };
 
   return (

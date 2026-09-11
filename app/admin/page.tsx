@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useState, useEffect, useCallback } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Billboard } from "@/lib/types";
@@ -95,7 +96,13 @@ function AdminDashboard() {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await fetch("/api/admin/auth/logout", { method: "POST" });
+    try {
+      await fetchJson("/api/admin/auth/logout", { method: "POST" });
+    } catch {
+      // Leaving is not negotiable — see the same reasoning in
+      // lib/auth/useCurrentUser.tsx. A hung request must not strand someone on
+      // a panel they asked to leave, with a dead button and no explanation.
+    }
     router.push("/admin/login");
   };
 
@@ -113,13 +120,11 @@ function AdminDashboard() {
     if (!deleteTarget) return;
     setDeleting(true); setDeleteError("");
     try {
-      const res = await fetch(`/api/admin/billboards/${deleteTarget.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) { setDeleteError(data.error ?? "خطا در حذف"); setDeleting(false); return; }
+      await fetchJson(`/api/admin/billboards/${deleteTarget.id}`, { method: "DELETE" });
       setBillboards(prev => prev.filter(b => b.id !== deleteTarget.id));
       setTotal(t => t - 1);
       setDeleteTarget(null);
-    } catch { setDeleteError("خطای شبکه"); }
+    } catch (err) { setDeleteError(errorMessage(err)); }
     setDeleting(false);
   };
 

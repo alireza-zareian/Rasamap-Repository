@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { fetchJson, errorMessage, TIMEOUT_MS } from "@/lib/fetch-json";
 import { Lightbox } from "./Lightbox";
 import { useModalA11y } from "@/lib/useModalA11y";
 import type { Billboard } from "@/lib/types";
@@ -34,18 +35,19 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
   const handleSave = async () => {
     setSaving(true); setError("");
     try {
-      const res = await fetch(`/api/admin/billboards/${billboard.id}/images`, {
+      const data = await fetchJson<{ images: string[] }>(`/api/admin/billboards/${billboard.id}/images`, {
+        // Photographs travel with this one, so it gets the upload budget rather
+        // than the ten seconds a small JSON call is allowed.
+        timeoutMs: TIMEOUT_MS.upload,
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در ذخیره تصاویر"); return; }
       // Replace in-memory data URLs with saved server paths
-      const saved = data.images as string[];
+      const saved = data.images;
       setImages(saved);
       onClose();
-    } catch { setError("خطای شبکه"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setSaving(false); }
   };
 

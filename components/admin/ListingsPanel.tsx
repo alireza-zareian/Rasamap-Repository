@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { Lightbox } from "./Lightbox";
 import { C, STATUS_LABEL } from "./constants";
 import { Badge } from "./Badge";
@@ -82,18 +83,16 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
     }
     setBusyId(id); setError("");
     try {
-      const res = await fetch(`/api/admin/listings/${id}/decision`, {
+      await fetchJson(`/api/admin/listings/${id}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decision, note: note || undefined }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در ثبت تصمیم"); return; }
       // The row has left the queue — drop it rather than refetching everything.
       setListings(prev => prev.filter(l => l.id !== id));
       setNotes(prev => { const next = { ...prev }; delete next[id]; return next; });
-    } catch {
-      setError("خطای شبکه");
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
       setBusyId(null);
     }

@@ -1483,15 +1483,16 @@ test("guard: a write from the browser goes through fetchJson", () => {
   //
   // Reads are left alone: a list that fails to load is visibly empty, while a
   // write that hangs looks like it is still working.
+  //
+  // The admin panel was exempt while B4 landed and is not any more. Staff are
+  // behind a session, but a stuck "approve" button is a stuck button whoever is
+  // pressing it — and the approval queue is the one screen where a listing is
+  // either published or not.
   const WRITE = /fetch\(\s*[`"'][^`"']*[`"']\s*,\s*\{[^}]*method:\s*["'](POST|PATCH|PUT|DELETE)/s;
 
   for (const [file, src] of sourceFiles()) {
     if (!file.endsWith(".tsx")) continue;
     if (!src.includes('"use client"')) continue;
-    // The admin panel is staff-only and behind a session; its forms are worth
-    // converting too, but they are not what a visitor meets. Tracked in B5.
-    if (file.replaceAll("\\", "/").startsWith("components/admin/")) continue;
-    if (file.replaceAll("\\", "/").startsWith("app/admin/")) continue;
 
     assert.ok(
       !WRITE.test(src),
