@@ -288,9 +288,9 @@ function AdminDashboard() {
                 </div>
                 {pages > 1 && (
                   <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, padding: "14px 0", borderTop: `1px solid ${C.border}` }}>
-                    <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1} style={{ ...iS, cursor: page===1?"default":"pointer", padding: "6px 14px" }}>←</button>
+                    <button type="button" aria-label="صفحهٔ قبلی" onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1} style={{ ...iS, cursor: page===1?"default":"pointer", padding: "6px 14px" }}>←</button>
                     <span style={{ fontSize: "0.8rem", color: C.muted }}>صفحه {page} از {pages}</span>
-                    <button onClick={() => setPage(p => Math.min(pages,p+1))} disabled={page===pages} style={{ ...iS, cursor: page===pages?"default":"pointer", padding: "6px 14px" }}>→</button>
+                    <button type="button" aria-label="صفحهٔ بعدی" onClick={() => setPage(p => Math.min(pages,p+1))} disabled={page===pages} style={{ ...iS, cursor: page===pages?"default":"pointer", padding: "6px 14px" }}>→</button>
                   </div>
                 )}
               </div>

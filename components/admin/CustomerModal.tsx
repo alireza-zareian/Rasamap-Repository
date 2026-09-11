@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { useModalA11y } from "@/lib/useModalA11y";
 import { copyText } from "@/lib/clipboard";
 import { C } from "./constants";
 import { Badge } from "./Badge";
@@ -36,6 +37,7 @@ const LISTING_STATUS: Record<string, [string, string]> = {
 const fmt = (d: string) => new Date(d).toLocaleDateString("fa-IR", { year: "numeric", month: "short", day: "numeric" });
 
 export function CustomerModal({ userId, onClose, onSaved }: { userId: number; onClose: () => void; onSaved?: () => void }) {
+  const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [data, setData] = useState<CustomerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -101,10 +103,10 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 24, width: "min(520px, 94vw)", maxHeight: "90vh", overflowY: "auto", direction: "rtl", boxSizing: "border-box" }}>
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-label="ویرایش مشتری" tabIndex={-1} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 24, width: "min(520px, 94vw)", maxHeight: "90vh", overflowY: "auto", direction: "rtl", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.95rem", fontWeight: 700 }}><User size={16} /> مشخصات کاربر</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
+          <button type="button" aria-label="بستن پنجرهٔ مشتری" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
         </div>
 
         {error && (

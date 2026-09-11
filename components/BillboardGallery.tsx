@@ -58,10 +58,15 @@ export default function BillboardGallery({ images, name }: Props) {
 
   return (
     <>
-      {/* Main image */}
-      <div
-        style={{ position: "relative", width: "100%", aspectRatio: "16/9", borderRadius: 16, overflow: "hidden", cursor: "zoom-in", background: "var(--bg-surface)" }}
+      {/* Main image — a real <button>, not a div with onClick. The lightbox
+          was reachable only by pointer before: nothing about a clickable div
+          reaches the tab order, so a keyboard could not open the photographs
+          at all. `type="button"` keeps it out of any surrounding form. */}
+      <button
+        type="button"
         onClick={openLightbox}
+        aria-label={`بزرگ‌نمایی تصویر ${name}`}
+        style={{ position: "relative", display: "block", width: "100%", aspectRatio: "16/9", borderRadius: 16, overflow: "hidden", cursor: "zoom-in", background: "var(--bg-surface)", border: "none", padding: 0, font: "inherit" }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -73,7 +78,7 @@ export default function BillboardGallery({ images, name }: Props) {
           </div>
         )}
         <div style={{ position: "absolute", bottom: 12, right: 12, background: "rgba(0,0,0,0.55)", borderRadius: 8, padding: "4px 10px", fontSize: "0.7rem", color: "#fff", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: 5 }}><Search size={12} /> بزرگ‌نمایی</div>
-      </div>
+      </button>
 
       {/* Thumbnails */}
       {images.length > 1 && (
@@ -81,7 +86,10 @@ export default function BillboardGallery({ images, name }: Props) {
           {images.map((src, i) => (
             <button
               key={i}
+              type="button"
               onClick={() => setActive(i)}
+              aria-label={`نمایش تصویر ${i + 1} از ${images.length}`}
+              aria-current={i === active}
               style={{ flexShrink: 0, width: 72, height: 52, borderRadius: 9, overflow: "hidden", border: i === active ? "2px solid var(--accent)" : "2px solid var(--border)", padding: 0, cursor: "pointer", background: "var(--bg-surface)" }}
             >
               <Image src={src} alt="" width={72} height={52} sizes="72px" loading="lazy" decoding="async"
@@ -94,6 +102,9 @@ export default function BillboardGallery({ images, name }: Props) {
       {/* Lightbox */}
       {lightbox && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`تصاویر ${name}`}
           style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setLightbox(false)}
         >
@@ -103,11 +114,11 @@ export default function BillboardGallery({ images, name }: Props) {
               style={{ width: "90vw", height: "auto", maxHeight: "88vh", objectFit: "contain", borderRadius: 12, display: "block" }} />
             {images.length > 1 && (
               <>
-                <button onClick={prev} className="gallery-arrow gallery-arrow-prev" style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={22} /></button>
-                <button onClick={next} className="gallery-arrow gallery-arrow-next" style={{ position: "absolute", top: "50%", left: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronLeft size={22} /></button>
+                <button type="button" onClick={prev} aria-label="تصویر قبلی" className="gallery-arrow gallery-arrow-prev" style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={22} /></button>
+                <button type="button" onClick={next} aria-label="تصویر بعدی" className="gallery-arrow gallery-arrow-next" style={{ position: "absolute", top: "50%", left: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronLeft size={22} /></button>
               </>
             )}
-            <button onClick={() => setLightbox(false)} style={{ position: "absolute", top: -16, left: -16, background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>
+            <button type="button" onClick={() => setLightbox(false)} aria-label="بستن نمای بزرگ" style={{ position: "absolute", top: -16, left: -16, background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>
             <div style={{ position: "absolute", bottom: -28, left: "50%", transform: "translateX(-50%)", fontSize: "0.72rem", color: "rgba(255,255,255,0.6)" }}>{active + 1} / {images.length}</div>
           </div>
         </div>

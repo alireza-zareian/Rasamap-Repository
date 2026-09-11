@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useModalA11y } from "@/lib/useModalA11y";
 import type { Billboard } from "@/lib/types";
 import { C, TYPE_LABEL } from "./constants";
 import { Plus, X, AlertTriangle } from "lucide-react";
@@ -7,6 +8,7 @@ import { Plus, X, AlertTriangle } from "lucide-react";
 const EMPTY = { name: "", location: "", city: "", type: "billboard", price: "", agency: "", phone: "", description: "", width: "12", height: "4", faces: "1", lat: "", lng: "" };
 
 export function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (b: Billboard) => void }) {
+  const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -49,10 +51,10 @@ export function CreateModal({ onClose, onCreated }: { onClose: () => void; onCre
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: "min(580px, 94vw)", maxHeight: "90vh", overflowY: "auto", direction: "rtl", boxSizing: "border-box" }}>
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-label="ایجاد بیلبورد تازه" tabIndex={-1} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: "min(580px, 94vw)", maxHeight: "90vh", overflowY: "auto", direction: "rtl", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "1rem", fontWeight: 700 }}><Plus size={17} /> بیلبورد جدید</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
+          <button type="button" aria-label="بستن فرم ایجاد" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
         </div>
         <div className="admin-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div style={{ gridColumn: "1/-1" }}><label style={lS}>نام <span style={{ color: C.accent }}>*</span></label><input style={iS} value={form.name} onChange={set("name")} placeholder="بیلبورد اتوبان..." /></div>

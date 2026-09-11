@@ -341,7 +341,7 @@ function AddAdminModal({ onClose, onCreated }: { onClose: () => void; onCreated:
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 26, width: "min(440px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.95rem", fontWeight: 700 }}><Plus size={16} /> کاربر مدیریتی جدید</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
+          <button type="button" aria-label="بستن فرم کاربر" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div><label style={lS}>نام</label><input style={iS} value={form.name} onChange={set("name")} /></div>

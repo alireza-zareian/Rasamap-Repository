@@ -23,7 +23,7 @@ export default function CompareBar({ items, onRemove, onCompare, onClear }: Prop
             <div key={b.id} style={{background:"var(--bg-surface)",border:"1px solid var(--accent-warm)",borderRadius:8,padding:"6px 12px",fontSize:"0.78rem",display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
               <span style={{display:"flex",flexShrink:0,color:"var(--text-muted)"}}><TypeIcon type={b.type} size={14} /></span>
               <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.name}</span>
-              <button onClick={()=>onRemove(b.id)} style={{background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",padding:0,display:"flex",flexShrink:0}}><X size={13}/></button>
+              <button type="button" onClick={()=>onRemove(b.id)} aria-label={`حذف ${b.name} از مقایسه`} style={{background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",padding:0,display:"flex",flexShrink:0}}><X size={13}/></button>
             </div>
           ) : (
             <div key={i} style={{background:"var(--bg-surface)",border:"1px dashed var(--border)",borderRadius:8,padding:"6px 12px",fontSize:"0.75rem",color:"var(--text-muted)",display:"flex",alignItems:"center",justifyContent:"center",flex:1,minWidth:0}}>

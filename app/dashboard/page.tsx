@@ -163,7 +163,10 @@ export default function Dashboard() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
             <button
+              type="button"
               onClick={() => setSidebarOpen(o => !o)}
+              aria-label="باز و بستن منو"
+              aria-expanded={sidebarOpen}
               style={{ display: "none", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", cursor: "pointer", color: "var(--text-main)", alignItems: "center" }}
               className="dash-hamburger"
             >

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useModalA11y } from "@/lib/useModalA11y";
 import { CatalogueItem, typeLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Scale, X, Star } from "lucide-react";
@@ -11,8 +12,9 @@ interface Props {
 }
 
 export default function CompareModal({ items, onClose }: Props) {
-  if (items.length < 2) return null;
+  const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [a, b] = items;
+  if (items.length < 2) return null;
 
   const rows: [string, (b:CatalogueItem)=>string|number, boolean][] = [
     ["نوع رسانه", b=>typeLabels[b.type], false],
@@ -44,11 +46,11 @@ export default function CompareModal({ items, onClose }: Props) {
 
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:500,background:"rgba(6,10,18,0.9)",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:16,width:"100%",maxWidth:680,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 32px 80px rgba(0,0,0,0.8)",animation:"fadeIn 0.25s ease"}}>
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-label="مقایسه رسانه‌ها" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:16,width:"100%",maxWidth:680,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 32px 80px rgba(0,0,0,0.8)",animation:"fadeIn 0.25s ease"}}>
 
         <div style={{padding:"18px 22px 14px",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{fontSize:"1.05rem",fontWeight:700,display:"flex",alignItems:"center",gap:7}}><Scale size={18} /> مقایسه رسانه‌ها</div>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",display:"flex"}}><X size={18} /></button>
+          <button type="button" onClick={onClose} aria-label="بستن مقایسه" style={{background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",display:"flex"}}><X size={18} /></button>
         </div>
 
         {/* Header row */}

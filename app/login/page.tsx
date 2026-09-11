@@ -126,6 +126,7 @@ function LoginForm() {
       <button
         type="button"
         onClick={() => setShow(!show)}
+        aria-label={show ? "پنهان کردن رمز" : "نمایش رمز"}
         tabIndex={-1}
         // The box is 44px so a thumb can hit it; the icon still sits where it
         // looked right, because the button centres it inside the space the

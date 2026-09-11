@@ -135,6 +135,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPass(s => !s)}
+                  aria-label={showPass ? "پنهان کردن رمز" : "نمایش رمز"}
                   tabIndex={-1}
                   style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex", alignItems: "center", padding: 4, lineHeight: 1 }}
                 >

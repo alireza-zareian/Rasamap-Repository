@@ -1,11 +1,13 @@
 "use client";
 import { useState, useRef } from "react";
+import { useModalA11y } from "@/lib/useModalA11y";
 import type { Billboard } from "@/lib/types";
 import { C } from "./constants";
 import { Badge } from "./Badge";
 import { Image as ImageIcon, X, FolderOpen, ArrowUp } from "lucide-react";
 
 export function ImageManager({ billboard, onClose }: { billboard: Billboard; onClose: () => void }) {
+  const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [images, setImages] = useState<string[]>(billboard.images ?? []);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -48,10 +50,10 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 24, width: "min(560px, 94vw)", maxHeight: "90vh", overflowY: "auto", direction: "rtl", boxSizing: "border-box" }}>
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-label="مدیریت تصاویر" tabIndex={-1} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 24, width: "min(560px, 94vw)", maxHeight: "90vh", overflowY: "auto", direction: "rtl", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700, fontSize: "0.95rem" }}><ImageIcon size={15} /> تصاویر — #{billboard.id}</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
+          <button type="button" aria-label="بستن مدیریت تصاویر" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
         </div>
 
         {error && (
@@ -85,7 +87,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
                 <img src={src} alt="" loading="lazy" decoding="async" onClick={e => { e.stopPropagation(); setLightbox(src); }} style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 6, cursor: "zoom-in" }} />
                 {i === 0 && <Badge text="اصلی" color={C.green} bg="rgba(34,197,94,0.12)" />}
                 <div style={{ display: "flex", gap: 4 }}>
-                  {i > 0 && <button title="انتقال به بالا" onClick={() => setImages(p => { const a = [...p]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; return a; })} style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "none", color: C.muted, cursor: "pointer", display: "inline-flex", alignItems: "center" }}><ArrowUp size={12} /></button>}
+                  {i > 0 && <button type="button" title="انتقال به بالا" aria-label={`انتقال تصویر ${i + 1} به بالا`} onClick={() => setImages(p => { const a = [...p]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; return a; })} style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "none", color: C.muted, cursor: "pointer", display: "inline-flex", alignItems: "center" }}><ArrowUp size={12} /></button>}
                   <button onClick={() => setImages(p => p.filter((_, j) => j !== i))} style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, border: "1px solid rgba(239,68,68,0.4)", background: "none", color: "#ef4444", cursor: "pointer" }}>حذف</button>
                 </div>
               </div>
@@ -106,7 +108,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
 
       {lightbox && (
         <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
-          <button onClick={() => setLightbox(null)} style={{ position: "absolute", top: 16, left: 16, background: "rgba(255,255,255,0.14)", border: "none", color: "#fff", width: 34, height: 34, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={18} /></button>
+          <button type="button" aria-label="بستن نمای بزرگ" onClick={() => setLightbox(null)} style={{ position: "absolute", top: 16, left: 16, background: "rgba(255,255,255,0.14)", border: "none", color: "#fff", width: 34, height: 34, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={18} /></button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={lightbox} alt="" onClick={e => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "88vh", objectFit: "contain", borderRadius: 10, display: "block" }} />
         </div>

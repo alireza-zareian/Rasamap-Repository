@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useModalA11y } from "@/lib/useModalA11y";
 import { X, ImagePlus, Check } from "lucide-react";
 import { faNum } from "@/lib/format";
 
@@ -55,6 +56,7 @@ export default function EditListingModal({
   onClose: () => void;
   onSaved: (updated: Record<string, unknown>) => void;
 }) {
+  const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [form, setForm] = useState({
     name: listing.name,
     desc: listing.description ?? "",
@@ -163,13 +165,13 @@ export default function EditListingModal({
       onClick={onClose}
       style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(6,10,18,0.7)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: 20, overflowY: "auto" }}
     >
-      <div
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-label="ویرایش و ارسال مجدد آگهی" tabIndex={-1}
         onClick={e => e.stopPropagation()}
         style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, width: "100%", maxWidth: 560, margin: "40px 0", direction: "rtl" }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
           <div style={{ fontSize: "0.95rem", fontWeight: 700 }}>ویرایش و ارسال مجدد آگهی</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 4, display: "flex" }}>
+          <button type="button" aria-label="بستن فرم ویرایش" onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 4, display: "flex" }}>
             <X size={18} />
           </button>
         </div>
@@ -242,7 +244,7 @@ export default function EditListingModal({
                 <div key={url} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "4/3", border: "1px solid var(--border)" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  <button onClick={() => setKeptUrls(prev => prev.filter(u => u !== url))}
+                  <button type="button" aria-label="حذف این تصویر" onClick={() => setKeptUrls(prev => prev.filter(u => u !== url))}
                     style={{ position: "absolute", top: 4, left: 4, background: "rgba(0,0,0,0.6)", border: "none", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}>
                     <X size={12} />
                   </button>
@@ -252,7 +254,7 @@ export default function EditListingModal({
                 <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "4/3", border: "1px solid var(--border)" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={p.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  <button onClick={() => setNewPhotos(prev => prev.filter((_, j) => j !== i))}
+                  <button type="button" aria-label={`حذف تصویر تازهٔ ${i + 1}`} onClick={() => setNewPhotos(prev => prev.filter((_, j) => j !== i))}
                     style={{ position: "absolute", top: 4, left: 4, background: "rgba(0,0,0,0.6)", border: "none", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}>
                     <X size={12} />
                   </button>

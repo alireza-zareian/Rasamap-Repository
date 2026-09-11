@@ -197,14 +197,19 @@ export default function ListMediaPage() {
         onChange={handleFileChange}
       />
       {photos.length < MAX_PHOTOS && (
-        <div
+        // A button, not a clickable div: the real <input type="file"> above is
+        // hidden, so this was the only way to add a photograph — and a div with
+        // an onClick is in no tab order, which left the whole upload step
+        // unreachable without a mouse.
+        <button
+          type="button"
           onClick={() => fileInputRef.current?.click()}
-          style={{border:"2px dashed var(--border)",borderRadius:12,padding:"32px",textAlign:"center",color:"var(--text-muted)",marginBottom:14,cursor:"pointer"}}
+          style={{border:"2px dashed var(--border)",borderRadius:12,padding:"32px",textAlign:"center",color:"var(--text-muted)",marginBottom:14,cursor:"pointer",width:"100%",background:"none",fontFamily:"inherit",display:"block"}}
         >
           <ImagePlus size={32} style={{margin:"0 auto 10px",display:"block",color:"var(--accent)"}} />
           <div style={{fontSize:"0.85rem",marginBottom:4}}>برای انتخاب تصویر کلیک کنید</div>
           <div style={{fontSize:"0.72rem"}}>(حداکثر ۵ تصویر، هر کدام تا ۲ مگابایت — JPG / PNG / WEBP)</div>
-        </div>
+        </button>
       )}
       {photos.length > 0 && (
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
@@ -213,7 +218,9 @@ export default function ListMediaPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.preview} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} />
               <button
+                type="button"
                 onClick={() => removePhoto(i)}
+                aria-label={`حذف تصویر ${i + 1}`}
                 style={{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:0}}
               >
                 <X size={12} />

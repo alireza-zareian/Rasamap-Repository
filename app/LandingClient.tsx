@@ -97,7 +97,7 @@ export default function LandingClient({
           <span className="logo-shimmer" style={{ fontSize: "1.15rem", fontWeight: 800, letterSpacing: "-0.2px" }}>رسامپ</span>
         </Link>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button onClick={toggle} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
+          <button onClick={toggle} aria-label={dark ? "تغییر به تم روشن" : "تغییر به تم تاریک"} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
             {dark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           {user ? (
@@ -252,8 +252,8 @@ export default function LandingClient({
             </div>
 
             {/* Prev / Next */}
-            <button onClick={() => goGal(-1)} style={{ position: "absolute", top: "50%", right: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}><ChevronRight size={22} /></button>
-            <button onClick={() => goGal(1)} style={{ position: "absolute", top: "50%", left: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}><ChevronLeft size={22} /></button>
+            <button onClick={() => goGal(-1)} aria-label="رسانهٔ قبلی" style={{ position: "absolute", top: "50%", right: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}><ChevronRight size={22} /></button>
+            <button onClick={() => goGal(1)} aria-label="رسانهٔ بعدی" style={{ position: "absolute", top: "50%", left: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}><ChevronLeft size={22} /></button>
 
             {/* Dot indicators */}
             <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 20 }}>

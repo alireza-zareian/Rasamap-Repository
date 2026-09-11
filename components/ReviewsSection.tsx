@@ -37,6 +37,12 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
             onClick={() => onChange?.(n)}
             onMouseEnter={() => onChange && setHover(n)}
             onMouseLeave={() => onChange && setHover(0)}
+            // Read-only when there is no onChange — it is then a rating being
+            // displayed, not asked for, so it leaves the tab order rather than
+            // offering five stops that do nothing.
+            aria-label={`${n} ستاره از ۵`}
+            aria-pressed={onChange ? n === value : undefined}
+            disabled={!onChange}
             style={{
               background: "none", border: "none", cursor: onChange ? "pointer" : "default", padding: 0,
               color: active ? "#f59e0b" : "var(--border)",
