@@ -3147,6 +3147,492 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     </div>
   </div>
 
+  <!-- ══════════ برنامهٔ کاری B — از ریشه‌ای‌ترین به سخت‌ترین ══════════ -->
+  <div class="note" style="margin:40px 0 18px; border-color:#C33A3A; background:#C33A3A0A">
+    <span class="t" style="color:#C33A3A">برنامهٔ کاری — از ریشه‌ای‌ترین به سخت‌ترین · ۲۰ شهریور ۱۴۰۵</span>
+    این بخش برای <b>اجرا شدن</b> نوشته شده، نه برای خوانده شدن. فرض این است که
+    کسی — یا چیزی — که آن را برمی‌دارد <b>هیچ حافظه‌ای از این گفت‌وگو ندارد</b>.
+    پس هر کارت این چهار تا را دارد: <b>چه چیزی غلط است</b> (با فایل و خط)،
+    <b>چرا اهمیت دارد</b>، <b>دقیقاً چه باید کرد</b>، و <b>چطور ثابت کنی درست شد</b>.
+    <br><br>
+    <b>ترتیب، ترتیبِ اهمیت نیست — ترتیبِ وابستگی است.</b> B1 زیرِ B2 است و
+    B2 زیرِ B3. اگر از وسط شروع کنی، روی زمینی کار می‌کنی که هنوز نریخته‌ای.
+    <br><br>
+    <b style="color:#C33A3A">B1 تا B3 یک خانواده‌اند و فوری‌ترین کارِ پروژه‌اند.</b>
+    هر سه یک نشانه دارند: <em>سایت، کاربرِ واقعی را به بهانهٔ امنیت بیرون می‌اندازد.</em>
+    این‌ها فرضیه نیستند — <b>امروز روی بیلد تولیدی اجرا و دیده شدند</b>؛ خروجیِ
+    دقیقِ هر آزمون داخلِ کارتش هست.
+    <br><br>
+    <b>قاعدهٔ کار:</b> یک کارت، یک کامیت، با <code>npm test</code>ِ سبز پیش از کامیت.
+    پس از هر کارت، وضعیتش را <b>در همین سند</b> به‌روز کن (قاعدهٔ ۶ <code>AGENTS.md</code>).
+  </div>
+
+  <div class="phase-card is-next open" style="border-color:#C33A3A">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:#C33A3A22; color:#C33A3A; border-color:#C33A3A44">B1</div>
+      <div class="ph-title"><h3>سرور نمی‌داند درخواست از کیست — همه «unknown»اند</h3><p>ریشهٔ همه‌چیز. تا این درست نشود، B2 و B3 روی شن ساخته می‌شوند</p></div>
+      <div class="ph-badge todo">→ اول از همه</div>
+    </div>
+    <div class="ph-body">
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">آنچه واقعاً اتفاق می‌افتد</span>
+        <code>lib/auth/client-ip.ts</code> آدرسِ کاربر را از هدرِ <code>X-Forwarded-For</code>
+        می‌خواند، و اگر نبود به <code>x-real-ip</code> و بعد به رشتهٔ <b><code>"unknown"</code></b> می‌افتد.
+        <br><br>
+        <b>و در آرایشِ دمو هیچ‌کدام از آن دو هدر وجود ندارد.</b> <code>npm run demo</code>
+        یعنی <code>next start</code> به‌تنهایی — هیچ nginx، هیچ پروکسی، هیچ‌کس که آن هدرها را بگذارد.
+        پس <b>هر بازدیدکننده کلیدِ یکسانِ <code>"unknown"</code> می‌گیرد</b>: گوشیِ داور،
+        لپ‌تاپِ تو، گوشیِ استاد — برای سرور <b>یک نفرند</b> و یک سطلِ سقفِ نرخ را بین خودشان خرج می‌کنند.
+      </div>
+      <div class="note" style="margin-bottom:14px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">اثباتِ تجربی — روی بیلد تولیدی، ۲۰ شهریور ۱۴۰۵</span>
+        سرور روی پورت ۳۱۹۹ بالا آمد و هفت تلاشِ ورودِ ناموفق با <b>هفت ایمیلِ متفاوت</b> فرستاده شد:
+        <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:8px 0">attempt 1 (person1@example.com): HTTP 401
+attempt 2 (person2@example.com): HTTP 401
+attempt 3 (person3@example.com): HTTP 401
+attempt 4 (person4@example.com): HTTP 401
+attempt 5 (person5@example.com): HTTP 401
+attempt 6 (person6@example.com): HTTP 429  ← قفل شد
+attempt 7 (person7@example.com): HTTP 429</pre>
+        هفت <em>حسابِ مختلف</em>، یک قفلِ مشترک. و بعد همان درخواست <b>با</b> هدرِ
+        <code>X-Forwarded-For: 203.0.113.77</code> فرستاده شد و <b>۴۰۰ گرفت نه ۴۲۹</b> —
+        یعنی سطلِ تازه. این ثابت می‌کند بدونِ پروکسی همه در یک سطلِ <code>"unknown"</code> نشسته‌اند.
+      </div>
+      <b style="font-size:0.88rem">دقیقاً چه باید کرد</b>
+      <div class="task-list" style="margin-top:8px">
+        <div class="task todo-t"><div class="tick"></div><div>وقتی هیچ هدرِ پروکسی نیست، <b>به نشانیِ واقعیِ سوکت برگرد</b> به‌جای رشتهٔ ثابتِ <code>"unknown"</code>. در Next.js 16 این از <code>request.headers</code> در دسترس نیست — باید از <code>NextRequest</code> یا در بدترین حالت از یک هدرِ تنظیم‌شده در <code>next.config.ts</code> گرفته شود. <b>اول در <code>node_modules/next/dist/docs/</code> بگرد</b> (قاعدهٔ صفرِ پروژه)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>اگر نشانیِ سوکت هم در دسترس نبود، <b>هرگز همه را در یک سطل نریز.</b> یک شناسهٔ پایدارِ هر-مرورگر (کوکیِ تصادفیِ <code>HttpOnly</code>، بدونِ اطلاعاتِ شخصی) به‌عنوانِ <em>بُعدِ دوم</em> کنارِ آدرس بگذار — نه جایگزینش، چون کوکی پاک‌شدنی است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>TRUSTED_PROXY_COUNT</code> در <code>.env.example</code> باید <b>صریح بگوید</b> که مقدارِ درست برای اجرای بدونِ پروکسی چیست، و چه اتفاقی می‌افتد اگر غلط باشد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>آزمونِ نگهبان:</b> دو درخواست بدونِ هیچ هدرِ پروکسی، از دو اتصالِ متفاوت، نباید یک کلید بگیرند</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--amber-mid)">
+        <b>سنجهٔ پذیرش:</b> همان آزمونِ هفت‌تاییِ بالا را تکرار کن.
+        <b>امروز:</b> تلاشِ ششم ۴۲۹ می‌گیرد. <b>هدف:</b> هر هفت تلاش ۴۰۱ بگیرند
+        (چون هفت حسابِ متفاوت‌اند)، و قفل فقط وقتی بیفتد که <em>یک حساب</em> پشتِ سرِ هم غلط بخورد — که کارِ B2 است.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-next open" style="border-color:#C33A3A">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:#C33A3A22; color:#C33A3A; border-color:#C33A3A44">B2</div>
+      <div class="ph-title"><h3>قفل‌ها روی آدرس بسته می‌شوند، نه روی حساب — پس همسایه‌ات تو را بیرون می‌اندازد</h3><p>ادمینِ واقعی با رمزِ درست، ۱۴ دقیقه قفل بود. این دیده شد، حدس زده نشد</p></div>
+      <div class="ph-badge todo">→ فوری</div>
+    </div>
+    <div class="ph-body">
+      <div class="note warn" style="margin-bottom:14px">
+        <span class="t">آنچه واقعاً اتفاق می‌افتد</span>
+        هر چهار قفلِ اعتبارنامه فقط روی <b>آدرس</b> بسته می‌شوند و هیچ‌کدام <b>حساب</b> را نمی‌بینند:
+        <table class="tbl" style="margin-top:8px">
+          <thead><tr><th>تابع</th><th>کلید</th><th>سقف</th><th>مدتِ قفل</th></tr></thead>
+          <tbody>
+            <tr style="background:#C33A3A0a"><td><code>loginRateLimit</code></td><td><b>فقط IP</b></td><td>۵ در ۱۵ دقیقه</td><td><b>۱۵ دقیقه</b></td></tr>
+            <tr style="background:#C33A3A0a"><td><code>userLoginRateLimit</code></td><td><b>فقط IP</b></td><td>۱۰ در ۱۵ دقیقه</td><td><b>۱۵ دقیقه</b></td></tr>
+            <tr style="background:#C33A3A0a"><td><code>registrationRateLimit</code></td><td><b>فقط IP</b></td><td>۵ در ساعت</td><td><b>۶۰ دقیقه</b></td></tr>
+            <tr style="background:#C33A3A0a"><td><code>otpSendIpRateLimit</code></td><td><b>فقط IP</b></td><td>۱۰ در ساعت</td><td><b>۳۰ دقیقه</b></td></tr>
+            <tr><td><code>otpSendRateLimit</code></td><td style="color:var(--green)">شماره ✓</td><td>۳ در ۱۰ دقیقه</td><td>۱۰ دقیقه</td></tr>
+            <tr><td><code>otpVerifyRateLimit</code></td><td style="color:var(--green)">شماره ✓</td><td>۱۰ در ۱۰ دقیقه</td><td>۱۰ دقیقه</td></tr>
+          </tbody>
+        </table>
+        <br>
+        دو تای آخر <b>درست</b>اند و الگویی‌اند که چهار تای اول باید از آن تقلید کنند.
+      </div>
+      <div class="note" style="margin-bottom:14px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">اثباتِ تجربی — ۲۰ شهریور ۱۴۰۵</span>
+        پس از شش تلاشِ ناموفق با ایمیل‌های <em>بی‌ربط</em>، <b>ادمینِ واقعیِ پروژه</b>
+        (<code>ADMIN_EMAIL</code>ِ خودِ <code>.env.local</code>) تلاش کرد وارد شود:
+        <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:8px 0">REAL admin attempt: HTTP 429
+{"error":"درخواست‌های زیادی فرستاده شده...","retryAfter":852}</pre>
+        <b>۸۵۲ ثانیه — چهارده دقیقه قفل، با رمزِ درست، بدونِ اینکه خودش حتی یک بار اشتباه زده باشد.</b>
+        <br><br>
+        و ثبت‌نام: ششمین حسابِ تازه از یک آدرس <b>۶۰ دقیقه</b> قفل خورد. روزِ ارائه،
+        اگر شش داور بخواهند حساب بسازند تا سایت را امتحان کنند، ششمی یک ساعت بیرون می‌ماند.
+      </div>
+      <div class="note" style="margin-bottom:14px; border-color:var(--amber-mid); background:var(--amber-dim)">
+        <span class="t" style="color:var(--amber)">چرا این فقط یک آزار نیست، بلکه یک ضعفِ امنیتی است</span>
+        قفلی که روی آدرس بسته می‌شود، <b>خودش به سلاح تبدیل می‌شود</b>: هر کسی که بداند
+        ادمین از کجا وصل می‌شود، با پنج تلاشِ عمداً غلط او را از پنلِ خودش بیرون می‌اندازد.
+        کنترلی که قرار بود از حساب محافظت کند، راهی برای از کار انداختنِ آن شده.
+        <br><br>
+        و <b>§۸ خودِ <code>AGENTS.md</code> این را از قبل خواسته بود:</b>
+        «تأخیر پیش‌رونده + قفلِ موقت <b>به‌ازای هر حساب و هر IP</b>». نیمهٔ «هر حساب» هرگز ساخته نشد.
+      </div>
+      <b style="font-size:0.88rem">دقیقاً چه باید کرد</b>
+      <p style="font-size:0.82rem; color:var(--muted); line-height:1.9; margin:6px 0 8px">
+        <b>ایدهٔ مرکزی:</b> حمله‌کننده‌ای که رمز حدس می‌زند، <em>یک حساب</em> را هدف می‌گیرد.
+        پس قفلِ تنگ باید روی <b>حساب</b> باشد. آدرس یک سقفِ <em>خیلی گشاد</em> می‌گیرد،
+        چون یک آدرس به‌طورِ قانونی ده‌ها نفر را حمل می‌کند.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><b>بُعدِ حساب (تنگ):</b> کلیدِ <code>login_acct:&lt;ایمیل یا شمارهٔ نرمال‌شده&gt;</code> — ۵ شکست، بعد قفلِ کوتاه. این <b>واقعاً</b> جلوی حدسِ رمز را می‌گیرد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>بُعدِ آدرس (گشاد):</b> همان کلیدِ فعلی، ولی سقف به‌مراتب بالاتر و <b><code>lockoutMs: 0</code></b> — پنجره خودش تمام شود. دقیقاً همان الگویی که <code>publicApiRateLimit</code> از قبل دارد و دلیلش در کامنتش نوشته شده</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>تأخیر پیش‌رونده به‌جای دیوار:</b> به‌جای «پنجمین تلاش = ۱۵ دقیقه هیچی»، هر شکست پاسخ را کمی کندتر کن (۰ → ۰٫۵ → ۱ → ۲ ثانیه). برای انسان نامحسوس است، برای اسکریپت مرگبار — و <b>هیچ‌کس را بیرون نمی‌اندازد</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>ثبت‌نام:</b> قفلِ یک‌ساعته برداشته شود. سقف بماند ولی به شکلِ پنجره، نه قفل. سوءاستفادهٔ واقعیِ ثبت‌نام با <b>OTP</b> جلویش گرفته می‌شود (کارتِ B12)، نه با بستنِ درِ ورودی</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b><code>otpSendIpRateLimit</code>:</b> قفلِ ۳۰ دقیقه‌ای برداشته شود. سقفِ هر-شماره (که درست است) هزینهٔ پیامک را از قبل مهار کرده</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>پیامِ کاربر باید راست بگوید:</b> وقتی <em>حساب</em> قفل است، بگو «این حساب موقتاً قفل شده»؛ وقتی <em>آدرس</em> است، بگو «درخواستِ زیاد از این شبکه». امروز هر دو یک جمله می‌گیرند و کاربر نمی‌فهمد کدام است — <b>ولی مراقب باش پیام نگوید حساب وجود دارد یا نه</b> (قاعدهٔ ۶: بدونِ نشتِ وجودِ حساب)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>آزمونِ نگهبان:</b> «۵ شکست روی حسابِ الف، حسابِ ب را از همان آدرس قفل نمی‌کند»</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--amber-mid)">
+        <b>سنجهٔ پذیرش — دقیقاً این را اجرا کن:</b><br>
+        ۱) شش بار با ایمیل‌های متفاوت رمزِ غلط بفرست · ۲) بعد با <b>ادمینِ واقعی و رمزِ درست</b> وارد شو.<br>
+        <b>امروز:</b> <code>HTTP 429</code>, <code>retryAfter: 852</code>.
+        <b>هدف:</b> <code>HTTP 200</code> و ورودِ موفق.<br>
+        و برعکسش هم باید سرِ جایش باشد: ۵ بار رمزِ غلط <em>روی همان یک حساب</em> باید آن حساب را کند یا قفل کند.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card" style="border-color:var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">B3</div>
+      <div class="ph-title"><h3>هر بازدیدِ صفحه، دو تا سه بار می‌پرسد «کی وارد است؟»</h3><p>بودجهٔ سقفِ نرخ سه برابر سریع‌تر خرج می‌شود — بی‌آنکه چیزی به کاربر بدهد</p></div>
+      <div class="ph-badge todo">⚪ همان خانواده</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <b>ایراد:</b> <code>useCurrentUser()</code> در هر کامپوننتی که صدایش می‌زند یک
+        <code>fetch("/api/auth/me")</code>ِ مستقل می‌اندازد، و هیچ اشتراکی بینشان نیست.
+        چهار کامپوننت از آن استفاده می‌کنند و روی یک صفحه با هم سوار می‌شوند:
+        <br><br>
+        <table class="tbl">
+          <tbody>
+            <tr><td><code>StaffBar</code> — در <b>layoutِ ریشه</b>، یعنی <b>هر صفحه</b></td><td>۱</td></tr>
+            <tr><td>+ <code>Topbar</code> — کاتالوگ و صفحهٔ جزئیات</td><td>۲</td></tr>
+            <tr style="background:#C33A3A0a"><td>+ <code>BillboardContact</code> — صفحهٔ جزئیات</td><td><b>۳</b></td></tr>
+            <tr><td>+ <code>LandingClient</code> — صفحهٔ نخست</td><td>۲</td></tr>
+          </tbody>
+        </table>
+        <br>
+        <b>چرا در این خانواده است:</b> سقفِ خواندن ۶۰۰ در دقیقه است و به‌تنهایی گشاد،
+        ولی وقتی <b>همه پشتِ کلیدِ <code>"unknown"</code>ِ B1 نشسته‌اند</b>، سه برابر شدنِ
+        هر بازدید یعنی سقف سه برابر زودتر می‌رسد. B1 مسئله را می‌سازد؛ این کارت شدتش را سه برابر می‌کند.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>یک <b>Context در layoutِ ریشه</b> که یک بار می‌پرسد و به همه می‌دهد — یا یک کشِ ساده در سطحِ ماژول با درخواستِ در-پرواز مشترک، تا چند فراخوانیِ هم‌زمان یک پاسخ بگیرند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>logout()</code> هم‌چنان <code>window.location.href</code> است. اینجا <b>عمدی و درست است</b> (بارگذاریِ کامل همهٔ وضعیتِ کلاینت را پاک می‌کند) — <b>کامنتش را بنویس</b> وگرنه بازبینِ بعدی آن را باگ می‌بیند و «درستش» می‌کند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>سنجه:</b> در DevTools ← Network، یک بازدید از <code>/billboard/[slug]</code>. <b>امروز: ۳ تا <code>/api/auth/me</code>. هدف: ۱.</b></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card" style="border-color:var(--amber-mid)">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">B4</div>
+      <div class="ph-title"><h3>سی‌ونه فراخوانیِ شبکه، هیچ‌کدام مهلت ندارند</h3><p>سرورِ کند = دکمه‌ای که تا ابد می‌چرخد و هرگز خطا نمی‌دهد</p></div>
+      <div class="ph-badge todo">⚪ تجربهٔ کاربر</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <b>ایراد:</b> ۳۹ فراخوانیِ <code>fetch</code> در کدِ کلاینت هست و <b>هیچ‌کدام</b>
+        <code>AbortSignal.timeout()</code> ندارند. تنها جای کلِ پروژه که مهلت دارد
+        <code>lib/sms.ts</code> است — که ناخواسته ثابت می‌کند الگویش شناخته‌شده بود و فقط اعمال نشد.
+        <br><br>
+        <b>چه اتفاقی می‌افتد:</b> اگر پاسخ نیاید — شبکهٔ ضعیفِ موبایل، سرورِ مشغول، تونلی که
+        افتاده — <code>await fetch()</code> برنمی‌گردد. <code>setSubmitting(false)</code>
+        هرگز اجرا نمی‌شود. دکمه در «در حال ارسال…» گیر می‌کند، <b>بی‌نهایت</b>، بدونِ خطا.
+        کاربر نمی‌داند شکست خورده یا نه، و اگر رفرش کند ممکن است دوباره بفرستد.
+        <br><br>
+        <b>§۵ خودِ پروژه این را خواسته بود:</b> «هر تماسِ بیرونی: مهلت + تلاشِ مجددِ محدود + یک جایگزینِ تعریف‌شده.»
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>یک کمکِ مشترک — مثلاً <code>lib/fetch-json.ts</code> — که <code>AbortSignal.timeout()</code> می‌گذارد، <code>AbortError</code> را به یک پیامِ فارسیِ «پاسخی از سرور نیامد» تبدیل می‌کند، و JSON را می‌خواند. <b>یک جا، نه ۳۹ کپی</b> (قاعدهٔ ۱۰)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>مهلت‌های متفاوت برای کارهای متفاوت: خواندنِ سبک ~۱۰ ثانیه، آپلودِ عکس به‌مراتب بیشتر (§۵ می‌گوید مهلت، نه مهلتِ کوتاه — آپلودِ ۲ مگابایتی روی اینترنتِ موبایل واقعاً طول می‌کشد). <b>مهلتِ خیلی کوتاه، خودش همان باگی است که این کارت می‌خواهد درست کند</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>هر ۳۹ فراخوانی به آن منتقل شوند، و <b>در هر مسیرِ خطا دکمه از حالتِ در-پرواز خارج شود</b> — یعنی <code>finally</code>، نه فقط مسیرِ موفق</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>آزمونِ نگهبان:</b> هیچ <code>fetch(</code>ِ کلاینتی بدونِ عبور از آن کمک نماند</div></div>
+      </div>
+      <div class="proof" style="border-color:var(--amber-mid)">
+        <b>سنجهٔ پذیرش (دستی):</b> فرمِ ثبتِ آگهی را پر کن، «ارسال» بزن و <b>همان لحظه Wi-Fi را قطع کن</b>.
+        <b>امروز:</b> دکمه تا ابد می‌چرخد. <b>هدف:</b> ظرفِ مهلت، یک پیامِ فارسیِ روشن و دکمه‌ای که دوباره قابلِ زدن است.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B5</div>
+      <div class="ph-title"><h3>ریزه‌کاری‌ها — یک بعدازظهر، همه با هم</h3><p>هیچ‌کدام به‌تنهایی ارزشِ یک کارت ندارند؛ با هم یک کامیتِ تمیزند</p></div>
+      <div class="ph-badge todo">⚪ ریز</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><b>صفحهٔ ۴۰۳ ندارد.</b> §۵ صفحهٔ فارسیِ طراحی‌شده برای ۴۰۰/۴۰۳/۴۰۴/۵۰۰ خواسته؛ <code>error.tsx</code>، <code>global-error.tsx</code> و <code>not-found.tsx</code> هستند ولی «اجازه نداری» جایی ندارد. کاربری که با حسابِ عادی <code>/admin</code> را باز می‌کند به صفحهٔ ورود می‌رود — که <b>گمراه‌کننده است</b>: او وارد <em>هست</em>، فقط این را نمی‌تواند ببیند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>به‌روزرسانیِ وابستگی‌ها:</b> <code>jose ۵٫۱۰٫۰ → ۶</code> و <code>bcryptjs ۲٫۴٫۳ → ۳</code>. هر دو یک نسخهٔ اصلی عقب‌اند. <b>نکتهٔ عملی:</b> <code>npm outdated</code> روی اینترنتِ ایران به رجیستری نمی‌رسد و بی‌پاسخ می‌ماند — نسخهٔ نصب‌شده را از <code>node_modules/&lt;نام&gt;/package.json</code> بخوان. <code>jose</code> قلبِ نشست است: <b>پس از ارتقا حتماً یک ورود و خروجِ واقعی را دستی امتحان کن</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>تصاویرِ پنل مدیریت با کیبورد باز نمی‌شوند:</b> در <code>ImageManager</code> و <code>ListingsPanel</code> عکس‌ها <code>&lt;img onClick&gt;</code>اند. همان اشکالی که در گالریِ عمومی درست شد (کارتِ A4)، اینجا باقی مانده — کم‌اهمیت‌تر چون فقط کارکنان می‌بینند، ولی همان کار است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>لایت‌باکس‌های باقی‌مانده <code>role="dialog"</code> ندارند:</b> لایت‌باکسِ <code>ImageManager</code> و <code>ListingsPanel</code> از <code>useModalA11y</code> استفاده نمی‌کنند. هوک از قبل نوشته شده — فقط وصل شود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>حلقهٔ ممیزیِ حافظه فقط ۵۰۰ ردیف است</b> (<code>lib/auth/audit.ts</code>). ردیف‌های ماندگار در <code>audit_logs</code> نوشته می‌شوند، ولی تبِ «لاگ» فقط ۲۰۰ تای آخر را نشان می‌دهد و <b>هیچ صفحه‌بندی یا پالایه‌ای ندارد</b>. برای دفاع کافی است؛ برای استفادهٔ واقعی نه</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>هیچ پالایشی روی <code>audit_logs</code> نیست.</b> جدول برای همیشه رشد می‌کند. یک حذفِ فرصت‌طلبانه مثلِ آنچه <code>lib/idempotency.ts</code> از قبل دارد کافی است — <b>همان الگو را کپی کن، الگوی تازه نساز</b></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B6</div>
+      <div class="ph-title"><h3>جست‌وجوی شعاعی — «نزدیکِ اینجا چه داری؟»</h3><p>تنها ویژگی از سایت‌های ترازِ اولِ دنیا که هم ارزش دارد، هم مدلِ کسب‌وکار اجازه‌اش را می‌دهد</p></div>
+      <div class="ph-badge todo">⚪ ویژگی</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        AdQuick اجازه می‌دهد «نزدیکِ شعبه‌های رقیبم» جست‌وجو کنی و این پرکاربردترین
+        پالایهٔ واقعیِ خریدارِ رسانه است — چون تبلیغِ محیطی ذاتاً دربارهٔ <em>جا</em> است،
+        و «شهرِ تهران» برای کسی که فروشگاهش در ونک است پالایهٔ بی‌معنایی است.
+        <br><br>
+        <b>چرا شدنی است و وابستگیِ تازه نمی‌خواهد:</b> <code>lat</code> و <code>lng</code>
+        از قبل در جدول هستند و پر شده‌اند، <code>getMapPins()</code> از قبل آن‌ها را می‌خواند،
+        و فرمولِ هاورساین چند خط حساب است. <b>هیچ سرویسِ نقشه‌ای لازم نیست</b> — که
+        همان دلیلی است که سایت با VPNِ خاموش کار می‌کند و نباید از دست برود.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>یک جعبهٔ مرزی (bounding box) در <code>WHERE</code> برای محدود کردنِ ردیف‌ها — <b>اول</b>، چون ایندکس می‌تواند کمکش کند — و بعد هاورساینِ دقیق روی همان مجموعهٔ کوچک</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>پارامترهای <code>lat</code>، <code>lng</code>، <code>radiusKm</code> به <code>lib/explore-query.ts</code> اضافه شوند — <b>با همان الگوی فهرستِ مجازها و بازهٔ عددی که بقیهٔ پالایه‌ها دارند</b>. شعاع سقف بگیرد (مثلاً ۵۰ کیلومتر) وگرنه «شعاعِ ۹۹۹۹» همان دور زدنِ سقفِ صفحه‌بندی است که §۲۰ جلویش را گرفته</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>در رابط کاربری: روی نقشه یک نقطه بگذار و شعاع را بکش — یا ساده‌تر، «نزدیکِ من» با <code>navigator.geolocation</code>. <b>یادت باشد <code>geolocation</code> فقط در بافتِ امن کار می‌کند</b>، پس روی <code>http://&lt;lan-ip&gt;</code>ِ دمو کار <b>نخواهد</b> کرد — یک راهِ دستی هم بگذار (قاعدهٔ ۹)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>کشِ این پرس‌وجو مثلِ بقیه، با همان <code>CATALOGUE_TAG</code></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B7</div>
+      <div class="ph-title"><h3>OTP روی ثبت‌نام — بستنِ حلقه‌ای که نیمه‌باز است</h3><p>زیرساخت کامل است؛ فقط ثبت‌نام هنوز پشتش نیست</p></div>
+      <div class="ph-badge todo">⚪ وابسته به پیامک</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <code>lib/otp.ts</code>، دو مسیرِ API، مدلِ <code>OtpCode</code> و سقف‌های نرخ همه ساخته
+        و آزموده‌اند و <b>بازیابیِ رمز امروز از آن‌ها استفاده می‌کند</b>. آنچه مانده فقط
+        بستنِ <code>POST /api/auth/register</code> به همان چرخه است.
+        <br><br>
+        <b>این کارت B2 را هم آسان‌تر می‌کند:</b> وقتی ثبت‌نام شمارهٔ تأییدشده بخواهد،
+        دیگر نیازی به قفلِ یک‌ساعته روی آدرس نیست — سوءاستفاده در نقطهٔ درستش مهار شده.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><code>purpose</code> در <code>otp/send</code> فعلاً فقط <code>"password_reset"</code> را می‌پذیرد (<code>z.literal</code>) — <code>"register"</code> اضافه شود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>app/api/auth/register/route.ts</code> پیش از ساختِ حساب کد را تأیید کند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>فرمِ ثبت‌نام دو-مرحله‌ای شود: شماره → کد → نام و رمز</div></div>
+        <div class="task block-t"><div class="tick">⏸</div><div><b>سدِ بیرونی:</b> بدونِ <code>KAVENEGAR_API_KEY</code> کدی فرستاده نمی‌شود و فقط در لاگ می‌نشیند. برای دمو کافی است، برای تولید نه</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B8</div>
+      <div class="ph-title"><h3>خزندهٔ زمان‌بندی‌شده — داده‌ای که کهنه نشود</h3><p>گردآوریِ یک‌باره به‌روزرسانیِ دوره‌ای شود، بدونِ پاک‌کردنِ ویرایش‌های دستیِ مدیر</p></div>
+      <div class="ph-badge todo">⚪ داده</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        داده یک بار جمع شده و از آن به بعد ثابت است. برای دفاع مشکلی نیست، ولی
+        «یک نمای واحد و به‌روز» ادعای محصول است و یک دادهٔ شش‌ماهه آن را نقض می‌کند.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><b>سختِ کار این است، نه زمان‌بندی:</b> اگر مدیر قیمتِ یک رکورد را دستی اصلاح کرده باشد، اجرای بعدیِ خزنده <b>نباید</b> رویش بنویسد. یک ستونِ «این فیلد دستی ویرایش شده» یا مقایسهٔ منبع‌محور لازم است — <b>پیش از نوشتنِ زمان‌بندی این را حل کن</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>تشخیصِ تغییر: فقط چیزی که واقعاً عوض شده نوشته شود، تا <code>updatedAt</code> بی‌دلیل تکان نخورد و کش بی‌جهت باطل نشود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>زمان‌بندی با <code>systemd timer</code> — فایلش از قبل در <code>deploy/</code> هست و الگویش آماده است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>رکوردی که از منبع ناپدید شده، <b>حذف نشود</b> — علامت بخورد. حذف، سرنخ‌ها و نظرهای وابسته را هم می‌شکند</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B9</div>
+      <div class="ph-title"><h3>استقرارِ واقعی — دامنه، میزبان، HTTPS</h3><p>سخت‌ترین کارِ باقی‌مانده، و تنها کاری که پول و کارِ اداری می‌خواهد</p></div>
+      <div class="ph-badge todo">⚪ زیرساخت</div>
+    </div>
+    <div class="ph-body">
+      <div class="note" style="margin-bottom:12px; border-color:var(--green-mid); background:var(--green-dim)">
+        <span class="t" style="color:var(--green)">خبرِ خوب: سمتِ کد تمام است</span>
+        <code>deploy/</code> پیکربندیِ nginx، واحدِ systemd و تایمرِ پشتیبان را دارد.
+        <code>/api/health</code> ساخته و از فیلترِ ربات معاف شده. <code>backup-db.sh</code>
+        موتور-آگاه است و بازیابی <b>تمرین شده</b>. قاعدهٔ ۹ روی یک تونلِ واقعیِ HTTPS
+        آزموده شده. آنچه مانده <b>خریدن</b> است، نه ساختن.
+      </div>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>دامنه: <code>.ir</code> از ایرنیک ارزان‌ترین است؛ <code>.com</code> اگر مخاطبِ بیرونی هم مدنظر است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>میزبان: یک VPS ساده کافی است — Node ۲۰ و (اختیاری) یک PostgreSQL. <b>میزبانِ داخلی بگیر</b>: پرداخت به میزبانِ خارجی از ایران دردسر است و خودِ سرور هم ممکن است برای کاربرِ ایرانی کند باشد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>HTTPS با Let's Encrypt. <b>پس از آن، قاعدهٔ ۹ را دوباره بررسی کن:</b> کوکی باید <code>Secure</code> بگیرد، بررسیِ مبدأ باید با دامنهٔ واقعی بخواند، و <code>SITE_URL</code> باید درست باشد وگرنه کارتِ اشتراک‌گذاری و <code>sitemap</code> به <code>localhost</code> اشاره می‌کنند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>و آن‌وقت <code>TRUSTED_PROXY_COUNT</code> معنا پیدا می‌کند:</b> با nginx جلوی اپ، مقدارش ۱ است و هدرِ <code>X-Forwarded-For</code> واقعاً می‌آید — که نیمی از مسئلهٔ B1 را خودبه‌خود حل می‌کند. <b>ولی B1 را به این موکول نکن</b>؛ دمو روی لپ‌تاپ همچنان بدونِ پروکسی اجرا می‌شود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>RUNBOOK.md</code> ترتیبِ استقرار را دارد — از رویش برو، از حافظه نه</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B10</div>
+      <div class="ph-title"><h3>رصد و هشدار — فهمیدنِ اینکه سایت خوابیده، پیش از اینکه داور بفهمد</h3><p>پس از استقرار معنا دارد، نه قبلش</p></div>
+      <div class="ph-badge todo">⚪ پس از B9</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>بررسیِ در دسترس بودن از <b>بیرون</b> + هشدار وقتی <code>/api/health</code> جواب ندهد. <b>بدونِ SaaSِ پولی یا تحریم‌شده</b> — یک cron روی ماشینِ دیگر که هر پنج دقیقه curl می‌زند و در صورتِ شکست پیامک می‌دهد، کافی است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>گردآوریِ لاگ: <code>lib/logger.ts</code> از ابتدا هر خط را یک شیء JSON می‌نویسد، پس <b>هیچ تغییرِ کدی لازم نیست</b> — فقط <code>LOG_DIR</code> و چرخشِ فایل</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>تازگیِ داده هم رصد شود: اگر آخرین اجرای خزنده بیش از N روز پیش بوده، هشدار — وگرنه سایت «کار می‌کند» ولی دادهٔ مرده نشان می‌دهد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>پشتیبان‌گیریِ خودکار از قبل در <code>deploy/</code> هست؛ <b>یک بار بازیابی را واقعاً تمرین کن</b> — پشتیبانی که بازیابی‌اش امتحان نشده، پشتیبان نیست</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B11</div>
+      <div class="ph-title"><h3>چند نمونه — و روزی که سقفِ نرخِ درون‌حافظه‌ای می‌شکند</h3><p>یک تصمیمِ آگاهانه که باید <em>پیش از</em> نمونهٔ دوم گرفته شود، نه بعدش</p></div>
+      <div class="ph-badge" style="background:var(--violet-dim); border-color:var(--violet-mid); color:var(--violet)">⏸ وقتی لازم شد</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
+        <code>lib/auth/rate-limit.ts</code> شمارنده‌ها را در یک <code>Map</code>ِ درون‌حافظه‌ای
+        نگه می‌دارد. با یک فرایند این <b>درست</b> است. با دو فرایند، هر کدام نصفِ تصویر را
+        می‌بیند و سقف‌ها عملاً دو برابر می‌شوند.
+        <br><br>
+        <b>چرا اینجاست و نه بالاتر:</b> این تنها وقتی مسئله می‌شود که نمونهٔ دوم وجود داشته باشد،
+        و آن هم به B9 وابسته است. <b>و توجه کن که کارت A0 هشدار می‌دهد Redis روی یک ماشین
+        <em>کندتر</em> است</b> — پس این کارت را زودتر از موعد باز نکن.
+      </p>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>انتقالِ شمارنده‌ها به انبارهٔ مشترک. <b>Redis از قبل برای کش پیکربندی شده</b> (کارتِ A0) و همان نمونه می‌تواند این را هم نگه دارد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>پیش‌نیازِ منطقی: اول B1 و B2.</b> مشترک‌کردنِ یک شمارندهٔ غلط، فقط غلط را در همهٔ نمونه‌ها پخش می‌کند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>وقتی Redis در دسترس نیست، سقف باید <b>باز بماند نه بسته</b> — قفل‌شدنِ کلِ سایت به‌خاطرِ خوابیدنِ Redis، بدترین حالتِ ممکن است</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-defer">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B12</div>
+      <div class="ph-title"><h3>بستهٔ تحویلیِ پایان‌نامه — کارهای غیرفنی</h3><p>دو مورد که فقط از دستِ خودت برمی‌آید</p></div>
+      <div class="ph-badge" style="background:var(--violet-dim); border-color:var(--violet-mid); color:var(--violet)">☐ دستِ خودت</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><b>نام استاد راهنما</b> — در <code>META</code>ی بالای <code>docs/thesis/thesis.html</code>، و در پوستر و اسلایدِ ۱</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>عمومی‌کردنِ مخزن گیت‌هاب</b> — الان private است، پس QRِ روی پوستر و لینکِ داخلِ پایان‌نامه برای داور باز نمی‌شود. <b>پیش از عمومی‌کردن:</b> تاریخچهٔ گیت را برای رازِ کامیت‌شده بگرد (<code>.env</code>، کلید، هشِ رمز) — عمومی‌کردن برگشت‌ناپذیر است</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>پس از هر تغییرِ عددی در کد، <b>اعداد پایان‌نامه و پوستر را دوباره بگیر</b> — نه از حافظه. اسکریپت‌های <code>docs/thesis/build.py</code> این کار را می‌کنند</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin:24px 0 34px; border-color:var(--brand); background:#2F6BE008">
+    <span class="t">اگر فقط سه چیز را انجام دهی</span>
+    <b>B1، B2، و بعد یک بار رفتنِ دستهٔ ۶ از فهرستِ آزمون‌های دستی (M1).</b>
+    این سه، تنها چیزهایی‌اند که می‌توانند <em>در خودِ جلسهٔ دفاع</em> خراب شوند:
+    چند نفر روی یک Wi-Fi، یکی رمزش را اشتباه می‌زند، و سایت بقیه را بیرون می‌اندازد.
+    بقیهٔ کارت‌ها پروژه را <em>بهتر</em> می‌کنند؛ این سه تا جلوی <em>بدترین اتفاقِ ممکن</em> را می‌گیرند.
+    <br><br>
+    <b>و یک قاعده که در همهٔ کارت‌ها تکرار شده، چون ریشهٔ همهٔ این‌هاست:</b>
+    وقتی بینِ «امنیت» و «کاربرِ واقعی» انتخاب می‌کنی، بپرس <em>کنترل در کدام جهت شکست می‌خورد؟</em>
+    قفلی که کاربرِ درست را بیرون می‌اندازد تا شاید حمله‌کننده‌ای را کند کند، معامله‌ای است
+    که تقریباً همیشه بازنده است — و §۸ خودِ پروژه این را با عبارتِ
+    «per account <b>and</b> per IP» از ابتدا خواسته بود.
+  </div>
+
+  <!-- ══════════ آزمون‌های دستی — روز ارائه ══════════ -->
+  <div class="note" style="margin:38px 0 18px; border-color:var(--violet-mid); background:var(--violet-dim)">
+    <span class="t" style="color:var(--violet)">آزمون‌های دستی — همهٔ چیزهایی که ماشین نمی‌تواند بررسی کند</span>
+    <code>npm test</code> ۱۱۸ چیز را می‌سنجد، ولی هیچ‌کدام «آیا این <em>خوب به‌نظر می‌رسد</em>» نیست.
+    این فهرست برای <b>یک تا دو روز پیش از ارائه</b> است: یک بار از بالا تا پایین برو،
+    هر کدام را که دیدی تیک بزن. <b>الان لازم نیست انجامشان بدهی.</b>
+    <br><br>
+    <b>قاعدهٔ طلایی:</b> با <code>npm run demo</code> اجرا کن، <b>نه</b> <code>npm run dev</code>
+    (۹۷ برابر CPU، §۲۲) — و دست‌کم نیمی از فهرست را <b>روی گوشی، از راه Wi-Fi، با آدرس
+    <code>http://&lt;lan-ip&gt;:3000</code></b> برو، نه روی <code>localhost</code>. قاعدهٔ ۹
+    <code>AGENTS.md</code> دقیقاً دربارهٔ همین است: <code>localhost</code> تنها جایی است که
+    هر اشتباهِ این طبقه نامرئی می‌ماند.
+  </div>
+
+  <div class="phase-card is-defer open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">M1</div>
+      <div class="ph-title"><h3>آزمون‌های دستی — پیش از ارائه</h3><p>۴۲ مورد، دسته‌بندی‌شده. هیچ‌کدام کد نمی‌خواهد — فقط چشم و انگشت</p></div>
+      <div class="ph-badge" style="background:var(--violet-dim); border-color:var(--violet-mid); color:var(--violet)">☐ روز ارائه</div>
+    </div>
+    <div class="ph-body">
+
+      <b style="font-size:0.9rem">۱ — سلامتِ پایه (۵ دقیقه، اول از همه)</b>
+      <div class="task-list" style="margin-top:8px">
+        <div class="task todo-t"><div class="tick"></div><div><code>npm run lint</code> بی‌هشدار · <code>npx tsc --noEmit</code> بی‌خطا · <code>npm test</code> همه سبز. <b>اگر این سه سبز نیستند، هیچ کارِ دیگری نکن تا درست شوند</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>npm run build</code> بدون خطا تمام شود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>npm run images:check</code> — ثابت می‌کند هر تصویری که هر صفحه می‌خواهد واقعاً وجود دارد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>تعداد رکوردها: <code>npm run db:studio</code> ← جدول <code>billboards</code>. عددش را یادداشت کن؛ همین عدد باید روی صفحهٔ نخست هم دیده شود</div></div>
+      </div>
+
+      <b style="font-size:0.9rem; display:block; margin-top:18px">۲ — سه سفرِ کاربر، از اول تا آخر</b>
+      <div class="task-list" style="margin-top:8px">
+        <div class="task todo-t"><div class="tick"></div><div><b>تبلیغ‌دهنده:</b> ثبت‌نام → جست‌وجو (فیلترِ شهر و نوع) → باز کردن یک کارت → «برای دیدن شماره وارد شوید» → ورود → <b>شمارهٔ صاحب رسانه ظاهر شود</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>همان سرنخ در پنل مدیریت، تبِ «سرنخ‌ها» دیده شود — با نامِ همان کاربر</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>صاحب رسانه:</b> ورود → ثبت رسانه (۵ مرحله، با آپلود عکس و انتخاب پلن) → داشبورد «آگهی‌های من» وضعیتِ «در انتظار بررسی» نشان دهد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>مدیر:</b> ورود → تبِ «تأیید آگهی‌ها» → عکس‌های ارسالی دیده شوند → تأیید → آگهی <b>در همان بازدیدِ بعدی</b> روی <code>/explore</code> ظاهر شود (نه چند دقیقه بعد — کش با نوشتن باطل می‌شود)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>چرخهٔ «نیاز به اصلاح»:</b> مدیر آگهی را با یادداشت برگرداند → کاربر در داشبورد یادداشت را ببیند → ویرایش و ارسال مجدد → دوباره در صفِ مدیر بنشیند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>بازیابی رمز:</b> <code>/reset-password</code> → شماره → کد (بدون کلید پیامک، کد <b>در لاگِ سرور</b> چاپ می‌شود) → رمز تازه → ورود با رمز تازه</div></div>
+      </div>
+
+      <b style="font-size:0.9rem; display:block; margin-top:18px">۳ — روی گوشی، با Wi-Fi (نه localhost)</b>
+      <div class="note warn" style="margin:8px 0 10px">
+        <span class="t">این دسته مهم‌ترین است</span>
+        داور با گوشیِ خودش QR را اسکن می‌کند. شش باگِ واقعیِ این پروژه از همین‌جا آمدند (§۲۴).
+        آدرسِ LAN را از خروجیِ <code>npm run demo</code> بردار («Network: http://192.168.x.x:3000»).
+      </div>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div><b>عکس‌ها لود می‌شوند؟</b> — این دقیقاً همان چیزی است که یک بار کاملاً شکسته بود (محافظتِ هات‌لینک با میزبانِ اشتباه مقایسه می‌کرد)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>ورود روی گوشی دوام می‌آورد؟</b> — وارد شو، صفحه را رفرش کن، هنوز وارد باشی. (کوکیِ <code>Secure</code> روی <code>http</code> دور انداخته می‌شد)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>تمِ تاریک را انتخاب کن، بعد چند صفحه جابه‌جا شو — <b>هیچ فلشِ سفیدی نباید ببینی</b></div></div>
+        <div class="task todo-t"><div class="tick"></div><div>هیچ صفحه‌ای <b>افقی</b> اسکرول نشود. کارت‌ها، فوتر، جدول‌ها، نوارِ مقایسه — همه در عرضِ گوشی جا شوند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>هر چیزِ قابلِ زدن دستِ‌کم ۴۴ پیکسل باشد — با <b>شست</b> امتحان کن نه با ناخن</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>گالریِ صفحهٔ رسانه: با انگشت به چپ و راست بکش، کار کند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>نقشه (<code>/explore/map</code>) روی گوشی باز شود و استان‌ها قابلِ زدن باشند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>با VPN خاموش</b> کلِ سایت را یک بار برو — هیچ چیزی نباید منتظرِ سرویسِ بیرونی بماند</div></div>
+      </div>
+
+      <b style="font-size:0.9rem; display:block; margin-top:18px">۴ — مسیرِ ناخوشایند (§۵)</b>
+      <div class="task-list" style="margin-top:8px">
+        <div class="task todo-t"><div class="tick"></div><div>فیلتری بگذار که هیچ نتیجه‌ای ندارد — <b>صفحهٔ «چیزی یافت نشد»ِ طراحی‌شده</b> بیاید، نه یک شبکهٔ خالی</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>در آدرس دستی <code>?page=9999</code> بگذار — پیامِ «این نتایج N صفحه دارد» بیاید</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک <code>slug</code> الکی باز کن — صفحهٔ ۴۰۴ فارسی بیاید</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>فرمِ ثبتِ آگهی را با فیلدهای خالی بفرست — <b>برای هر خطا یک پیامِ فارسی</b> بیاید</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>عکسی بزرگ‌تر از ۲ مگابایت آپلود کن — پیامِ روشن بیاید، نه خطای خام</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>وسطِ ارسالِ فرم، Wi-Fi را قطع کن — <b>پیامِ خطا بیاید و دکمه از حالتِ «در حال ارسال» خارج شود</b> (اگر تا ابد چرخید، کارتِ B4 هنوز انجام نشده)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>روی هر دکمهٔ ارسال <b>دوبار سریع</b> بزن — نباید دو رکورد ساخته شود</div></div>
+      </div>
+
+      <b style="font-size:0.9rem; display:block; margin-top:18px">۵ — امنیت و دسترسی (آنچه داور می‌پرسد)</b>
+      <div class="task-list" style="margin-top:8px">
+        <div class="task todo-t"><div class="tick"></div><div>بدونِ ورود، <code>/admin</code> را باز کن — به صفحهٔ ورود هدایت شوی</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>با حسابِ <b>کاربرِ عادی</b> وارد شو و <code>/admin</code> را باز کن — راه ندهد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>آگهیِ تأییدنشده را با نشانیِ مستقیمش باز کن — <b>۴۰۴</b> بدهد، نه صفحه</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>در صفحهٔ رسانه، بدونِ ورود دنبالِ شمارهٔ تماس بگرد — نه روی صفحه، نه در <code>View Source</code></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>پاسِ کیبورد:</b> از صفحهٔ نخست تا دکمهٔ تماس، فقط با <code>Tab</code> و <code>Enter</code>، <b>بدونِ دست‌زدن به ماوس</b>. هرجا گیر کردی یادداشت کن</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک مودال باز کن (مقایسه یا گالری) — <code>Escape</code> ببنددش، و فوکوس به همان دکمه‌ای برگردد که بازش کرده بود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>Lighthouse</b> (<code>F12</code> ← Lighthouse ← Analyze) روی <code>/</code> و یک <code>/billboard/[slug]</code>. هر چهار عدد را <b>همین‌جا بنویس</b> — این چیزی است که داور می‌تواند جلوی چشمت تکرار کند</div></div>
+      </div>
+
+      <b style="font-size:0.9rem; display:block; margin-top:18px">۶ — چند نفر هم‌زمان (شبیه‌سازیِ خودِ روزِ ارائه)</b>
+      <div class="note warn" style="margin:8px 0 10px">
+        <span class="t">این دسته را حتماً برو — و اگر شکست، کارت‌های B1 و B2 هنوز انجام نشده‌اند</span>
+        روزِ ارائه چند نفر هم‌زمان روی یک Wi-Fi هستند. اگر B1/B2 انجام نشده باشد،
+        <b>همهٔ آن‌ها برای سرور یک نفرند</b> و بودجهٔ یکدیگر را خرج می‌کنند.
+      </div>
+      <div class="task-list">
+        <div class="task todo-t"><div class="tick"></div><div>با <b>سه دستگاه</b> هم‌زمان (لپ‌تاپ + دو گوشی) سایت را بگرد — کسی ۴۲۹ نگیرد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>روی یک گوشی <b>عمداً ۵ بار رمز را غلط بزن</b>، بعد از گوشیِ دیگر با رمزِ <b>درست</b> وارد شو — <b>باید بتوانی</b>. اگر ۴۲۹ گرفتی، B2 انجام نشده</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>یک صفحه را ۲۰ بار پشتِ سرِ هم رفرش کن — سایت نباید تو را ببندد</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>در حالی که مدیر در پنل کار می‌کند، از گوشیِ دیگر سایت را بگرد — هیچ‌کدام دیگری را کند یا مسدود نکند</div></div>
+      </div>
+
+      <b style="font-size:0.9rem; display:block; margin-top:18px">۷ — آماده‌سازیِ خودِ ارائه</b>
+      <div class="task-list" style="margin-top:8px">
+        <div class="task todo-t"><div class="tick"></div><div>یک حسابِ <b>دمو</b>ی کاربر بساز و نام و رمزش را روی کاغذ بنویس</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>ورودِ مدیر را یک بار امتحان کن — <code>ADMIN_EMAIL</code> در <code>.env.local</code></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><code>npm run db:backup</code> — یک نسخهٔ سالم پیش از روزِ ارائه</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>QR کدِ آدرسِ LAN را از قبل بساز و چاپ کن</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>صفحاتِ ثابت را یک بار ببین: <code>/about</code>، <code>/terms</code>، <code>/contact</code>، <code>/api-docs</code></div></div>
+        <div class="task todo-t"><div class="tick"></div><div><b>لپ‌تاپ به برق وصل باشد</b> و <code>npm run demo</code> اجرا شده باشد — نه <code>dev</code></div></div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ══════════ ممیزی مستقل — ۲۰ شهریور ۱۴۰۵ ══════════ -->
   <div class="note" style="margin:38px 0 18px; border-color:var(--brand); background:#2F6BE008">
     <span class="t">ممیزی مستقلِ کلِ پروژه — ۲۰ شهریور ۱۴۰۵</span>
