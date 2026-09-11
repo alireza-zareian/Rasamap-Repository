@@ -445,10 +445,14 @@ test("an admin session browsing a media page does not create a lead", async () =
   assert.equal(after.json.total, before.json.total);
 });
 
-test("GET /api/admin/leads is 401 for a customer account", async () => {
+test("GET /api/admin/leads is 403 for a customer account", async () => {
+  // 403, not 401: the caller is authenticated and simply may not have this.
+  // Answering 401 told a client to authenticate again, which could not help —
+  // and it disagreed with the route handlers, which have always answered 403
+  // for an insufficient role. proxy.ts was the one saying something else.
   const token = await mintSession({ userId: "1", role: "user" });
   const { status } = await api("/api/admin/leads", { token });
-  assert.equal(status, 401);
+  assert.equal(status, 403);
 });
 
 test("GET /api/admin/leads is 403 for a viewer", async () => {
@@ -834,10 +838,10 @@ test("GET /api/admin/billboards without a session is 401", async () => {
   assert.equal(status, 401);
 });
 
-test("GET /api/admin/billboards with role 'user' is 401", async () => {
+test("GET /api/admin/billboards with role 'user' is 403", async () => {
   const token = await mintSession({ role: "user" });
   const { status } = await api("/api/admin/billboards", { token });
-  assert.equal(status, 401);
+  assert.equal(status, 403);
 });
 
 test("GET /api/admin/billboards with role 'admin' is 200", async () => {
@@ -1328,9 +1332,11 @@ test("an editor may read the approval queue but not decide (403)", async () => {
 });
 
 test("the approval queue is closed to a customer session and to anonymous callers", async () => {
+  // Anonymous: 401, because signing in is exactly what would help.
   assert.equal((await api("/api/admin/listings")).status, 401);
+  // A customer: 403, because it would not.
   const userToken = await mintSession({ userId: "1", role: "user" });
-  assert.equal((await api("/api/admin/listings", { token: userToken })).status, 401);
+  assert.equal((await api("/api/admin/listings", { token: userToken })).status, 403);
 });
 
 // ── Source guards: the "works on the developer's machine" class ──────
@@ -1443,6 +1449,28 @@ test("guard: an icon-only button carries a name", () => {
     offenders,
     [],
     `these buttons render only an icon and have no accessible name — give each an aria-label in Persian:\n  ${offenders.join("\n  ")}`,
+  );
+});
+
+test("a signed-in customer is refused the panel, not asked to sign in again", async () => {
+  // Two different refusals that used to get one answer. Sending a customer who
+  // followed a link to /admin to the sign-in form told them their session had
+  // failed, so they retyped a password that was never the problem — while an
+  // actually signed-out visitor needs exactly that form.
+  const customer = await mintSession({ userId: "1", role: "user" });
+
+  const page = await api("/admin", { token: customer, redirect: "manual" });
+  assert.equal(page.status, 403, "a signed-in customer should be refused, not redirected");
+
+  const json = await api("/api/admin/billboards", { token: customer });
+  assert.equal(json.status, 403);
+  assert.equal(json.json.code, "FORBIDDEN");
+
+  // Nobody signed in still gets the sign-in form, which is the right answer there.
+  const anon = await api("/admin", { redirect: "manual" });
+  assert.ok(
+    anon.status === 307 || anon.status === 302,
+    `a signed-out visitor should be redirected to sign in, got ${anon.status}`,
   );
 });
 

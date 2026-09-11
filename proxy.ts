@@ -9,6 +9,7 @@ const USER_PAGE_PATTERN  = /^\/(dashboard|list-media)(\/|$)/;
 const USER_API_PATTERN   = /^\/api\/listings(\/.*)?$/;
 const LOGIN_PATH         = "/admin/login";
 const USER_LOGIN_PATH    = "/login";
+const FORBIDDEN_PATH     = "/forbidden";
 
 // Catalogue pages worth protecting from bulk copying. These are the only pages
 // that carry listing data; marketing pages are cheap and left alone.
@@ -122,11 +123,31 @@ export async function proxy(req: NextRequest) {
   const session = await getSessionFromRequest(req);
 
   // ── Admin routes — require an admin role ──
+  //
+  // "Not signed in" and "signed in as the wrong kind of account" are different
+  // refusals and get different answers. Sending the second to a sign-in form —
+  // which is what this did — tells a customer their session failed and leaves
+  // them retyping a password that was never the problem.
   if (isAdminPage || isAdminApi) {
     const isAdminRole = session && session.role !== "user";
     if (!isAdminRole) {
       if (isAdminApi) {
-        return NextResponse.json({ error: "احراز هویت لازم است", code: "AUTH_REQUIRED" }, { status: 401 });
+        return session
+          ? NextResponse.json({ error: "دسترسی کافی ندارید", code: "FORBIDDEN" }, { status: 403 })
+          : NextResponse.json({ error: "احراز هویت لازم است", code: "AUTH_REQUIRED" }, { status: 401 });
+      }
+      if (session) {
+        // Rewrite rather than redirect: the address the visitor typed stays in
+        // the bar, so a refusal does not look like the site moved them
+        // somewhere, and the 403 status travels with the response instead of
+        // being lost to a 307 that lands on a 200.
+        const forbidden = req.nextUrl.clone();
+        forbidden.pathname = FORBIDDEN_PATH;
+        forbidden.search = "";
+        return addSecurityHeaders(
+          NextResponse.rewrite(forbidden, { status: 403 }),
+          true,
+        );
       }
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = LOGIN_PATH;

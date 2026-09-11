@@ -40,7 +40,13 @@ export async function mintSession({ userId = "1", email = "tester", name = "Test
  * Call an API route.
  * @returns {{ status:number, json:any, headers:Headers }}
  */
-export async function api(path, { method = "GET", body, token, ip, headers = {} } = {}) {
+/**
+ * @param {object} [opts]
+ * @param {"follow"|"manual"} [opts.redirect] "manual" to read the redirect
+ *   itself rather than what it points at — the only way to tell a 307 to the
+ *   sign-in page from a 403 refusal, since following one turns it into a 200.
+ */
+export async function api(path, { method = "GET", body, token, ip, headers = {}, redirect = "follow" } = {}) {
   const h = { "user-agent": UA, "x-forwarded-for": ip || uniqueIp(), ...headers };
   if (body !== undefined) h["content-type"] = "application/json";
   if (token) h["cookie"] = `rasamap_session=${token}`;
@@ -48,6 +54,7 @@ export async function api(path, { method = "GET", body, token, ip, headers = {} 
   const res = await fetch(BASE + path, {
     method,
     headers: h,
+    redirect,
     body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
