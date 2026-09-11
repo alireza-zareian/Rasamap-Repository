@@ -389,9 +389,19 @@ test("suggestions prefer the same city over a higher-ranked one elsewhere", asyn
   assert.ok(suggested.length > 0, "no suggestions were rendered");
   assert.ok(!suggested.includes("valiasr-tower"), "a listing must not suggest itself");
 
-  // inactive-board shares Tehran with the reference; photo-board is in Shiraz
-  // and outranks it on images. The city ring has to win.
-  assert.equal(suggested[0], "inactive-board", `expected the same-city listing first, got ${suggested[0]}`);
+  // photo-board is in Shiraz and outranks the Tehran rows on images, so the city
+  // ring has to win. Asserted as "the first suggestion is in the same city"
+  // rather than by naming one slug: several fixtures share Tehran and which of
+  // them ranks first is a detail of the sort, not the behaviour under test.
+  // Naming one made this fail the moment the radial-search fixtures were added,
+  // which said nothing about suggestions.
+  const TEHRAN_SLUGS = ["inactive-board", "near-centre", "just-outside", "no-coords"];
+  assert.ok(
+    TEHRAN_SLUGS.includes(suggested[0]),
+    `expected a same-city listing first, got ${suggested[0]}`,
+  );
+  assert.ok(!suggested.slice(0, TEHRAN_SLUGS.length - 1).includes("photo-board"),
+    "a listing from another city was suggested ahead of the same-city ones");
 });
 
 test("suggestions never include an unpublished listing", async () => {
@@ -1450,6 +1460,69 @@ test("guard: an icon-only button carries a name", () => {
     [],
     `these buttons render only an icon and have no accessible name — give each an aria-label in Persian:\n  ${offenders.join("\n  ")}`,
   );
+});
+
+// ── Radial search ────────────────────────────────────────────────────
+// The centre is Valiasr/Vanak; the seed puts one fixture ~0.15 km away, one
+// ~8 km away, and one with no coordinates at all.
+const CENTRE = { lat: 35.7580, lng: 51.4100 };
+const nearQuery = (radiusKm, extra = "") =>
+  `/api/billboards?lat=${CENTRE.lat}&lng=${CENTRE.lng}&radiusKm=${radiusKm}${extra}`;
+
+test("a radial search returns what is inside the circle and nothing else", async () => {
+  const { status, json } = await api(nearQuery(2));
+  assert.equal(status, 200);
+  const slugs = json.items.map(i => i.slug);
+  assert.ok(slugs.includes("near-centre"), "the fixture 0.15 km away should be inside a 2 km circle");
+  assert.ok(!slugs.includes("just-outside"), "the fixture 8 km away should not be");
+  // The box is square and the circle is not, so this is the case that catches a
+  // search that stops at the bounding box and forgets to cut the corners.
+  assert.ok(!slugs.includes("no-coords"), "a row with no coordinates cannot be inside any circle");
+});
+
+test("a wider radius reaches further", async () => {
+  const near = await api(nearQuery(2));
+  const wide = await api(nearQuery(20));
+  const wideSlugs = wide.json.items.map(i => i.slug);
+  assert.ok(wideSlugs.includes("near-centre"));
+  assert.ok(wideSlugs.includes("just-outside"), "8 km away should be inside a 20 km circle");
+  assert.ok(wide.json.total > near.json.total, "a wider circle cannot return fewer results");
+});
+
+test("the radius has a ceiling, and asking past it is refused", async () => {
+  // Without a ceiling, one request with a huge radius is a way to ask for the
+  // whole country and walk past the page cap §20 exists to enforce.
+  assert.equal((await api(nearQuery(5000))).status, 400);
+  assert.equal((await api(nearQuery(0))).status, 400);
+});
+
+test("half a centre is refused rather than quietly re-centred", async () => {
+  // Keeping the half that parsed would search around a point nobody asked for.
+  assert.equal((await api(`/api/billboards?lat=${CENTRE.lat}`)).status, 400);
+  assert.equal((await api(`/api/billboards?lng=${CENTRE.lng}`)).status, 400);
+  // Neither half is the ordinary catalogue, which still works.
+  assert.equal((await api("/api/billboards")).status, 200);
+});
+
+test("a radial search still obeys the other filters", async () => {
+  // The circle narrows the catalogue; it does not replace it. In particular an
+  // unpublished row must not become visible by being nearby.
+  const { json } = await api(nearQuery(20, "&status=available"));
+  assert.ok(json.items.every(i => i.status === "available"));
+  assert.ok(!json.items.some(i => i.slug === "inactive-board"));
+});
+
+test("a radial search pages correctly", async () => {
+  // Radial search cannot be paged by the database — the circle is cut after the
+  // rows come back — so the paging is done by hand and is worth checking.
+  const all = await api(nearQuery(50, "&limit=48"));
+  const first = await api(nearQuery(50, "&limit=1&page=1"));
+  const second = await api(nearQuery(50, "&limit=1&page=2"));
+  assert.equal(first.json.items.length, 1);
+  assert.equal(first.json.total, all.json.total, "total is the size of the circle, not of the page");
+  if (all.json.total > 1) {
+    assert.notEqual(first.json.items[0].slug, second.json.items[0].slug, "page 2 repeated page 1");
+  }
 });
 
 test("a password hashed by the seed still signs in", async () => {

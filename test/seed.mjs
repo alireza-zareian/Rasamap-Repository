@@ -21,6 +21,15 @@ const prisma = new PrismaClient({ adapter });
  * estimatedViews column in step — a fixture where they disagree would let a
  * sort test pass while sorting on the wrong thing.
  */
+/**
+ * Fixtures for the radial search, laid out so the assertions can be exact.
+ *
+ * Centre is Valiasr/Vanak in Tehran. One row sits about 1 km away, one about
+ * 8 km, and one has no coordinates at all — which is 15% of the real dataset
+ * and therefore the case most likely to be forgotten.
+ */
+export const NEAR_CENTRE = { lat: 35.7580, lng: 51.4100 };
+
 function billboard({ views = 7500, width = 12, height = 4, ...overrides } = {}) {
   return {
     name: "Test Billboard",
@@ -88,6 +97,10 @@ async function main() {
     billboard({ id: 1, name: "Valiasr Tower",   slug: "valiasr-tower",   city: "تهران", type: "billboard", status: "available", price: 8000,  views: 9000, width: 20, height: 5 }),
     billboard({ id: 2, name: "Mashhad Digital", slug: "mashhad-digital", city: "مشهد",  type: "digital",   status: "available", price: 12000, views: 3000, width: 6,  height: 3 }),
     billboard({ id: 3, name: "Inactive Board",  slug: "inactive-board",  city: "تهران", type: "billboard", status: "inactive",  price: 3000,  views: 500,  width: 4,  height: 2 }),
+    // ── Radial-search fixtures ──
+    billboard({ id: 90, name: "Near Centre",  slug: "near-centre",  city: "تهران", status: "available", price: 6000, lat: 35.7590, lng: 51.4110 }),  // ~0.15 km
+    billboard({ id: 91, name: "Just Outside", slug: "just-outside", city: "تهران", status: "available", price: 6100, lat: 35.8300, lng: 51.4100 }),  // ~8 km
+    billboard({ id: 92, name: "No Coords",    slug: "no-coords",    city: "تهران", status: "available", price: 6200 }),                              // lat/lng null
     // Submission-pipeline fixtures: neither may appear in any public read.
     billboard({ id: 4, name: "Pending Listing", slug: "pending-listing", city: "تهران", type: "billboard", status: "pending", price: 100, source: "listing", submittedById: 1 }),
     billboard({ id: 5, name: "Unpaid Listing",  slug: "unpaid-listing",  city: "تهران", type: "digital",   status: "awaiting_payment", plan: "featured", price: 200, source: "listing", submittedById: 1 }),

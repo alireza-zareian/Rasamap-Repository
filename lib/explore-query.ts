@@ -23,6 +23,19 @@ export const ALLOWED_SORT   = ["price_asc", "price_desc", "traffic_desc", "area_
 export type SortKey = (typeof ALLOWED_SORT)[number];
 type StatusKey = (typeof ALLOWED_STATUS)[number];
 
+/**
+ * How far a radial search may reach.
+ *
+ * A ceiling, not a preference. Without one, `radiusKm=99999` is a way to ask
+ * for the whole country in a single request and walk straight past the page cap
+ * §20 exists to enforce — the same hole the `limit` and `page` ceilings close.
+ * Fifty kilometres is past the far edge of any Iranian city.
+ */
+export const MAX_RADIUS_KM = 50;
+export const MIN_RADIUS_KM = 1;
+/** What "near here" means before anyone touches the control. */
+export const DEFAULT_RADIUS_KM = 5;
+
 /** Price slider ceiling, in millions of toman. At the ceiling there is no cap. */
 export const MAX_PRICE = 500;
 export const MIN_PRICE = 10;
@@ -40,11 +53,13 @@ export interface ExploreFilters {
   city:     string;
   view:     "grid" | "list";
   page:     number;
+  /** A radial search, or null when the catalogue is not centred anywhere. */
+  near:     { lat: number; lng: number; radiusKm: number } | null;
 }
 
 const DEFAULT_FILTERS: ExploreFilters = {
   search: "", type: "all", status: "", maxPrice: MAX_PRICE,
-  sortBy: "price_asc", province: "", city: "", view: "grid", page: 1,
+  sortBy: "price_asc", province: "", city: "", view: "grid", page: 1, near: null,
 };
 
 /** A repeated parameter (`?type=a&type=b`) arrives as an array — take the first. */
@@ -59,6 +74,29 @@ function pick<T extends string>(value: string, allowed: readonly T[], fallback: 
 function intInRange(value: string, min: number, max: number, fallback: number): number {
   const n = Number.parseInt(value, 10);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+}
+
+/**
+ * A coordinate pair from the query string, or null.
+ *
+ * Both halves or neither: half a centre is not a narrower search, it is a
+ * meaningless one, and silently keeping the half that parsed would put the
+ * visitor somewhere off the coast of Africa. Anything outside the real range of
+ * a latitude or longitude is rejected the same way — a hand-edited URL yields
+ * an ordinary catalogue page, never an error.
+ */
+function parseNear(
+  latRaw: string, lngRaw: string, radiusRaw: string,
+): ExploreFilters["near"] {
+  const lat = Number.parseFloat(latRaw);
+  const lng = Number.parseFloat(lngRaw);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return {
+    lat,
+    lng,
+    radiusKm: intInRange(radiusRaw, MIN_RADIUS_KM, MAX_RADIUS_KM, DEFAULT_RADIUS_KM),
+  };
 }
 
 /**
@@ -96,6 +134,7 @@ export function parseExploreParams(
     city,
     view:     one(sp.view) === "list" ? "list" : "grid",
     page:     intInRange(one(sp.page), 1, MAX_PAGE, 1),
+    near:     parseNear(one(sp.lat), one(sp.lng), one(sp.radiusKm)),
   };
 }
 
@@ -116,6 +155,7 @@ export function toFilterParams(f: ExploreFilters): BillboardFilterParams {
     sortBy:   f.sortBy,
     page:     f.page,
     limit:    PAGE_SIZE,
+    near:     f.near ?? undefined,
   };
 }
 
@@ -137,6 +177,14 @@ export function exploreHref(f: ExploreFilters, base = "/explore"): string {
   if (f.sortBy !== DEFAULT_FILTERS.sortBy) p.set("sortBy", f.sortBy);
   if (f.view !== "grid")       p.set("view",     f.view);
   if (f.page > 1)              p.set("page",     String(f.page));
+  if (f.near) {
+    // Six decimals is about ten centimetres — far past what a map click or a
+    // phone's own fix can tell apart, and it keeps one place on one address
+    // instead of a different cache key per trailing digit.
+    p.set("lat",      f.near.lat.toFixed(6));
+    p.set("lng",      f.near.lng.toFixed(6));
+    p.set("radiusKm", String(f.near.radiusKm));
+  }
   const qs = p.toString();
   // `base` so the map view can carry the identical filter set to its own
   // address instead of growing a second, drifting copy of this function.
@@ -147,6 +195,6 @@ export function exploreHref(f: ExploreFilters, base = "/explore"): string {
 export function hasActiveFilters(f: ExploreFilters): boolean {
   return Boolean(
     f.search || f.type !== "all" || f.status ||
-    f.province || f.city || f.maxPrice < MAX_PRICE,
+    f.province || f.city || f.maxPrice < MAX_PRICE || f.near,
   );
 }
