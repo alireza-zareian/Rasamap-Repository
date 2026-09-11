@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site-url";
-import { ThemeProvider } from "@/lib/theme";
+import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/theme";
 import BackgroundPattern from "@/components/BackgroundPattern";
 import StaffBar from "@/components/StaffBar";
 
@@ -27,13 +27,27 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // data-theme is the SSR default (light); the ThemeProvider effect switches
-    // it to "dark" after mount if the user chose that. suppressHydrationWarning
-    // covers that one intentional <html> attribute change.
+    // data-theme is the SSR default (light). The inline script in <head> below
+    // overwrites it before the first paint when the visitor stored "dark", so
+    // the server's attribute and the document's can differ by the time React
+    // hydrates — which is what suppressHydrationWarning covers here.
     <html lang="fa" dir="rtl" data-theme="light" style={{ colorScheme: "light" }} suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="light" />
         <meta name="supported-color-schemes" content="light" />
+        {/* Applies the stored theme before the first paint.
+            ThemeProvider reads the same key, but it runs in an effect — i.e.
+            after the browser has already painted the light default above — so a
+            visitor who chose dark saw a white flash on every single navigation.
+            A blocking inline script in <head> is the only place that runs
+            earlier than paint. CSP allows it: script-src keeps 'unsafe-inline'
+            for the App Router's own streaming payload (§29).
+            Kept in sync with lib/theme.tsx by THEME_STORAGE_KEY. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==="dark"||t==="light"){var e=document.documentElement;e.setAttribute("data-theme",t);e.style.colorScheme=t;}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>
         <ThemeProvider>

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
 
 interface Reply {
@@ -257,7 +258,7 @@ export default function ReviewsSection({ billboardId }: Props) {
 
       {user === null && (
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 16, textAlign: "center" }}>
-          برای ثبت نظر باید <a href="/login" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>وارد حساب کاربری</a> شوید
+          برای ثبت نظر باید <Link href="/login" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>وارد حساب کاربری</Link> شوید
         </div>
       )}
 

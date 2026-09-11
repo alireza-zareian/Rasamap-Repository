@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import MediaImage from "@/components/MediaImage";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { CatalogueItem, BillboardType } from "@/lib/types";
 import type { SiteStats } from "@/lib/db/stats";
 import { useTheme } from "@/lib/theme";
@@ -52,6 +53,11 @@ export default function LandingClient({
   const dark = theme === "dark";
   const { user, logout } = useCurrentUser();
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const router = useRouter();
+
+  // Built once so the Enter key and the button beside it can never disagree
+  // about where the site's most-used search actually goes.
+  const exploreUrl = `/explore?search=${encodeURIComponent(search)}&city=${encodeURIComponent(city)}`;
 
   useEffect(() => {
     // Only care whether we're past the header threshold — flips state twice
@@ -157,10 +163,10 @@ export default function LandingClient({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="منطقه، خیابان، نوع رسانه..."
-              onKeyDown={e => e.key === "Enter" && (window.location.href = `/explore?search=${encodeURIComponent(search)}&city=${encodeURIComponent(city)}`)}
+              onKeyDown={e => { if (e.key === "Enter") router.push(exploreUrl); }}
               style={{ flex: 1, background: "none", border: "none", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", outline: "none", minWidth: 0 }}
             />
-            <Link href={`/explore?search=${encodeURIComponent(search)}&city=${encodeURIComponent(city)}`} className="btn-sheen" style={{ background: "var(--accent)", color: "#fff", border: "none", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, boxShadow: "0 2px 10px rgba(59,123,245,0.4)", display: "flex", alignItems: "center", gap: 5 }}>
+            <Link href={exploreUrl} className="btn-sheen" style={{ background: "var(--accent)", color: "#fff", border: "none", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, boxShadow: "0 2px 10px rgba(59,123,245,0.4)", display: "flex", alignItems: "center", gap: 5 }}>
               <Search size={14} /> جستجو
             </Link>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ImagePlus, X, Check, Lightbulb, CircleCheckBig, ArrowRight, ArrowLeft, ChevronLeft } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
@@ -43,6 +44,7 @@ function toDataUrl(file: File): Promise<string> {
 }
 
 export default function ListMediaPage() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -102,7 +104,7 @@ export default function ListMediaPage() {
         }),
       });
       if (res.status === 401) {
-        window.location.href = `/login?next=${encodeURIComponent("/list-media")}`;
+        router.push(`/login?next=${encodeURIComponent("/list-media")}`);
         return;
       }
       const data = await res.json().catch(() => ({}));
