@@ -85,7 +85,7 @@ export default function LandingClient({
     <div style={{ fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)", background: "var(--bg-deep)", minHeight: "100vh" }}>
 
       {/* ── Fixed header — logo + auth only ── */}
-      <header style={{ position: "fixed", top: 0, right: 0, left: 0, zIndex: 100, background: headerBg, backdropFilter: scrolled ? "blur(16px)" : "none", borderBottom: scrolled ? "1px solid var(--border)" : "none", transition: "all 0.35s", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", height: 64 }}>
+      <header className="landing-header" style={{ position: "fixed", top: 0, right: 0, left: 0, zIndex: 100, background: headerBg, backdropFilter: scrolled ? "blur(16px)" : "none", borderBottom: scrolled ? "1px solid var(--border)" : "none", transition: "all 0.35s", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", height: 64 }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--text-main)" }}>
           <div style={{ width: 36, height: 36, background: "var(--accent)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1.1rem", boxShadow: "0 0 14px rgba(59,123,245,0.4)" }}>R</div>
           <span className="logo-shimmer" style={{ fontSize: "1.15rem", fontWeight: 800, letterSpacing: "-0.2px" }}>رسامپ</span>

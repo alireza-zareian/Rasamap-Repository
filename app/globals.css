@@ -320,8 +320,17 @@ button, a, input, select, label,
   /* How-it-works: single column */
   .how-grid { grid-template-columns: 1fr !important; }
 
-  /* BillboardCard action buttons: taller tap target */
+  /* BillboardCard action buttons, and the landing page's own fixed header —
+     both are discrete controls a thumb aims at, so both get the 44px.
+     Inline links inside running text are deliberately left alone: stretching a
+     sentence's link to 44px breaks the paragraph it lives in. */
   .card-action-btn { min-height: 44px !important; }
+  .landing-header a, .landing-header button { min-height: 44px; }
+
+  /* Gallery lightbox: the arrows float outside the image on desktop; on a phone
+     that is off-screen, so bring them in over the edges. Swipe still works too. */
+  .gallery-arrow-prev { right: 6px !important; background: rgba(0,0,0,0.45) !important; }
+  .gallery-arrow-next { left: 6px !important; background: rgba(0,0,0,0.45) !important; }
 
   /* Dashboard sidebar: hidden by default, shown via .sidebar-open */
   .dash-sidebar { display: none !important; }
@@ -342,6 +351,11 @@ button, a, input, select, label,
   .topbar-tabs { gap: 2px !important; }
   .topbar-tabs a { padding: 7px 9px !important; }
   .topbar-tab-label { display: none !important; }
+  /* Once the labels go, the nav is four 14px icons, and a 28px-tall tap target
+     is a miss waiting to happen. The bar is 62px, so every control in it gets
+     the 44px both Apple and Google publish — the icon does not change size,
+     only the box around it. */
+  .topbar a, .topbar button { min-height: 44px; }
   .topbar-sub { display: none !important; }
   .topbar-list-cta { display: none !important; }
   .topbar-logout-label { display: none !important; }
@@ -360,6 +374,12 @@ button, a, input, select, label,
     align-self: auto !important;
     border-top: 1px solid var(--border);
   }
+
+  /* Explore filters: on a phone the location/type block is folded behind the
+     toggle so the catalogue starts right under the search box. */
+  .explore-loc-toggle { display: flex !important; }
+  .explore-secondary { display: none; }
+  .explore-secondary.is-open { display: block; }
 
   /* Billboard detail: the "1fr 440px" grid can't fit a phone. Stack it, and
      reorder so it reads: header+gallery -> booking + map -> description ->
@@ -508,7 +528,13 @@ html.page-hidden .skeleton {
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────── */
+/* Catalogue card: the photo eases in under the badges on hover. Hover only —
+   a touch device never enters the state, so nothing moves on a phone. */
+.card-photo-zoom { transition: transform 0.4s ease; will-change: transform; }
+
 @media (prefers-reduced-motion: reduce) {
   .bg-orb, .bg-scan { animation: none !important; }
   .btn-sheen::after { display: none !important; }
+  /* A zoom is motion, so this drops the movement itself, not just its easing. */
+  .card-photo-zoom { transition: none !important; transform: none !important; }
 }

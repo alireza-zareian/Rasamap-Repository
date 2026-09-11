@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { ImageOff, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -8,12 +8,34 @@ interface Props {
   name: string;
 }
 
+// Below this, a horizontal drag counts as a swipe rather than a stray touch.
+const SWIPE_PX = 45;
+
 export default function BillboardGallery({ images, name }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(false);
 
   const prev = useCallback(() => setActive(i => (i - 1 + images.length) % images.length), [images.length]);
   const next = useCallback(() => setActive(i => (i + 1) % images.length), [images.length]);
+
+  // Touch swipe — the only way to move between images on a phone, where the
+  // lightbox arrows sit at the screen edge and there is no keyboard.
+  const touchX = useRef<number | null>(null);
+  const swipedAt = useRef(0);
+  const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchX.current === null || images.length < 2) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    touchX.current = null;
+    if (Math.abs(dx) < SWIPE_PX) return;
+    swipedAt.current = Date.now();
+    // Drag left → next image, drag right → previous — the convention every
+    // photo viewer uses, RTL page or not.
+    (dx < 0 ? next : prev)();
+  };
+  // A swipe ends in a synthetic click; on the main image that would pop the
+  // lightbox open, so swallow the click that lands right after one.
+  const openLightbox = () => { if (Date.now() - swipedAt.current > 250) setLightbox(true); };
 
   useEffect(() => {
     if (!lightbox) return;
@@ -39,7 +61,9 @@ export default function BillboardGallery({ images, name }: Props) {
       {/* Main image */}
       <div
         style={{ position: "relative", width: "100%", aspectRatio: "16/9", borderRadius: 16, overflow: "hidden", cursor: "zoom-in", background: "var(--bg-surface)" }}
-        onClick={() => setLightbox(true)}
+        onClick={openLightbox}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
       >
         <Image src={images[active]} alt={name} fill sizes="(max-width: 900px) 100vw, 640px"
           decoding="async" priority style={{ objectFit: "cover" }} />
@@ -73,13 +97,14 @@ export default function BillboardGallery({ images, name }: Props) {
           style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setLightbox(false)}
         >
-          <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}
+            onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
             <Image src={images[active]} alt={name} width={500} height={500} sizes="90vw"
               style={{ width: "90vw", height: "auto", maxHeight: "88vh", objectFit: "contain", borderRadius: 12, display: "block" }} />
             {images.length > 1 && (
               <>
-                <button onClick={prev} style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={22} /></button>
-                <button onClick={next} style={{ position: "absolute", top: "50%", left: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronLeft size={22} /></button>
+                <button onClick={prev} className="gallery-arrow gallery-arrow-prev" style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={22} /></button>
+                <button onClick={next} className="gallery-arrow gallery-arrow-next" style={{ position: "absolute", top: "50%", left: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronLeft size={22} /></button>
               </>
             )}
             <button onClick={() => setLightbox(false)} style={{ position: "absolute", top: -16, left: -16, background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>

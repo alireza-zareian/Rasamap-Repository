@@ -8,6 +8,7 @@ import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import { statusLabels, planLabels } from "@/lib/types";
 import EditListingModal, { type EditableListing } from "@/components/EditListingModal";
+import UserAvatar from "@/components/UserAvatar";
 import { faNum } from "@/lib/format";
 
 // One of the user's own submissions, in whatever state the review left it.
@@ -139,11 +140,8 @@ export default function Dashboard() {
       <div style={{ display: "flex", flexWrap: "wrap", maxWidth: 1200, margin: "0 auto", padding: "86px 20px 28px", gap: 24 }}>
         {/* Sidebar */}
         <div className={`dash-sidebar${sidebarOpen ? " sidebar-open" : ""}`} style={{ width: 200, flexShrink: 0, minWidth: 0 }}>
-          {/* UserAvatar */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "16px 14px", marginBottom: 10, display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(59,123,245,0.15)", border: "2px solid rgba(59,123,245,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.1rem", color: "var(--accent)", flexShrink: 0 }}>
-              {user.name.charAt(0)}
-            </div>
+            <UserAvatar name={user.name} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: "0.82rem", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name.split(" ")[0]}</div>
               <div style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>کاربر</div>
@@ -171,8 +169,11 @@ export default function Dashboard() {
             >
               {sidebarOpen ? <XIcon size={18} /> : <Menu size={18} />}
             </button>
-            <div>
-              <div style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 2 }}>خوش آمدید، {user.name}</div>
+            {/* On a phone the sidebar is behind the hamburger, so this is the
+                only place the account is identified. */}
+            <UserAvatar name={user.name} size={40} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>خوش آمدید، {user.name}</div>
               <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{user.phone}</div>
             </div>
           </div>

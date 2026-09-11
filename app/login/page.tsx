@@ -127,11 +127,15 @@ function LoginForm() {
         type="button"
         onClick={() => setShow(!show)}
         tabIndex={-1}
+        // The box is 44px so a thumb can hit it; the icon still sits where it
+        // looked right, because the button centres it inside the space the
+        // input's own paddingLeft already reserves.
         style={{
-          position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+          position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)",
+          width: 44, height: 44,
           background: "none", border: "none", cursor: "pointer",
-          color: "var(--text-muted)", display: "flex", alignItems: "center", padding: 4,
-          lineHeight: 1,
+          color: "var(--text-muted)", display: "flex", alignItems: "center",
+          justifyContent: "center", padding: 0, lineHeight: 1,
         }}
       >
         {show ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -149,7 +153,7 @@ function LoginForm() {
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl" }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ width: 52, height: 52, background: accent, borderRadius: 14, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", fontWeight: 900, color: "#fff", boxShadow: `0 0 24px ${glow}`, marginBottom: 10 }}>{staff ? <ShieldCheck size={26} /> : "R"}</div>
+          <div style={{ width: 52, height: 52, background: accent, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", fontWeight: 900, color: "#fff", boxShadow: `0 0 24px ${glow}`, margin: "0 auto 10px" }}>{staff ? <ShieldCheck size={26} /> : "R"}</div>
           <div className="logo-shimmer" style={{ fontSize: "1.4rem", fontWeight: 800 }}>رسامپ</div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 3 }}>
             {staff ? "ورود همکاران — پنل مدیریت رسامپ" : "پلتفرم جامع رسانه‌های محیطی ایران"}

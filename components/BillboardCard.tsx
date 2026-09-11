@@ -65,14 +65,14 @@ export default function BillboardCard({
               <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>ت/ماه</span>
             </div>
             <div style={{ display: "flex", gap: 5 }}>
-              <button onClick={e => { e.stopPropagation(); onCompare(); }} style={{
+              <button onClick={e => { e.stopPropagation(); onCompare(); }} className="card-action-btn" style={{
                 ...smallBtnStyle,
                 background: isCompared ? "var(--accent-warm)" : "var(--bg-card)",
                 border: `1px solid ${isCompared ? "var(--accent-warm)" : "var(--border)"}`,
                 color: isCompared ? "#111" : "var(--text-muted)",
                 display: "flex", alignItems: "center", gap: 4,
               }}><Scale size={12} /> مقایسه</button>
-              <Link href={`/billboard/${b.slug}`} onClick={e => e.stopPropagation()} style={{ ...smallBtnStyle, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
+              <Link href={`/billboard/${b.slug}`} onClick={e => e.stopPropagation()} className="card-action-btn" style={{ ...smallBtnStyle, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                 مشخصات
               </Link>
             </div>
@@ -107,10 +107,20 @@ export default function BillboardCard({
         background: "var(--bg-card)",
         overflow: "hidden",
       }}>
-        {/* A grid card is 320–400 CSS px wide, so at 1x the 384 variant fits
-            and at 2x the 500-wide source is the largest that exists. */}
-        <MediaImage src={b.images?.[0]} alt={b.name} type={b.type}
-          sizes="(max-width: 700px) 100vw, 384px" />
+        {/* The photo drifts in on hover while the badges stay put — so the
+            wrapper moves, not the whole square. MediaImage fills its parent,
+            and so does the placeholder, so both zoom the same way.
+            `.card-photo-zoom` carries the transition, which lets
+            prefers-reduced-motion switch it off (globals.css). */}
+        <div className="card-photo-zoom" style={{
+          position: "absolute", inset: 0,
+          transform: hovered ? "scale(1.03)" : "scale(1)",
+        }}>
+          {/* A grid card is 320–400 CSS px wide, so at 1x the 384 variant fits
+              and at 2x the 500-wide source is the largest that exists. */}
+          <MediaImage src={b.images?.[0]} alt={b.name} type={b.type}
+            sizes="(max-width: 700px) 100vw, 384px" />
+        </div>
 
         {/* Type badge */}
         <div style={{ position: "absolute", top: 8, right: 8, background: dark ? "rgba(10,14,26,0.78)" : "rgba(255,255,255,0.82)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 9px", fontSize: "0.7rem", color: "var(--text-muted)", backdropFilter: "blur(4px)" }}>
@@ -148,7 +158,7 @@ export default function BillboardCard({
             <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>ت/ماه</span>
           </div>
           <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-            <button onClick={e => { e.stopPropagation(); onCompare(); }} style={{
+            <button onClick={e => { e.stopPropagation(); onCompare(); }} className="card-action-btn" style={{
               background: isCompared ? "var(--accent-warm)" : "var(--bg-card)",
               border: `1px solid ${isCompared ? "var(--accent-warm)" : "var(--border)"}`,
               color: isCompared ? "#111" : "var(--text-muted)",
@@ -158,7 +168,7 @@ export default function BillboardCard({
             }}>
               <Scale size={12} /> مقایسه
             </button>
-            <Link href={`/billboard/${b.slug}`} onClick={e => e.stopPropagation()} style={{
+            <Link href={`/billboard/${b.slug}`} onClick={e => e.stopPropagation()} className="card-action-btn" style={{
               background: "var(--accent)", border: "none",
               color: "#fff",
               fontFamily: "inherit", fontSize: "0.72rem", fontWeight: 700,
