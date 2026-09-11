@@ -112,7 +112,15 @@ export function loginRateLimit(ip: string): RateLimitResult {
   });
 }
 
-/** Specific preset: admin API — 120 req per minute */
+/**
+ * Specific preset: admin API — a ceiling, not a throttle.
+ *
+ * A staff member working through the approval queue fires a burst of reads per
+ * minute (the table, a listing's photos, the audit tab), so the number is set
+ * far above real use and exists only to bound a runaway script. No lockout: an
+ * admin who trips this is working, not attacking, and should be free again when
+ * the window rolls over rather than locked out of their own panel.
+ */
 export function adminApiRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`admin_api:${ip}`, {
     windowMs:    60 * 1000,
@@ -140,11 +148,14 @@ export function resetUserLoginAttempts(ip: string): void {
 }
 
 /**
- * Specific preset: user API — 60 req/min per IP, then a short 2-minute cooldown.
- * 60/min is far above real interactive use (a booking form, a review, a phone
- * reveal), so tripping it means a script or a stuck button. The cooldown is
- * deliberately short: an accidental burst (e.g. rapid double-taps on a failing
- * form) should not lock a real person out for the 15-minute credential default.
+ * Specific preset: user API — the signed-in write paths (a listing, a review, a
+ * phone reveal).
+ *
+ * Well above real interactive use, because several people behind one office or
+ * campus NAT share a single address and spend this budget between them. No
+ * lockout, for the same reason the public read limit has none: an accidental
+ * burst — double-taps on a failing form — must not cost a real person the
+ * 15-minute penalty that belongs to credential guessing.
  */
 export function userApiRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`user_api:${ip}`, {
@@ -193,9 +204,8 @@ export function otpVerifyRateLimit(phone: string): RateLimitResult {
 }
 
 /**
- * Public API rate limit — 60 req/min per IP, 10-min lockout after burst.
- * Applied to /api/billboards and /api/billboards/pins to slow automated crawling.
- * Normal browser usage never comes close to this ceiling.
+ * Public API rate limit — applied to /api/billboards to slow automated
+ * crawling. Normal browser usage never comes close to this ceiling.
  */
 export function publicApiRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`public_api:${ip}`, {
