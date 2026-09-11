@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
 
 interface Reply {
@@ -126,17 +127,12 @@ export default function ReviewsSection({ billboardId }: Props) {
     if (deletingId) return;                       // one delete in flight at a time
     setDeletingId(id); setError("");
     try {
-      const res = await fetch(`/api/reviews/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(data?.error ?? "حذف نظر ممکن نشد");
-        return;
-      }
+      await fetchJson(`/api/reviews/${id}`, { method: "DELETE" });
       cancelEdit();
       setSuccess(false);
       fetchReviews();
-    } catch {
-      setError("خطای شبکه — دوباره تلاش کنید");
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
       setDeletingId(null);
     }
@@ -154,16 +150,14 @@ export default function ReviewsSection({ billboardId }: Props) {
     if (body.length < 2) { setError("پاسخ خیلی کوتاه است"); return; }
     setReplyBusy(true); setError("");
     try {
-      const res = await fetch(`/api/reviews/${reviewId}/replies`, {
+      await fetchJson(`/api/reviews/${reviewId}/replies`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body }),
       });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) { setError(data?.error ?? "ثبت پاسخ ممکن نشد"); return; }
       setReplyTo(null); setReplyBody("");
       fetchReviews();
-    } catch { setError("خطای شبکه — دوباره تلاش کنید"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setReplyBusy(false); }
   };
 
@@ -171,14 +165,9 @@ export default function ReviewsSection({ billboardId }: Props) {
     if (busyReplyId) return;
     setBusyReplyId(replyId); setError("");
     try {
-      const res = await fetch(`/api/reviews/${reviewId}/replies/${replyId}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(data?.error ?? "حذف پاسخ ممکن نشد");
-        return;
-      }
+      await fetchJson(`/api/reviews/${reviewId}/replies/${replyId}`, { method: "DELETE" });
       fetchReviews();
-    } catch { setError("خطای شبکه — دوباره تلاش کنید"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setBusyReplyId(null); }
   };
 
@@ -188,18 +177,16 @@ export default function ReviewsSection({ billboardId }: Props) {
     if (comment.length < 10) { setError("نظر باید حداقل ۱۰ کاراکتر باشد"); return; }
     setError(""); setSubmitting(true);
     try {
-      const res = await fetch("/api/reviews", {
+      await fetchJson("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ billboardId, rating, comment }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در ثبت نظر"); return; }
       setSuccess(true);
       setEditing(false);
       setComment(""); setRating(0);
       fetchReviews();
-    } catch { setError("خطای شبکه — دوباره تلاش کنید"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setSubmitting(false); }
   };
 

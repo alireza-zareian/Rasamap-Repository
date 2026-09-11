@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/fetch-json";
 import { useModalA11y } from "@/lib/useModalA11y";
 import { X, ImagePlus, Check } from "lucide-react";
 import { faNum } from "@/lib/format";
@@ -127,7 +128,9 @@ export default function EditListingModal({
     setSaving(true);
     try {
       const fresh = await Promise.all(newPhotos.map(p => toDataUrl(p.file)));
-      const res = await fetch(`/api/listings/${listing.id}`, {
+      const data = await fetchJson<{ listing: Record<string, unknown> }>(`/api/listings/${listing.id}`, {
+        // Photographs travel with this request, so it gets the upload budget.
+        timeoutMs: TIMEOUT_MS.upload,
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -146,12 +149,15 @@ export default function EditListingModal({
           images: [...keptUrls, ...fresh],
         }),
       });
-      if (res.status === 401) { window.location.href = "/login?next=/dashboard"; return; }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(data.error ?? "خطا در ذخیره تغییرات"); return; }
       onSaved(data.listing);
-    } catch {
-      setError("خطا در اتصال به سرور. دوباره تلاش کنید.");
+    } catch (err) {
+      // A session that expired while this modal was open — a full reload, not a
+      // soft push, because the dashboard behind it is now showing stale state.
+      if (err instanceof FetchError && err.status === 401) {
+        window.location.href = "/login?next=/dashboard";
+        return;
+      }
+      setError(errorMessage(err));
     } finally {
       setSaving(false);
     }

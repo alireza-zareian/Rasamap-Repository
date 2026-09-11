@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import Link from "next/link";
 import { Phone } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
@@ -30,19 +31,14 @@ export default function BillboardContact({ hasPhone, agency, slug }: Props) {
     if (busy || phone) return;                // one request in flight, once only
     setBusy(true); setError("");
     try {
-      const res = await fetch(`/api/billboards/${slug}/contact`, { method: "POST" });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setError(data?.error ?? "دریافت شماره ممکن نشد");
-        return;
-      }
+      const data = await fetchJson<{ phone?: string }>(`/api/billboards/${slug}/contact`, { method: "POST" });
       if (!data?.phone) {
         setError("شمارهٔ تماسی برای این رسانه ثبت نشده است");
         return;
       }
       setPhone(data.phone);
-    } catch {
-      setError("خطای شبکه — دوباره تلاش کنید");
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }

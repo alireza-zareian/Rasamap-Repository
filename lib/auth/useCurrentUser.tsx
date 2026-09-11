@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { fetchJson } from "@/lib/fetch-json";
 
 export interface CurrentUser {
   id: number;
@@ -79,7 +80,15 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    try {
+      await fetchJson("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Leaving is not negotiable. If the server cannot be reached the cookie
+      // may survive on it, but keeping someone on a page they asked to leave —
+      // or worse, leaving the button dead because a hung request never
+      // returned — is the worse failure. The reload below drops every trace of
+      // the session from this browser either way.
+    }
     setUser(null);
     // A full reload rather than a soft navigation, and deliberately so: it
     // discards every piece of client state built up while signed in — open

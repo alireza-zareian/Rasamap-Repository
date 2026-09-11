@@ -6,6 +6,7 @@ import { ImagePlus, X, Check, Lightbulb, CircleCheckBig, ArrowRight, ArrowLeft, 
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import { faNum } from "@/lib/format";
+import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/fetch-json";
 
 const steps = ["اطلاعات اصلی","موقعیت و نوع","قیمت‌گذاری","تصاویر","انتخاب پلن","تأیید"];
 const SUBMIT_STEP = 4;   // the plan step is the last one with a submit button
@@ -84,7 +85,12 @@ export default function ListMediaPage() {
     setSubmitting(true);
     try {
       const images = await Promise.all(photos.map(p => toDataUrl(p.file)));
-      const res = await fetch("/api/listings", {
+      await fetchJson("/api/listings", {
+        // The upload budget, not the read one: five photographs at two
+        // megabytes each over a mobile connection legitimately takes most of a
+        // minute, and cutting that off would be the same bug with a nicer
+        // message.
+        timeoutMs: TIMEOUT_MS.upload,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -103,18 +109,15 @@ export default function ListMediaPage() {
           images,
         }),
       });
-      if (res.status === 401) {
+      setStep(DONE_STEP);
+    } catch (err) {
+      // A session that expired while the form was being filled in is not an
+      // error to read — it is a trip to the sign-in page and back.
+      if (err instanceof FetchError && err.status === 401) {
         router.push(`/login?next=${encodeURIComponent("/list-media")}`);
         return;
       }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error ?? "خطا در ثبت رسانه");
-        return;
-      }
-      setStep(DONE_STEP);
-    } catch {
-      setError("خطا در اتصال به سرور. لطفاً دوباره امتحان کنید.");
+      setError(errorMessage(err));
     } finally {
       setSubmitting(false);
     }

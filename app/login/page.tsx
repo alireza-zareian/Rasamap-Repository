@@ -1,6 +1,7 @@
 "use client";
 import { useState, Suspense } from "react";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, AlertTriangle, ArrowRight, User, ShieldCheck } from "lucide-react";
@@ -66,9 +67,11 @@ function LoginForm() {
       const body = tab === "login"
         ? { identifier: form.phone.trim(), password: form.pass }
         : { name: form.name.trim(), phone: form.phone, password: form.pass };
-      const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطایی رخ داد"); setLoading(false); return; }
+      const data = await fetchJson<{ user?: { isStaff?: boolean } }>(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
       // The session answer is cached for the whole page load (see
       // CurrentUserProvider), and router.push below is a soft navigation that
       // does not reload it. Without this the visitor would arrive signed in but
@@ -77,8 +80,11 @@ function LoginForm() {
       // A team member who signed in here almost certainly wants the panel; a
       // customer wants wherever they were headed.
       router.push(data.user?.isStaff ? "/admin" : nextPath);
-    } catch {
-      setError("خطای شبکه"); setLoading(false);
+    } catch (err) {
+      // Covers a refusal from the API (wrong password, rate limit) and a
+      // network failure alike — fetchJson has already turned both into the
+      // sentence to show.
+      setError(errorMessage(err)); setLoading(false);
     }
   };
 

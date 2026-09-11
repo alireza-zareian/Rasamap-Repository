@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowRight, Check } from "lucide-react";
@@ -31,17 +32,14 @@ export default function ResetPasswordPage() {
     if (!/^09\d{9}$/.test(phone)) { setError("شماره موبایل معتبر نیست"); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/otp/send", {
+      const data = await fetchJson<{ message?: string; devCode?: string }>("/api/auth/otp/send", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, purpose: "password_reset" }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 429) { setError(data.error ?? "درخواست‌های زیادی. کمی بعد دوباره تلاش کنید."); setLoading(false); return; }
-      if (!res.ok) { setError(data.error ?? "خطا در ارسال کد"); setLoading(false); return; }
       setNotice(data.message ?? "اگر این شماره ثبت شده باشد، کد تأیید ارسال شد.");
       if (data.devCode) setNotice(n => `${n} (کد تست: ${data.devCode})`);
       setStep(2);
-    } catch { setError("خطای شبکه"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setLoading(false); }
   };
 
@@ -52,14 +50,12 @@ export default function ResetPasswordPage() {
     if (pass !== confirm) { setError("رمز عبور و تکرار آن یکسان نیستند"); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/otp/verify", {
+      await fetchJson("/api/auth/otp/verify", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, purpose: "password_reset", code, newPassword: pass }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(data.error ?? "خطا در تغییر رمز"); setLoading(false); return; }
       setStep(3);
-    } catch { setError("خطای شبکه"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setLoading(false); }
   };
 

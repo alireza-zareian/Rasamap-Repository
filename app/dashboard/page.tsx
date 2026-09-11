@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -111,14 +112,16 @@ export default function Dashboard() {
     if (editNewPass) { body.currentPassword = editCurPass; body.newPassword = editNewPass; }
     if (!Object.keys(body).length) { setProfileError("تغییری وارد نکرده‌اید"); setProfileSaving(false); return; }
     try {
-      const res = await fetch("/api/auth/me", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = await res.json();
-      if (!res.ok) { setProfileError(data.error ?? "خطا در ذخیره"); return; }
+      const data = await fetchJson<{ user: { name: string; phone: string } }>("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
       setUser(data.user);
       setEditName(data.user.name);
       setEditCurPass(""); setEditNewPass("");
       setProfileSuccess("اطلاعات با موفقیت ذخیره شد");
-    } catch { setProfileError("خطای شبکه"); }
+    } catch (err) { setProfileError(errorMessage(err)); }
     finally { setProfileSaving(false); }
   };
 

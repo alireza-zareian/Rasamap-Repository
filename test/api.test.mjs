@@ -1446,6 +1446,32 @@ test("guard: an icon-only button carries a name", () => {
   );
 });
 
+test("guard: a write from the browser goes through fetchJson", () => {
+  // A bare fetch() has no timeout, and `await` on a request that never answers
+  // never returns — so the `finally` that releases the button never runs and it
+  // spins on "در حال ارسال…" forever, with no error and no way back but a
+  // reload, which on a form risks sending it twice. §5 asks for a timeout and a
+  // defined fallback on every outbound call; lib/fetch-json.ts is both.
+  //
+  // Reads are left alone: a list that fails to load is visibly empty, while a
+  // write that hangs looks like it is still working.
+  const WRITE = /fetch\(\s*[`"'][^`"']*[`"']\s*,\s*\{[^}]*method:\s*["'](POST|PATCH|PUT|DELETE)/s;
+
+  for (const [file, src] of sourceFiles()) {
+    if (!file.endsWith(".tsx")) continue;
+    if (!src.includes('"use client"')) continue;
+    // The admin panel is staff-only and behind a session; its forms are worth
+    // converting too, but they are not what a visitor meets. Tracked in B5.
+    if (file.replaceAll("\\", "/").startsWith("components/admin/")) continue;
+    if (file.replaceAll("\\", "/").startsWith("app/admin/")) continue;
+
+    assert.ok(
+      !WRITE.test(src),
+      `${file}: send writes with fetchJson() from lib/fetch-json.ts — a bare fetch has no timeout, so a stalled request leaves the button spinning for good.`,
+    );
+  }
+});
+
 test("guard: no credential lockout rests on the address alone", () => {
   // The failure this prevents was measured, not imagined: six failed sign-ins
   // with unrelated emails from one address locked the real administrator out
