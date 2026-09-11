@@ -26,7 +26,8 @@
     "images:check": "node scripts/check-images.mjs",
     "db:to-postgres": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/to-postgres.mjs",
     "db:to-sqlite": "node scripts/to-postgres.mjs --to-sqlite",
-    "test:e2e": "node test/run-e2e.mjs"
+    "test:e2e": "node test/run-e2e.mjs",
+    "bundle": "node scripts/bundle-report.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
