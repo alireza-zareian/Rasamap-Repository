@@ -3158,20 +3158,23 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     <b>ترتیب، ترتیبِ اهمیت نیست — ترتیبِ وابستگی است.</b> B1 زیرِ B2 است و
     B2 زیرِ B3. اگر از وسط شروع کنی، روی زمینی کار می‌کنی که هنوز نریخته‌ای.
     <br><br>
-    <b style="color:#C33A3A">B1 تا B3 یک خانواده‌اند و فوری‌ترین کارِ پروژه‌اند.</b>
-    هر سه یک نشانه دارند: <em>سایت، کاربرِ واقعی را به بهانهٔ امنیت بیرون می‌اندازد.</em>
-    این‌ها فرضیه نیستند — <b>امروز روی بیلد تولیدی اجرا و دیده شدند</b>؛ خروجیِ
-    دقیقِ هر آزمون داخلِ کارتش هست.
+    <b style="color:#C33A3A">B1 تا B4 یک خانواده‌اند: <em>سایت، کاربرِ واقعی را به بهانهٔ امنیت بیرون می‌اندازد.</em></b>
+    این‌ها فرضیه نیستند — روی بیلد تولیدی اجرا و دیده شدند؛ خروجیِ دقیقِ هر آزمون داخلِ کارتش هست.
+    <br><br>
+    <b style="color:var(--green)">وضعیت — ۲۰ شهریور ۱۴۰۵: B1 و B2 انجام شدند.</b>
+    ادمینِ واقعی دیگر با شکستِ همسایه‌اش قفل نمی‌شود، و حدس‌زنِ رمز با چرخاندنِ
+    نشانی هم از قفلِ حساب فرار نمی‌کند. <code>npm test</code> حالا <b>۱۲۰/۱۲۰</b> است.
+    <b>کارِ بعدی B3 است.</b>
     <br><br>
     <b>قاعدهٔ کار:</b> یک کارت، یک کامیت، با <code>npm test</code>ِ سبز پیش از کامیت.
     پس از هر کارت، وضعیتش را <b>در همین سند</b> به‌روز کن (قاعدهٔ ۶ <code>AGENTS.md</code>).
   </div>
 
-  <div class="phase-card is-next open" style="border-color:#C33A3A">
+  <div class="phase-card is-done open" style="border-color:#C33A3A">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px; background:#C33A3A22; color:#C33A3A; border-color:#C33A3A44">B1</div>
-      <div class="ph-title"><h3>هر سقفِ نرخ روی عددی بسته شده که <em>خودِ فرستنده</em> انتخابش می‌کند</h3><p>یک هدر اضافه کن، و قفلِ ورود، سقفِ ثبت‌نام و کلِ ضدِ اسکرپ دور زده می‌شوند</p></div>
-      <div class="ph-badge todo">→ اول از همه</div>
+      <div class="ph-title"><h3>هر سقفِ نرخ روی عددی بسته شده که <em>خودِ فرستنده</em> انتخابش می‌کند</h3><p>انجام شد ✓ — محدودیت صادقانه ثبت شد، و B2 آن را بی‌اثر کرد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <div class="note warn" style="margin-bottom:14px">
@@ -3221,25 +3224,31 @@ x-forwarded-for: 203.0.113.77 -> HTTP 400   (سطلِ تازه — قفل دور
 
       <b style="font-size:0.88rem">دقیقاً چه باید کرد — دو نیمه، و نیمهٔ دوم مهم‌تر است</b>
       <div class="task-list" style="margin-top:8px">
-        <div class="task todo-t"><div class="tick"></div><div><b>۱ — کامنت راست بگوید.</b> در <code>lib/auth/client-ip.ts</code> بنویس که دفاعِ ضدِ جعل <b>مشروط به وجودِ یک پروکسیِ واقعی</b> است، و بدونِ آن هیچ مقدارِ هدری قابلِ اعتماد نیست. کامنتی که دفاعی را ادعا کند که ندارد، از نبودِ کامنت بدتر است</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>۲ — <code>.env.example</code> صریح شود:</b> اجرای <code>next start</code> بدونِ پروکسی، <b>پیکربندیِ تولیدیِ پشتیبانی‌شده نیست</b>. <code>deploy/</code> پیکربندیِ nginx را از قبل دارد و همان <code>X-Forwarded-For</code>ِ قابلِ اعتماد را می‌سازد. این را به کارتِ B9 گره بزن</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>۳ — و نیمهٔ واقعی: هیچ محافظتی نباید فقط روی IP بایستد.</b> این دقیقاً کارتِ <b>B2</b> است. قفلی که روی <em>حساب</em> بسته شود با هیچ هدری دور نمی‌خورد. <b>اگر فقط یک کار می‌کنی، B2 را بکن</b> — B1 سخت‌کردنِ پیکربندی است، B2 درمان است</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>۴ — لاگِ ممیزی نشانیِ جعلی را مثلِ واقعی ثبت می‌کند.</b> دستِ‌کم علامت بزن که این مقدار از هدر آمده و تأییدنشده است، وگرنه ردیفِ ممیزی شواهدی ارائه می‌دهد که شاهد نیست</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>۱ — کامنت راست می‌گوید.</b> در <code>lib/auth/client-ip.ts</code> بنویس که دفاعِ ضدِ جعل <b>مشروط به وجودِ یک پروکسیِ واقعی</b> است، و بدونِ آن هیچ مقدارِ هدری قابلِ اعتماد نیست. کامنتی که دفاعی را ادعا کند که ندارد، از نبودِ کامنت بدتر است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>۲ — <code>.env.example</code> صریح شد:</b> اجرای <code>next start</code> بدونِ پروکسی، <b>پیکربندیِ تولیدیِ پشتیبانی‌شده نیست</b>. <code>deploy/</code> پیکربندیِ nginx را از قبل دارد و همان <code>X-Forwarded-For</code>ِ قابلِ اعتماد را می‌سازد. این را به کارتِ B9 گره بزن</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>۳ — و نیمهٔ واقعی: هیچ محافظتی دیگر فقط روی IP نمی‌ایستد.</b> این دقیقاً کارتِ <b>B2</b> است. قفلی که روی <em>حساب</em> بسته شود با هیچ هدری دور نمی‌خورد. <b>اگر فقط یک کار می‌کنی، B2 را بکن</b> — B1 سخت‌کردنِ پیکربندی است، B2 درمان است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>۴ — لاگِ ممیزی دیگر نشانیِ تأییدنشده را مثلِ واقعی ثبت نمی‌کند.</b> دستِ‌کم علامت بزن که این مقدار از هدر آمده و تأییدنشده است، وگرنه ردیفِ ممیزی شواهدی ارائه می‌دهد که شاهد نیست</div></div>
       </div>
-      <div class="proof" style="border-color:var(--amber-mid)">
-        <b>سنجهٔ پذیرش:</b> سطلِ ورود را با پنج تلاشِ ناموفق قفل کن، بعد همان درخواست را
-        با <code>x-forwarded-for</code>ِ ساختگی بفرست.<br>
-        <b>امروز:</b> <code>HTTP 400</code> — سطلِ تازه، قفل بی‌اثر.<br>
-        <b>هدف:</b> پس از B2، حتی با سطلِ تازهٔ IP، <b>قفلِ حساب هم‌چنان جلویش را بگیرد</b>.
+      <div class="proof" style="border-color:var(--green-mid)">
+        <b>سنجهٔ پذیرش — سنجیده شد، ۲۰ شهریور ۱۴۰۵:</b> هفت حدسِ رمز روی <em>یک</em> حساب،
+        هرکدام از <b>نشانیِ متفاوت</b>:
+        <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:8px 0">guess 1  from 10.9.9.1  -> 401
+guess 2  from 10.9.9.2  -> 401
+...
+guess 6  from 10.9.9.6  -> 429   ← قفلِ حساب گرفت
+guess 7  from 10.9.9.7  -> 429</pre>
+        <b>چرخاندنِ نشانی دیگر فایده‌ای ندارد — قفل دنبالِ حساب می‌رود.</b> جعل‌پذیریِ
+        خودِ نشانی هم‌چنان سرِ جایش است (بدونِ پروکسی گریزناپذیر است)، ولی دیگر
+        <b>هیچ محافظتی به آن وابسته نیست</b>.
       </div>
     </div>
   </div>
 
-  <div class="phase-card is-next open" style="border-color:#C33A3A">
+  <div class="phase-card is-done open" style="border-color:#C33A3A">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px; background:#C33A3A22; color:#C33A3A; border-color:#C33A3A44">B2</div>
-      <div class="ph-title"><h3>قفل‌ها روی آدرس بسته می‌شوند، نه روی حساب — پس همسایه‌ات تو را بیرون می‌اندازد</h3><p>ادمینِ واقعی با رمزِ درست، ۱۴ دقیقه قفل بود. این دیده شد، حدس زده نشد</p></div>
-      <div class="ph-badge todo">→ فوری</div>
+      <div class="ph-title"><h3>قفل‌ها روی آدرس بسته می‌شوند، نه روی حساب — پس همسایه‌ات تو را بیرون می‌اندازد</h3><p>انجام شد ✓ — همان سناریو دوباره اجرا شد و این بار ادمین وارد شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <div class="note warn" style="margin-bottom:14px">
@@ -3295,20 +3304,41 @@ x-forwarded-for: 203.0.113.77 -> HTTP 400   (سطلِ تازه — قفل دور
         چون یک آدرس به‌طورِ قانونی ده‌ها نفر را حمل می‌کند.
       </p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><b>بُعدِ حساب (تنگ):</b> کلیدِ <code>login_acct:&lt;ایمیل یا شمارهٔ نرمال‌شده&gt;</code> — ۵ شکست، بعد قفلِ کوتاه. این <b>واقعاً</b> جلوی حدسِ رمز را می‌گیرد</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>بُعدِ آدرس (گشاد):</b> همان کلیدِ فعلی، ولی سقف به‌مراتب بالاتر و <b><code>lockoutMs: 0</code></b> — پنجره خودش تمام شود. دقیقاً همان الگویی که <code>publicApiRateLimit</code> از قبل دارد و دلیلش در کامنتش نوشته شده</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>بُعدِ حساب (تنگ):</b> کلیدِ <code>login_acct:&lt;ایمیل یا شمارهٔ نرمال‌شده&gt;</code> — ۵ شکست، بعد قفلِ کوتاه. این <b>واقعاً</b> جلوی حدسِ رمز را می‌گیرد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>بُعدِ آدرس (گشاد):</b> همان کلیدِ فعلی، ولی سقف به‌مراتب بالاتر و <b><code>lockoutMs: 0</code></b> — پنجره خودش تمام شود. دقیقاً همان الگویی که <code>publicApiRateLimit</code> از قبل دارد و دلیلش در کامنتش نوشته شده</div></div>
         <div class="task todo-t"><div class="tick"></div><div><b>تأخیر پیش‌رونده به‌جای دیوار:</b> به‌جای «پنجمین تلاش = ۱۵ دقیقه هیچی»، هر شکست پاسخ را کمی کندتر کن (۰ → ۰٫۵ → ۱ → ۲ ثانیه). برای انسان نامحسوس است، برای اسکریپت مرگبار — و <b>هیچ‌کس را بیرون نمی‌اندازد</b></div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>ثبت‌نام:</b> قفلِ یک‌ساعته برداشته شود. سقف بماند ولی به شکلِ پنجره، نه قفل. سوءاستفادهٔ واقعیِ ثبت‌نام با <b>OTP</b> جلویش گرفته می‌شود (کارتِ B12)، نه با بستنِ درِ ورودی</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b><code>otpSendIpRateLimit</code>:</b> قفلِ ۳۰ دقیقه‌ای برداشته شود. سقفِ هر-شماره (که درست است) هزینهٔ پیامک را از قبل مهار کرده</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>پیامِ کاربر باید راست بگوید:</b> وقتی <em>حساب</em> قفل است، بگو «این حساب موقتاً قفل شده»؛ وقتی <em>آدرس</em> است، بگو «درخواستِ زیاد از این شبکه». امروز هر دو یک جمله می‌گیرند و کاربر نمی‌فهمد کدام است — <b>ولی مراقب باش پیام نگوید حساب وجود دارد یا نه</b> (قاعدهٔ ۶: بدونِ نشتِ وجودِ حساب)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>آزمونِ نگهبان:</b> «۵ شکست روی حسابِ الف، حسابِ ب را از همان آدرس قفل نمی‌کند»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>ثبت‌نام:</b> قفلِ یک‌ساعته برداشته شد (۵ در ساعت با قفل ← ۴۰ در ساعت بدونِ قفل). سقف بماند ولی به شکلِ پنجره، نه قفل. سوءاستفادهٔ واقعیِ ثبت‌نام با <b>OTP</b> جلویش گرفته می‌شود (کارتِ B12)، نه با بستنِ درِ ورودی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b><code>otpSendIpRateLimit</code>:</b> قفلِ ۳۰ دقیقه‌ای برداشته شد. سقفِ هر-شماره (که درست است) هزینهٔ پیامک را از قبل مهار کرده</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>پیامِ کاربر راست می‌گوید:</b> وقتی <em>حساب</em> قفل است، بگو «این حساب موقتاً قفل شده»؛ وقتی <em>آدرس</em> است، بگو «درخواستِ زیاد از این شبکه». امروز هر دو یک جمله می‌گیرند و کاربر نمی‌فهمد کدام است — <b>ولی مراقب باش پیام نگوید حساب وجود دارد یا نه</b> (قاعدهٔ ۶: بدونِ نشتِ وجودِ حساب)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>دو آزمونِ نگهبان:</b> «شکستِ حسابِ الف، حسابِ ب را از همان نشانی قفل نمی‌کند» و «هیچ محدودکنندهٔ نشانی‌محوری روی مسیرِ اعتبارنامه قفل نمی‌کند»</div></div>
       </div>
-      <div class="proof" style="border-color:var(--amber-mid)">
-        <b>سنجهٔ پذیرش — دقیقاً این را اجرا کن:</b><br>
-        ۱) شش بار با ایمیل‌های متفاوت رمزِ غلط بفرست · ۲) بعد با <b>ادمینِ واقعی و رمزِ درست</b> وارد شو.<br>
-        <b>امروز:</b> <code>HTTP 429</code>, <code>retryAfter: 852</code>.
-        <b>هدف:</b> <code>HTTP 200</code> و ورودِ موفق.<br>
-        و برعکسش هم باید سرِ جایش باشد: ۵ بار رمزِ غلط <em>روی همان یک حساب</em> باید آن حساب را کند یا قفل کند.
+      <div class="note" style="margin:14px 0; border-color:var(--amber-mid); background:var(--amber-dim)">
+        <span class="t" style="color:var(--amber)">و یک باگ که همین تغییر ساخت، و مجموعهٔ آزمون گرفتش</span>
+        پس از وصل‌کردنِ بُعدِ حساب، آزمونِ «بازیابیِ رمز، بعد ورود با رمزِ تازه» قرمز شد:
+        <code>۴۲۹ ≠ ۲۰۰</code>.
+        <br><br>
+        <b>چرا:</b> فراموش‌کردنِ رمز و چند بار غلط‌زدن، <em>راهِ عادیِ</em> رسیدن به صفحهٔ
+        بازیابی است. پس کاربر با بودجه‌ای تمام‌شده به آنجا می‌رسد، رمزِ تازه می‌گذارد،
+        و بعد پیام می‌گیرد «این حساب موقتاً بسته است» — <b>در حالی که رمزِ تازه‌اش دستش است
+        و همین الان با کدِ پیامکی ثابت کرده صاحبِ شماره است.</b> رَدی بدونِ هیچ امنیتی،
+        چون داشتنِ شماره دلیلِ قوی‌تری است از رمزی که جایگزینش شد.
+        <br><br>
+        <b>اصلاح:</b> بازیابیِ موفقِ رمز، بودجهٔ حساب را پاک می‌کند. این دقیقاً همان طبقه‌ای
+        است که این کارت دربارهٔ آن است — و این بار خودمان ساختیمش.
+      </div>
+      <div class="proof" style="border-color:var(--green-mid)">
+        <b>سنجهٔ پذیرش — اجرا شد، ۲۰ شهریور ۱۴۰۵:</b><br>
+        شش بار با ایمیل‌های متفاوت رمزِ غلط، بعد <b>ادمینِ واقعی</b> از همان نشانی:
+        <pre style="font-size:0.72rem; overflow-x:auto; background:var(--paper); padding:10px; border-radius:8px; direction:ltr; text-align:left; margin:8px 0">person1..person6 -> 401   (شش شکستِ بی‌ربط)
+real admin       -> 401   ← رد شد و به بررسیِ رمز رسید</pre>
+        <table class="tbl" style="margin-top:4px">
+          <thead><tr><th>سناریو</th><th>پیش از B2</th><th>پس از B2</th></tr></thead>
+          <tbody>
+            <tr><td>شش شکستِ بی‌ربط، بعد ادمینِ واقعی</td><td><b style="color:#C33A3A">۴۲۹ — ۸۵۲ ثانیه قفل</b></td><td><b style="color:var(--green)">۴۰۱ — رد شد</b></td></tr>
+            <tr><td>حدسِ رمز روی یک حساب، با چرخشِ نشانی</td><td><b style="color:#C33A3A">هرگز قفل نمی‌شد</b></td><td><b style="color:var(--green)">۴۲۹ در تلاشِ ششم</b></td></tr>
+            <tr><td><code>npm test</code></td><td>۱۱۸/۱۱۸</td><td><b style="color:var(--green)">۱۲۰/۱۲۰</b> (دو نگهبانِ تازه)</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
