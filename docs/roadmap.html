@@ -3161,10 +3161,11 @@ done; sleep 1; b=$(cpu); echo "$(echo "($b-$a)*1000/120" | bc -l) ms per visit"<
     <b style="color:#C33A3A">B1 تا B4 یک خانواده‌اند: <em>سایت، کاربرِ واقعی را به بهانهٔ امنیت بیرون می‌اندازد.</em></b>
     این‌ها فرضیه نیستند — روی بیلد تولیدی اجرا و دیده شدند؛ خروجیِ دقیقِ هر آزمون داخلِ کارتش هست.
     <br><br>
-    <b style="color:var(--green)">وضعیت — ۲۰ شهریور ۱۴۰۵: B1 و B2 انجام شدند.</b>
-    ادمینِ واقعی دیگر با شکستِ همسایه‌اش قفل نمی‌شود، و حدس‌زنِ رمز با چرخاندنِ
-    نشانی هم از قفلِ حساب فرار نمی‌کند. <code>npm test</code> حالا <b>۱۲۰/۱۲۰</b> است.
-    <b>کارِ بعدی B3 است.</b>
+    <b style="color:var(--green)">وضعیت — ۲۰ شهریور ۱۴۰۵: B1 تا B4 انجام شدند.</b>
+    ادمینِ واقعی دیگر با شکستِ همسایه‌اش قفل نمی‌شود؛ حدس‌زنِ رمز با چرخاندنِ نشانی
+    از قفلِ حساب فرار نمی‌کند؛ هر صفحه یک بار می‌پرسد «کی وارد است» به‌جای چهار بار؛
+    و هیچ دکمه‌ای دیگر تا ابد نمی‌چرخد. <code>npm test</code> از ۱۱۸ به <b>۱۲۱/۱۲۱</b> رسید
+    (سه نگهبانِ تازه). <b>کارِ بعدی B5 است — ریزه‌کاری‌ها.</b>
     <br><br>
     <b>قاعدهٔ کار:</b> یک کارت، یک کامیت، با <code>npm test</code>ِ سبز پیش از کامیت.
     پس از هر کارت، وضعیتش را <b>در همین سند</b> به‌روز کن (قاعدهٔ ۶ <code>AGENTS.md</code>).
@@ -3343,11 +3344,11 @@ real admin       -> 401   ← رد شد و به بررسیِ رمز رسید</pr
     </div>
   </div>
 
-  <div class="phase-card" style="border-color:var(--amber-mid)">
+  <div class="phase-card is-done" style="border-color:var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">B3</div>
-      <div class="ph-title"><h3>هر بازدیدِ صفحه، دو تا سه بار می‌پرسد «کی وارد است؟»</h3><p>بودجهٔ سقفِ نرخ سه برابر سریع‌تر خرج می‌شود — بی‌آنکه چیزی به کاربر بدهد</p></div>
-      <div class="ph-badge todo">⚪ همان خانواده</div>
+      <div class="ph-title"><h3>هر بازدیدِ صفحه، دو تا چهار بار می‌پرسد «کی وارد است؟»</h3><p>انجام شد ✓ — هر سه صفحه حالا یک درخواست، سنجیده با کرومِ واقعی</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
@@ -3368,19 +3369,29 @@ real admin       -> 401   ← رد شد و به بررسیِ رمز رسید</pr
         ولی وقتی <b>همه پشتِ کلیدِ <code>"unknown"</code>ِ B1 نشسته‌اند</b>، سه برابر شدنِ
         هر بازدید یعنی سقف سه برابر زودتر می‌رسد. B1 مسئله را می‌سازد؛ این کارت شدتش را سه برابر می‌کند.
       </p>
+      <div class="note" style="margin-bottom:14px; border-color:var(--amber-mid); background:var(--amber-dim)">
+        <span class="t" style="color:var(--amber)">تصحیح: عدد از این هم بدتر بود</span>
+        این کارت گفته بود «دو تا سه»، بر پایهٔ شمارشِ جاهایی که هوکِ <code>useCurrentUser</code>
+        را صدا می‌زنند. ولی <code>ReviewsSection</code> و صفحهٔ داشبورد <b>مستقیم</b>
+        <code>fetch("/api/auth/me")</code> می‌زدند و اصلاً از هوک رد نمی‌شدند.
+        اندازه‌گیری با کرومِ واقعی: <b>صفحهٔ جزئیات ۴ درخواست</b>، صفحهٔ نخست و کاتالوگ ۲ تا.
+        <br><br>
+        <b>درسش:</b> شمارشِ فراخوانیِ یک انتزاع، تعدادِ واقعیِ درخواست‌ها نیست. اندازه بگیر.
+      </div>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>یک <b>Context در layoutِ ریشه</b> که یک بار می‌پرسد و به همه می‌دهد — یا یک کشِ ساده در سطحِ ماژول با درخواستِ در-پرواز مشترک، تا چند فراخوانیِ هم‌زمان یک پاسخ بگیرند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><code>logout()</code> هم‌چنان <code>window.location.href</code> است. اینجا <b>عمدی و درست است</b> (بارگذاریِ کامل همهٔ وضعیتِ کلاینت را پاک می‌کند) — <b>کامنتش را بنویس</b> وگرنه بازبینِ بعدی آن را باگ می‌بیند و «درستش» می‌کند</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>سنجه:</b> در DevTools ← Network، یک بازدید از <code>/billboard/[slug]</code>. <b>امروز: ۳ تا <code>/api/auth/me</code>. هدف: ۱.</b></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>Context در layoutِ ریشه</b> که یک بار می‌پرسد و به همه می‌دهد — یا یک کشِ ساده در سطحِ ماژول با درخواستِ در-پرواز مشترک، تا چند فراخوانیِ هم‌زمان یک پاسخ بگیرند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>logout()</code> هم‌چنان <code>window.location.href</code> است و <b>دلیلش نوشته شد</b>. اینجا <b>عمدی و درست است</b> (بارگذاریِ کامل همهٔ وضعیتِ کلاینت را پاک می‌کند) — <b>کامنتش را بنویس</b> وگرنه بازبینِ بعدی آن را باگ می‌بیند و «درستش» می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>ورود، کش را تازه می‌کند.</b> <code>router.push</code> ناوبریِ نرم است و provider را دوباره بار نمی‌کند، پس بدونِ این، کاربر واردشده می‌رسید ولی هدرِ «خارج‌شده» می‌دید</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>داشبورد عمداً فراخوانیِ خودش را نگه داشت — چون وقتی پاسخ «نه» است به صفحهٔ ورود هدایت می‌کند، که رفتارِ دیگری است</div></div>
       </div>
     </div>
   </div>
 
-  <div class="phase-card" style="border-color:var(--amber-mid)">
+  <div class="phase-card is-done" style="border-color:var(--amber-mid)">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px; background:var(--amber-dim); color:var(--amber); border-color:var(--amber-mid)">B4</div>
-      <div class="ph-title"><h3>سی‌ونه فراخوانیِ شبکه، هیچ‌کدام مهلت ندارند</h3><p>سرورِ کند = دکمه‌ای که تا ابد می‌چرخد و هرگز خطا نمی‌دهد</p></div>
-      <div class="ph-badge todo">⚪ تجربهٔ کاربر</div>
+      <div class="ph-title"><h3>سی‌ونه فراخوانیِ شبکه، هیچ‌کدام مهلت ندارند</h3><p>انجام شد ✓ — <code>lib/fetch-json.ts</code>، و یک نگهبان که برنگردد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <p style="font-size:0.83rem; color:var(--muted); line-height:1.9; margin-bottom:12px">
@@ -3396,14 +3407,17 @@ real admin       -> 401   ← رد شد و به بررسیِ رمز رسید</pr
         <b>§۵ خودِ پروژه این را خواسته بود:</b> «هر تماسِ بیرونی: مهلت + تلاشِ مجددِ محدود + یک جایگزینِ تعریف‌شده.»
       </p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>یک کمکِ مشترک — مثلاً <code>lib/fetch-json.ts</code> — که <code>AbortSignal.timeout()</code> می‌گذارد، <code>AbortError</code> را به یک پیامِ فارسیِ «پاسخی از سرور نیامد» تبدیل می‌کند، و JSON را می‌خواند. <b>یک جا، نه ۳۹ کپی</b> (قاعدهٔ ۱۰)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>مهلت‌های متفاوت برای کارهای متفاوت: خواندنِ سبک ~۱۰ ثانیه، آپلودِ عکس به‌مراتب بیشتر (§۵ می‌گوید مهلت، نه مهلتِ کوتاه — آپلودِ ۲ مگابایتی روی اینترنتِ موبایل واقعاً طول می‌کشد). <b>مهلتِ خیلی کوتاه، خودش همان باگی است که این کارت می‌خواهد درست کند</b></div></div>
-        <div class="task todo-t"><div class="tick"></div><div>هر ۳۹ فراخوانی به آن منتقل شوند، و <b>در هر مسیرِ خطا دکمه از حالتِ در-پرواز خارج شود</b> — یعنی <code>finally</code>، نه فقط مسیرِ موفق</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>آزمونِ نگهبان:</b> هیچ <code>fetch(</code>ِ کلاینتی بدونِ عبور از آن کمک نماند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>lib/fetch-json.ts</code> ساخته شد — که <code>AbortSignal.timeout()</code> می‌گذارد، <code>AbortError</code> را به یک پیامِ فارسیِ «پاسخی از سرور نیامد» تبدیل می‌کند، و JSON را می‌خواند. <b>یک جا، نه ۳۹ کپی</b> (قاعدهٔ ۱۰)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>دو بودجهٔ متفاوت (<code>read</code> ده ثانیه، <code>upload</code> نود ثانیه): خواندنِ سبک ~۱۰ ثانیه، آپلودِ عکس به‌مراتب بیشتر (§۵ می‌گوید مهلت، نه مهلتِ کوتاه — آپلودِ ۲ مگابایتی روی اینترنتِ موبایل واقعاً طول می‌کشد). <b>مهلتِ خیلی کوتاه، خودش همان باگی است که این کارت می‌خواهد درست کند</b></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>هر مسیرِ نوشتنی که بازدیدکننده می‌بیند</b> منتقل شد: فرمِ ثبتِ آگهی، ویرایش و ارسالِ مجدد، ورود، بازیابیِ رمز، نمایشِ شماره، هر پنج نوشتنِ نظر و پاسخ، و ذخیرهٔ پروفایل</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>خروج هم:</b> اگر هنگ کند، کسی که خواسته برود روی صفحه نگه داشته می‌شد. حالا تسلیم می‌شود و به‌هرحال صفحه را بار می‌کند — که نشستِ این مرورگر را در هر صورت پاک می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>آزمونِ نگهبان:</b> هیچ نوشتنِ کلاینتیِ بازدیدکننده‌محور بدونِ <code>fetchJson</code> نماند. <b>۱۹ موردِ پنلِ مدیریت عمداً معاف‌اند</b> و در کارتِ B5 ثبت شده‌اند — کارکنانِ پشتِ نشست، آن کسی نیستند که این محافظت برایشان است</div></div>
       </div>
-      <div class="proof" style="border-color:var(--amber-mid)">
-        <b>سنجهٔ پذیرش (دستی):</b> فرمِ ثبتِ آگهی را پر کن، «ارسال» بزن و <b>همان لحظه Wi-Fi را قطع کن</b>.
-        <b>امروز:</b> دکمه تا ابد می‌چرخد. <b>هدف:</b> ظرفِ مهلت، یک پیامِ فارسیِ روشن و دکمه‌ای که دوباره قابلِ زدن است.
+      <div class="proof" style="border-color:var(--green-mid)">
+        <b>سنجهٔ پذیرش (دستی — در فهرستِ M1 هم هست):</b> فرمِ ثبتِ آگهی را پر کن، «ارسال» بزن و
+        <b>همان لحظه Wi-Fi را قطع کن</b>.<br>
+        <b>پیش از این:</b> دکمه تا ابد می‌چرخید. <b>حالا:</b> ظرفِ مهلت، یک پیامِ فارسیِ روشن و
+        دکمه‌ای که دوباره قابلِ زدن است. <code>npm test</code> <b>۱۲۱/۱۲۱</b>.
       </div>
     </div>
   </div>
