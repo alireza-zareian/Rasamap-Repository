@@ -1452,6 +1452,21 @@ test("guard: an icon-only button carries a name", () => {
   );
 });
 
+test("a password hashed by the seed still signs in", async () => {
+  // Every other sign-in test registers its own account first, so the password
+  // is hashed by the running server and verified by the running server — which
+  // cannot fail even if bcrypt changed underneath. Nothing covered the case
+  // that actually breaks on an upgrade: a hash written earlier, by a different
+  // version, read back now. That is every account in dev.db and the admin hash
+  // in .env, so getting it wrong locks out the whole site silently.
+  const res = await api("/api/auth/login", {
+    method: "POST",
+    body: { phone: "09120000002", password: "secret123" },   // seeded, id 2
+  });
+  assert.equal(res.status, 200, `seeded credentials were rejected: ${JSON.stringify(res.json)}`);
+  assert.ok(tokenFromSetCookie(res), "a successful sign-in must set the session cookie");
+});
+
 test("a signed-in customer is refused the panel, not asked to sign in again", async () => {
   // Two different refusals that used to get one answer. Sending a customer who
   // followed a link to /admin to the sign-in form told them their session had

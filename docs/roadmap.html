@@ -3422,20 +3422,22 @@ real admin       -> 401   ← رد شد و به بررسیِ رمز رسید</pr
     </div>
   </div>
 
-  <div class="phase-card">
+  <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">B5</div>
-      <div class="ph-title"><h3>ریزه‌کاری‌ها — یک بعدازظهر، همه با هم</h3><p>هیچ‌کدام به‌تنهایی ارزشِ یک کارت ندارند؛ با هم یک کامیتِ تمیزند</p></div>
-      <div class="ph-badge todo">⚪ ریز</div>
+      <div class="ph-title"><h3>ریزه‌کاری‌ها — یک بعدازظهر، همه با هم</h3><p>انجام شد ✓ — و یکی‌شان یک ناسازگاریِ واقعی بود، نه ریزه‌کاری</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div><b>صفحهٔ ۴۰۳ ندارد.</b> §۵ صفحهٔ فارسیِ طراحی‌شده برای ۴۰۰/۴۰۳/۴۰۴/۵۰۰ خواسته؛ <code>error.tsx</code>، <code>global-error.tsx</code> و <code>not-found.tsx</code> هستند ولی «اجازه نداری» جایی ندارد. کاربری که با حسابِ عادی <code>/admin</code> را باز می‌کند به صفحهٔ ورود می‌رود — که <b>گمراه‌کننده است</b>: او وارد <em>هست</em>، فقط این را نمی‌تواند ببیند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>صفحهٔ ۴۰۳ ساخته شد — و یک ناسازگاریِ واقعی زیرش بود.</b> §۵ صفحهٔ فارسیِ طراحی‌شده برای ۴۰۰/۴۰۳/۴۰۴/۵۰۰ خواسته؛ <code>error.tsx</code>، <code>global-error.tsx</code> و <code>not-found.tsx</code> هستند ولی «اجازه نداری» جایی ندارد. کاربری که با حسابِ عادی <code>/admin</code> را باز می‌کرد به صفحهٔ ورود می‌رفت — <b>گمراه‌کننده</b>، چون او وارد <em>بود</em> و فرمِ ورود می‌گفت نشستش شکست خورده، پس رمزی را دوباره تایپ می‌کرد که اصلاً مشکل نبود.
+        <br><br><b>و ناسازگاری:</b> همهٔ route handlerهای مدیریت از قبل برای نقشِ ناکافی <b>۴۰۳</b> می‌دادند؛ فقط <code>proxy.ts</code> ۴۰۱ می‌گفت. سه آزمون رفتارِ قدیمی را ثبت کرده بودند و حالا همان وضعیتی را می‌سنجند که handlerها از ابتدا می‌دادند.
+        <br><br>صفحه <code>rewrite</code> است نه <code>redirect</code>، تا نشانیِ تایپ‌شده در نوار بماند و وضعیتِ ۴۰۳ همراهِ پاسخ برود — نه اینکه در یک ۳۰۷ که روی ۲۰۰ می‌نشیند گم شود. و نمی‌گوید پشتِ آن نشانی چه هست.</div></div>
         <div class="task todo-t"><div class="tick"></div><div><b>به‌روزرسانیِ وابستگی‌ها:</b> <code>jose ۵٫۱۰٫۰ → ۶</code> و <code>bcryptjs ۲٫۴٫۳ → ۳</code>. هر دو یک نسخهٔ اصلی عقب‌اند. <b>نکتهٔ عملی:</b> <code>npm outdated</code> روی اینترنتِ ایران به رجیستری نمی‌رسد و بی‌پاسخ می‌ماند — نسخهٔ نصب‌شده را از <code>node_modules/&lt;نام&gt;/package.json</code> بخوان. <code>jose</code> قلبِ نشست است: <b>پس از ارتقا حتماً یک ورود و خروجِ واقعی را دستی امتحان کن</b></div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>تصاویرِ پنل مدیریت با کیبورد باز نمی‌شوند:</b> در <code>ImageManager</code> و <code>ListingsPanel</code> عکس‌ها <code>&lt;img onClick&gt;</code>اند. همان اشکالی که در گالریِ عمومی درست شد (کارتِ A4)، اینجا باقی مانده — کم‌اهمیت‌تر چون فقط کارکنان می‌بینند، ولی همان کار است</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>لایت‌باکس‌های باقی‌مانده <code>role="dialog"</code> ندارند:</b> لایت‌باکسِ <code>ImageManager</code> و <code>ListingsPanel</code> از <code>useModalA11y</code> استفاده نمی‌کنند. هوک از قبل نوشته شده — فقط وصل شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>تصاویرِ پنل مدیریت حالا با کیبورد باز می‌شوند.</b> در <code>ImageManager</code> و <code>ListingsPanel</code> عکس‌ها <code>&lt;img onClick&gt;</code>اند. همان اشکالی که در گالریِ عمومی درست شد (کارتِ A4)، اینجا باقی مانده — کم‌اهمیت‌تر چون فقط کارکنان می‌بینند، ولی همان کار است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>دو لایت‌باکسِ یکسان یکی شدند</b> (<code>components/admin/Lightbox.tsx</code>) و <code>useModalA11y</code> گرفتند: لایت‌باکسِ <code>ImageManager</code> و <code>ListingsPanel</code> از <code>useModalA11y</code> استفاده نمی‌کنند. هوک از قبل نوشته شده — فقط وصل شود</div></div>
         <div class="task todo-t"><div class="tick"></div><div><b>حلقهٔ ممیزیِ حافظه فقط ۵۰۰ ردیف است</b> (<code>lib/auth/audit.ts</code>). ردیف‌های ماندگار در <code>audit_logs</code> نوشته می‌شوند، ولی تبِ «لاگ» فقط ۲۰۰ تای آخر را نشان می‌دهد و <b>هیچ صفحه‌بندی یا پالایه‌ای ندارد</b>. برای دفاع کافی است؛ برای استفادهٔ واقعی نه</div></div>
-        <div class="task todo-t"><div class="tick"></div><div><b>هیچ پالایشی روی <code>audit_logs</code> نیست.</b> جدول برای همیشه رشد می‌کند. یک حذفِ فرصت‌طلبانه مثلِ آنچه <code>lib/idempotency.ts</code> از قبل دارد کافی است — <b>همان الگو را کپی کن، الگوی تازه نساز</b></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>‏<code>audit_logs</code> حالا خودش را هرس می‌کند</b> (۹۰ روز، نمونه‌برداری‌شده روی ۱ از ۱۰۰ نوشتن، با همان الگوی <code>lib/idempotency.ts</code>). جدول برای همیشه رشد می‌کند. یک حذفِ فرصت‌طلبانه مثلِ آنچه <code>lib/idempotency.ts</code> از قبل دارد کافی است — <b>همان الگو را کپی کن، الگوی تازه نساز</b></div></div>
       </div>
     </div>
   </div>
