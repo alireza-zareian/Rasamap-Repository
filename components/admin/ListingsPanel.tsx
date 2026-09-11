@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { Lightbox } from "./Lightbox";
 import { C, STATUS_LABEL } from "./constants";
 import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";
@@ -149,9 +150,20 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                         <ImageOff size={16} /> بدون تصویر
                       </div>
                     ) : l.images.slice(0, 3).map((src, i) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={i} src={src} alt="" loading="lazy" decoding="async" onClick={() => setLightbox(src)}
-                        style={{ width: 84, height: 84, objectFit: "cover", borderRadius: 8, border: `1px solid ${C.border}`, cursor: "zoom-in" }} />
+                      // A button, not a clickable <img>: reviewing the photos is
+                      // the whole job on this screen, and nothing about an image
+                      // with an onClick reaches the tab order.
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setLightbox(src)}
+                        aria-label={`بزرگ‌نمایی تصویر ${i + 1} از ${l.name}`}
+                        style={{ padding: 0, border: "none", background: "none", borderRadius: 8, cursor: "zoom-in", lineHeight: 0 }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="" loading="lazy" decoding="async"
+                          style={{ width: 84, height: 84, objectFit: "cover", borderRadius: 8, border: `1px solid ${C.border}`, display: "block" }} />
+                      </button>
                     ))}
                   </div>
 
@@ -215,12 +227,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
         </div>
       )}
 
-      {lightbox && (
-        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(6,10,18,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox} alt="" style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 12 }} />
-        </div>
-      )}
+      {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
     </div>
   );
 }
