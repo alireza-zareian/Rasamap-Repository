@@ -126,7 +126,7 @@ export function toFilterParams(f: ExploreFilters): BillboardFilterParams {
  * filtered view has exactly one address — one page for a search engine to
  * index, and one cache key rather than a family of equivalent ones.
  */
-export function exploreHref(f: ExploreFilters): string {
+export function exploreHref(f: ExploreFilters, base = "/explore"): string {
   const p = new URLSearchParams();
   if (f.search)                p.set("search",   f.search);
   if (f.type !== "all")        p.set("type",     f.type);
@@ -138,7 +138,9 @@ export function exploreHref(f: ExploreFilters): string {
   if (f.view !== "grid")       p.set("view",     f.view);
   if (f.page > 1)              p.set("page",     String(f.page));
   const qs = p.toString();
-  return qs ? `/explore?${qs}` : "/explore";
+  // `base` so the map view can carry the identical filter set to its own
+  // address instead of growing a second, drifting copy of this function.
+  return qs ? `${base}?${qs}` : base;
 }
 
 /** True when the catalogue is showing anything other than everything. */

@@ -7,6 +7,9 @@ export interface SiteStats {
   total: number;
   cityCount: number;
   byType: Record<string, number>;
+  /** Published rows per city. The groupBy already ran for `cityCount`; keeping
+   *  its rows is what lets the map colour provinces without a second query. */
+  byCity: Record<string, number>;
   totalDailyReach: number;
 }
 
@@ -53,10 +56,14 @@ export async function getSiteStats(): Promise<SiteStats> {
   const byType: Record<string, number> = {};
   for (const row of typeCounts) byType[row.type] = row._count._all;
 
+  const byCity: Record<string, number> = {};
+  for (const row of cityCounts) byCity[row.city] = row._count._all;
+
   return {
     total,
     cityCount: cityCounts.length,
     byType,
+    byCity,
     totalDailyReach: Number(trafficRows[0]?.total ?? 0),
   };
 }

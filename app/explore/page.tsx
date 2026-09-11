@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SearchX } from "lucide-react";
+import { SearchX, Map as MapIcon } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import SnakeScroll from "@/components/SnakeScroll";
@@ -73,7 +73,23 @@ export default async function ExplorePage({
           <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
             <span style={{ color: "var(--accent)", fontWeight: 700 }}>{faNum(total)}</span> رسانه یافت شد
           </div>
-          <SortSelect filters={filters} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* The map carries the filters across, so switching view keeps the
+                search the visitor already built rather than resetting it. */}
+            <Link
+              href={exploreHref(filters, "/explore/map")}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "var(--bg-card)", border: "1px solid var(--border)",
+                color: "var(--text-main)", textDecoration: "none",
+                fontSize: "0.78rem", borderRadius: 8, padding: "7px 12px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <MapIcon size={14} /> نمای نقشه
+            </Link>
+            <SortSelect filters={filters} />
+          </div>
         </div>
 
         {/* ── Results ──────────────────────────────────────────── */}

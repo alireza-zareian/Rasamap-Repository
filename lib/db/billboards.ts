@@ -222,6 +222,53 @@ export async function getShowcaseBillboards(limit: number): Promise<Billboard[]>
   return rows.map(fromRow);
 }
 
+/** The lean row a map pin needs — nothing that is not drawn or linked to. */
+export interface MapPin {
+  slug: string;
+  name: string;
+  city: string;
+  type: string;
+  price: number;
+  lat: number;
+  lng: number;
+}
+
+/**
+ * A ceiling, not a page size. The map has no "next page", so an unbounded
+ * query is the one shape that could hand a crawler the whole coordinate set in
+ * a single request — which is exactly what §20 keeps the catalogue from doing.
+ * No single city comes close to it.
+ */
+const MAP_PIN_LIMIT = 1200;
+
+/**
+ * Coordinates for the pins under the current filter.
+ *
+ * Selects seven columns instead of the row, because a pin is a dot with a
+ * label: pulling `images`, `traffic` and `features` for a thousand rows would
+ * cost more than everything else the map does put together.
+ *
+ * `buildWhere` is shared with the catalogue on purpose — the map is another
+ * view of the same result set, so a filter that narrows one must narrow the
+ * other identically, including the published-only rule.
+ */
+export async function getMapPins(p: BillboardFilterParams): Promise<MapPin[]> {
+  const rows = await prisma.billboard.findMany({
+    where: { ...buildWhere(p), lat: { not: null }, lng: { not: null } },
+    select: {
+      slug: true, name: true, city: true, type: true,
+      price: true, lat: true, lng: true,
+    },
+    orderBy: { estimatedViews: "desc" },
+    take: MAP_PIN_LIMIT,
+  });
+  // `lat: { not: null }` already excludes the nulls; this narrows the type
+  // without a cast, and costs one pass over rows that are already in memory.
+  return rows.flatMap((r) =>
+    r.lat === null || r.lng === null ? [] : [{ ...r, lat: r.lat, lng: r.lng }],
+  );
+}
+
 // Admin table listing — filter, sort and paginate in the DB (not by loading
 // every row and slicing in JS).
 export interface AdminBillboardQuery {

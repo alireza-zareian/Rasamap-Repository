@@ -8,6 +8,7 @@ import {
   toCatalogueItem,
   toPublicBillboard,
   type BillboardFilterParams,
+  getMapPins,
 } from "./billboards";
 import { getSiteStats } from "./stats";
 import type { Billboard, CatalogueItem } from "../types";
@@ -67,6 +68,20 @@ export const getCachedShowcaseBillboards = unstable_cache(
   async (limit: number): Promise<CatalogueItem[]> =>
     (await getShowcaseBillboards(limit)).map(toCatalogueItem),
   ["catalogue-showcase"],
+  cacheOptions,
+);
+
+/**
+ * Pins for the map view, under the same filter the catalogue uses.
+ *
+ * Cached like everything else here, so panning back to a province already
+ * looked at costs nothing. Held separate from the catalogue page because the
+ * two answer different questions about one filter — the catalogue wants 24 rows
+ * with photographs, the map wants every coordinate and no photograph at all.
+ */
+export const getCachedMapPins = unstable_cache(
+  getMapPins,
+  ["map-pins"],
   cacheOptions,
 );
 
