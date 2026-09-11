@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, LayoutGrid, List, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train, MapPin, ChevronDown } from "lucide-react";
+import { Search, X, LayoutGrid, List, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train, MapPin, ChevronDown, Crosshair } from "lucide-react";
 import type { BillboardType } from "@/lib/types";
 import { provinces, getProvince } from "@/lib/iranLocations";
 import { faNum } from "@/lib/format";
@@ -32,6 +32,9 @@ const TYPE_CHIPS: { label: string; value: BillboardType | "all"; Icon?: React.Co
   { label: "عرشه پل", value: "bridge", Icon: Milestone },
   { label: "ایستگاه", value: "station", Icon: Train },
 ];
+
+/** The radii offered in the control. Every one is inside MAX_RADIUS_KM. */
+const RADIUS_CHOICES = [1, 2, 5, 10, 20, 50];
 
 const SORT_LABELS: Record<SortKey, string> = {
   price_asc:    "قیمت: کم به زیاد",
@@ -222,6 +225,50 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
               {c.label}
             </button>
           ))}
+
+          {/* A radial search is the one filter with no control of its own up
+              here: it is started from a media page ("others near this one") or
+              from the browser's own position, so this is where it becomes
+              visible and adjustable once it exists. */}
+          {filters.near && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "4px 10px", borderRadius: 20,
+              border: "1px solid var(--accent)", background: "rgba(59,123,245,0.10)",
+              fontSize: "0.75rem", color: "var(--accent)", fontWeight: 600,
+            }}>
+              <Crosshair size={13} />
+              <span>تا {faNum(filters.near.radiusKm)} کیلومتر از این نقطه</span>
+              <label htmlFor="explore-radius" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+                شعاع جست‌وجو به کیلومتر
+              </label>
+              <select
+                id="explore-radius"
+                value={filters.near.radiusKm}
+                onChange={e => apply({
+                  near: { ...filters.near!, radiusKm: Number(e.target.value) },
+                  page: 1,
+                })}
+                style={{
+                  background: "var(--bg-surface)", border: "1px solid var(--border)",
+                  color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.72rem",
+                  borderRadius: 6, padding: "2px 4px", cursor: "pointer",
+                }}
+              >
+                {RADIUS_CHOICES.map(km => (
+                  <option key={km} value={km}>{faNum(km)} کیلومتر</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => apply({ near: null, page: 1 })}
+                aria-label="برداشتن محدودهٔ مکانی"
+                style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", padding: 0, display: "flex" }}
+              >
+                <X size={13} />
+              </button>
+            </div>
+          )}
 
           <button onClick={() => setShowFilters(p => !p)} style={{
             marginRight: "auto", padding: "5px 12px", borderRadius: 20, fontSize: "0.75rem", cursor: "pointer",

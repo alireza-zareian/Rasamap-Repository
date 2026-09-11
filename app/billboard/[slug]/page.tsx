@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck } from "lucide-react";
+import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck, Crosshair } from "lucide-react";
 import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
 import { getCachedBillboardBySlug, getCachedRelatedBillboards } from "@/lib/db/cached";
 import { getSession } from "@/lib/auth/session";
@@ -92,6 +92,10 @@ function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
       : {}),
   };
 }
+
+/** What "nearby" means from a media page — a comfortable ring rather than the
+ *  widest the catalogue allows. The visitor can widen it on the results page. */
+const NEARBY_RADIUS_KM = 5;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -397,14 +401,29 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                       {b.lat.toFixed(5)}, {b.lng.toFixed(5)}
                     </span>
                   </span>
-                  <a
-                    href={`https://www.google.com/maps?q=${b.lat},${b.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none", border: "1px solid rgba(59,123,245,0.28)", borderRadius: 7, padding: "4px 11px", display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}
-                  >
-                    باز کردن در برنامهٔ نقشه <ExternalLink size={10} />
-                  </a>
+                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                    {/* The way into a radial search that works everywhere. The
+                        browser's own position needs a secure context, so on the
+                        demo — served over plain HTTP to a phone on the Wi-Fi —
+                        it is unavailable (rule 9). Starting from a media item
+                        the visitor is already looking at needs no permission,
+                        no secure context and no provider, and is the question
+                        someone on this page actually has. */}
+                    <Link
+                      href={`/explore?lat=${b.lat.toFixed(6)}&lng=${b.lng.toFixed(6)}&radiusKm=${NEARBY_RADIUS_KM}`}
+                      style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none", border: "1px solid rgba(59,123,245,0.28)", borderRadius: 7, padding: "4px 11px", display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}
+                    >
+                      <Crosshair size={10} /> رسانه‌های نزدیک این نقطه
+                    </Link>
+                    <a
+                      href={`https://www.google.com/maps?q=${b.lat},${b.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none", border: "1px solid rgba(59,123,245,0.28)", borderRadius: 7, padding: "4px 11px", display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}
+                    >
+                      باز کردن در برنامهٔ نقشه <ExternalLink size={10} />
+                    </a>
+                  </div>
                 </div>
               </div>
             )}

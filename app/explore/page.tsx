@@ -72,6 +72,14 @@ export default async function ExplorePage({
         }}>
           <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
             <span style={{ color: "var(--accent)", fontWeight: 700 }}>{faNum(total)}</span> رسانه یافت شد
+            {/* Say why the count is small. Arriving from a media page's "nearby"
+                link, a visitor who is not told the results are cut to a circle
+                reads a short list as an empty catalogue. */}
+            {filters.near && (
+              <span style={{ color: "var(--accent-warm)" }}>
+                {" "}— در شعاع {faNum(filters.near.radiusKm)} کیلومتری
+              </span>
+            )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {/* The map carries the filters across, so switching view keeps the
@@ -99,7 +107,9 @@ export default async function ExplorePage({
             <div style={{ fontSize: "1rem", fontWeight: 600 }}>
               {pastEnd
                 ? `این نتایج ${faNum(totalPages)} صفحه دارد — صفحهٔ ${faNum(filters.page)} وجود ندارد`
-                : "رسانه‌ای با این فیلترها یافت نشد"}
+                : filters.near
+                  ? `رسانه‌ای در شعاع ${faNum(filters.near.radiusKm)} کیلومتری این نقطه یافت نشد`
+                  : "رسانه‌ای با این فیلترها یافت نشد"}
             </div>
             <Link
               href={pastEnd ? exploreHref({ ...filters, page: 1 }) : "/explore"}
