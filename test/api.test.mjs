@@ -1386,6 +1386,59 @@ test("guard: every 429 goes through the shared helper", () => {
   }
 });
 
+test("guard: an icon-only button carries a name", () => {
+  // A <button> whose whole content is an icon is announced as "button" and
+  // nothing else. The audit found 29 of them — the theme toggle, the gallery
+  // arrows, every modal's close, the star rating — so a keyboard or screen
+  // reader user met a row of unnamed controls on the busiest pages.
+  //
+  // A button is considered named if it has an aria-label, or if any Persian
+  // text appears inside it (including inside a ternary or a {label} the caller
+  // supplies, which is how the type chips and the sign-in tabs get their text).
+  const offenders = [];
+  for (const [file, src] of sourceFiles()) {
+    if (!file.endsWith(".tsx")) continue;
+    for (const m of src.matchAll(/<button\b(.*?)>(.*?)<\/button>/gs)) {
+      const [, attrs, inner] = m;
+      if (attrs.includes("aria-label")) continue;
+      if (/[\u0600-\u06FF]/.test(inner)) continue;
+      if (/\{\s*(children|label)\s*\}/.test(inner)) continue;
+      // Text supplied from a lookup table or a mapped data array.
+      if (/\{\s*\w+\.label\s*\}|\w+Labels\[/.test(inner)) continue;
+      offenders.push(`${file}:${src.slice(0, m.index).split("\n").length}`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `these buttons render only an icon and have no accessible name — give each an aria-label in Persian:\n  ${offenders.join("\n  ")}`,
+  );
+});
+
+test("guard: every admin route is rate limited", () => {
+  // Rule 2 of AGENTS.md fixes the order session -> rate limit -> Zod, and
+  // GET /api/admin/auth/me was the one route that skipped the middle step.
+  // The risk was small (it sits behind proxy.ts and needs a session), but a
+  // rule with one unexplained exception stops reading as a rule, and the next
+  // person to add a route copies whichever neighbour they happened to open.
+  // Logout is the one deliberate exception, and it is exempt here rather than
+  // silently passing: throttling it fails in the dangerous direction. Someone
+  // who taps "sign out" twice would be told to wait and left signed in, which
+  // is the opposite of what they asked for. It writes at most one audit line
+  // per call and only when a session exists, so there is nothing to exhaust.
+  const EXEMPT = ["app/api/admin/auth/logout/route.ts"];
+
+  for (const [file, src] of sourceFiles()) {
+    const path = file.replaceAll("\\", "/");
+    if (!/^app\/api\/admin\/.*route\.ts$/.test(path)) continue;
+    if (EXEMPT.includes(path)) continue;
+    assert.ok(
+      /RateLimit\(/.test(src),
+      `${file}: every /api/admin route checks a rate limit after the session check — see lib/auth/rate-limit.ts.`,
+    );
+  }
+});
+
 test("guard: every infinite marquee pauses with the tab", () => {
   const css = readFileSync("app/globals.css", "utf8");
   const paused = css.slice(css.indexOf("html.page-hidden"));
