@@ -101,12 +101,15 @@ test("a visitor can sign in and lands signed in", async () => {
 
     // And the session survives a fresh page load, which is the part a cookie
     // without Secure/SameSite right would fail (§24).
+    //
+    // waitForText, not text(): /dashboard is a client component that renders
+    // "در حال بررسی احراز هویت..." until GET /api/auth/me answers, so reading
+    // straight after goto() catches the page mid-check and blames the cookie
+    // for a race (§31, the fifth one).
     await b.goto(`${BASE}/dashboard`);
-    const text = await b.text();
-    assert.ok(
-      text.includes(USER.name.split(" ")[0]) || text.includes("پیشخوان"),
-      "the dashboard did not recognise the session after a reload",
-    );
+    await b.waitForText(USER.name.split(" ")[0], {
+      label: "the dashboard greeting — the session did not survive a reload",
+    });
   });
 });
 
