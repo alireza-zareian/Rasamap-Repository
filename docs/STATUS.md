@@ -101,12 +101,26 @@
 
 ##### 📋 پس از ارائه — مستند، پیاده نشده
 
-- [ ] **P5** — `next/image` برای scraped images (نیاز به `remotePatterns` در next.config + full test)
-- [ ] **P6** — Server Components refactor برای `billboard/[slug]/page.tsx` (static parts → RSC)
-- [ ] **P7** — PPR (Partial Prerendering) روی explore page — `experimental_ppr = true`
-- [ ] **P8** — Server Actions + `useOptimistic` برای BookingModal
-- [ ] **P9** — Bundle analyzer: `npx @next/bundle-analyzer` — شناسایی chunk های بزرگ
-- [ ] **P10** — JSON-LD structured data روی billboard detail pages (SEO)
+- [x] **P5** — `next/image` روی تصاویرِ اسکرپ‌شده: `components/MediaImage.tsx` یک تعریف
+      برای هر پنج سطح، به‌اضافهٔ `npm run images:variants` که اندازه‌ها را پیش از ساخت
+      می‌سازد تا سرورِ تصویر لازم نشود (§۲۲c)
+- [x] **P6** — `billboard/[slug]/page.tsx` همین حالا Server Component است؛ فقط
+      گالری، اشتراک‌گذاری، نظرها، سنجهٔ ترافیک و دکمهٔ تماس client‌اند — یعنی دقیقاً
+      جاهایی که تعامل دارند. `RelatedBillboards` و `Footer` سمتِ سرورند
+- [x] **P7** — اندازه‌گیری شد و **رد شد**: Cache Components روی `/explore` ۱۰.۲۴ → ۱۰.۳۲
+      میلی‌ثانیه داد، یعنی هیچ. برگردانده شد و خواندن‌های صفحهٔ جزئیات که واقعاً سود
+      داشتند نگه داشته شدند (§۲۶)
+- [x] **P8** — منتفی: `BookingModal` با حذفِ زیرسیستمِ رزرو در بازبینی نهایی رفت (§۱۷)
+- [x] **P9** — اندازه‌گیری شد، **چیزی برای رفع نبود**: ۱۲۹.۲ کیلوبایتِ فشرده مشترکِ
+      همهٔ صفحه‌هاست که برای Next 16 + React 19 عددِ عادی است، و هیچ چانکِ بزرگی
+      کتابخانهٔ اضافه‌ای داخلش ندارد. مشخصاً ۹۰ آیکونِ Lucide در ۴۶ نقطه، درست
+      tree-shake می‌شوند و در هیچ‌کدام از چهار چانکِ بزرگ نیستند؛ دادهٔ مرزهای نقشه
+      هم فقط در چانکِ مسیرِ خودش است (۱۵.۵ کیلوبایت فشرده)، نه در باندلِ مشترک.
+      به‌جای افزودنِ `@next/bundle-analyzer`، `npm run bundle` نوشته شد —
+      `scripts/bundle-report.mjs`، بدون وابستگی، چون Next 16 ستونِ حجم را دیگر
+      چاپ نمی‌کند و عدد باید از manifest بیاید
+- [x] **P10** — JSON-LD روی صفحهٔ رسانه: `mediaJsonLd()` با `schema.org/Product`،
+      قیمت با واحدِ ISO 4217 و `InStock`/`OutOfStock` بر اساس وضعیت
 
 ---
 
@@ -161,25 +175,34 @@
 #### U6 — کاهش حس AI / میکرو-انیمیشن
 > **اولویت: دوم** | Anti-AI design trend 2025-2026
 
-- [ ] `globals.css`: shimmer animation — جایگزینی همه emoji fallback (🏙️) با shimmer rect animated
-- [ ] `components/BillboardCard.tsx`: hover → image `scale(1.03)` 0.4s ease
-- [ ] لندینگ: «آنلاین رزرو کن» با `var(--accent-warm)` به جای آبی در headline
-- [ ] `globals.css`: subtle noise texture overlay روی body (4% opacity SVG filter)
-- [ ] Typography: متن‌های توضیحی با `fontWeight: 300` برای contrast بهتر
+- [x] emoji fallback (🏙️) دیگر در کد نیست — جای آن `components/MediaImage.tsx` نشسته:
+      آیکونِ نوعِ رسانه روی رنگِ خودش، یک تعریف برای هر پنج سطحی که قبلاً آیکونِ
+      «تصویر خراب» نشان می‌دادند (§۳۱). shimmer هم هست: `.skeleton`،
+      `.shimmer-heading`، `.logo-shimmer`
+- [x] `components/BillboardCard.tsx`: hover → تصویر `scale(1.03)` با گذارِ ۰.۴ ثانیه.
+      فقط تصویر حرکت می‌کند، نه نشان‌ها — برای همین قابِ عکس جداگانه wrap شد.
+      `prefers-reduced-motion` هم خودِ حرکت را حذف می‌کند، نه فقط easing را
+- [x] `globals.css`: بافتِ نویز روی body — از قبل با `feTurbulence` پیاده شده بود
+- [x] لندینگ «آنلاین رزرو کن»: منتفی — زیرسیستم رزرو در بازبینی نهایی حذف شد (§۱۷)،
+      چنین عبارتی دیگر در سایت نیست
+- [ ] Typography: `fontWeight: 300` برای متن‌های توضیحی — **عمداً انجام نشد.** وزنِ ۳۰۰
+      روی فارسیِ ریز و زمینهٔ تیره خواناییِ واقعی را کم می‌کند، و «متنِ توضیحی» مرزِ
+      روشنی ندارد که بشود یک‌جا اعمالش کرد. اگر خواسته شد، باید صفحه‌به‌صفحه و با
+      نگاه کردن انجام شود، نه با یک جای‌گزینیِ سراسری
 
-**فایل‌ها:** `app/globals.css`, `components/BillboardCard.tsx`, `app/page.tsx`
+**فایل‌ها:** `app/globals.css`, `components/BillboardCard.tsx`
 
 ---
 
 #### U7 — رفع باگ‌های UX-Breaking
 > **اولویت: فوری** — این‌ها سایت را خراب می‌کنند
 
-- [ ] **login shadow:** `rgba(255,77,0,0.4)` → `rgba(59,123,245,0.4)` در `app/login/page.tsx`
-- [ ] **contact فرم تقلبی:** حذف disclaimer + فرم + جایگزینی با info cards صادقانه + لینک مستقیم mailto: و Telegram
-- [ ] **contact icons:** جایگزینی emoji (✉️📱🏢⏰) با Lucide (Mail, Phone, Building2, Clock)
-- [ ] **list-media step 4:** اضافه کردن `<input type="file" hidden>` با `onChange` handler واقعی
-- [ ] **list-media validation:** بررسی required fields قبل از هر «بعدی»
-- [ ] **compare thumbnails:** اضافه کردن عکس 64px به کارت‌های compare page
+- [x] **login shadow:** سایهٔ نارنجی برداشته شد — `glow` حالا آبی/بنفش بر پایهٔ حالت فرم (`app/login/page.tsx`)
+- [x] **contact فرم تقلبی:** فرم و disclaimer حذف شد — info cards صادقانه + دکمهٔ مستقیم mailto: و Telegram
+- [x] **contact icons:** آیکون‌های Lucide (`Mail`, `Send`, `Building2`, `Clock`) جای emoji
+- [x] **list-media step 4:** `<input type="file" hidden>` با `handleFileChange` واقعی — پیش‌نمایش، حذف، بررسی حجم/فرمت/تعداد
+- [x] **list-media validation:** `validateStep()` هر گام را پیش از «بعدی» می‌بندد
+- [x] **compare thumbnails:** تصویر ۲۵۶×۱۱۰ (`next/image`) روی کارت‌های مقایسه، با `TypeIcon` به‌عنوان fallback
 
 **فایل‌ها:** `app/login/page.tsx`, `app/contact/page.tsx`, `app/list-media/page.tsx`, `app/compare/page.tsx`
 
@@ -188,11 +211,18 @@
 #### U8 — پالیش داشبورد و پروفایل
 > **اولویت: سوم**
 
-- [ ] `components/UserAvatar.tsx` (جدید): دایره رنگی با حرف اول نام
-- [ ] داشبورد: اضافه کردن UserAvatar در sidebar و greeting
-- [ ] داشبورد: تغییر آیکون confirmed count از `Calendar` به `CheckCircle2` (الان دو Calendar داریم)
-- [ ] داشبورد ردیف رزرو: thumbnail 64px بیلبورد + نام کلیک‌پذیر به `/billboard/slug`
-- [ ] داشبورد empty state رزروها: زیباتر با icon بزرگ‌تر و متن راهنما
+- [x] `components/UserAvatar.tsx` (جدید): دایره با حرف اول نام، اندازه‌پذیر. استخراج شد
+      چون دو جا رندر می‌شود و دو نسخهٔ یک دایره به‌مرور دو دایرهٔ متفاوت می‌شوند
+- [x] داشبورد: UserAvatar در sidebar (۴۲px) و greeting (۴۰px). روی گوشی sidebar پشت
+      همبرگر است، پس greeting تنها جایی است که حساب را معرفی می‌کند
+- [x] داشبورد: آیکون‌های آمار سه‌تای متمایز‌اند — `LayoutList` / `Clock` / `CheckCircle2`.
+      `Calendar` اصلاً import نمی‌شود
+- [x] داشبورد ردیف آگهی: thumbnail ۶۴px + نام کلیک‌پذیر به `/billboard/slug` (فقط وقتی
+      منتشر شده باشد — آگهی در انتظار بررسی صفحه‌ای ندارد که به آن لینک شود)
+- [x] داشبورد empty state: دایرهٔ ۶۴px با `LayoutList`، متن راهنما و دکمهٔ «ثبت رسانه»
+
+> موردهای ۳ تا ۵ در کارهای قبلی انجام شده بودند؛ فهرست عقب مانده بود. مورد رزرو هم با
+> حذف زیرسیستم رزرو (§۱۷) به «آگهی» تغییر کرده است.
 
 **فایل‌ها:** `app/dashboard/page.tsx`, `components/UserAvatar.tsx`
 
@@ -201,14 +231,20 @@
 #### U9 — ریسپانسیو / موبایل
 > **اولویت: چهارم** | 78% کاربران ایرانی از موبایل
 
-- [ ] Footer لندینگ: collapse → single column زیر 640px
-- [ ] Dashboard sidebar: hamburger toggle زیر 768px
-- [ ] لندینگ header: زیر 420px فقط لوگو + explore
-- [ ] explore filters: bottom-sheet برای موبایل (از backlog U2)
-- [ ] about stats: single column زیر 640px
-- [ ] billboard gallery در detail: swipe gesture support
+- [x] Footer لندینگ: collapse → single column زیر 640px (`.footer-grid`)
+- [x] Dashboard sidebar: hamburger toggle زیر 768px (`.dash-sidebar` + `.dash-hamburger`)
+- [x] لندینگ header: زیر 640px برچسب‌های تب حذف می‌شوند و نوار فقط لوگو + آیکون می‌ماند
+      (`.topbar-tab-label`, `.topbar-sub`, `.topbar-list-cta`, `.topbar-logout-label`).
+      اندازه‌گیری روی ۳۶۰ و ۳۹۰ پیکسل: سرریز افقی صفر — کوتاه‌تر کردن از این، ناوبری
+      کارآمد را بدون سودِ اندازه‌گیری‌شده حذف می‌کرد
+- [x] explore filters: استان/شهر/نوع پشت یک ضربه تا می‌شود (`.explore-loc-toggle` +
+      `.explore-secondary`) با نشانِ تعدادِ فیلترِ پنهان — اولین کارت ۱۲۸ پیکسل بالاتر می‌آید.
+      به‌جای bottom-sheet، چون همان مشکل را بدون لایه‌ی شناور و تله‌ی فوکوس حل می‌کند
+- [x] about stats: single column زیر 640px (`.about-stats-grid`)
+- [x] billboard gallery در detail: swipe gesture support — آستانهٔ ۴۵ پیکسل، و کلیکِ
+      ساختگیِ پایانِ swipe لایت‌باکس را باز نمی‌کند
 
-**فایل‌ها:** `app/page.tsx`, `app/dashboard/page.tsx`, `app/about/page.tsx`, `app/globals.css`, `app/explore/page.tsx`
+**فایل‌ها:** `app/explore/ExploreControls.tsx`, `components/BillboardGallery.tsx`, `app/globals.css`
 
 ---
 
@@ -226,16 +262,30 @@
 
 ---
 
-### ⏸ مشکلات نقشه — تحقیق معوق
+### ✅ نقشه — حل شد بدون هیچ ارائه‌دهنده‌ای (§۳۲)
 
-> قبل از هر تغییر، تحقیق ریشه‌ای لازم است — تعویض مکرر provider ممنوع
+> تصمیمِ ریشه‌ای: هیچ نقشهٔ میزبانی‌شده‌ای شرط‌ها را نمی‌گذراند — یا پول می‌خواهد، یا
+> کلید، یا از داخل ایران در دسترس نیست؛ معمولاً هر سه. پس نقشه **کشیده می‌شود، نه
+> گرفته**. مرزها داخل باندل‌اند و هیچ درخواستی به بیرون نمی‌رود.
 
-- [ ] **MAP-A** — شناسایی منشأ پیام «API Key Required» (console log، network tab)
-- [ ] **MAP-B** — مختصات بیلبوردها نادرست — ردیابی pipeline: scraper → DB → geocoding → Leaflet
-- [ ] **MAP-C** — لینک Google Maps در detail page — بررسی URL generation (lat/lng vs text query)
-- [ ] **MAP-D** — مقایسه provider‌ها برای ایران: CARTO (فعلی) vs Neshan vs OSM Nominatim
+- [x] **MAP-A** — «API Key Required» منتفی شد: مسیرِ نقشه دیگر هیچ provider‌ای صدا نمی‌زند
+- [x] **MAP-B** — **درست بود.** اندازه‌گیری روی دیتاست: از ۳٬۰۳۲ رکوردِ مختصات‌دار، حدود
+      یک‌ششم از شهری که ادعا می‌کند دور است (تهران با نقطه‌ای ۴۹۳ کیلومتر آن‌طرف‌تر،
+      اصفهان با میانهٔ ۳۱ کیلومتر). در هر سه اسکرپر ۱۶٪ تا ۲۷٪ است، پس ایرادِ خودِ
+      مرحلهٔ ژئوکد است. چون ژئوکدِ دوباره سرویسِ پولی می‌خواهد، راه‌حل **قرنطینه است نه
+      تعمیر**: `isPlottable()` در `lib/geo.ts` هر نقطهٔ دورتر از ۴۰ کیلومتر از مرکزِ
+      شهرش را از نقشه کنار می‌گذارد (تهران تا کرج ~۴۰ کیلومتر، پس پراکندگیِ واقعیِ
+      کلان‌شهر می‌ماند). ۲٬۵۳۱ پین از ۳٬۵۴۵ رکورد. کنارگذاشته‌ها در فهرست می‌مانند چون
+      نشانیِ متنی‌شان درست است، و نقشه تعدادشان را روی خودش می‌نویسد
+- [x] **MAP-C** — لینک و embedِ صفحهٔ جزئیات از `lat,lng` می‌سازد و درست است؛ همان
+      embedِ بی‌کلیدِ گوگل که رایگان و بی‌حساب است و دست‌نخورده ماند
+- [x] **MAP-D** — منتفی: هیچ provider‌ای انتخاب نشد. مرزها از geoBoundaries (CC BY 4.0)
+      یک‌بار در زمانِ ساخت گرفته و داخل مخزن آمده‌اند
 
-**فایل‌های مرتبط:** `app/explore/map/page.tsx` (فعلاً فقط redirect به `/explore`)، `NESHAN_API_KEY` در env. کامپوننت `RealMap.tsx`/`MapView.tsx` در پاکسازی حذف شد — در تاریخچه‌ی git است اگر کار نقشه از سر گرفته شود.
+**فایل‌ها:** `app/explore/map/page.tsx` · `components/IranMap.tsx` · `lib/geo.ts` ·
+`lib/iran-provinces.ts` (تولیدشده، ۴۲KB) · `scripts/build-iran-map.py`.
+`NESHAN_API_KEY` همچنان فقط برای `prisma/backfill-coordinates.ts` است و نقشه به آن
+کاری ندارد.
 
 ---
 
@@ -401,7 +451,8 @@ directly. Media owners submit their own listings (with photos) on a free or paid
 admins review, approve and publish them through a separate RBAC-gated panel.
 
 - **Stack:** Next.js 16.2.11 App Router, React 19, TS strict, SQLite + Prisma 7
-  (`better-sqlite3`, WAL), JWT HttpOnly cookies (jose), Leaflet, inline-CSS.
+  (`better-sqlite3`, WAL), JWT HttpOnly cookies (jose), inline-CSS. The map view is
+  drawn from vendored outlines — no map library and no provider (§۳۲).
 - **Scale:** read-heavy, single SQLite file, single instance, a few concurrent users at
   the demo. Data comes from a Python scraper → `seed.ts` → `dev.db`.
 - **User model:** anonymous visitor · registered `user` (reserve) · admin roles
@@ -412,11 +463,10 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 
 ### (b) Remaining from STATUS.md / roadmap (practical, unfinished)
 
-- U5–U9 UI polish (testimonials, anti-AI microanimation, dashboard avatars, mobile
+- U5, U6, U8, U9 UI polish (testimonials, anti-AI microanimation, dashboard avatars, mobile
   responsive passes) — product polish, not covered here.
-- U7 UX-breaking bugs: fake contact form still posts nowhere; `list-media` step 4 file
-  input is non-functional; `list-media` has no per-step required-field validation;
-  compare page has no thumbnails; stale orange shadow on login.
+- U7 UX-breaking bugs: done — honest contact page, working `list-media` file input with
+  per-step validation, compare thumbnails, and the login shadow all landed in earlier work.
 - MAP-A..D: map "API Key Required" message, wrong billboard coordinates, Google Maps
   link format — research deferred by decision.
 - P5–P10 performance backlog (next/image, RSC refactor, PPR, bundle analyzer, JSON-LD) —
@@ -438,7 +488,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 | F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. | Low |
 | F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |
-| F11 | CSP allows `script-src 'unsafe-inline' 'unsafe-eval'` (Leaflet). Documented tradeoff. | Low (accepted) |
+| F11 | CSP allows `script-src 'self' 'unsafe-inline'` — the App Router streams its payload through inline scripts (§۲۹). `'unsafe-eval'` is **not** granted, and no map library needs it: the map is SVG drawn from vendored outlines (§۳۲). | Low (accepted) |
 | F12 | No structured logging / rotating log file — only `console.error` guarded by `NODE_ENV`. Professors often ask. | Med |
 | F13 | No DB backup script or documented restore. | Med |
 | F14 | Object-level authz on `/api/reservations/my` and admin routes: verify a user cannot read another user's reservation by ID. | Med — needs check |
@@ -498,8 +548,25 @@ admins review, approve and publish them through a separate RBAC-gated panel.
       corrected everywhere. (F8)
 - [x] T3.2 `project-ai.zip` deleted from the working tree (was never committed;
       regenerable via the README zip command). `.gitignore` already excludes it.
-- [ ] T3.3 Responsive spot-check at 360/390/768/1280 on landing, explore, detail,
-      dashboard; fix only hard breaks (horizontal scroll, unreachable buttons)
+- [x] T3.3 Responsive sweep, 13 pages × 360/390/768/1280 driven in a real browser.
+      **No horizontal scroll anywhere** — every `over` reading was 0. What the sweep
+      first flagged as bleeding was decorative or by design: `bg-orb`/vine paths that
+      the body clips on purpose, the ticker's marquee strip, and the wide `/api-docs`
+      tables, which all sit in `overflow-x: auto` containers and scroll correctly.
+      Three real defects found and fixed:
+      - the login page's badge and wordmark rendered side by side instead of stacked
+        (`inline-flex` + `inline-block` on one line, so the badge's `marginBottom`
+        did nothing) — the badge is block-level now
+      - tap targets: the topbar's icon-only nav was 32×28 on a phone, the password
+        show/hide 24×24. Both are 44px now; the bar was already 62px so nothing moved
+      - `.card-action-btn { min-height: 44px }` existed in `globals.css` and was
+        **on no element at all** — the card's «مشخصات»/«مقایسه» controls never got it.
+        The class is now applied at all four call sites rather than a new rule added
+      Deliberately not changed: inline links inside running text («رمز عبور را فراموش
+      کرده‌اید؟», the contact addresses, footer links) stay at their typographic size —
+      the 44px guidance is for discrete controls, and stretching a sentence's link
+      breaks the paragraph around it. Same for the landing type chips, where 44px
+      would redesign the row rather than fix a defect.
       (Phase 9) — 1.5 h
 - [x] T3.4 `AnalyticsTab` confirmed — `components/AnalyticsTab.tsx` fetches
       `/api/analytics?city=…` (client), does not touch `lib/data.ts`.
@@ -708,8 +775,8 @@ migration or touches product behaviour.
   T2.6)._ `LICENSE`: _pending (PLAN T2.7)._
 - **L12 — logs:** minimal structured logger + user-facing error reference ID: _pending
   (PLAN T2.4)._
-- **L1 / L2 — front-end & API:** "try to break it" pass + U7 bug fixes: _pending
-  (PLAN T1.5, T1.6)._
+- **L1 / L2 — front-end & API:** "try to break it" pass: _pending (PLAN T1.5)._ U7 bug
+  fixes: done (PLAN T1.6).
 - **Layers 6, 11:** consciously left empty — documented as Overkill above; to be stated
   in the presentation summary as deliberate, justified omissions.
 

@@ -1622,11 +1622,13 @@ sequenceDiagram
     </div>
     <div class="ph-body">
       <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div>BillboardCard: hover → scale(1.06) روی تصویر (0.4s ease) — state imgHovered</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>BillboardCard: hover → تصویر <code>scale(1.03)</code> با گذارِ ۰.۴ ثانیه. قابِ عکس یک <code>div</code> جداگانه است تا فقط عکس حرکت کند و نشان‌های نوع/وضعیت/ویژه سرِ جایشان بمانند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>prefers-reduced-motion</code>: کلاسِ <code>.card-photo-zoom</code> هم گذار و هم خودِ <code>transform</code> را از دست می‌دهد — بزرگ‌نمایی خودش حرکت است، پس حذفِ easing به‌تنهایی کافی نیست</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>بافتِ نویزِ ملایمِ body و انیمیشن‌های shimmer (<code>.skeleton</code>، <code>.shimmer-heading</code>، <code>.logo-shimmer</code>) از پیش پیاده بودند — تأیید شد</div></div>
         <div class="task done-t"><div class="tick">✓</div><div>Login page: سایه لوگو به آبی تأیید شد (<code>rgba(59,123,245,0.45)</code>)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>Typography: متن‌های توضیحی با fontWeight: 300 — deferred</div></div>
+        <div class="task todo-t"><div class="tick"></div><div>Typography: <code>fontWeight: 300</code> برای متن‌های توضیحی — عمداً انجام نشد: وزنِ ۳۰۰ روی فارسیِ ریز و زمینهٔ تیره خوانایی را کم می‌کند، و «متنِ توضیحی» مرزی ندارد که یک‌جا اعمال شود</div></div>
       </div>
-      <div class="proof">✓ Build موفق — BillboardCard hover scale فعال. سایه لوگو آبی.</div>
+      <div class="proof">✓ در مرورگرِ واقعی اندازه‌گیری شد: در حالتِ عادی <code>matrix(1,…)</code> → روی hover <code>matrix(1.03,…)</code> → پس از خروج دوباره <code>matrix(1,…)</code>؛ با <code>prefers-reduced-motion: reduce</code> مقدار در هر دو حالت <code>none</code> و گذار صفر ثانیه است. نشان‌ها بیرونِ قابِ متحرک‌اند. ۱۱۶ تستِ API و ۸ تستِ مرورگر سبز.</div>
     </div>
   </div>
 <div class="phase-card is-done">
@@ -1637,11 +1639,13 @@ sequenceDiagram
     </div>
     <div class="ph-body">
       <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div>Billboard detail CTA: دکمه رزرو به <code>BookingModal</code> واقعی وصل شد — component <code>BillboardBookingCTA.tsx</code> ساخته شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Billboard detail CTA: <code>BillboardContact.tsx</code> — شمارهٔ آگهی‌دهنده پشت یک کلیک، و همان کلیک به‌عنوان lead در <code>POST /api/billboards/[slug]/contact</code> ثبت می‌شود</div></div>
         <div class="task done-t"><div class="tick">✓</div><div>صفحه تماس: فرم تقلبی حذف شد — جایگزینی با info cards + دکمه‌های مستقیم mailto: و Telegram</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>ثبت رسانه step 4: <code>&lt;input type="file"&gt;</code> واقعی + preview grid + دکمه حذف هر تصویر</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>Compare: thumbnail تصویر در کارت‌ها + برچسب «فقط ۲ رسانه اول مقایسه می‌شوند» برای آیتم‌های اضافه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ثبت رسانه step 4: <code>&lt;input type="file" hidden&gt;</code> واقعی + preview grid + دکمه حذف هر تصویر + بررسی حجم/فرمت/تعداد سمت مرورگر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ثبت رسانه: <code>validateStep()</code> فیلدهای الزامی هر گام را پیش از «بعدی» می‌بندد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Compare: thumbnail تصویر (<code>next/image</code> ۲۵۶×۱۱۰) در کارت‌ها + برچسب «فقط ۲ رسانه اول مقایسه می‌شوند» برای آیتم‌های اضافه</div></div>
         <div class="task done-t"><div class="tick">✓</div><div>جایگزینی emoji تماس با Lucide icons (Mail، Send، Building2، Clock)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ورود: سایهٔ نارنجی جامانده برداشته شد — <code>glow</code> بر پایهٔ حالت فرم آبی یا بنفش است</div></div>
       </div>
       <div class="proof">✓ Build موفق — TypeScript clean. همه مشکلات UX-Breaking برطرف شدند.</div>
     </div>
@@ -1654,13 +1658,13 @@ sequenceDiagram
     </div>
     <div class="ph-body">
       <div class="task-list">
-        <div class="task done-t"><div class="tick">✓</div><div>UserAvatar: دایره آبی با حرف اول نام — بالای sidebar داشبورد</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>آیکون «در انتظار تأیید»: از Calendar به Clock — آیکون‌های سه stat card متمایز شدند</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>ردیف رزرو: thumbnail 64px از API + نام کلیک‌پذیر به <code>/billboard/slug</code> + hover color</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>Empty state: آیکون Search دایره‌ای + متن دوخطی راهنما + دکمه «جستجوی رسانه»</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div>API <code>/api/reservations/my</code>: اضافه شدن <code>billboardSlug</code> و <code>billboardImage</code> به response</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><code>components/UserAvatar.tsx</code>: دایره با حرف اول نام، اندازه‌پذیر. در sidebar (۴۲px) و کنار خوش‌آمد (۴۰px) رندر می‌شود — یک تعریف، چون دو نسخهٔ دستیِ یک دایره به‌مرور از هم فاصله می‌گیرند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>آیکون‌های سه کارتِ آمار متمایز شدند: <code>LayoutList</code> / <code>Clock</code> / <code>CheckCircle2</code> — <code>Calendar</code> دیگر import نمی‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>ردیف آگهی: thumbnail ۶۴px + نام کلیک‌پذیر به <code>/billboard/slug</code> — لینک فقط وقتی می‌آید که آگهی منتشر شده باشد، چون آگهیِ در انتظارِ بررسی صفحه‌ای ندارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Empty state: دایرهٔ ۶۴px با <code>LayoutList</code> + متن دوخطی راهنما + دکمهٔ «ثبت رسانه»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>داده از <code>GET /api/listings</code> می‌آید (آگهی‌های خودِ کاربر با وضعیت، پلن و تصویر) — زیرسیستم رزرو در بازبینی نهایی حذف شد، §۱۷</div></div>
       </div>
-      <div class="proof">✓ Build موفق — TypeScript clean. داشبورد حالا thumbnail، link و avatar دارد.</div>
+      <div class="proof">✓ در مرورگرِ واقعی و با نشستِ واقعی دیده شد: روی ۱۲۸۰ پیکسل هر دو آواتار (۴۲ و ۴۰ پیکسل)، روی ۳۹۰ پیکسل فقط آواتارِ خوش‌آمد چون sidebar پشت همبرگر است، و با زدنِ همبرگر دوباره هر دو. سرریزِ افقی در هر سه حالت صفر. lint و build تمیز، ۱۱۶ تستِ API و ۸ تستِ مرورگر سبز.</div>
     </div>
   </div>
 <div class="phase-card is-done">
@@ -1676,25 +1680,51 @@ sequenceDiagram
         <div class="task done-t"><div class="tick">✓</div><div>Landing grids: <code>.testimonials-grid</code>، <code>.types-grid</code>، <code>.how-grid</code>، <code>.stats-bar-grid</code> — single/2col زیر 640px</div></div>
         <div class="task done-t"><div class="tick">✓</div><div>About page: <code>.about-stats-grid</code> و <code>.how-grid</code> → single column موبایل</div></div>
         <div class="task done-t"><div class="tick">✓</div><div>Landing header nav: قبلاً با <code>.landing-nav</code> در 640px hidden بود — تأیید شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>Explore: فیلترِ استان/شهر/نوع پشت یک ضربه تا می‌شود (<code>.explore-loc-toggle</code> + <code>.explore-secondary</code>)، با نشانِ تعدادِ فیلترِ پنهان. فقط زیر 640px؛ دسکتاپ همان چیدمانِ باز را دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>گالریِ جزئیات: کشیدنِ انگشت تصویرِ بعدی/قبلی را می‌آورد (آستانهٔ ۴۵ پیکسل، تا لمسِ اتفاقی به‌حساب نیاید)، و کلیکِ ساختگیِ پایانِ swipe لایت‌باکس را باز نمی‌کند. فلش‌های لایت‌باکس هم روی گوشی از بیرونِ کادر به داخلِ لبه‌ها می‌آیند</div></div>
       </div>
-      <div class="proof">✓ Build موفق — TypeScript clean. CSS media queries در globals.css اضافه شدند.</div>
+      <div class="proof">✓ در مرورگرِ واقعی روی ۳۹۰ پیکسل اندازه‌گیری شد: تاکردنِ فیلترها اولین کارت را ۱۲۸ پیکسل بالاتر می‌آورد؛ swipe به چپ تصویر را جلو و به راست عقب می‌برد، کشیدنِ ۲۰ پیکسلی هیچ‌کاری نمی‌کند و ضربهٔ ساده همچنان لایت‌باکس را باز می‌کند؛ سرریزِ افقی در ۳۶۰ و ۳۹۰ پیکسل صفر است. ۱۱۶ تستِ API و ۸ تستِ مرورگر سبز.</div>
     </div>
   </div>
-<div class="phase-card">
+<div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
-      <div class="ph-num" style="font-size:12px">U10</div>
-      <div class="ph-title"><h3>Map-First Explore</h3><p>تجربه AdQuick/Blip-like — نقشه به عنوان default view</p></div>
-      <div class="ph-badge todo">todo</div>
+      <div class="ph-num" style="font-size:12px">T3.3</div>
+      <div class="ph-title"><h3>جاروی ریسپانسیو با مرورگر واقعی</h3><p>۱۳ صفحه × چهار عرض — و سه ایرادِ واقعی که تست‌ها نمی‌گرفتندشان</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
     </div>
     <div class="ph-body">
-      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">⚠ وابسته به حل MAP-A/B/C — بعد از آنها اجرا شود.</p>
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
+        ۱۳ صفحه در ۳۶۰ و ۳۹۰ و ۷۶۸ و ۱۲۸۰ پیکسل با Chrome واقعی باز شد و سه چیز اندازه گرفته شد: اسکرولِ افقی، هر عنصری که از لبه بیرون بزند، و هر هدفِ لمسیِ کوچک‌تر از ۴۴ پیکسل.
+      </p>
       <div class="task-list">
-        <div class="task todo-t"><div class="tick"></div><div>Map view به عنوان default tab در explore</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>Price pins روی نقشه (مثل Zillow)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>«جستجو با حرکت نقشه» toggle (مثل Airbnb)</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>Cluster pins هنگام zoom-out</div></div>
-        <div class="task todo-t"><div class="tick"></div><div>Filter pills بالای صفحه: بیلبورد | پل | LED | استرابورد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>اسکرولِ افقی: هیچ‌جا.</b> هر ۵۲ ترکیبِ صفحه-عرض صفر بود. آنچه اول «بیرون‌زده» علامت خورد یا تزئینی بود (<code>bg-orb</code> و خطوطِ vine که body عمداً کلیپ‌شان می‌کند، نوارِ تیکر)، یا جدول‌های پهنِ <code>/api-docs</code> که همه داخلِ ظرفِ <code>overflow-x: auto</code>اند و درست اسکرول می‌شوند — یعنی الگوی درست، نه ایراد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>صفحهٔ ورود:</b> نشانِ «R» و واژهٔ «رسامپ» به‌جای روی‌هم، کنارِ هم رندر می‌شدند — یکی <code>inline-flex</code> و دیگری <code>inline-block</code>، پس هر دو روی یک خط می‌نشستند و <code>marginBottom</code>ِ نشان اصلاً کاری نمی‌کرد. نشان block شد و واژه رفت زیرش</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>هدف‌های لمسی:</b> ناوبریِ آیکونیِ تاپ‌بار روی گوشی ۳۲×۲۸ بود و دکمهٔ نمایشِ رمز ۲۴×۲۴. هر دو ۴۴ پیکسل شدند؛ چون نوار از قبل ۶۲ پیکسل بود، هیچ چیزی جابه‌جا نشد و اندازهٔ آیکون‌ها هم عوض نشد — فقط کادرِ دورشان</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>یک قاعدهٔ یتیم:</b> <code>.card-action-btn { min-height: 44px }</code> در <code>globals.css</code> نوشته شده بود و <b>روی هیچ عنصری نبود</b> — یعنی دکمه‌های «مشخصات» و «مقایسهٔ» کارت هرگز آن را نگرفته بودند. به‌جای افزودنِ قاعدهٔ تازه، همان کلاس به هر چهار نقطه داده شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>عمداً دست‌نخورده:</b> لینک‌های متنیِ درون‌خطی («رمز عبور را فراموش کرده‌اید؟»، نشانی‌های تماس، لینک‌های فوتر) در اندازهٔ تایپوگرافیکِ خودشان ماندند — قاعدهٔ ۴۴ پیکسل برای کنترل‌های مجزاست و کش‌دادنِ لینکِ داخلِ یک جمله، خودِ جمله را خراب می‌کند. همین‌طور چیپ‌های نوعِ رسانه در لندینگ، که ۴۴ پیکسل کردنشان بازطراحی است نه رفعِ ایراد</div></div>
       </div>
+      <div class="proof">✓ پس از اصلاح دوباره اندازه‌گیری شد: کنترل‌های زیرِ ۴۴ پیکسل در کاوش از ۸۰ به ۳۲ رسید و در تاپ‌بار به صفر؛ لوگوی تاپ‌بار ۹۶×۴۴، دکمهٔ رمز ۴۴×۴۴ و داخلِ کادرِ ورودی. lint و build تمیز، ۱۱۶ تستِ API و ۸ تستِ مرورگر سبز.</div>
+    </div>
+  </div>
+<div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:12px">U10</div>
+      <div class="ph-title"><h3>نمای نقشه — بدون هیچ ارائه‌دهنده‌ای</h3><p>نقشه کشیده می‌شود، نه گرفته — صفر کلید، صفر هزینه، بدونِ درخواستِ بیرونی</p></div>
+      <div class="ph-badge done">✓ انجام شد</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:12px">
+        بررسیِ ریشه‌ای اول انجام شد و به یک «نه» رسید: embedِ بی‌کلیدِ گوگل یک <code>iframe</code> از دامنهٔ دیگر است، پس نه می‌شود پین‌های خودمان را رویش گذاشت، نه فهمید کاربر نقشه را کجا برد — مرزِ امنیتیِ مرورگر است، نه قابلیتِ نداشته. تنها محصولی که می‌توانست (Maps JavaScript API) حسابِ صورت‌حساب‌دار می‌خواهد و Google Maps Platform برای حساب‌های ایرانی اصلاً در دسترس نیست. جزئیات در <code>engineering-decisions</code> §۳۲.
+      </p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div>نمای کشوری: ۳۱ استان به‌صورت SVG، رنگ‌شده بر اساس موجودی با مقیاسِ جذر (تهران چند برابرِ بعدی است؛ روی مقیاسِ خطی بقیه خالی به نظر می‌رسند). از ستونِ <code>city</code> ساخته می‌شود، پس برای هر ۳٬۵۴۵ رکورد دقیق است — حتی آن‌هایی که اصلاً ژئوکد نشده‌اند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>نمای استانی: پین روی مختصاتِ واقعی، همگام با همان فیلترهای کاتالوگ. کادر روی <b>خودِ پین‌ها</b> بسته می‌شود نه کلِ استان — تقریباً همهٔ رسانه‌های یک استان در یک شهرند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>مرزها یک‌بار در زمانِ ساخت گرفته و داخل مخزن آمده‌اند: <code>lib/iran-provinces.ts</code>، ۴۲KB، از ۲۶٬۹۴۶ نقطه به ۲٬۶۵۸ (Douglas-Peucker با ۰.۰۲ درجه ≈ ۲ کیلومتر). منبع geoBoundaries، CC BY 4.0، با ذکرِ مأخذ زیر نقشه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>MAP-B درست بود:</b> از ۳٬۰۳۲ رکوردِ مختصات‌دار حدود یک‌ششم از شهرِ ادعایی‌اش دور است. <code>isPlottable()</code> هر نقطهٔ دورتر از ۴۰ کیلومتر از مرکزِ شهرش را کنار می‌گذارد؛ ۲٬۵۳۱ پین می‌ماند. کنارگذاشته‌ها در فهرست هستند و نقشه تعدادشان را روی خودش می‌نویسد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>فیلترها در آدرس‌اند، پس نقشهٔ فیلترشده یک نشانیِ واقعی است و رفت‌وبرگشت بین دو نما جستجو را نگه می‌دارد. <code>exploreHref</code> یک پارامترِ <code>base</code> گرفت به‌جای اینکه نسخهٔ دومی از خودش ساخته شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div>هیچ کوئریِ تازه‌ای اضافه نشد: شمارشِ استانی از <code>groupBy</code>ای می‌آید که <code>getSiteStats</code> از قبل اجرا می‌کرد و تعدادهایش را دور می‌ریخت؛ پین‌ها فقط وقتی استانی انتخاب شده باشد گرفته می‌شوند و مثل بقیه cache دارند</div></div>
+      </div>
+      <div class="proof">✓ با دادهٔ واقعی (۳٬۵۴۵ رکورد) در مرورگر دیده شد: نمای کشوری ۳۱ مسیر با برچسبِ استان‌های پرتراکم (برچسب‌ها به‌ترتیبِ اهمیت چیده می‌شوند و هر کدام که تداخل کند حذف — دو آذربایجان روی هم می‌افتادند)؛ تهران ۴۹۰ پین از ۶۷۵ رکورد با یادداشتِ «۱۸۵ رسانه مختصات قابل‌اتکا ندارد». تصویرسازی داخلِ کادر می‌نشیند (x ۸۰..۹۲۱ در ۱۰۰۰×۷۶۰)، روی ۳۹۰ پیکسل سرریزِ افقی صفر، و در تم تیره از متغیرهای CSS پیروی می‌کند. lint و build تمیز، ۱۱۶ تستِ API و ۸ تستِ مرورگر سبز.</div>
     </div>
   </div>
 <div class="phase-card is-done">
@@ -4013,7 +4043,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۶ شهریور ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۲۰ شهریور ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>

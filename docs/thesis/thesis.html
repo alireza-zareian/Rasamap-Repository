@@ -975,8 +975,8 @@ erDiagram
   رخ ندهد؛ و هر خطا پیام فارسی روشن دارد، نه کد وضعیت خام.</p>
 
   <h2>سازمان‌دهی کد و نقشهٔ وابستگی‌ها</h2>
-  <p>پروژه ۱۵۰ فایلِ <span dir="ltr">TypeScript</span> دارد. وقتی فایلی چیزی را از فایلِ دیگرِ
-  همین پروژه <code>import</code> می‌کند، یک «وابستگی» میانشان ساخته می‌شود؛ در کلِ پروژه ۴۳۳
+  <p>پروژه ۱۵۵ فایلِ <span dir="ltr">TypeScript</span> دارد. وقتی فایلی چیزی را از فایلِ دیگرِ
+  همین پروژه <code>import</code> می‌کند، یک «وابستگی» میانشان ساخته می‌شود؛ در کلِ پروژه ۴۵۶
   چنین وابستگی وجود دارد. این عددها با یک اسکریپت که خودِ مخزن را می‌خواند و همهٔ دستورهای
   <code>import</code> را می‌شمارد استخراج شده‌اند، نه با تخمین. پس آنچه در ادامه می‌آید تصویرِ
   معماریِ <em>واقعیِ موجود</em> است، نه معماریِ آرزوشده.</p>
@@ -1081,7 +1081,7 @@ flowchart TB
   حسبِ لایهٔ فایلِ مبدأ و لایهٔ فایلِ مقصد دسته‌بندی کنیم، این نمودار به دست می‌آید.
   <b>هر پیکان از لایهٔ A به لایهٔ B یعنی «فایل‌های A چیزهایی را از فایل‌های B وارد
   می‌کنند»، و عددِ رویش می‌گوید این کار در کل کد چند بار تکرار شده.</b> برای نمونه،
-  «<span dir="ltr">API routes → Auth : ۱۲۱ import</span>» یعنی در ۱۲۱ نقطه، یک فایلِ مسیر
+  «<span dir="ltr">API routes → Auth : ۱۲۳ import</span>» یعنی در ۱۲۳ نقطه، یک فایلِ مسیر
   چیزی را از لایهٔ احراز هویت وارد کرده است. (برای خوانایی، فقط پیکان‌هایی رسم شده‌اند که
   میانِ دو لایهٔ متفاوت از این شش لایه‌اند و دستِ‌کم چهار بار تکرار شده‌اند؛ پیوندهای
   درون‌لایه‌ای و لایه‌های کوچک‌تر کنار گذاشته شده‌اند.)</p>
@@ -1089,20 +1089,20 @@ flowchart TB
   <figure>
     <div class="frame"><div class="mermaid">
 flowchart TB
-    PG["صفحه‌ها<br>۳۰ فایل"]
-    UI["مؤلفه‌های رابط<br>۳۲ فایل"]
+    PG["صفحه‌ها<br>۲۰ فایل"]
+    UI["مؤلفه‌های رابط<br>۳۵ فایل"]
     API["API routes<br>۳۵ فایل"]
     AUTH["احراز هویت<br>۶ فایل"]
-    LIB["ابزارهای مشترک<br>۱۷ فایل"]
-    DATA["Data Access Layer<br>۲ فایل"]
-    PG -->|"۴۹ import"| UI
-    PG -->|"۱۸ import"| LIB
-    PG -->|"۴ import"| DATA
-    UI -->|"۳۰ import"| LIB
+    LIB["ابزارهای مشترک<br>۱۹ فایل"]
+    DATA["Data Access Layer<br>۵ فایل"]
+    PG -->|"۵۵ import"| UI
+    PG -->|"۳۳ import"| LIB
+    PG -->|"۱۰ import"| DATA
+    UI -->|"۳۶ import"| LIB
     UI -->|"۴ import"| AUTH
-    API -->|"۱۲۱ import"| AUTH
-    API -->|"۸۶ import"| LIB
-    API -->|"۳۷ import"| DATA
+    API -->|"۱۲۳ import"| AUTH
+    API -->|"۸۹ import"| LIB
+    API -->|"۳۹ import"| DATA
     classDef a fill:#FFF8E8,stroke:#B57209,color:#151A23
     classDef b fill:#EAF7F1,stroke:#0E8F5D,color:#151A23
     classDef c fill:#F5F0FF,stroke:#6247C4,color:#151A23
@@ -1117,9 +1117,9 @@ flowchart TB
     class DATA f
     </div></div>
     <figcaption><span class="lbl"></span> وابستگی میان لایه‌های کد؛ عددِ هر پیکان تعدادِ
-    <code>import</code> است. پرتکرارترین پیکان (۱۲۱) از <span dir="ltr">API routes</span> به
+    <code>import</code> است. پرتکرارترین پیکان (۱۲۳) از <span dir="ltr">API routes</span> به
     لایهٔ احراز هویت می‌رود — یعنی بررسیِ نشست، سقفِ نرخ و شناسهٔ کاربر در عملاً هیچ مسیری جا
-    نیفتاده است. در مقابل، صفحه‌ها فقط ۴ بار مستقیم به
+    نیفتاده است. در مقابل، صفحه‌ها فقط ۱۰ بار مستقیم به
     <span dir="ltr">Data Access Layer</span> وصل شده‌اند: همان استثنای
     <span dir="ltr">Server Component</span> که در بخش ۱-۴ توضیح داده شد.</figcaption>
   </figure>
@@ -1131,19 +1131,19 @@ flowchart TB
   واردشان می‌کنند» چیده شده‌اند: هرچه فایلی وابستهٔ بیشتری داشته باشد به وسطِ نوار نزدیک‌تر
   است. پس دایره‌های درشتِ نزدیک به مرکزِ هر نوار، همان فایل‌هایی‌اند که بیشترِ پروژه به
   آن‌ها تکیه دارد.</p>
-  <p>از آن ۱۵۰ فایل، ۳۴ فایل نه چیزی <code>import</code> می‌کنند و نه جایی وارد می‌شوند —
+  <p>از آن ۱۵۵ فایل، ۳۳ فایل نه چیزی <code>import</code> می‌کنند و نه جایی وارد می‌شوند —
   فایل‌های قراردادیِ چارچوب (<code>layout</code>، <code>loading</code>، <code>error</code>)
-  که خودِ <span dir="ltr">Next.js</span> صدایشان می‌زند — پس ۱۱۶ فایلِ متصل می‌ماند، با ۴۳۳
+  که خودِ <span dir="ltr">Next.js</span> صدایشان می‌زند — پس ۱۲۲ فایلِ متصل می‌ماند، با ۴۵۶
   پیوند میانشان. کشیدنِ همه‌شان روی کاغذ فقط یک کلاف می‌شود؛ تنه‌ی این شلوغی ۳۵ فایلِ مسیر
   است که هرکدام چند چیز از لایه‌های احراز هویت و ابزارهای مشترک وارد می‌کنند. برای
   خواندنی‌ماندن، شکلِ زیر از هر لایه فقط چند فایلِ بزرگ‌ترش را نشان می‌دهد، به‌اضافهٔ
-  فایل‌های نام‌گذاری‌شده — رویِ‌هم ۳۹ فایل و ۸۷ پیوند. الگوی کلی همان است؛ فقط انبوهگی
+  فایل‌های نام‌گذاری‌شده — رویِ‌هم ۳۹ فایل و ۹۰ پیوند. الگوی کلی همان است؛ فقط انبوهگی
   حذف شده.</p>
 
   <figure class="big">
     <div class="frame"><img src="shots/import-graph.svg" alt="" style="width:100%;display:block"></div>
     <figcaption><span class="lbl"></span> گرافِ وابستگی در سطحِ فایل — نمایی خلاصه: از هر لایه
-    چند فایلِ بزرگ‌تر به‌اضافهٔ فایل‌های نام‌گذاری‌شده (۳۹ فایل از ۱۱۶ فایلِ متصل، ۸۷ پیوند).
+    چند فایلِ بزرگ‌تر به‌اضافهٔ فایل‌های نام‌گذاری‌شده (۳۹ فایل از ۱۲۲ فایلِ متصل، ۹۰ پیوند).
     آنچه باید دید، تراکمِ دایره‌ها نزدیکِ مرکزِ سه نوارِ پایینی — احراز هویت، ابزارهای مشترک و
     <span dir="ltr">Data Access Layer</span> — است: هرچه فایلی به مرکزِ نوارش نزدیک‌تر باشد،
     فایل‌های بیشتری واردش می‌کنند. همین تصویر است که جدولِ بعدی به‌صورتِ
@@ -1169,18 +1169,18 @@ flowchart TB
     <tbody>
       <tr><td>۳۴</td><td><code>lib/api-log.ts</code></td><td>ثبت هر درخواست</td></tr>
       <tr><td>۳۳</td><td><code>lib/auth/session.ts</code></td><td>بررسی نشست</td></tr>
-      <tr><td>۳۲</td><td><code>lib/auth/client-ip.ts</code></td><td>شناسهٔ کاربر که جعل‌شدنی نیست</td></tr>
-      <tr><td>۳۲</td><td><code>lib/auth/rate-limit.ts</code></td><td>سقف نرخ درخواست</td></tr>
-      <tr><td>۳۱</td><td><code>lib/api-rate-limit.ts</code></td><td>پاسخ مشترک «تعداد زیاد»</td></tr>
-      <tr><td>۳۱</td><td><code>lib/db/client.ts</code></td><td>تنها اتصال به پایگاه داده</td></tr>
-      <tr><td>۲۶</td><td><code>lib/types.ts</code></td><td>انواع دادهٔ دامنه، بدون داده</td></tr>
-      <tr><td>۱۵</td><td><code>lib/db/billboards.ts</code></td><td>لایهٔ دسترسی دادهٔ رسانه‌ها</td></tr>
+      <tr><td>۳۳</td><td><code>lib/auth/client-ip.ts</code></td><td>شناسهٔ کاربر که جعل‌شدنی نیست</td></tr>
+      <tr><td>۳۳</td><td><code>lib/auth/rate-limit.ts</code></td><td>سقف نرخ درخواست</td></tr>
+      <tr><td>۳۲</td><td><code>lib/api-rate-limit.ts</code></td><td>پاسخ مشترک «تعداد زیاد»</td></tr>
+      <tr><td>۳۲</td><td><code>lib/db/client.ts</code></td><td>تنها اتصال به پایگاه داده</td></tr>
+      <tr><td>۳۰</td><td><code>lib/types.ts</code></td><td>انواع دادهٔ دامنه، بدون داده</td></tr>
+      <tr><td>۲۰</td><td><code>lib/db/billboards.ts</code></td><td>لایهٔ دسترسی دادهٔ رسانه‌ها</td></tr>
     </tbody>
   </table>
 
   <div class="box good">
     <span class="bt">چرا این عددها مهم‌اند</span>
-    <p class="noind">اینکه ۳۱ فایل به <code>lib/db/client.ts</code> وابسته‌اند و
+    <p class="noind">اینکه ۳۲ فایل به <code>lib/db/client.ts</code> وابسته‌اند و
     <em>هیچ فایلی</em> اتصال جداگانه‌ای نمی‌سازد، یعنی ادعای «یک نقطهٔ ورود به پایگاه داده»
     قابل بررسی است و نه شعاری. به همین ترتیب، حضور <code>session.ts</code> و
     <code>rate-limit.ts</code> در صدر فهرست یعنی این بررسی‌ها در مسیرها فراموش نشده‌اند.

@@ -1545,7 +1545,7 @@ on screen answered every question below in one look.
    hand-rolled "compact number" helpers had the same problem, and are now one
    `faCompact` beside `faNum`.
 
-**Four rounds of flakiness, and none of them were flaky.** The suite went 8/8,
+**Five rounds of flakiness, and none of them were flaky.** The suite went 8/8,
 then 6/8, then 7/8 with a different test failing each time. Each cause was real:
 
 - *One IP for eight tests.* The deliberate wrong-password test spent the
@@ -1568,15 +1568,88 @@ then 6/8, then 7/8 with a different test failing each time. Each cause was real:
   cards are present and the fallback has not been removed. A selector wait was
   satisfied by the first, while the page text still said "در حال بارگذاری".
   `waitForText()` waits for the phrase being asserted.
+- *The same race again, in the one test that had been written by hand.* The
+  sign-in test read `/dashboard` straight after `goto()`. But the dashboard is a
+  client component: it renders "در حال بررسی احراز هویت..." until
+  `GET /api/auth/me` answers, so the read landed mid-check and the assertion
+  blamed the session cookie for a timing gap. It also offered
+  `text.includes("پیشخوان")` as an alternative — a word that appears nowhere in
+  the app, so that half could never be true and hid how narrow the real check
+  was. It waits for the greeting now, like every other test in the file.
 
 The habit worth keeping: **a flaky test is a race that has not been read
-carefully yet.** Four in a row here were four real defects — three in the
-harness, one in the product's own protection working as designed. Sixteen
-consecutive green runs since.
+carefully yet.** Five in a row here were five real defects — three in the
+harness, one in the test file, and one in the product's own protection working
+as designed. The fix for the last one is the giveaway that the rule generalises:
+`waitForText` existed *because* of the fourth race, and the fifth was simply a
+place that had not been converted to it yet.
 
 **What it does not cover.** Payment (there is none), SMS (dormant, §16), and
 the map iframe (a third party that may not load from Iran at all). Eight flows
 is a floor, not a finish.
+
+---
+
+## 32. A map of Iran that asks nobody for permission
+
+**The question was whether Google could do it.** The detail page already carries
+a Google map — the keyless legacy embed,
+`maps.google.com/maps?q=LAT,LNG&output=embed` — and it is free, unlimited and
+needs no account. That is exactly why it was chosen. The obvious next step was
+to browse the catalogue on the same thing.
+
+It cannot be done, and the reason is not effort. The embed is a cross-origin
+iframe: a page cannot add its own markers to it, cannot read where the visitor
+panned or zoomed, and cannot receive a click on it. That is a browser security
+boundary, not a missing feature. The one Google product that *would* do it, the
+Maps JavaScript API, needs a key attached to a billing account — and Google
+Maps Platform is not available to Iranian accounts at all, so the account
+cannot be created. Even with a key it would be unreliable on an Iranian mobile
+line, which is why the embed already ships with the coordinates and an
+open-in-your-map-app link stated underneath rather than conditionally: a
+blocked cross-origin frame reports load either way and cannot be detected.
+
+Every hosted alternative fails at least one of the same three tests — billed,
+keyed, or unreachable from Iran. So the map is drawn instead of fetched.
+
+**What that costs at runtime: nothing.** `lib/iran-provinces.ts` is 42 KB of
+province outlines vendored into the bundle — geoBoundaries gbOpen ADM1, CC BY
+4.0, credited under the map, reduced from 26,946 points to 2,658 by
+Douglas-Peucker at 0.02° (about 2 km, far below one pixel at the size it is
+drawn) by `scripts/build-iran-map.py`. The projection is equirectangular with
+longitude squeezed by the cosine of the middle latitude, which is a dozen lines
+in `lib/geo.ts`. No tile server, no key, no request that can be blocked.
+
+**Two levels, because they answer different questions.** The country view
+shades each province by how much inventory sits in it, and is built from the
+`city` column — so it is exact for all 3,545 rows, including the ones that were
+never geocoded. Choosing a province drops to its own pins, which is a different
+and weaker claim, and the difference matters:
+
+**The coordinates are not all trustworthy, and the map says so.** MAP-B in the
+backlog claimed the coordinates were wrong and had sat there unexamined. They
+are wrong in part. Measured over the dataset: 3,032 of 3,528 rows carry
+coordinates, and about one in six of those sits far from the city it claims — a
+row labelled تهران with a point 493 km away, Isfahan with a *median* 31 km out.
+It is not one bad scraper; all three are between 16% and 27%, so the fault is
+in the geocoding step. Re-geocoding needs a paid service, which is the thing
+this whole decision is avoiding.
+
+So the rule is quarantine, not repair. `isPlottable()` keeps a row off the map
+when it is further than 40 km from its city's known centre — Tehran to Karaj is
+about 40 km, so genuine metropolitan sprawl survives and the geocoder's misses
+do not. That leaves 2,531 pins of 3,545 rows. The rows held back stay in the
+catalogue, because their city and district text is still correct; only the
+point is wrong. And the map prints the number it is hiding, in Persian, under
+the drawing. A map that quietly drops one row in six is a map that lies; one
+that says so is a map with a known edge (§5).
+
+**Two smaller things worth keeping.** The view frames the *pins* rather than the
+province, because nearly all of a province's media sits inside one city and
+fitting the province spends most of the picture on empty country. And the
+busiest provinces carry their names, placed busiest-first with any label that
+would collide simply dropped — hover names a province, but a phone has no
+hover, and the two Azerbaijans printed on top of each other otherwise.
 
 ---
 
@@ -1620,5 +1693,6 @@ is a floor, not a finish.
 | 2026-09-07 | **V3 — PostgreSQL, dormant** | §27 — engine read from `DATABASE_URL`; the two engine-specific spots (JSON path, `contains` case) handled; `npm run db:to-postgres` / `db:to-sqlite`. Proved against PostgreSQL 16: 3,562 rows moved, counts matched, app served, identical answers from both engines, switched back, 113/113. Still on SQLite. |
 | 2026-09-08 | **V4 — deployment surface** | §28 — `/api/health` (real DB ping, exempt from the bot filter, 3 tests); `backup-db.sh` made engine-aware after §27 and both paths exercised; restore rehearsed; `deploy/` nginx + systemd + backup timer; RUNBOOK deployment order. Acceptance test run over a `trycloudflare` tunnel: rule 9 verified against a real proxy (`Secure` present over HTTPS, absent over localhost, same build). Domain and host still to buy. |
 | 2026-09-08 | **V5 — CSP and security cleanup** | §29 — six dead origins removed from the CSP (incl. `unpkg.com` in `script-src`); `'unsafe-eval'` dropped after proving zero `eval(` in the bundle; `X-XSS-Protection` removed; `robots.txt` reduced to one generated source whose `Sitemap` follows `SITE_URL`; dead `NEXT_PUBLIC_NESHAN_KEY` removed and `NESHAN_API_KEY` demoted to optional. Nonce-based `script-src` measured at 1.86 → 8.30 ms on the landing page and declined. |
-| 2026-09-09 | **V7 — browser tests** | §31 — `test/browser.mjs`, a 359-line CDP driver over the installed Chrome, no new dependency. `npm run test:e2e`: 8 flows on the production build, screenshots on failure. Found the headless-UA 403, missing image placeholders on four surfaces (`MediaImage`), and Latin digits in prices (`faCompact`/`faNum`). Four flakiness causes diagnosed and fixed, 16 green runs since. |
+| 2026-09-11 | **Map view, no provider** | §32 — `/explore/map`: 31 provinces as SVG shaded by inventory, pins for a chosen province, filters carried in the URL. `lib/iran-provinces.ts` (42 KB, vendored, geoBoundaries CC BY 4.0) + `lib/geo.ts` + `scripts/build-iran-map.py`. No key, no tiles, no runtime request. MAP-B confirmed and quarantined: `isPlottable()` holds back the ~1-in-6 coordinates that sit far from their own city, and the map states the count it is hiding. No new query — the province counts come from a `groupBy` `getSiteStats` already ran. |
+| 2026-09-09 | **V7 — browser tests** | §31 — `test/browser.mjs`, a 359-line CDP driver over the installed Chrome, no new dependency. `npm run test:e2e`: 8 flows on the production build, screenshots on failure. Found the headless-UA 403, missing image placeholders on four surfaces (`MediaImage`), and Latin digits in prices (`faCompact`/`faNum`). Five flakiness causes diagnosed and fixed. |
 | 2026-09-08 | **V6 — findability** | §30 — titles on the seven pages that had none (three `noindex`); generated Open Graph card with the project's own font, explicit RTL word order and ZWNJ handling; `Product`/`Offer` JSON-LD on media pages with Toman→IRR conversion; sitemap verified at 3,532/3,532 with no unpublished leak; `manifest.ts` + 192/512 icons. |
