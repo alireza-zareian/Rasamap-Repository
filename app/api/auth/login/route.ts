@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getClientIp } from "@/lib/auth/client-ip";
+import { getClientIp, isClientIpTrusted } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/client";
 import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
-import { userLoginRateLimit, resetUserLoginAttempts } from "@/lib/auth/rate-limit";
+import { userLoginAttempt, resetAccountAttempts } from "@/lib/auth/rate-limit";
 import { TIMING_PAD_HASH, validateCredentials } from "@/lib/auth/users";
 import { auditLog } from "@/lib/auth/audit";
 import { withApiLog } from "@/lib/api-log";
@@ -39,13 +39,10 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function POSTHandler(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = userLoginRateLimit(ip);
-  if (!rl.allowed) {
-    // The shared helper adds Retry-After and says how many minutes to wait —
-    // these lock for a quarter of an hour or more, so "try later" is not enough.
-    return rateLimited(rl, { endpoint: "auth/login", ip });
-  }
 
+  // The body is parsed before the limit is checked, because the half of the
+  // limit that matters is keyed on the account being attacked and that lives in
+  // the body. The schema caps it at a few hundred bytes.
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }
 
@@ -62,13 +59,27 @@ async function POSTHandler(req: NextRequest) {
 
   const { identifier, password } = parsed.data;
 
+  // One identifier, whichever store it belongs to: the tight budget follows the
+  // account someone is trying to get into, and the address keeps only a loose
+  // backstop. A staff email and a customer phone can never collide, so a single
+  // scope is safe — and it means a caller cannot double their tries by
+  // alternating between the two shapes.
+  const attempt = userLoginAttempt(identifier, ip);
+  if (!attempt.result.allowed) {
+    return rateLimited(attempt.result, {
+      endpoint: "auth/login",
+      ip,
+      limitedBy: attempt.limitedBy,
+    });
+  }
+
   if (EMAIL.test(identifier)) {
     const staff = await validateCredentials(identifier.toLowerCase(), password);
     if (!staff) {
       auditLog("login_failure", "warn", {
         ip,
         userAgent: req.headers.get("user-agent") ?? undefined,
-        details: { email: identifier, via: "public form" },
+        details: { email: identifier, via: "public form", ipTrusted: isClientIpTrusted(req) },
       });
       return NextResponse.json({ error: DENIED }, { status: 401 });
     }
@@ -76,7 +87,7 @@ async function POSTHandler(req: NextRequest) {
     const token = await createSession({
       userId: staff.id, email: staff.email, name: staff.name, role: staff.role,
     });
-    resetUserLoginAttempts(ip);
+    resetAccountAttempts("user_login", identifier);
     auditLog("login_success", "info", {
       userId: staff.id, userEmail: staff.email, ip,
       userAgent: req.headers.get("user-agent") ?? undefined,
@@ -106,7 +117,7 @@ async function POSTHandler(req: NextRequest) {
   }
 
   const token = await createSession({ userId: user.id.toString(), email: user.phone, name: user.name, role: "user" });
-  resetUserLoginAttempts(ip);
+  resetAccountAttempts("user_login", identifier);
 
   const res = NextResponse.json({ ok: true, user: { id: user.id, name: user.name, phone: user.phone, isStaff: false } });
   res.headers.set("Set-Cookie", buildSessionCookieHeader(token, req));

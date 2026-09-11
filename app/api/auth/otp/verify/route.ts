@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getClientIp } from "@/lib/auth/client-ip";
-import { otpVerifyRateLimit } from "@/lib/auth/rate-limit";
+import { otpVerifyRateLimit, resetAccountAttempts } from "@/lib/auth/rate-limit";
 import { rateLimited } from "@/lib/api-rate-limit";
 import { verifyOtp } from "@/lib/otp";
 import { persistAudit } from "@/lib/auth/audit";
@@ -55,6 +55,17 @@ async function POSTHandler(req: NextRequest) {
   }
 
   await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(newPassword, 12) } });
+
+  // Clear the failed-sign-in budget for this account.
+  //
+  // Forgetting a password and guessing at it is the *normal* way to arrive
+  // here, so by the time someone completes a reset their account has usually
+  // spent most of its attempts. Leaving the count standing would meet them with
+  // "this account is temporarily locked" holding the password they just chose,
+  // through a phone code they just proved they control — a refusal with no
+  // security left in it, since possession of the number is a stronger proof
+  // than the password it replaced.
+  resetAccountAttempts("user_login", phone);
 
   await persistAudit({
     action: "password_reset_self",

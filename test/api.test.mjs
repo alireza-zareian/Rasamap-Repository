@@ -553,17 +553,43 @@ test("login with a wrong password and login for a missing user give an identical
   assert.deepEqual(wrongPass.json, noSuchUser.json);
 });
 
-test("login is rate limited per IP", async () => {
-  const ip = uniqueIp();
+test("repeated failures lock the account they are aimed at", async () => {
+  // Its own throwaway identifier, not a seeded account: the budget now follows
+  // the account, so a test that hammers a shared phone number would spend the
+  // budget of every later test that signs in as that user.
+  const phone = "09129998001";
   let last;
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 14; i++) {
     last = await api("/api/auth/login", {
       method: "POST",
-      ip,
-      body: { phone: "09120000000", password: "wrong" },
+      ip: uniqueIp(),            // a new address each time — the account is the limit
+      body: { phone, password: "wrong" },
     });
   }
   assert.equal(last.status, 429);
+  assert.match(last.json.error, /این حساب/, "the message should say the account is locked, not the network");
+});
+
+test("one account's failures do not lock another account on the same address", async () => {
+  // This is the whole point of keying on the account. Several people behind one
+  // office, campus or carrier address share it, and — as card B1 records — an
+  // address is a value the caller can choose anyway, so a control resting on it
+  // alone is both unfair and escapable.
+  const ip = uniqueIp();
+  for (let i = 0; i < 14; i++) {
+    await api("/api/auth/login", {
+      method: "POST", ip,
+      body: { phone: "09129998002", password: "wrong" },
+    });
+  }
+  // A different account from the same address. It does not matter whether the
+  // credentials are right — 401 proves the request reached the credential check
+  // instead of being turned away at the limiter, which is the whole assertion.
+  const other = await api("/api/auth/login", {
+    method: "POST", ip,
+    body: { phone: "09120000000", password: "whatever" },
+  });
+  assert.notEqual(other.status, 429, "a neighbour's failures locked this account out");
 });
 
 // ── Password reset via phone OTP (SMS layer dormant) ──────────────
@@ -992,18 +1018,23 @@ test("customer routes are 403 for role 'viewer'", async () => {
 // Rate limiting now lives where it belongs — on the endpoints that write or
 // authenticate, not on reading pages. Registration is one of the tight ones and
 // is meant to stay tight: five per hour from one address.
-test("a rate-limited write returns 429 with a Retry-After header", async () => {
-  const ip = uniqueIp();
+test("a refused request returns 429 with a Retry-After header", async () => {
+  // Registration used to be the vehicle for this, at five an hour. It is now a
+  // wide window with no lockout on purpose (the sixth person to sign up from an
+  // office was being refused for the rest of the hour), so the tight limit that
+  // remains — and the one worth checking the shape of — is the per-account
+  // sign-in budget.
+  const phone = "09129999123";   // never registered; only the budget matters
   let got429 = null;
-  for (let i = 0; i < 8 && !got429; i++) {
-    const res = await api("/api/auth/register", {
+  for (let i = 0; i < 14 && !got429; i++) {
+    const res = await api("/api/auth/login", {
       method: "POST",
-      ip,
-      body: { name: `کاربر نرخ ${i}`, phone: `0913${String(1000000 + i).slice(0, 7)}`, password: "secret123" },
+      ip: uniqueIp(),          // a fresh address each time: this is the account limit
+      body: { phone, password: "definitely-wrong" },
     });
     if (res.status === 429) got429 = res;
   }
-  assert.ok(got429, "expected a 429 within 8 rapid registrations from one address");
+  assert.ok(got429, "expected a 429 within 14 failed sign-ins against one account");
   assert.ok(Number(got429.headers.get("Retry-After")) > 0);
 });
 
@@ -1415,6 +1446,32 @@ test("guard: an icon-only button carries a name", () => {
   );
 });
 
+test("guard: no credential lockout rests on the address alone", () => {
+  // The failure this prevents was measured, not imagined: six failed sign-ins
+  // with unrelated emails from one address locked the real administrator out
+  // for 852 seconds while holding the correct password. Several real people
+  // share one address behind any office, campus or carrier — and card B1
+  // records that without a reverse proxy the address is a value the caller
+  // simply chooses, so a lockout keyed on it is unfair and escapable at once.
+  //
+  // A per-address ceiling is fine and stays. What must never come back is a
+  // per-address *lockout* on a credential path, because that is the shape that
+  // lets one person's mistakes shut out everyone beside them.
+  const src = stripComments(readFileSync("lib/auth/rate-limit.ts", "utf8"));
+
+  for (const m of src.matchAll(/checkRateLimit\(\s*`([^`]+)`\s*,\s*\{([^}]*)\}/g)) {
+    const [, key, body] = m;
+    // Only the address dimension: an account-keyed lockout is the intended one.
+    if (!key.includes("${ip}")) continue;
+    const lockout = /lockoutMs:\s*([^,\n]+)/.exec(body)?.[1]?.trim();
+    assert.ok(
+      lockout === "0",
+      `${key}: a per-address limiter must not lock out (found lockoutMs: ${lockout}). ` +
+        `Cap the window instead, and put the tight budget on the account — see credentialAttempt.`,
+    );
+  }
+});
+
 test("guard: every admin route is rate limited", () => {
   // Rule 2 of AGENTS.md fixes the order session -> rate limit -> Zod, and
   // GET /api/admin/auth/me was the one route that skipped the middle step.
@@ -1433,7 +1490,9 @@ test("guard: every admin route is rate limited", () => {
     if (!/^app\/api\/admin\/.*route\.ts$/.test(path)) continue;
     if (EXEMPT.includes(path)) continue;
     assert.ok(
-      /RateLimit\(/.test(src),
+      // Two shapes count: the single-dimension presets (…RateLimit) and the
+      // two-dimension credential check (…Attempt), which the sign-in routes use.
+      /RateLimit\(|LoginAttempt\(/.test(src),
       `${file}: every /api/admin route checks a rate limit after the session check — see lib/auth/rate-limit.ts.`,
     );
   }
@@ -1527,7 +1586,9 @@ test("an unknown phone costs about as much as a wrong password (no timing oracle
     return performance.now() - t0;
   };
 
-  const known   = (await sample("09120000000")) + (await sample("09120000000"));
+  // A seeded account that no other test signs in as, so its per-account budget
+  // is untouched — two probes stay well inside it.
+  const known   = (await sample("09120000004")) + (await sample("09120000004"));
   const unknown = (await sample("09190000001")) + (await sample("09190000002"));
 
   // Generous bound: bcrypt cost 12 dominates (~250 ms/call), so a missing

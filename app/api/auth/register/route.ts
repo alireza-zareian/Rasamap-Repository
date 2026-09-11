@@ -5,7 +5,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/client";
 import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
-import { registrationRateLimit, resetUserLoginAttempts } from "@/lib/auth/rate-limit";
+import { registrationRateLimit } from "@/lib/auth/rate-limit";
 import { sendSms } from "@/lib/sms";
 import { withApiLog } from "@/lib/api-log";
 
@@ -52,7 +52,6 @@ async function POSTHandler(req: NextRequest) {
   }
 
   const token = await createSession({ userId: user.id.toString(), email: phone, name: user.name, role: "user" });
-  resetUserLoginAttempts(ip);
 
   // Welcome SMS — fire-and-forget, a no-op unless KAVENEGAR_API_KEY is set, and
   // never allowed to fail the registration.

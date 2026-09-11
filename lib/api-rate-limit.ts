@@ -12,16 +12,40 @@ import { faNum } from "@/lib/format";
 
 export function rateLimited(
   rl: RateLimitResult,
-  ctx: { endpoint: string; ip: string; userId?: string | null; userEmail?: string | null },
+  ctx: {
+    endpoint: string;
+    ip: string;
+    userId?: string | null;
+    userEmail?: string | null;
+    /** Which dimension refused a credential attempt — see lib/auth/rate-limit.ts. */
+    limitedBy?: "account" | "address" | null;
+  },
 ): NextResponse {
   const retryAfter = retryAfterSeconds(rl);
   const mins = Math.ceil(retryAfter / 60);
-  const message =
-    mins > 1
-      ? `درخواست‌های زیادی فرستاده شده. لطفاً حدود ${faNum(mins)} دقیقه دیگر دوباره تلاش کنید.`
-      : "درخواست‌های زیادی فرستاده شده. لطفاً یک دقیقه دیگر دوباره تلاش کنید.";
+  const wait = mins > 1
+    ? `حدود ${faNum(mins)} دقیقه دیگر`
+    : "یک دقیقه دیگر";
 
-  const details = { endpoint: ctx.endpoint, retryAfter, lockedUntil: rl.lockedUntil ?? null };
+  // Two refusals that feel the same to the server are very different to the
+  // person reading them: "this account is paused" tells them to stop retyping
+  // the password, while "this network is busy" tells them it is not about them
+  // at all. Saying "too many requests" for both left people guessing.
+  //
+  // Neither wording says whether the account exists. The account message is
+  // reached only after attempts were made against that identifier, which the
+  // caller already knows — it reveals nothing a failed sign-in did not.
+  const message =
+    ctx.limitedBy === "account"
+      ? `به‌دلیل تلاش‌های ناموفق پیاپی، ورود با این حساب موقتاً بسته شده است. لطفاً ${wait} دوباره تلاش کنید.`
+      : `درخواست‌های زیادی فرستاده شده. لطفاً ${wait} دوباره تلاش کنید.`;
+
+  const details = {
+    endpoint: ctx.endpoint,
+    retryAfter,
+    lockedUntil: rl.lockedUntil ?? null,
+    ...(ctx.limitedBy ? { limitedBy: ctx.limitedBy } : {}),
+  };
 
   if (rl.justLocked) {
     // The request that actually triggered the lockout — keep one durable record.

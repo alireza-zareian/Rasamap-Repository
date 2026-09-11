@@ -77,6 +77,11 @@ async function main() {
   const passwordHash = await bcrypt.hash("secret123", 12);
   await prisma.user.create({ data: { id: 1, name: "Ali Tester", phone: "09120000000", passwordHash } });
   await prisma.user.create({ data: { id: 2, name: "Sara Tester", phone: "09120000002", passwordHash } });
+  // Reserved for the timing-oracle probe. It needs an account that really
+  // exists and whose per-account sign-in budget nothing else has spent — the
+  // budget follows the account now, so sharing a phone number across tests
+  // makes one test's failures another test's 429.
+  await prisma.user.create({ data: { id: 3, name: "Timing Probe", phone: "09120000004", passwordHash } });
 
   for (const row of [
     // Distinct estimatedViews / area so the sort tests can assert a real order.

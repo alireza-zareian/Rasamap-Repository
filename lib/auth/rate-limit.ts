@@ -103,13 +103,93 @@ export function checkRateLimit(key: string, opts: RateLimitOptions): RateLimitRe
   return { allowed: true, remaining, resetAt: w.resetAt };
 }
 
-/** Specific preset: login endpoint — 5 attempts per 15 min, 15 min lockout */
-export function loginRateLimit(ip: string): RateLimitResult {
-  return checkRateLimit(`login:${ip}`, {
-    windowMs:    15 * 60 * 1000,
-    maxRequests: 5,
-    lockoutMs:   15 * 60 * 1000,
-  });
+/**
+ * A credential attempt, judged on two independent questions.
+ *
+ * Guessing a password means attacking **one account**, so that is where the
+ * tight limit belongs. The address is a far weaker signal: in production behind
+ * a proxy, one public address carries a whole university, office or mobile
+ * carrier, and — as card B1 records — without a proxy the address is a value
+ * the caller can simply choose. A control that rests on it alone is both too
+ * harsh on real people and trivially escaped by anyone who reads this file.
+ *
+ * So both are checked, and they are asked different questions:
+ *
+ *   account — 5 tries, then a short lockout. This is the real brute-force
+ *             defence, and no header can move a caller off it.
+ *   address — a high ceiling with **no lockout**, as a backstop against a flood
+ *             from one source. The window rolling over frees it, so a shared
+ *             address never strands the people behind it.
+ *
+ * The account key is an identifier the visitor typed. It is lowercased and
+ * trimmed so "Ali@X.com " and "ali@x.com" are one account rather than two
+ * budgets, and hashed so the store never holds a list of attempted emails and
+ * phone numbers in memory.
+ */
+export interface CredentialAttempt {
+  /** Refused, and which dimension refused it — the caller phrases the message. */
+  result: RateLimitResult;
+  limitedBy: "account" | "address" | null;
+}
+
+/** Keep the in-memory store free of readable identifiers. */
+function accountKey(identifier: string): string {
+  const norm = identifier.trim().toLowerCase();
+  // djb2 — this is a cache key, not a security boundary. It only needs to be
+  // stable and to not be the identifier itself.
+  let h = 5381;
+  for (let i = 0; i < norm.length; i++) h = ((h << 5) + h + norm.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/**
+ * Both dimensions of one credential attempt.
+ *
+ * The account is checked first so that a caller who has genuinely exhausted one
+ * account's tries is told so, rather than being told the network is busy.
+ */
+function credentialAttempt(
+  scope: string,
+  identifier: string,
+  ip: string,
+  account: RateLimitOptions,
+  address: RateLimitOptions,
+): CredentialAttempt {
+  const acct = checkRateLimit(`${scope}_acct:${accountKey(identifier)}`, account);
+  if (!acct.allowed) return { result: acct, limitedBy: "account" };
+
+  const addr = checkRateLimit(`${scope}_ip:${ip}`, address);
+  if (!addr.allowed) return { result: addr, limitedBy: "address" };
+
+  return { result: addr, limitedBy: null };
+}
+
+/**
+ * Staff sign-in. Five tries against one email, then that email waits a quarter
+ * of an hour; the address gets a much looser ceiling and is never locked.
+ */
+export function adminLoginAttempt(email: string, ip: string): CredentialAttempt {
+  return credentialAttempt("login", email, ip,
+    { windowMs: 15 * 60 * 1000, maxRequests: 5,   lockoutMs: 15 * 60 * 1000 },
+    { windowMs: 15 * 60 * 1000, maxRequests: 100, lockoutMs: 0 },
+  );
+}
+
+/**
+ * Customer sign-in. Ten rather than five, because a phone number and a password
+ * are more often mistyped than an email is, and the account lockout is shorter
+ * for the same reason.
+ */
+export function userLoginAttempt(identifier: string, ip: string): CredentialAttempt {
+  return credentialAttempt("user_login", identifier, ip,
+    { windowMs: 15 * 60 * 1000, maxRequests: 10,  lockoutMs: 10 * 60 * 1000 },
+    { windowMs: 15 * 60 * 1000, maxRequests: 150, lockoutMs: 0 },
+  );
+}
+
+/** Clear an account's failures after it signs in successfully. */
+export function resetAccountAttempts(scope: string, identifier: string): void {
+  store.delete(`${scope}_acct:${accountKey(identifier)}`);
 }
 
 /**
@@ -127,24 +207,6 @@ export function adminApiRateLimit(ip: string): RateLimitResult {
     maxRequests: 600,
     lockoutMs:   0,
   });
-}
-
-/** Reset login attempts (on success) */
-export function resetLoginAttempts(ip: string): void {
-  store.delete(`login:${ip}`);
-}
-
-/** Specific preset: user login — 10 attempts per 15 min, 15 min lockout */
-export function userLoginRateLimit(ip: string): RateLimitResult {
-  return checkRateLimit(`user_login:${ip}`, {
-    windowMs:    15 * 60 * 1000,
-    maxRequests: 10,
-    lockoutMs:   15 * 60 * 1000,
-  });
-}
-
-export function resetUserLoginAttempts(ip: string): void {
-  store.delete(`user_login:${ip}`);
 }
 
 /**
@@ -165,12 +227,25 @@ export function userApiRateLimit(ip: string): RateLimitResult {
   });
 }
 
-/** Specific preset: registration — 5 attempts per hour, 1 hour lockout */
+/**
+ * Registration, per address.
+ *
+ * This used to be five an hour followed by an hour-long lockout, which meant
+ * the sixth person to sign up from an office or a campus was refused for the
+ * rest of the hour — and, since the hour restarted on every further attempt,
+ * for as long as anyone kept trying. Bulk sign-up is a real concern, but the
+ * defence that actually answers it is a verified phone number (card B7), not a
+ * closed front door.
+ *
+ * So: a ceiling that a flood still meets, and no lockout, so a legitimate queue
+ * of people drains as the window rolls rather than being shut out by the first
+ * five.
+ */
 export function registrationRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`register:${ip}`, {
     windowMs:    60 * 60 * 1000,
-    maxRequests: 5,
-    lockoutMs:   60 * 60 * 1000,
+    maxRequests: 40,
+    lockoutMs:   0,
   });
 }
 
@@ -184,12 +259,18 @@ export function otpSendRateLimit(phone: string): RateLimitResult {
   });
 }
 
-/** OTP send — per IP: 10 per hour, so one client can't fan out across numbers. */
+/**
+ * OTP send, per address — a backstop so one client cannot fan out across many
+ * numbers. The per-phone cap above is what actually bounds the SMS bill, and it
+ * is keyed on the thing being abused, so this one does not need a lockout: a
+ * shared address that trips it would otherwise take everyone behind it out of
+ * the password-reset flow for half an hour.
+ */
 export function otpSendIpRateLimit(ip: string): RateLimitResult {
   return checkRateLimit(`otp_send_ip:${ip}`, {
     windowMs:    60 * 60 * 1000,
-    maxRequests: 10,
-    lockoutMs:   30 * 60 * 1000,
+    maxRequests: 40,
+    lockoutMs:   0,
   });
 }
 
