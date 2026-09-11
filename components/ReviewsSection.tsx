@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
 
 interface Reply {
@@ -62,7 +63,6 @@ export default function ReviewsSection({ billboardId }: Props) {
   const [avg, setAvg] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   // undefined = still asking, null = signed out.
-  const [user, setUser] = useState<{ id: number; name: string; isStaff: boolean } | null | undefined>(undefined);
 
   // Form state
   const [rating, setRating] = useState(0);
@@ -90,11 +90,17 @@ export default function ReviewsSection({ billboardId }: Props) {
 
   useEffect(() => {
     fetchReviews();
-    fetch("/api/auth/me")
-      .then(r => r.ok ? r.json() : null)
-      .then(d => setUser(d?.user ? { id: Number(d.user.id), name: d.user.name, isStaff: !!d.user.isStaff } : null))
-      .catch(() => setUser(null));
   }, [fetchReviews]);
+
+  // The signed-in account comes from the shared provider rather than a fourth
+  // copy of the same request: this component sits on the media page beside
+  // StaffBar, Topbar and BillboardContact, and all four used to ask separately.
+  // The shape differs — this file wants a numeric id to match review.userId
+  // against — so it is narrowed here rather than at the source.
+  const { user: currentUser } = useCurrentUser();
+  const user = currentUser
+    ? { id: Number(currentUser.id), name: currentUser.name, isStaff: !!currentUser.isStaff }
+    : currentUser;   // null when signed out, undefined while still asking
 
   // One review per account per media (a unique index enforces it), so there is
   // at most one of these — it is what the edit and delete buttons act on.

@@ -1,5 +1,6 @@
 "use client";
 import { useState, Suspense } from "react";
+import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, AlertTriangle, ArrowRight, User, ShieldCheck } from "lucide-react";
@@ -11,6 +12,7 @@ const toLatin = (v: string) =>
 
 function LoginForm() {
   const router = useRouter();
+  const { refresh } = useCurrentUser();
   const searchParams = useSearchParams();
   const rawNext = searchParams.get("next") ?? "";
   // Only allow same-origin paths (start with / but not //)
@@ -67,6 +69,11 @@ function LoginForm() {
       const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "خطایی رخ داد"); setLoading(false); return; }
+      // The session answer is cached for the whole page load (see
+      // CurrentUserProvider), and router.push below is a soft navigation that
+      // does not reload it. Without this the visitor would arrive signed in but
+      // be shown the signed-out header until they reloaded by hand.
+      await refresh();
       // A team member who signed in here almost certainly wants the panel; a
       // customer wants wherever they were headed.
       router.push(data.user?.isStaff ? "/admin" : nextPath);

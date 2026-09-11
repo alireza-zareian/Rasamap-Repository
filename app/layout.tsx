@@ -3,6 +3,7 @@ import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site-url";
 import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/theme";
+import { CurrentUserProvider } from "@/lib/auth/useCurrentUser";
 import BackgroundPattern from "@/components/BackgroundPattern";
 import StaffBar from "@/components/StaffBar";
 
@@ -51,10 +52,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>
-          <BackgroundPattern />
-          <div className="grain-overlay" aria-hidden="true" />
-          {children}
-          <StaffBar />
+          {/* Wraps everything so the "who is signed in?" answer is fetched once
+              per page load and shared, rather than once per component that
+              wants it — StaffBar below is on every page, and Topbar and
+              BillboardContact join it on a media page. */}
+          <CurrentUserProvider>
+            <BackgroundPattern />
+            <div className="grain-overlay" aria-hidden="true" />
+            {children}
+            <StaffBar />
+          </CurrentUserProvider>
         </ThemeProvider>
       </body>
     </html>
