@@ -144,7 +144,7 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 **9b. Run the tests with `npm test` — and never point them at `next dev`**
 
 `npm test` builds and serves a *production* server on :3100 (into `.next-test/`),
-reseeding its own `prisma/test.db`. It finishes in about 37 seconds with 113/113
+reseeding its own `prisma/test.db`. It finishes in about 37 seconds with 134/134
 passing.
 
 It used to run `next dev`, and the failure mode is worth knowing because it looks

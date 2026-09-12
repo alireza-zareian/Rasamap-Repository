@@ -1,6 +1,9 @@
-// One-time code lifecycle for phone-verified flows (currently: password reset).
+// One-time code lifecycle for phone-verified flows: password reset and sign-up.
 // The code is never stored — only an HMAC-SHA256 hash keyed by AUTH_SECRET.
 // Codes are 6 digits, valid 5 minutes, single-use, and capped at 5 attempts.
+//
+// The purpose is part of every lookup, so a code issued to reset a password can
+// never be spent to open an account, and the two flows cannot share a row.
 
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db/client";
@@ -8,7 +11,7 @@ import { prisma } from "@/lib/db/client";
 const TTL_MS = 5 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
-export type OtpPurpose = "password_reset";
+export type OtpPurpose = "password_reset" | "register";
 
 function hashCode(code: string): string {
   return createHmac("sha256", process.env.AUTH_SECRET ?? "").update(code).digest("hex");
@@ -31,9 +34,22 @@ export async function issueOtp(phone: string, purpose: OtpPurpose): Promise<stri
   return code;
 }
 
-export type OtpCheck =
-  | { ok: true }
-  | { ok: false; reason: "not_found" | "expired" | "too_many_attempts" | "mismatch" };
+export type OtpFailure = "not_found" | "expired" | "too_many_attempts" | "mismatch";
+
+export type OtpCheck = { ok: true } | { ok: false; reason: OtpFailure };
+
+/** What to show someone whose code was refused. Both flows say the same thing,
+ *  so the sentences live with the check that produces them. */
+const FAILURE_MESSAGE: Record<OtpFailure, string> = {
+  not_found:         "کدی برای این شماره پیدا نشد. دوباره درخواست کد بدهید.",
+  expired:           "کد منقضی شده است. دوباره درخواست کد بدهید.",
+  too_many_attempts: "تعداد تلاش‌ها بیش از حد مجاز است. دوباره درخواست کد بدهید.",
+  mismatch:          "کد وارد شده نادرست است.",
+};
+
+export function otpErrorMessage(reason: OtpFailure): string {
+  return FAILURE_MESSAGE[reason];
+}
 
 /** Verify and consume a code. A wrong code increments the attempt counter. */
 export async function verifyOtp(phone: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {

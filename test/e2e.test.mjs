@@ -24,6 +24,7 @@ import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { Browser } from "./browser.mjs";
+import { recoverOtpCode, randomPhone } from "./helpers.mjs";
 
 const BASE = process.env.TEST_BASE_URL || "http://localhost:3200";
 const SHOTS = join(process.cwd(), "test", "screenshots");
@@ -140,6 +141,44 @@ test("a rejected sign-in shows the visitor why, and says no more", async () => {
     // possibilities together on purpose — that is what makes it tell nobody
     // which of the two it was.
     assert.equal(wrongPassword, unknownPhone);
+  });
+});
+
+test("signing up takes two steps, and the code is one of them", async () => {
+  await withBrowser("sign-up-otp", async (b) => {
+    const phone = randomPhone();
+
+    await b.goto(`${BASE}/login`);
+    await b.click("#tab-register");
+    await b.fill("input[type='tel']", phone);
+    await b.click("button[type='submit']");
+
+    // Step one only asks for a number. The code box appearing is the proof
+    // that it was sent and that the form moved on to step two.
+    await b.waitForSelector("input[inputmode='numeric']");
+
+    // Read the code the way the API suite does, from the store. The page can
+    // echo it, but only with OTP_DEV_ECHO=1, and that flag cannot arm on a
+    // production build — which is what this suite runs against (§22b).
+    const code = await recoverOtpCode(phone, "register");
+    assert.match(String(code ?? ""), /^\d{6}$/, "no sign-up code was issued");
+
+    await b.fill("input[inputmode='numeric']", code);
+    await b.fill("input[placeholder='نام و نام خانوادگی']", "تازه‌وارد آزمایشی");
+    await b.fill("input[placeholder='رمز عبور']", "secret123");
+    await b.fill("input[placeholder='تکرار رمز']", "secret123");
+    await b.click("button[type='submit']");
+
+    await b.waitFor("!location.pathname.startsWith('/login')", {
+      label: "a redirect away from /login — the sign-up did not complete",
+    });
+
+    // And the account is real: the session survives a reload, on a cookie set
+    // by the register call itself.
+    await b.goto(`${BASE}/dashboard`);
+    await b.waitForText("تازه‌وارد", {
+      label: "the dashboard greeting — the new account's session did not survive",
+    });
   });
 });
 

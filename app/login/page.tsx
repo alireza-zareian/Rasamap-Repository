@@ -39,21 +39,60 @@ function LoginForm() {
   const [tab, setTab] = useState<"login"|"register">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ phone: "", pass: "", name: "", confirm: "" });
+  const [form, setForm] = useState({ phone: "", pass: "", name: "", confirm: "", code: "" });
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const s = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
+  /**
+   * Sign-up is two steps, and this says which one is on screen.
+   *
+   * "phone" asks for the number and sends a code to it; "details" takes the
+   * code together with the name and password, and it is the *register* call
+   * that spends the code — there is no separate verify round-trip and so no
+   * window where a number is proven but no account exists yet.
+   */
+  const [signUpStep, setSignUpStep] = useState<"phone" | "details">("phone");
+  const [notice, setNotice] = useState("");
+
+  const switchTab = (next: "login" | "register") => {
+    setTab(next);
+    setError(""); setNotice("");
+    setSignUpStep("phone");
+  };
+
   const switchMode = (next: "customer" | "staff") => {
     setMode(next);
-    setTab("login");            // staff accounts are created by an admin, never here
-    setError("");
+    switchTab("login");         // staff accounts are created by an admin, never here
     setForm(f => ({ ...f, phone: "" }));
+  };
+
+  // Step one of sign-up: ask for a code on the number that was typed.
+  const sendCode = async () => {
+    setError("");
+    if (!/^09\d{9}$/.test(form.phone)) { setError("شماره موبایل معتبر نیست"); return; }
+    setLoading(true);
+    try {
+      const data = await fetchJson<{ message?: string; devCode?: string }>("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone, purpose: "register" }),
+      });
+      setNotice(data.devCode
+        ? `${data.message} (کد تست: ${data.devCode})`
+        : data.message ?? "کد تأیید ارسال شد.");
+      setSignUpStep("details");
+    } catch (err) {
+      // Includes the 409 for a number that already has an account — the message
+      // the server sends tells them to sign in instead.
+      setError(errorMessage(err));
+    } finally { setLoading(false); }
   };
 
   const submit = async () => {
     setError("");
     if (tab === "register") {
+      if (!/^\d{6}$/.test(form.code)) { setError("کد تأیید باید ۶ رقم باشد"); return; }
       if (!form.name.trim()) { setError("نام الزامی است"); return; }
       if (form.pass !== form.confirm) { setError("رمز عبور و تکرار آن یکسان نیستند"); return; }
       if (form.pass.length < 6) { setError("رمز عبور باید حداقل ۶ کاراکتر باشد"); return; }
@@ -66,7 +105,7 @@ function LoginForm() {
       // customers only, so it stays a phone.
       const body = tab === "login"
         ? { identifier: form.phone.trim(), password: form.pass }
-        : { name: form.name.trim(), phone: form.phone, password: form.pass };
+        : { name: form.name.trim(), phone: form.phone, password: form.pass, code: form.code };
       const data = await fetchJson<{ user?: { isStaff?: boolean } }>(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,6 +134,22 @@ function LoginForm() {
     boxSizing: "border-box", display: "block", marginBottom: 14,
   };
 
+  // Sign-up in its customer form, and which of its two steps is on screen.
+  const signUp = tab === "register" && !staff;
+  const askingForCode = signUp && signUpStep === "phone";
+  const detailsStep  = signUp && signUpStep === "details";
+
+  // The six-digit code from the SMS — same shape as /reset-password's box.
+  const codeInp = () => (
+    <input
+      value={form.code}
+      onChange={e => s("code", toLatin(e.target.value).replace(/\D/g, "").slice(0, 6))}
+      inputMode="numeric" dir="ltr" autoComplete="one-time-code"
+      placeholder="------"
+      style={{ ...base, textAlign: "center", letterSpacing: 6, fontSize: "1.1rem" }}
+    />
+  );
+
   // Name input — normal RTL
   const nameInp = () => (
     <input value={form.name} onChange={e => s("name", e.target.value)}
@@ -105,18 +160,26 @@ function LoginForm() {
   // conversion for the team, a phone keypad for a customer. Either way the
   // server reads the value's own shape, so a wrong guess here costs nothing
   // but a keyboard.
-  const identifierInp = () => (
-    <input
-      value={form.phone}
-      onChange={e => s("phone", staff ? e.target.value : toLatin(e.target.value))}
-      type={staff ? "email" : "tel"}
-      inputMode={staff ? "email" : "tel"}
-      dir="ltr" lang="en"
-      autoComplete={staff ? "email" : "tel"}
-      placeholder={staff ? "name@rasamap.ir" : "09123456789"}
-      style={{ ...base, textAlign: "left" }}
-    />
-  );
+  const identifierInp = () => {
+    // Once a code has been sent, the number is what that code belongs to.
+    // Editing it here would only produce "no code found for this number" a
+    // moment later, so the field goes read-only and the way back is the
+    // "wrong number" button under the form.
+    const locked = detailsStep;
+    return (
+      <input
+        value={form.phone}
+        onChange={e => s("phone", staff ? e.target.value : toLatin(e.target.value))}
+        readOnly={locked}
+        type={staff ? "email" : "tel"}
+        inputMode={staff ? "email" : "tel"}
+        dir="ltr" lang="en"
+        autoComplete={staff ? "email" : "tel"}
+        placeholder={staff ? "name@rasamap.ir" : "09123456789"}
+        style={{ ...base, textAlign: "left", ...(locked ? { opacity: 0.6, cursor: "default" } : {}) }}
+      />
+    );
+  };
 
   // Password input with show/hide toggle + forced Latin
   const passInp = (
@@ -179,24 +242,40 @@ function LoginForm() {
               sign-up tab simply does not exist in that mode. */}
           <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
             {(staff ? (["login"] as const) : (["login", "register"] as const)).map(t => (
-              <button key={t} onClick={() => { setTab(t); setError(""); }} style={{ flex: 1, padding: "14px", border: "none", background: "none", color: tab === t ? accent : "var(--text-muted)", fontFamily: "inherit", fontSize: "0.88rem", fontWeight: tab === t ? 700 : 400, cursor: "pointer", borderBottom: `2px solid ${tab === t ? accent : "transparent"}`, transition: "all 0.2s" }}>
+              <button key={t} id={`tab-${t}`} onClick={() => switchTab(t)} style={{ flex: 1, padding: "14px", border: "none", background: "none", color: tab === t ? accent : "var(--text-muted)", fontFamily: "inherit", fontSize: "0.88rem", fontWeight: tab === t ? 700 : 400, cursor: "pointer", borderBottom: `2px solid ${tab === t ? accent : "transparent"}`, transition: "all 0.2s" }}>
                 {t === "login" ? (staff ? "ورود همکاران" : "ورود") : "ثبت‌نام"}
               </button>
             ))}
           </div>
           {/* یک <form> واقعی، نه فقط چند input کنار هم: بدون آن، زدنِ Enter
               در فیلد رمز هیچ کاری نمی‌کند و کاربر باید حتماً دکمه را بزند. */}
-          <form onSubmit={e => { e.preventDefault(); if (!loading) submit(); }} style={{ padding: "24px" }}>
-            {tab === "register" && nameInp()}
+          <form onSubmit={e => { e.preventDefault(); if (!loading) void (askingForCode ? sendCode() : submit()); }} style={{ padding: "24px" }}>
+            {notice && detailsStep && (
+              <div style={{ background: "rgba(59,123,245,0.08)", border: "1px solid rgba(59,123,245,0.25)", borderRadius: 8, padding: "9px 13px", fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 14, lineHeight: 1.7 }}>{notice}</div>
+            )}
+            {/* Step one asks for the number alone; everything else waits until a
+                code has been sent to it. */}
             {identifierInp()}
-            {passInp(form.pass, v => s("pass", v), "رمز عبور", showPass, setShowPass)}
-            {tab === "register" && passInp(form.confirm, v => s("confirm", v), "تکرار رمز", showConfirm, setShowConfirm)}
+            {detailsStep && codeInp()}
+            {detailsStep && nameInp()}
+            {!askingForCode && passInp(form.pass, v => s("pass", v), "رمز عبور", showPass, setShowPass)}
+            {detailsStep && passInp(form.confirm, v => s("confirm", v), "تکرار رمز", showConfirm, setShowConfirm)}
             {error && (
               <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 13px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>
             )}
             <button type="submit" disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : accent, border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer", boxShadow: `0 4px 16px ${glow}`, marginBottom: tab === "login" ? 10 : 14 }}>
-              {loading ? "در حال پردازش..." : staff ? "ورود به پنل مدیریت" : tab === "login" ? "ورود به حساب" : "ایجاد حساب"}
+              {loading ? "در حال پردازش..."
+                : staff ? "ورود به پنل مدیریت"
+                : tab === "login" ? "ورود به حساب"
+                : askingForCode ? "ارسال کد تأیید"
+                : "ایجاد حساب"}
             </button>
+            {detailsStep && (
+              <button type="button" onClick={() => { setSignUpStep("phone"); setError(""); setNotice(""); s("code", ""); }}
+                style={{ width: "100%", background: "none", border: "none", color: "var(--text-muted)", fontFamily: "inherit", fontSize: "0.78rem", marginBottom: 4, cursor: "pointer" }}>
+                شماره را اشتباه وارد کردم
+              </button>
+            )}
             {tab === "login" && !staff && (
               <div style={{ textAlign: "center" }}>
                 <Link href="/reset-password" style={{ color: "var(--text-muted)", fontSize: "0.78rem", textDecoration: "none" }}>رمز عبور را فراموش کرده‌اید؟</Link>

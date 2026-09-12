@@ -494,11 +494,13 @@ with rendered tables under `next start`.
 
 ---
 
-## 16. SMS & phone-verified password reset — built, shipped dormant
+## 16. SMS & phone-verified flows — built, shipped dormant
 
-**Decision.** The full SMS layer (Kavenegar) and a phone-OTP password-reset
-flow are implemented and tested, but inert until `KAVENEGAR_API_KEY` is set.
-Nothing about registration, login or the OTP endpoints breaks while it's off.
+**Decision.** The full SMS layer (Kavenegar) and the phone-OTP flows — password
+reset, and since 2026-09-12 sign-up as well — are implemented and tested, but
+inert until `KAVENEGAR_API_KEY` is set. Nothing about registration, login or the
+OTP endpoints breaks while it's off; without a line the code is written to the
+log instead of sent, which is enough for a demo and not enough for production.
 
 **Why it ships disabled, not omitted.** A Kavenegar line needs a paid minimum
 top-up and a verified sender — not worth doing for a capstone demo, and the
@@ -519,14 +521,27 @@ works, and switching it on is one env var + a redeploy. This is the same
   codes, stored only as an HMAC-SHA256 hash keyed by `AUTH_SECRET`, 5-minute
   TTL, single-use, 5-attempt cap, rows older than a day pruned opportunistically.
 - `POST /api/auth/otp/send` + `/verify` — public, rate-limited per phone **and**
-  per IP (`otpSendRateLimit` 3/10 min, `otpSendIpRateLimit` 10/hr,
-  `otpVerifyRateLimit` 10/10 min). `send` responds identically whether or not
-  the number is registered (no account enumeration). `verify` checks the code
-  and sets the new bcrypt hash in one step — no intermediate token — and audits
-  it as `password_reset_self`. `OTP_DEV_ECHO=1` returns the code in the `send`
-  response for local testing (ignored under `NODE_ENV=production`).
+  per IP (`otpSendRateLimit` 3/10 min, `otpSendIpRateLimit` 40/hr,
+  `otpVerifyRateLimit` 10/10 min). `send` takes a `purpose`, and the two
+  purposes read the same row in opposite directions: a `password_reset`
+  responds identically whether or not the number is registered (no account
+  enumeration), while a `register` answers 409 on a number that already has an
+  account — the step that creates the account has to refuse a duplicate anyway,
+  so silence there would buy nothing and would leave someone who mistyped a
+  digit waiting for a code that was never coming. `verify` is password-reset
+  only: it checks the code and sets the new bcrypt hash in one step — no
+  intermediate token — and audits it as `password_reset_self`. `OTP_DEV_ECHO=1`
+  returns the code in the `send` response for local testing (ignored under
+  `NODE_ENV=production`).
 - `/reset-password` — a 3-step page (phone → code + new password → done), linked
   from `/login` as «رمز عبور را فراموش کرده‌اید؟».
+- `POST /api/auth/register` — takes the six-digit `code` alongside name, phone
+  and password, and creates nothing until `verifyOtp(phone, "register", code)`
+  passes. The duplicate-phone check runs *before* the code is spent, so being
+  told a number is taken does not cost the caller their one-use code. The code
+  is consumed by the register call itself, so there is no window in which a
+  number is verified but no account exists. `/login`'s sign-up tab is two steps:
+  number → code + name + password.
 - Register hook — a fire-and-forget welcome SMS after `prisma.user.create`;
   it can never fail the sign-up.
 
@@ -535,9 +550,13 @@ optionally `KAVENEGAR_SENDER` / `KAVENEGAR_OTP_TEMPLATE`) in `.env`, redeploy.
 No code change: the welcome SMS and the reset flow start delivering
 immediately. `.env.example` documents every knob.
 
-**Verified.** Tests (part of the 71): an unknown phone gets a generic 200 and
-no code; a full send → verify → login with the new password succeeds; a wrong
-code is rejected; the per-phone send limit returns 429 with `Retry-After`.
+**Verified.** Tests: an unknown phone gets a generic 200 and no code; a full
+send → verify → login with the new password succeeds; a wrong code is rejected;
+the per-phone send limit returns 429 with `Retry-After`. For sign-up: a register
+without a code creates nothing (checked by asking the sign-in endpoint, not by
+trusting the refusal); a wrong code is rejected and the right one still works
+afterwards; a `register` code cannot be spent on a password reset; one code
+cannot open two accounts; and `otp/send` for a taken number issues no row.
 
 ---
 
@@ -1515,9 +1534,10 @@ test driver needs. `test/browser.mjs` is 359 lines: launch, navigate, wait,
 fill, click, screenshot. It borrows the harness `npm test` already uses —
 production build, isolated database, own port (§22b) — so `npm run test:e2e`
 reseeds `prisma/e2e.db`, builds into `.next-e2e/`, serves on 3200 and runs
-eight flows: catalogue and filter, unpublished rows staying hidden, sign-in,
-a rejected sign-in, the contact number behind that sign-in, submitting a
-listing, the admin door refusing a customer, and the catalogue at 390px.
+nine flows: catalogue and filter, unpublished rows staying hidden, sign-in,
+a rejected sign-in, the two-step sign-up with its phone code (§16), the contact
+number behind that sign-in, submitting a listing, the admin door refusing a
+customer, and the catalogue at 390px.
 
 **Failures write a screenshot,** and that is most of the value. "Expected a
 card, found none" is nearly useless; a picture of what the browser actually had

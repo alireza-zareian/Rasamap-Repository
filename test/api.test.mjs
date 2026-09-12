@@ -36,7 +36,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows } from "./helpers.mjs";
+import { api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows, registerUser } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
 
@@ -516,7 +516,7 @@ test("GET /api/stats returns 200", async () => {
 test("register rejects a short password", async () => {
   const { status } = await api("/api/auth/register", {
     method: "POST",
-    body: { name: "Test User", phone: randomPhone(), password: "123" },
+    body: { name: "Test User", phone: randomPhone(), password: "123", code: "123456" },
   });
   assert.equal(status, 400);
 });
@@ -524,7 +524,7 @@ test("register rejects a short password", async () => {
 test("register rejects a non-Iranian phone number", async () => {
   const { status } = await api("/api/auth/register", {
     method: "POST",
-    body: { name: "Test User", phone: "12345", password: "secret123" },
+    body: { name: "Test User", phone: "12345", password: "secret123", code: "123456" },
   });
   assert.equal(status, 400);
 });
@@ -533,11 +533,7 @@ test("register then login: happy path sets a session cookie", async () => {
   const ip = uniqueIp();
   const phone = randomPhone();
 
-  const reg = await api("/api/auth/register", {
-    method: "POST",
-    ip,
-    body: { name: "New User", phone, password: "secret123" },
-  });
+  const reg = await registerUser({ name: "New User", phone, ip });
   assert.equal(reg.status, 200, JSON.stringify(reg.json));
   assert.ok(tokenFromSetCookie(reg), "register should set a session cookie");
 
@@ -654,6 +650,86 @@ test("otp/send + otp/verify resets the password; the new one then logs in", asyn
   });
   assert.equal(login.status, 200);
   assert.ok(tokenFromSetCookie(login));
+});
+
+// ── Sign-up behind a phone code (card B7) ─────────────────────────
+
+test("register without a code is refused and creates nothing", async () => {
+  const phone = randomPhone();
+  const { status } = await api("/api/auth/register", {
+    method: "POST", ip: uniqueIp(),
+    body: { name: "No Code", phone, password: "secret123" },
+  });
+  assert.equal(status, 400);
+
+  // The account must not exist. Asking the sign-in endpoint is the honest
+  // check: a 401 here is what a phone with no account answers.
+  const login = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { phone, password: "secret123" } });
+  assert.equal(login.status, 401, "an account was created without a verified phone");
+});
+
+test("register with a wrong code is refused", async () => {
+  const phone = randomPhone();
+  const send = await api("/api/auth/otp/send", { method: "POST", ip: uniqueIp(), body: { phone, purpose: "register" } });
+  assert.equal(send.status, 200);
+
+  const bad = await api("/api/auth/register", {
+    method: "POST", ip: uniqueIp(),
+    body: { name: "Wrong Code", phone, password: "secret123", code: "000000" },
+  });
+  assert.equal(bad.status, 400);
+
+  // And the real code still works afterwards — a wrong guess spends an attempt,
+  // not the code.
+  const ok = await api("/api/auth/register", {
+    method: "POST", ip: uniqueIp(),
+    body: { name: "Wrong Code", phone, password: "secret123", code: await recoverOtpCode(phone, "register") },
+  });
+  assert.equal(ok.status, 200, JSON.stringify(ok.json));
+});
+
+test("a sign-up code cannot be spent on a password reset", async () => {
+  const phone = randomPhone();
+  await api("/api/auth/otp/send", { method: "POST", ip: uniqueIp(), body: { phone, purpose: "register" } });
+  const code = await recoverOtpCode(phone, "register");
+
+  // Purpose is part of every lookup, so the reset endpoint cannot see this row.
+  const cross = await api("/api/auth/otp/verify", {
+    method: "POST", ip: uniqueIp(),
+    body: { phone, purpose: "password_reset", code, newPassword: "brandnew1" },
+  });
+  assert.equal(cross.status, 400);
+});
+
+test("a register code is consumed once — the same code cannot open a second account", async () => {
+  const phone = randomPhone();
+  await api("/api/auth/otp/send", { method: "POST", ip: uniqueIp(), body: { phone, purpose: "register" } });
+  const code = await recoverOtpCode(phone, "register");
+
+  const first = await api("/api/auth/register", {
+    method: "POST", ip: uniqueIp(), body: { name: "First", phone, password: "secret123", code },
+  });
+  assert.equal(first.status, 200, JSON.stringify(first.json));
+
+  const replay = await api("/api/auth/register", {
+    method: "POST", ip: uniqueIp(), body: { name: "Replay", phone, password: "secret123", code },
+  });
+  // 409 — the duplicate check answers before the spent code does.
+  assert.equal(replay.status, 409);
+});
+
+test("otp/send for sign-up on a taken number is 409 and issues no code", async () => {
+  const phone = "09120000000"; // seeded user 1
+  const before = await countOtpRows(phone, "register");
+  const { status } = await api("/api/auth/otp/send", {
+    method: "POST", ip: uniqueIp(), body: { phone, purpose: "register" },
+  });
+  // Sign-up does not hide a taken number: the step that creates the account
+  // has to refuse it anyway, and silence would leave someone who mistyped a
+  // digit waiting for a code that was never coming. The per-phone ceiling is
+  // what bounds the abuse.
+  assert.equal(status, 409);
+  assert.equal(await countOtpRows(phone, "register"), before, "a code was issued for a number that already has an account");
 });
 
 test("otp/send is rate limited per phone", async () => {
@@ -1665,7 +1741,7 @@ test("a login over plain HTTP does not mark the session cookie Secure", async ()
   // this file reset fixture passwords, and this test is about the cookie's
   // flags, not about who owns it.
   const phone = randomPhone();
-  const reg = await api("/api/auth/register", { method: "POST", body: { name: "Cookie Test", phone, password: "secret123" } });
+  const reg = await registerUser({ name: "Cookie Test", phone });
   assert.equal(reg.status, 200, JSON.stringify(reg.json));
 
   const cookie = (reg.headers.getSetCookie?.() ?? []).join("; ");
@@ -1677,11 +1753,7 @@ test("a login over plain HTTP does not mark the session cookie Secure", async ()
 
 test("a login behind an HTTPS proxy does mark the session cookie Secure", async () => {
   const phone = randomPhone();
-  const reg = await api("/api/auth/register", {
-    method: "POST",
-    headers: { "x-forwarded-proto": "https" },
-    body: { name: "Cookie Test TLS", phone, password: "secret123" },
-  });
+  const reg = await registerUser({ name: "Cookie Test TLS", phone, headers: { "x-forwarded-proto": "https" } });
   assert.equal(reg.status, 200, JSON.stringify(reg.json));
   const cookie = (reg.headers.getSetCookie?.() ?? []).join("; ");
   assert.match(cookie, /Secure/i);

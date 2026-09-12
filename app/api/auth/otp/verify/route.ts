@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { otpVerifyRateLimit, resetAccountAttempts } from "@/lib/auth/rate-limit";
 import { rateLimited } from "@/lib/api-rate-limit";
-import { verifyOtp } from "@/lib/otp";
+import { verifyOtp, otpErrorMessage } from "@/lib/otp";
 import { persistAudit } from "@/lib/auth/audit";
 import { prisma } from "@/lib/db/client";
 import { withApiLog } from "@/lib/api-log";
@@ -17,13 +17,6 @@ const Schema = z.object({
   code:        z.string().regex(/^\d{6}$/, "کد باید ۶ رقم باشد"),
   newPassword: z.string().min(6).max(128),
 });
-
-const OTP_ERROR: Record<string, string> = {
-  not_found:         "کدی برای این شماره پیدا نشد. دوباره درخواست کد بدهید.",
-  expired:           "کد منقضی شده است. دوباره درخواست کد بدهید.",
-  too_many_attempts: "تعداد تلاش‌ها بیش از حد مجاز است. دوباره درخواست کد بدهید.",
-  mismatch:          "کد وارد شده نادرست است.",
-};
 
 // POST /api/auth/otp/verify — finish a phone-verified password reset (public)
 async function POSTHandler(req: NextRequest) {
@@ -44,7 +37,7 @@ async function POSTHandler(req: NextRequest) {
 
   const check = await verifyOtp(phone, purpose, code);
   if (!check.ok) {
-    return NextResponse.json({ error: OTP_ERROR[check.reason] ?? "کد نامعتبر است" }, { status: 400 });
+    return NextResponse.json({ error: otpErrorMessage(check.reason) }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({ where: { phone }, select: { id: true } });

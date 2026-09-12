@@ -137,6 +137,21 @@ export async function recoverOtpCode(phone, purpose = "password_reset") {
 }
 
 /** How many unconsumed codes exist for a phone — used to prove none was issued. */
+/**
+ * Open an account the way the sign-up screen does: ask for a code on the
+ * number, read it back out of the store, and register with it.
+ *
+ * Registration has needed a verified phone since card B7, so every test that
+ * just wants *an account* goes through here rather than repeating three calls.
+ * Returns the register response, so a caller can still assert on its cookie.
+ */
+export async function registerUser({ name = "Test User", phone, password = "secret123", ip, headers } = {}) {
+  const send = await api("/api/auth/otp/send", { method: "POST", ip, headers, body: { phone, purpose: "register" } });
+  if (send.status !== 200) return send;
+  const code = await recoverOtpCode(phone, "register");
+  return api("/api/auth/register", { method: "POST", ip, headers, body: { name, phone, password, code } });
+}
+
 export async function countOtpRows(phone, purpose = "password_reset") {
   const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
   const prisma = new PrismaClient({ adapter });
