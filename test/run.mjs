@@ -86,7 +86,13 @@ try {
     process.exit(1);
   }
   step("run tests");
+  // Two files, two runs, in this order and never in parallel: the importer
+  // tests write rows into the same database the API tests count.
   execSync("node --test --test-reporter=spec test/api.test.mjs", {
+    stdio: "inherit",
+    env: { ...env, TEST_BASE_URL: BASE },
+  });
+  execSync("node --test --test-reporter=spec test/sync.test.mjs", {
     stdio: "inherit",
     env: { ...env, TEST_BASE_URL: BASE },
   });

@@ -125,6 +125,18 @@ model Billboard {
   structureCode String?
   scrapedAt     String?
 
+  // What the source last said about this row, field by field
+  // (prisma/sync-scraped.ts). It is the third side of a three-way merge: a
+  // column whose current value still equals its snapshot is the source's to
+  // update, and one that has drifted from it was edited by an admin and is
+  // never overwritten. Null until the row has been through one sync.
+  sourceSnapshot Json?
+
+  // When the row stopped appearing in the source feed. A vanished listing is
+  // marked, never deleted — reviews, contact requests and admin edits hang off
+  // it. Cleared if it comes back.
+  missingSince DateTime?
+
   ownerId Int?
   owner   Owner? @relation(fields: [ownerId], references: [id])
 
@@ -170,6 +182,22 @@ model Billboard {
   @@index([city, type])
   @@index([type, price])
   @@map("billboards")
+}
+
+// ── SourceTombstone ────────────────────────────────────────────
+// A crawler row this database deliberately does not have.
+//
+// The nightly import (prisma/sync-scraped.ts) inserts anything the feed has
+// and the database does not — which, without this table, would resurrect every
+// duplicate `db:dedupe` merged away and every scraped row an admin deleted, one
+// night after the decision. A tombstone is that decision, written down.
+model SourceTombstone {
+  slug      String   @id
+  reason    String // dedupe | admin_delete | first_sync
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@map("source_tombstones")
 }
 
 // No Reservation model by design. Rasamap is a directory: it does not own the

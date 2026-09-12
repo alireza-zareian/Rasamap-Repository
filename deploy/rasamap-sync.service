@@ -1,0 +1,16 @@
+[Unit]
+Description=Rasamap scraped-data sync
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=rasamap
+WorkingDirectory=/srv/rasamap
+EnvironmentFile=/etc/rasamap/env
+# Reads scraper/data/billboards.json from the working tree and merges it into
+# the database. It does NOT crawl and it does NOT fetch: the crawler runs in CI
+# (.github/workflows/scrape.yml) and commits its output, so whatever `git pull`
+# the deploy does is what this sees. Keeping the two apart means a blocked
+# source site, a rate limit or a crawler crash can never take the site down —
+# the worst case is that the feed is as old as the last successful crawl.
+ExecStart=/usr/bin/npm run db:sync-scraped -- --apply

@@ -21,6 +21,7 @@
     "db:reset-coords": "tsx prisma/reset-coordinates.ts",
     "db:export-unresolved": "tsx prisma/export-unresolved.ts",
     "db:backfill-coords": "tsx prisma/backfill-coordinates.ts",
+    "db:sync-scraped": "tsx prisma/sync-scraped.ts",
     "db:studio": "prisma studio",
     "images:variants": "python3 scripts/build-image-variants.py",
     "images:check": "node scripts/check-images.mjs",

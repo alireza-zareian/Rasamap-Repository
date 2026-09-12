@@ -1673,6 +1673,89 @@ hover, and the two Azerbaijans printed on top of each other otherwise.
 
 ---
 
+## 33. A nightly import that cannot undo a person
+
+**Decision.** The crawler's output is merged into the live database by
+`prisma/sync-scraped.ts`, on a systemd timer, using a three-way merge against a
+per-row snapshot of what the source last said. It is dry-run by default and
+never deletes.
+
+**The problem it solves is not scheduling.** The data was collected once and
+then frozen, because the only path from `scraper/data/billboards.json` into the
+database was `prisma db seed` — a full rebuild. On a live database that would
+take the admin's corrections, the reviews and the submitted listings with it, so
+nobody ever ran it twice, and a product whose claim is "one up-to-date view"
+was serving a snapshot of one afternoon.
+
+The hard part is that a row has two authors. The feed wrote it; an admin
+corrected it. An importer that simply writes the feed's values silently undoes
+every correction — worse than stale data, because nothing shows that it
+happened.
+
+**The merge.** Each row carries `sourceSnapshot`: what the feed said at the last
+sync. Every field is then decided by three values rather than two.
+
+| row vs snapshot | feed vs snapshot | outcome |
+|---|---|---|
+| equal | changed | the feed writes — nobody had touched this field |
+| differs | changed | an admin owns it; the feed never writes, and the run reports the disagreement |
+| — | unchanged | nothing happens |
+
+A row with no snapshot is *adopted*: the snapshot is recorded and nothing is
+written, because without one there is no way to tell a correction from the
+source's own value and guessing wrong erases the correction. A row whose only
+difference is an admin's correction is not written at all — not even to advance
+its snapshot, since Prisma stamps `updatedAt` on any update and a nightly run
+that stamped 3.5k rows would throw the catalogue cache away every night for a
+change nobody could see. The cost is that the same disagreement is reported
+every run, which turns out to be the more useful behaviour: the report's
+"fields an admin owns" line is a standing list of where this site and its
+source no longer agree.
+
+**Absence is a decision too, in both directions.** A row that stops appearing in
+the feed is marked with `missingSince`, never deleted — reviews and contact
+requests reference it. And a row the feed has that the database does not may be
+new, or may be one somebody removed on purpose: a duplicate `db:dedupe` merged
+away, a scraped row an admin deleted. Those are written into
+`source_tombstones` by the code that removes them, and a tombstoned slug is
+never re-inserted. Without that table the first nightly run would have
+resurrected all 17 cross-source duplicates the dedupe had removed — the same
+failure as overwriting a price, spelled with rows instead of fields.
+
+**What the tests found that review did not.**
+- The feed's own `source` values decide which rows the run manages. The first
+  version said "everything except a submitted listing", which quietly adopted
+  every row an admin had *created* (`source: "manual"`) and marked it missing.
+  Reading the sources out of the feed also means a crawl that returns nothing
+  for one site cannot mark that site's whole inventory as vanished.
+- A database with no crawler rows at all — a fresh install — has no history to
+  protect and must take the whole feed, rather than tombstoning it.
+
+**One change in the crawler was required first.** Seven fields are invented
+because the source does not state them (dimensions when the ad omits them,
+faces, age, the decorative map coordinates, rating, review count), and they were
+drawn from the module-level `random`, so every listing got a new value on every
+run. Change detection is impossible against a source that changes for no reason:
+the importer would have rewritten all 3,528 rows nightly. They now come from
+`random.Random(raw["id"])` — same distribution, same value per listing, for as
+long as the listing exists.
+
+**Verified.** Against a copy of the real 3,511-row database: run one adopted
+3,511 rows and wrote nothing; run two reported 3,511 unchanged and 17 refused;
+with a feed that raised two prices, the one an admin had corrected kept the
+admin's value and did not have its `updatedAt` touched, while the untouched row
+took the feed's; a row dropped from the feed was marked and came back unmarked.
+Five tests in `test/sync.test.mjs` run the real script against the test
+database and assert each of those.
+
+**What is not automated.** The crawler still runs in CI
+(`.github/workflows/scrape.yml`) and commits its output; the timer imports
+whatever the working tree holds. Keeping them apart means a blocked source site
+or a crawler crash can never take the site down — the worst case is a feed as
+old as the last successful crawl.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -1716,3 +1799,4 @@ hover, and the two Azerbaijans printed on top of each other otherwise.
 | 2026-09-11 | **Map view, no provider** | §32 — `/explore/map`: 31 provinces as SVG shaded by inventory, pins for a chosen province, filters carried in the URL. `lib/iran-provinces.ts` (42 KB, vendored, geoBoundaries CC BY 4.0) + `lib/geo.ts` + `scripts/build-iran-map.py`. No key, no tiles, no runtime request. MAP-B confirmed and quarantined: `isPlottable()` holds back the ~1-in-6 coordinates that sit far from their own city, and the map states the count it is hiding. No new query — the province counts come from a `groupBy` `getSiteStats` already ran. |
 | 2026-09-09 | **V7 — browser tests** | §31 — `test/browser.mjs`, a 359-line CDP driver over the installed Chrome, no new dependency. `npm run test:e2e`: 8 flows on the production build, screenshots on failure. Found the headless-UA 403, missing image placeholders on four surfaces (`MediaImage`), and Latin digits in prices (`faCompact`/`faNum`). Five flakiness causes diagnosed and fixed. |
 | 2026-09-08 | **V6 — findability** | §30 — titles on the seven pages that had none (three `noindex`); generated Open Graph card with the project's own font, explicit RTL word order and ZWNJ handling; `Product`/`Offer` JSON-LD on media pages with Toman→IRR conversion; sitemap verified at 3,532/3,532 with no unpublished leak; `manifest.ts` + 192/512 icons. |
+| 2026-09-12 | **Nightly data sync** | §33 — `prisma/sync-scraped.ts` + `npm run db:sync-scraped`, three-way merge on `sourceSnapshot`, `missingSince` for vanished rows, `source_tombstones` so a deleted or deduped row never returns, `deploy/rasamap-sync.{service,timer}`. Crawler's invented fields made deterministic per listing so change detection is possible at all. 5 tests in `test/sync.test.mjs`. |

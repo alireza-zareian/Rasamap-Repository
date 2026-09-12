@@ -144,8 +144,10 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 **9b. Run the tests with `npm test` — and never point them at `next dev`**
 
 `npm test` builds and serves a *production* server on :3100 (into `.next-test/`),
-reseeding its own `prisma/test.db`. It finishes in about 37 seconds with 134/134
-passing.
+reseeding its own `prisma/test.db`. It finishes in about 44 seconds: 134 API
+tests, then the 5 importer tests in `test/sync.test.mjs` — two files, run one
+after the other on purpose, because the importer writes rows the API tests
+count.
 
 It used to run `next dev`, and the failure mode is worth knowing because it looks
 like a broken test suite rather than a wrong server mode: one test reads the

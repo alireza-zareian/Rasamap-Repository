@@ -1394,6 +1394,16 @@ def to_rasamap_format(raw: dict, index: int) -> dict:
     price = raw["price"]
     # Use MD5 of raw["id"] — gives a full 32-char hex, stable across runs.
     full_hex = hashlib.md5(raw["id"].encode()).hexdigest()
+    # Seven fields below are invented because the source does not state them
+    # (dimensions when the ad omits them, faces, age, the decorative map
+    # coordinates, rating, review count). Drawing them from the module-level
+    # `random` gave every listing a NEW value on every run, which made the whole
+    # dataset look changed to anything comparing two runs — the database sync
+    # (prisma/sync-scraped.ts) would have rewritten 3,528 rows nightly and
+    # invalidated the catalogue cache for nothing. A generator seeded from the
+    # listing's own id keeps the same distribution and the same value per
+    # listing, for as long as that listing exists.
+    invented = random.Random(raw["id"])
     # Try successive 8-char windows until we find an unused ID (handles rare collisions).
     for offset in range(0, 25, 8):
         _hex_src = full_hex[offset:offset + 8]
@@ -1410,17 +1420,17 @@ def to_rasamap_format(raw: dict, index: int) -> dict:
         "city": raw.get("city", "تهران"),
         "type": raw["type"],
         "status": raw["status"],
-        "width": raw.get("_widthRaw") or random.choice([8, 10, 12, 14, 16]),
-        "height": raw.get("_heightRaw") or random.choice([3, 4, 4.5, 5]),
-        "faces": random.choice([1, 2, 2, 4]),
-        "age": random.randint(1, 15),
+        "width": raw.get("_widthRaw") or invented.choice([8, 10, 12, 14, 16]),
+        "height": raw.get("_heightRaw") or invented.choice([3, 4, 4.5, 5]),
+        "faces": invented.choice([1, 2, 2, 4]),
+        "age": invented.randint(1, 15),
         "price": price,
         "priceWeekly": round(price / 4),
         "priceQuarterly": round(price * 3 * 0.9),
         "priceYearly": round(price * 12 * 0.8),
         "traffic": raw["traffic"],
-        "mapX": random.uniform(5, 95),
-        "mapY": random.uniform(5, 90),
+        "mapX": invented.uniform(5, 95),
+        "mapY": invented.uniform(5, 90),
         "icon": {"billboard": "🏙️", "digital": "📺", "bridge": "🌉", "station": "🚇"}.get(raw["type"], "📋"),
         "images": raw.get("images", []),
         "agency": raw.get("agency") or "اجاره‌دهنده مستقیم",
@@ -1428,8 +1438,8 @@ def to_rasamap_format(raw: dict, index: int) -> dict:
         "description": raw["name"],
         "features": [],
         "nearbyLandmarks": [],
-        "rating": round(random.uniform(3.8, 5.0), 1),
-        "reviewCount": random.randint(1, 40),
+        "rating": round(invented.uniform(3.8, 5.0), 1),
+        "reviewCount": invented.randint(1, 40),
         "source": raw.get("source", "manual"),
         "scrapedAt": raw.get("scrapedAt"),
     }

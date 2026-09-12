@@ -184,8 +184,23 @@ async function main() {
 
   console.log(`\n--apply passed — deleting ${toDelete.length} row(s)...`);
   const ids = toDelete.map((d) => d.row.id);
-  const result = await prisma.billboard.deleteMany({ where: { id: { in: ids } } });
-  console.log(`Deleted ${result.count} row(s).`);
+
+  // Deleting the loser is only half of it: the losing listing is still in the
+  // source feed, so the nightly import would recreate it and the duplicate
+  // would be back by morning (prisma/sync-scraped.ts). The tombstone records
+  // that this row was merged away on purpose, and names the row it merged into.
+  const result = await prisma.$transaction(async (tx) => {
+    const deleted = await tx.billboard.deleteMany({ where: { id: { in: ids } } });
+    for (const d of toDelete) {
+      await tx.sourceTombstone.upsert({
+        where:  { slug: d.row.slug },
+        update: { reason: "dedupe", note: `merged into ${d.keptAs.slug}` },
+        create: { slug: d.row.slug, reason: "dedupe", note: `merged into ${d.keptAs.slug}` },
+      });
+    }
+    return deleted;
+  });
+  console.log(`Deleted ${result.count} row(s), each recorded in source_tombstones.`);
 }
 
 main()

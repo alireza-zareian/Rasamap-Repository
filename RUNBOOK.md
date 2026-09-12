@@ -146,6 +146,23 @@ cp deploy/rasamap-backup.* /etc/systemd/system/
 systemctl daemon-reload && systemctl enable --now rasamap-backup.timer
 ```
 
+**The nightly data import is a separate, later step** — set it up once the site
+is serving and a backup has been taken, never in the same sitting:
+
+```bash
+npm run db:sync-scraped                 # dry run first. READ the report.
+npm run db:sync-scraped -- --apply      # the first run only adopts what is there
+cp deploy/rasamap-sync.* /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now rasamap-sync.timer
+journalctl -u rasamap-sync -n 40        # the next morning: what it wrote
+```
+
+The first run on an existing database writes no field and records what is
+already there as the baseline — that is deliberate, and §33 says why. Anything
+the feed has that the database does not is recorded as deliberately absent
+(`--insert-absent` overrides). The timer fires at 01:30, an hour after the
+backup, so a night that goes wrong can be undone from a backup taken before it.
+
 **Rehearse all of this before renting anything.** A tunnel gives a real HTTPS
 address, a real reverse proxy and a non-localhost host for free, which is every
 condition the §24 bug class needs to show itself:

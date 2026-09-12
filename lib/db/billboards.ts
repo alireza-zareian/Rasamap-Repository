@@ -759,7 +759,26 @@ export async function updateBillboard(id: number, data: BillboardUpdateInput): P
 
 export async function deleteBillboard(id: number): Promise<boolean> {
   try {
-    await prisma.billboard.delete({ where: { id } });
+    // A crawler row deleted here is still in tomorrow's feed, and the nightly
+    // import would put it straight back (prisma/sync-scraped.ts). The tombstone
+    // is the record that this absence was a decision. Rows the crawler does not
+    // own — a submitted listing, a curated one — cannot come back and need none.
+    const row = await prisma.billboard.findUnique({
+      where: { id },
+      select: { slug: true, source: true },
+    });
+    const crawled = row !== null && row.source !== null && row.source !== "listing";
+
+    await prisma.$transaction(async tx => {
+      await tx.billboard.delete({ where: { id } });
+      if (crawled) {
+        await tx.sourceTombstone.upsert({
+          where:  { slug: row.slug },
+          update: { reason: "admin_delete" },
+          create: { slug: row.slug, reason: "admin_delete" },
+        });
+      }
+    });
     revalidateCatalogue();
     return true;
   } catch {

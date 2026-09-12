@@ -1,0 +1,25 @@
+# RASAMAP — a nightly import of whatever the crawler last collected
+#
+#   sudo cp deploy/rasamap-sync.* /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now rasamap-sync.timer
+#   systemctl list-timers rasamap-sync
+#   journalctl -u rasamap-sync -n 40      ← the run's report: what it wrote,
+#                                           and which fields an admin owns
+#
+# Run it once by hand first (`npm run db:sync-scraped`, no --apply) and read the
+# report. On a database that has never synced, the first run only adopts what is
+# already there — see the header of prisma/sync-scraped.ts.
+
+[Unit]
+Description=Nightly Rasamap scraped-data sync
+
+[Timer]
+# An hour after the backup, so a night that goes wrong can be undone from a
+# backup taken before it rather than after.
+OnCalendar=*-*-* 01:30:00
+# A machine that was off at 01:30 still catches up.
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target
