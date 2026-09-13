@@ -1,7 +1,7 @@
 # وضعیت پروژه و آمادگی پروداکشن
 
-> پیش‌تر این محتوا در پنج فایل جدا بود: `docs/STATUS.md`، `docs/STATUS.md`، `STATUS.md`،
-> `STATUS.md` و `STATUS.md`. همه یک پرسش را جواب می‌دادند —
+> پیش‌تر این محتوا در پنج فایل جدا بود: `STATUS.md`، `PLAN.md`، `docs/AUDIT.md`،
+> `docs/next-tasks.md` و `docs/security-audit.md`. همه یک پرسش را جواب می‌دادند —
 > «پروژه کجای کار است و چه چیزی مانده» — و اکنون در همین یک فایل‌اند.
 
 
@@ -157,16 +157,24 @@
 
 ---
 
-### 🚀 فازهای بعدی — باید انجام شوند
+### 🚀 فازهای رابط کاربری — وضعیت نهایی
+
+> U5 تا U9 بسته‌اند: هر چه مانده یا **عمداً** انجام نشده (دلیلش زیر همان مورد نوشته
+> شده) یا به استقرارِ روی دامنهٔ واقعی گره خورده. تنها کارِ باز U10 است که از ابتدا
+> بلندمدت علامت خورده و به حلِ MAP-A/B/C وابسته است.
 
 #### U5 — تصویر انسانی و اعتمادسازی
-> **اولویت: اول** | مطالعات: +45-105% conversion با تصویر انسانی واقعی
 
-- [ ] لندینگ: section «مشتریان می‌گویند» — 3 testimonial card با آواتار رنگی (حرف اول)، نام فارسی، شرکت، نقل‌قول خاص
-- [ ] لندینگ: نوار برند «همراه برندهایی مثل...» — 4-5 لوگوی تایپوگرافی ساده فارسی
-- [ ] لندینگ stats bar: حذف/جایگزینی آمار `۱۲M+ بازدید` hardcoded — با آمار واقعی DB یا حذف آن
-- [ ] About page: بازنویسی کامل — داستان، ارزش‌ها، «چرا رسامپ؟» با 3 ستون مزیت
-- [ ] Footer: placeholder بصری برای Enamad badge
+- [x] لندینگ stats bar: عددِ `۱۲M+ بازدید`ِ hardcoded دیگر در کد نیست. `app/page.tsx` حالا
+      Server Component است و هر چهار عدد را از `getCachedSiteStats()` می‌گیرد — همان
+      پرس‌وجوهای cacheشده‌ای که فهرست استفاده می‌کند — پس عدد در خودِ HTMLِ اولیه و واقعی است
+- [x] About page: `app/about/page.tsx` داستان، «چرا رسامپ؟» و «ارزش‌های ما» را دارد
+- [ ] لندینگ: «مشتریان می‌گویند» و نوار برند — **عمداً انجام نشد.** هر دو یعنی نوشتنِ
+      مشتری و برندی که وجود ندارد. روی پروژه‌ای که داور قرار است صحتش را بسنجد، گواهیِ
+      ساختگی بدترین نوع بدهی است: اگر بپرسد «این سه نفر کی‌اند؟» جوابی نیست. اگر مشتریِ
+      واقعی پیدا شد، با اسم و اجازهٔ خودش اضافه شود — نه پیش از آن
+- [ ] Footer: نشانِ اینماد — **منتفی تا زمانِ استقرار.** اینماد به دامنهٔ ثبت‌شده و هویتِ
+      حقوقی نیاز دارد؛ جای خالیِ یک نشانی که هنوز صادر نشده، ادعای اعتبارِ نداشته است
 
 **فایل‌ها:** `app/page.tsx`, `app/about/page.tsx`
 
@@ -431,9 +439,9 @@ npm run db:studio        # Prisma Studio
 > **Any agent producing a report or thesis text from this repo must repeat this
 > rule to the reader, with the number.**
 
-> Generated from `PRODUCTION_STATUS.md`. Scope filter: bachelor capstone, ~5 days to
-> demo, solo dev, Iran (no paid SaaS), local/private-server demo. Priority beats
-> completeness.
+> Generated from the production-readiness master prompt (`.claude/commands/prod-audit.md`).
+> Scope filter: bachelor capstone, ~5 days to demo, solo dev, Iran (no paid SaaS),
+> local/private-server demo. Priority beats completeness.
 >
 > ⚠️ **2026-09-02 — the product model changed.** The final review removed the whole
 > reservation subsystem: Rasamap does not own the media it lists, so it cannot sell
@@ -478,20 +486,20 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 
 | # | Finding | Severity |
 |---|---------|----------|
-| F1 | **Repo is not a git repository** (`.git` absent) — Phases 11/12 blocked, no history, no rollback. | High |
+| F1 | **Repo is not a git repository** (`.git` absent) — Phases 11/12 blocked, no history, no rollback. → **fixed** — 144 commits on `main`. | High |
 | F2 | No `.env.example` in repo. → **fixed** | Med |
 | F3 | `dev.db` (12 MB + WAL) not in `.gitignore`; would be committed on `git init`, may hold real user data. → **fixed** | High |
-| F4 | `project-ai.zip` (265 KB) tracked at repo root; `.DS_Store` scattered. → gitignore updated; zip deletion needs user OK | Low |
-| F5 | No `RUNBOOK.md` / `RUNBOOK.md`. → **fixed** | Med |
-| F6 | No `LICENSE`. | Low |
-| F7 | No automated tests at all — nothing to run in CI or pre-deploy. | Med (accepted) |
-| F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. | Low |
+| F4 | `project-ai.zip` (265 KB) tracked at repo root; `.DS_Store` scattered. → **fixed** — `.gitignore` updated and neither is tracked. | Low |
+| F5 | No `PRE_DEPLOY_CHECKLIST.md` / `RUNBOOK.md`. → **fixed** | Med |
+| F6 | No `LICENSE`. → **fixed** — MIT. | Low |
+| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 139 tests (`npm test`, on a production build) plus 9 browser flows (`npm run test:e2e`). | Med |
+| F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. → **fixed** — every live count now reads the same (3,536 rows, 3,532 published, 101 cities, 3,020 geocoded, verified against `dev.db`); older figures survive only in dated history entries. The module split is stated in `AGENTS.md` rule 1 and F15: `lib/types.ts` is data-free, `lib/data.ts` holds the dataset and is imported only by `prisma/seed.ts`. | Low |
 | F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |
 | F11 | CSP allows `script-src 'self' 'unsafe-inline'` — the App Router streams its payload through inline scripts (§۲۹). `'unsafe-eval'` is **not** granted, and no map library needs it: the map is SVG drawn from vendored outlines (§۳۲). | Low (accepted) |
-| F12 | No structured logging / rotating log file — only `console.error` guarded by `NODE_ENV`. Professors often ask. | Med |
-| F13 | No DB backup script or documented restore. | Med |
-| F14 | Object-level authz on `/api/reservations/my` and admin routes: verify a user cannot read another user's reservation by ID. | Med — needs check |
+| F12 | No structured logging / rotating log file — only `console.error` guarded by `NODE_ENV`. Professors often ask. → **fixed** — `lib/logger.ts` (one JSON object per line, optional rotated file via `LOG_DIR`), `withApiLog` on every route, and a short reference id surfaced to the user on a 500 (`lib/api-error.ts`). §7. | Med |
+| F13 | No DB backup script or documented restore. → **fixed** — `scripts/backup-db.sh` (`npm run db:backup`, engine-aware since §27, keeps the last 10) and a restore drill in `RUNBOOK.md`. | Med |
+| F14 | Object-level authz on `/api/reservations/my` and admin routes: verify a user cannot read another user's row by ID. → **verified** — covered by tests; a row that is not yours answers 404, not 403, so the response cannot be used to discover which ids exist. | Med |
 | F15 | **`lib/data.ts` mixed pure types + `typeLabels` + a 4 MB `billboards.json` import in one module.** Every page rendering a billboard card imported `typeLabels`, so the bundler pulled the whole module → a **6.7 MB client chunk** of scraped billboard JSON shipped to every visitor (verified in `.next/static/chunks`). Fixed: split into `lib/types.ts` (data-free). Client chunks 7.7 MB → 1.0 MB. | High → **fixed 2026-09-01** |
 
 ### (d) Priority ranking
@@ -518,7 +526,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
       blocks «بعدی» until the step's fields are valid).
 
 #### Tier 2 — infrastructural, cheap now / expensive later
-- [x] T2.1 `RUNBOOK.md` + `RUNBOOK.md` — 30 min
+- [x] T2.1 `PRE_DEPLOY_CHECKLIST.md` + `RUNBOOK.md` — 30 min
 - [x] T2.2 `STATUS.md` 13-layer table — 30 min
 - [x] T2.3 `scripts/backup-db.sh` + `npm run db:backup` (online `.backup`, keeps last 10,
       `BACKUP_DIR` override, cron one-liner in RUNBOOK). Test restore **run and verified**
@@ -591,7 +599,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 
 ### Progress log
 
-- 2026-09-01 — Created `docs/STATUS.md`, `STATUS.md`, `RUNBOOK.md`,
+- 2026-09-01 — Created `PLAN.md`, `docs/AUDIT.md`, `PRE_DEPLOY_CHECKLIST.md`,
   `RUNBOOK.md`, `.env.example`; hardened `.gitignore`; added `/prod-audit` command and
   standing rules to `CLAUDE.md`. No application code changed.
 - 2026-09-01 — `git init`; excluded 712 MB of scraped images + raw dumps; added
@@ -754,33 +762,33 @@ migration or touches product behaviour.
 | 2 | APIs & backend logic | ~20 route handlers, Zod `.safeParse()` everywhere, allowlists for sort/filter, consistent Persian error payloads, rate-limit + auth ordering enforced | Structured request logging; a couple of stub endpoints | **Required** (keep the discipline), **Worth it** (logging) | Already strong. Logging is the main gap professors probe. |
 | 3 | Database & storage | Prisma 7 schema, FKs, unique constraints (`slug`, `phone`, `review`), composite indexes matching query patterns, WAL mode, seed vs demo seed separated | Automated backup + tested restore; denormalised sort keys (`area`, `estimatedViews`) indexed | **Required** (backup + restore doc), **Worth it** (sort correctness) | "Do you have backups?" is a guaranteed question. SQLite `.backup` is one command. |
 | 4 | Auth & permissions | JWT HttpOnly + SameSite=Strict cookies, bcrypt cost 12, timing-safe dummy hash, no user enumeration, `proxy.ts` guard, RBAC `viewer<editor<admin<super_admin` | Object-level authz spot-check; password reset flow (none exists) | **Required** (authz check), **Worth it** (reset), **Overkill** (email verification) | Being logged in ≠ authorised for a given row — must verify. No email service in Iran → reset is a stretch. |
-| 5 | Hosting & deployment | Runs with `npm run build && npm start`; security headers + HSTS in `next.config.ts` | Deterministic documented deploy steps; env separation doc | **Required** | `RUNBOOK.md` + `RUNBOOK.md` cover this. Cheap, expected. |
+| 5 | Hosting & deployment | Runs with `npm run build && npm start`; security headers + HSTS in `next.config.ts` | Deterministic documented deploy steps; env separation doc | **Required** | `PRE_DEPLOY_CHECKLIST.md` + `RUNBOOK.md` cover this. Cheap, expected. |
 | 6 | Cloud & compute | Single Node process, single SQLite file | Nothing | **Overkill** | Capstone demo. No cloud compute needed; say so. |
-| 7 | CI/CD & version control | **Not a git repo yet**; `.github/` folder present but unused | `git init`, `main` branch discipline, tag for presentation; CI only if tests exist | **Required** (git), **Overkill** (CI) | No history = no rollback and a bad portfolio look. CI has nothing to run — no test suite. |
+| 7 | CI/CD & version control | Git repo, 144 commits on `main`, one behaviour change per commit; `.github/workflows/scrape.yml` runs the crawler | A tag for the presentation; a CI job that runs `npm test` | **Required = already met** (git), **Worth it** (tag), **Overkill** (full CI) | History and rollback exist. There is a suite to run now, but wiring CI for a single-author capstone buys little over running `npm test` before a commit. |
 | 8 | Security & row-level security | CSP + security headers, bot-UA blocking, input validation, ORM-only (no string SQL), per-user listing scoping, upload magic-byte validation, anti-scraping limits, `npm` lockfile committed | Per-user data-isolation spot-check across all `[id]` routes; `npm audit` run; `LICENSE` | **Required** | Change-an-ID test and a dependency audit are quick and high-signal. |
 | 9 | Rate limiting | Sliding-window per-IP/per-user on login, register, public API, admin API; lockout + audit entry on breach | Persistence across restart (in-memory today) | **Required = already met**; persistence is **Overkill** | Single instance; a restart clearing counters is acceptable and disclosed. |
 | 10 | Caching & CDN | `Cache-Control: max-age + stale-while-revalidate` on public billboard API; Next static optimisation; font preload | Response compression config; fragment/page caching; image WebP+resize | **Worth it** (compression, image resize), **Overkill** (CDN, cache server) | Next/Node gzip is basically free. A CDN for a demo is pointless. |
 | 11 | Load balancing & scaling | None | Horizontal scaling, connection pooling beyond SQLite | **Overkill** | SQLite + single instance is a deliberate, defensible capstone choice. First bottleneck under load = single-writer lock on listing POSTs; name it, don't fix it. |
-| 12 | Error tracking & logs | `console.error` guarded by `NODE_ENV`, in-memory audit ring buffer (500 entries) for admin actions | Structured JSON logs to a rotating file, request/error reference IDs surfaced to users, audit trail persisted | **Worth it** (self-hosted structured logs + reference ID), **Overkill** (Sentry/paid) | The in-code equivalent of error tracking. Directly answers an examiner question. |
+| 12 | Error tracking & logs | One JSON object per log line (`lib/logger.ts`), `withApiLog` on every route, a short reference id shown to the user on a 500 and logged with the stack, audit trail persisted to `audit_logs`, optional rotated file via `LOG_DIR` | Dashboards / alerting | **Required = already met**, **Overkill** (Sentry/paid, LGTM stack) | The in-code equivalent of error tracking, and it directly answers an examiner question. Dashboards are the deployment layer; the format is built for them but nothing is wired. §7 + §7a. |
 | 13 | Availability & recovery | None documented | Backup schedule, restore procedure, rollback plan, uptime check | **Required** (backup + `RUNBOOK.md` rollback), **Overkill** (uptime monitor for a non-public demo) | Recovery story must exist on paper. External uptime pinging is moot if it is not public. |
 
 ### What was changed, by layer
 
-- **L3 / L13 — recovery:** `RUNBOOK.md` + `RUNBOOK.md` added. Backup script
-  + tested restore: _pending (PLAN T2.3)._
+- **L3 / L13 — recovery:** `RUNBOOK.md` + `PRE_DEPLOY_CHECKLIST.md` added. `scripts/backup-db.sh`
+  (`npm run db:backup`) plus a restore drill that was actually run, both in `RUNBOOK.md`.
 - **L5 / L7 — deploy & git:** `.env.example` added; `.gitignore` hardened to exclude
-  `*.db*`, archives and logs and to keep `.env.example`. `git init` + first commit:
-  _pending user approval (PLAN T1.3)._
-- **L8 — security:** `npm audit` + object-level authz spot-check: _pending (PLAN T2.5,
-  T2.6)._ `LICENSE`: _pending (PLAN T2.7)._
-- **L12 — logs:** minimal structured logger + user-facing error reference ID: _pending
-  (PLAN T2.4)._
-- **L1 / L2 — front-end & API:** "try to break it" pass: _pending (PLAN T1.5)._ U7 bug
-  fixes: done (PLAN T1.6).
-- **Layers 6, 11:** consciously left empty — documented as Overkill above; to be stated
-  in the presentation summary as deliberate, justified omissions.
+  `*.db*`, archives and logs and to keep `.env.example`. The repo is now under git — 144
+  commits on `main`. Deployment surface prepared and mostly proven: §28.
+- **L8 — security:** `npm audit` triaged (see the advisory section above), object-level
+  authz covered by tests, `LICENSE` added (MIT).
+- **L12 — logs:** `lib/logger.ts` + `withApiLog` on every route + a user-facing error
+  reference id (`lib/api-error.ts`), audit lines persisted to `audit_logs`. §7.
+- **L1 / L2 — front-end & API:** "try to break it" pass done, and it is now automated: 139
+  tests on a production build plus 9 browser flows (§31). U7 bug fixes: done.
+- **Layers 6, 11:** consciously left empty — documented as Overkill above; stated in the
+  presentation summary as deliberate, justified omissions.
 
-_Last updated: 2026-09-01._
+_Last updated: 2026-09-13 (۲۲ شهریور ۱۴۰۵)._
 
 ---
 

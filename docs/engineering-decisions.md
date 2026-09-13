@@ -9,8 +9,8 @@ Format of each record: **Decision · Context · Structure it produces · Why her
 Where it applies · How it's verified**.
 
 Companion docs: [`architecture.md`](./architecture.md) (data-flow model),
-[`api.md`](./api.md) (endpoint reference), [`STATUS.md`](./STATUS.md) (13-layer
-production assessment), [`STATUS.md`](./STATUS.md).
+[`api.md`](./api.md) (endpoint reference), and [`STATUS.md`](./STATUS.md) — project
+state, the 13-layer production assessment and the security audit, all in one file.
 
 ---
 
@@ -174,7 +174,15 @@ minutes. Benchmark: `BENCH_SINGLE_IP=1` shows 60 requests then `429`.
 
 ---
 
-## 5. Concurrency & correctness — the reservation flow
+## 5. Concurrency & correctness — the one non-idempotent write
+
+> **This record is written about the reservation flow, which §17 removed.** It is kept
+> because the *technique* is the answer to the concurrency question and is still in
+> force — it simply moved. The one non-idempotent write in the product is now
+> `POST /api/listings`, and it is guarded the same way: the check and the insert run in
+> one transaction, with a partial unique index on `(submittedById, name, city)` as the
+> DB-level floor and an opt-in `Idempotency-Key` on top (`lib/idempotency.ts`).
+> Read the paragraphs below as the reasoning; read §17 for why the flow itself went away.
 
 **Decision.** The overlap check and the insert run inside one
 `prisma.$transaction`. `POST` responses are safe to retry (planned:
@@ -195,9 +203,11 @@ double-book in front of a reviewer would be the worst failure.
 `Idempotency-Key` table + a `Reservation(billboardId,userId,startDate,endDate)`
 unique constraint as a DB-level floor).
 
-**Verified.** Test: **10 identical concurrent POSTs → exactly one 201, nine
-409s**. Under write load the first hard limit is SQLite's single-writer lock —
-named, not hidden.
+**Verified.** Test: **10 identical submissions fired together → exactly one row.**
+The test now drives `POST /api/listings`, because that is where the non-idempotent
+write lives; it deliberately sends no `Idempotency-Key`, so the unique index is the
+only thing between a double-click and a duplicate. Under write load the first hard
+limit is SQLite's single-writer lock — named, not hidden.
 
 ---
 
@@ -1780,12 +1790,12 @@ old as the last successful crawl.
 | 2026-09-02 | Logging to file | `auditLog()` routes through `logger`; `LOG_DIR` → rotated `app.log`. `docs/engineering-decisions.md` §7a: why no Docker/ELK/Sentry yet + the path to it. |
 | 2026-09-02 | SMS (dormant) | §16 — Kavenegar adapter + `otp_codes` + `/api/auth/otp/{send,verify}` + `/reset-password` page + welcome SMS. Inert until `KAVENEGAR_API_KEY`. |
 | 2026-09-02 | Efficiency | Admin billboards list: DB-side filter/sort/paginate instead of loading all 3.5k rows. Overview "co-located clusters" stat O(n²) → O(n) grid bucket. Lint clean (0 warnings). |
-| 2026-09-02 | Data cleanup + defense prep | `db:dedupe --apply` → 17 cross-source duplicate rows removed (3549 → 3532; pre-dedupe backup kept). `LOG_DIR` set. `defense.md` (screenshot + talking-point checklist) and `defense.md` (A− rubric) added. |
+| 2026-09-02 | Data cleanup + defense prep | `db:dedupe --apply` → 17 cross-source duplicate rows removed (3549 → 3532; pre-dedupe backup kept). `LOG_DIR` set. `docs/presentation-prep.md` (screenshot + talking-point checklist) and `docs/self-assessment.md` (A− rubric) added. |
 | 2026-09-02 | **Final review — business model** | Reservation subsystem removed (§17). Rasamap is a directory: buyers get the owner's phone, owners pay to be listed. Two plans + a manual, auditable payment confirmation (§18). |
 | 2026-09-02 | **Final review — correctness** | Timing-attack padding hash was not a valid bcrypt hash (0 ms vs 250 ms — enumeration by stopwatch); analytics reported 100% image coverage instead of 57%; `hasImages` drifted on admin image edits; unapproved listings were readable by URL; both catalogue sorts ordered by the wrong column (§21). All fixed, each with a regression test. |
 | 2026-09-02 | **Final review — honesty** | Fake scraper panel (canned log lines, hardcoded "45 processed") replaced with a read-only status view fed by real counts. Listing photo upload made real and hardened (§19). Ratings now recomputed from the reviews table. |
 | 2026-09-02 | **Final review — anti-scraping** | Bot UAs blocked on pages as well as the API, per-IP page budget, hotlink protection, page cap 100 → 48, dead bulk `pins` endpoint and unused Leaflet dependencies removed (§20). |
-| 2026-09-02 | **Performance — demo mode** | §22 — measured `next dev` at 9.7 s CPU vs `next start` at 0.1 s for the same ten routes (~97×). Added `npm run demo`. Red-flagged in README, `docs/STATUS.md`, `defense.md`, `defense.md`, `RUNBOOK.md`, `docs/STATUS.md`, `CLAUDE.md` and `docs/roadmap.html` because it is the rule most easily forgotten. |
+| 2026-09-02 | **Performance — demo mode** | §22 — measured `next dev` at 9.7 s CPU vs `next start` at 0.1 s for the same ten routes (~97×). Added `npm run demo`. Red-flagged in README, `docs/STATUS.md`, `docs/final-review-notes.md`, `docs/presentation-prep.md`, `RUNBOOK.md`, `PLAN.md`, `CLAUDE.md` and `docs/roadmap.html` because it is the rule most easily forgotten. |
 | 2026-09-02 | **Performance — image weight** | §22a — 1332 fully-opaque PNGs re-encoded to progressive JPEG offline (Pillow): 493 MB → 64 MB (87%), RMSE 2.37/255, dimensions unchanged, 231 transparent PNGs untouched, references rewritten from an explicit map in both DB and seed JSON. `/explore` page image weight 4.0 MB → 1.09 MB. `loading="lazy"` + `decoding="async"` on every thumbnail. |
 | 2026-09-02 | **Performance — always-on animation** | Cursor-parallax and scroll-linked SVG redraw removed from `BackgroundPattern` (vines now draw once on mount); landing page stopped re-rendering on every scroll frame (continuous `scrollY` state → one `scrolled` boolean at a 60 px threshold); decorative animation pauses via `visibilitychange` while the tab is hidden. |
 | 2026-09-07 | **V1 — server-rendered catalogue** | `/explore` and `/` became Server Components reading the DB directly; the query string is the single source of truth for the catalogue. Prices in `/explore` HTML 0 → 24. `/` CPU 16.5 → 1.9 ms (prerendered). `/explore` CPU flat — see the V1 card in `docs/roadmap.html` for why the "SSR is cheaper" premise was half wrong. |

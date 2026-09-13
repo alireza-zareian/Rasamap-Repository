@@ -1,7 +1,7 @@
 # دفاع — خلاصه، آمادگی، بازبینی نهایی و خودارزیابی
 
-> پیش‌تر چهار فایل جدا: `defense.md`، `defense.md`،
-> `defense.md` و `defense.md`. هر چهار برای یک روز نوشته شده بودند.
+> پیش‌تر چهار فایل جدا: `docs/presentation-summary.md`، `docs/presentation-prep.md`،
+> `docs/final-review-notes.md` و `docs/self-assessment.md`. هر چهار برای یک روز نوشته شده بودند.
 >
 > سند تحویلی و اسلایدها جای دیگری‌اند: `docs/thesis/thesis.pdf` و `docs/defense-slides.html`.
 
@@ -115,7 +115,7 @@ Leaflet. یک اسکریپرِ Python هم داده‌ی اولیه را از چ
 - اسکریپتِ نسخه‌ی پشتیبانِ آنلاینِ SQLite (`npm run db:backup`)، نگه‌داشتنِ ۱۰
   نسخه‌ی آخر، با یک بازیابیِ **آزموده‌شده و ثبت‌شده** (شمارشِ ردیف‌ها و
   `PRAGMA integrity_check`).
-- `RUNBOOK.md` و `RUNBOOK.md`: چه چیزی را قبل از هر استقرار چک کنیم،
+- `PRE_DEPLOY_CHECKLIST.md` و `RUNBOOK.md`: چه چیزی را قبل از هر استقرار چک کنیم،
   و اگر اپ خوابید اول/دوم/سوم چه کنیم و چطور در کمتر از دو دقیقه به نسخه‌ی قبلی
   برگردیم.
 - اعتبارسنجیِ fail-closedِ متغیرهای محیطی هنگامِ بالا آمدن (`lib/env.ts`): اگر
@@ -218,11 +218,10 @@ Leaflet. یک اسکریپرِ Python هم داده‌ی اولیه را از چ
 > | Doc | What it carries |
 > |-----|-----------------|
 > | `docs/architecture.md` | the two data paths, kitchen analogy, perf comparison, why it isn't a headless DRF API — **must appear in every reviewer-facing report** |
-> | `docs/engineering-decisions.md` | 16 decision records (Decision / Context / Structure / Why / Where / Verified) + milestone log — the spine of the "what we built and why" chapter |
-> | `defense.md` | defense-ready Persian summary + one-line opener |
-> | `docs/api.md` | the ~28-endpoint HTTP reference (also served at `/api-docs`) |
-> | `STATUS.md` / `docs/STATUS.md` / `STATUS.md` | production-readiness triage, 13-layer assessment, `npm audit` status |
-> | `docs/STATUS.md` | current phase state + the "round two" work list |
+> | `docs/engineering-decisions.md` | 33 decision records (Decision / Context / Structure / Why / Where / Verified) + milestone log — the spine of the "what we built and why" chapter |
+> | `docs/defense.md` | defense-ready Persian summary + one-line opener (this file) |
+> | `docs/api.md` | the 42-endpoint HTTP reference (also served at `/api-docs`) |
+> | `docs/STATUS.md` | production-readiness triage, 13-layer assessment, `npm audit` status, current phase state and the remaining work list |
 > | `README.md` | the narrative intro (why Next.js → API combination → why SQLite) |
 
 ---
@@ -335,11 +334,12 @@ is git-tracked-friendly (images aren't in `.gitignore` there).
    are deployment steps that add no code. The path to add them is written out.
 5. **"What did you leave out and why?"** — §16 (SMS built but dormant — a paid
    line isn't worth it for a demo, one env var switches it on), the P5–P10 /
-   U5–U10 items in `docs/STATUS.md` (Postgres migration, `next/image`, PPR,
-   marketing polish), all deliberate and documented.
-6. **Numbers to have ready:** 3532 billboards, ~28 API endpoints, 57 tests,
+   U5–U10 items in `docs/STATUS.md` (Postgres migration, PPR, map-first explore,
+   fabricated social proof), all deliberate and documented.
+6. **Numbers to have ready:** 3536 billboards (3532 published) across 101 cities,
+   42 API endpoints in 35 route files, 139 automated tests plus 9 browser flows,
    0 lint warnings, 10 CVEs patched, bundle 7.7 MB → 1.0 MB after the
-   `lib/data.ts` split.
+   `lib/data.ts` split, and `next start` vs `next dev` at 0.1 s vs 9.7 s CPU (97×).
 
 ---
 
@@ -641,7 +641,7 @@ bcryptjs بدونِ خطا قبولش می‌کند ولی بلافاصله `fal
 - rate limiter و بافرِ ممیزی **درون‌حافظه‌ای** = تک‌نمونه. برای این deploy درست
   است؛ برای چند نمونه Redis لازم است. در کد و مستندات گفته شده.
 - تست فقط سطحِ API است — تستِ کامپوننت و E2E مرورگر ندارید.
-- `docs/STATUS.md` و `docs/STATUS.md` بخش‌های تاریخیِ مربوط به رزرو را نگه داشته‌اند، با
+- `PLAN.md` و `docs/STATUS.md` بخش‌های تاریخیِ مربوط به رزرو را نگه داشته‌اند، با
   بنرِ هشدار در بالا. **مرجعِ وضعیت فعلی این فایل و `docs/api.md` است.**
 
 ---
@@ -687,9 +687,9 @@ Overall: **A−**
 | **Security** | A | Endpoint-not-UI boundary, RBAC `viewer<editor<admin<super_admin`, JWT HS256 in an HttpOnly SameSite=Strict cookie, bcrypt cost 12 + timing-safe login, Zod `.safeParse()` on every input with sort/filter allowlists, non-spoofable client IP, per-IP + per-user rate limits with humane lockouts, a durable audit log for every admin mutation, fail-closed env validation at boot, generic auth errors (no user enumeration), owner phone numbers behind auth. `npm audit` reviewed, `next` CVEs patched. | No WAF / CAPTCHA / hosted error tracking — out of scope for a self-hostable, no-paid-service project, and the reasoning is documented (§7a). |
 | **Error handling & UX** | A− | Styled Persian 400/403/404/500 pages + a client error boundary, a short reference id on every unexpected 500 (shown to the user, logged with the stack), designed empty/loading/failure states, disabled in-flight buttons, a "try again in N minutes" message on rate-limit. | A few flows still surface a raw server 409 as the first signal (the booking clash guard now pre-empts the main one). |
 | **Observability** | A− | One JSON object per log line, one `api_request` per request, `withApiLog` on every route, audit lines routed through the same logger, optional rotated file via `LOG_DIR`. §7 + §7a explain the deliberate stop point and the path forward. | No dashboards/alerting — that's the deployment layer, and the format is built for it, but it isn't wired. |
-| **Testing** | A− | 71 dependency-free API tests (`node:test` + `fetch` against a real dev server on an isolated DB): validation, allowlists, rate limits, no enumeration **by body or by timing**, upload magic-byte rejection, the approval state machine, object-level authz, the OTP reset flow, sort correctness (each guarded against a vacuous pass). `npm run bench` for load. | API-level only — no component/unit tests, no E2E browser suite. Reasonable for the scope and timeline; worth naming as future work. |
-| **Code quality** | A− | Consistent structure across ~28 routes, single-responsibility modules, `0` lint warnings, no `TODO`/`FIXME`/`@ts-ignore` in the codebase, TypeScript strict. Inline-style rule inflates line counts but that's a deliberate design-system choice. | `page.tsx` files are large (600+ lines) because of inline styles; the admin billboards list was loading all rows and filtering in JS until this pass (now DB-side); one O(n²) stat was replaced with O(n). |
-| **Documentation** | A | `docs/` carries architecture, ~28-endpoint API reference, 16 decision records with a milestone log, a security audit, a production-readiness triage, demo-account sheet, and this prep checklist. README is a readable narrative, not a command dump. | — |
+| **Testing** | A− | 139 dependency-free tests (`node:test` + `fetch` against a real **production** build on an isolated DB): 134 API — validation, allowlists, rate limits, no enumeration **by body or by timing**, upload magic-byte rejection, the approval state machine, object-level authz, the OTP reset flow, sort correctness (each guarded against a vacuous pass) — plus 5 covering the nightly importer's rule that it may never undo a person (§33). On top of that, 9 E2E flows drive the installed Chrome over CDP (§31). `npm run bench` for load. | No component/unit tests, and the browser suite covers the main flows rather than every page. Reasonable for the scope and timeline; worth naming as future work. |
+| **Code quality** | A− | Consistent structure across 35 route files (42 endpoints), single-responsibility modules, `0` lint warnings, no `TODO`/`FIXME`/`@ts-ignore` in the codebase, TypeScript strict. Inline-style rule inflates line counts but that's a deliberate design-system choice. | `page.tsx` files are large (600+ lines) because of inline styles; the admin billboards list was loading all rows and filtering in JS until this pass (now DB-side); one O(n²) stat was replaced with O(n). |
+| **Documentation** | A | `docs/` carries architecture, a 42-endpoint API reference, 33 decision records with a milestone log, a security audit, a production-readiness triage, demo-account sheet, and this prep checklist. README is a readable narrative, not a command dump. | — |
 
 ### Where a stricter grader would push
 

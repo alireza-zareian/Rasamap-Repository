@@ -14,7 +14,7 @@ Zod `.safeParse()`. User-facing error messages are in Persian. This document is
 maintained by hand — update it when a route changes.
 
 This file is also rendered in-app at **`/api-docs`** (self-hosted, no external
-CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](./RUNBOOK.md).
+CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 
 **Auth levels**
 
@@ -148,7 +148,8 @@ enumeration by body **or by timing**), the OTP reset flow, the listing pipeline
 (upload magic-byte validation, plan → status, Idempotency-Key replay),
 object-level authorisation on `/api/listings`, admin RBAC, the approval state
 machine, reviews and the denormalised rating aggregate, analytics coverage
-counts, and the durable audit log. **113 tests.**
+counts, and the durable audit log. **139 tests** (134 API + 5 covering the nightly
+importer), plus 9 browser flows in `npm run test:e2e`.
 
 ---
 

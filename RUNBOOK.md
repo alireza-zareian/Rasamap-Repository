@@ -1,6 +1,6 @@
 # رانبوک — اجرا، استقرار و حساب‌های دمو
 
-> پیش‌تر سه فایل جدا: `RUNBOOK.md`، `RUNBOOK.md` و `RUNBOOK.md`.
+> پیش‌تر سه فایل جدا: `RUNBOOK.md`، `PRE_DEPLOY_CHECKLIST.md` و `docs/demo-accounts.md`.
 
 
 ---
@@ -400,4 +400,4 @@ curl -s -c cookies.txt -X POST http://localhost:3000/api/auth/login \
 curl -s -b cookies.txt http://localhost:3000/api/listings | jq
 ```
 
-See [`api.md`](./api.md) for the full endpoint reference.
+See [`docs/api.md`](./docs/api.md) for the full endpoint reference.

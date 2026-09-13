@@ -987,7 +987,7 @@ sequenceDiagram
 <section class="chapter" id="c8">
   <div class="chead">
     <div class="cn">فصل ۸</div>
-    <div><h3>تاریخچهٔ ساخت</h3><p>۵۸ گام کار، دسته‌بندی‌شده در شش دوره — روی هر دوره کلیک کن تا باز شود</p></div>
+    <div><h3>تاریخچهٔ ساخت</h3><p>۱۰۲ گام کار، دسته‌بندی‌شده در شش دوره — روی هر دوره کلیک کن تا باز شود</p></div>
   </div>
 
   <div class="note info">
@@ -1498,7 +1498,7 @@ sequenceDiagram
   </details>
 
   <details class="fold">
-    <summary>دورهٔ ۳ — طراحی و تجربهٔ کاربری<span class="tag">۱۴ گام · از یک رابط خام تا یک محصولِ قابل‌ارائه — ۱۴ گام</span></summary>
+    <summary>دورهٔ ۳ — طراحی و تجربهٔ کاربری<span class="tag">۱۵ گام · از یک رابط خام تا یک محصولِ قابل‌ارائه — ۱۴ گام</span></summary>
     <div class="foldbody"><div class="phases">
 <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
@@ -1920,7 +1920,7 @@ sequenceDiagram
   </details>
 
   <details class="fold">
-    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۹ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ، رسانه‌های مرتبط و بستن ایرادهای آخر</span></summary>
+    <summary>دورهٔ ۵ — بازبینی نهایی و چرخش مدل کسب‌وکار<span class="tag">۱۰ گام · مرور صفر تا صد، حذف رزرو، ثبت سرنخ، رسانه‌های مرتبط و بستن ایرادهای آخر</span></summary>
     <div class="foldbody"><div class="phases">
 <div class="phase-card is-done">
     <div class="ph-header" onclick="toggle(this)">
@@ -2142,7 +2142,7 @@ sequenceDiagram
   </details>
 
   <details class="fold">
-    <summary>دورهٔ ۶ — آماده‌سازی ارائه<span class="tag">۲ گام · چک‌لیست روز دفاع و پاسخ‌های آمادهٔ داور</span></summary>
+    <summary>دورهٔ ۶ — آماده‌سازی ارائه، و سخت‌سازیِ پس از آن<span class="tag">۴۵ گام · چک‌لیست روز دفاع، سپس مجموعهٔ V (استقرار، CSP، آزمونِ مرورگر)، مجموعهٔ B (ممیزی و رفعِ یافته‌ها) و مجموعهٔ A (دسترس‌پذیری و معماری)</span></summary>
     <div class="foldbody"><div class="phases">
   <!-- ─── MOB3 — sticky theme, harsh rate limit, map referrer ─── -->
   <div class="phase-card is-done">
@@ -3551,6 +3551,45 @@ real admin       -> 401   ← رد شد و به بررسیِ رمز رسید</pr
         انجام می‌شود، نه با صدا زدنِ تابعی که آزمون خودش انتخاب کرده باشد.
         <code>npm test</code>: <b>۱۳۴ + ۵ = ۱۳۹</b>، <code>lint</code> و <code>tsc</code> پاک.
         شرحِ کامل در §۳۳ <code>docs/engineering-decisions.md</code>.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card is-done">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">B8b</div>
+      <div class="ph-title"><h3>مستندات را با کد یکی کردن — و یک اشکالِ سراسری که ادغامِ اسناد جا گذاشته بود</h3><p>سندی که عددِ کهنه می‌گوید، بدتر از سندِ نداشته است: داور آن را راستی‌آزمایی می‌کند</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="note" style="margin-bottom:12px">
+        <span class="t">اشکال از کجا آمد</span>
+        کامیتِ «۲۴ فایل سند به ۱۳ تا» ۱۰۴ ارجاع را خودکار بازنویسی کرده بود. آن بازنویسی
+        <b>خودِ یادداشت‌های تاریخچه را هم</b> عوض کرد، و جمله‌هایی ساخت که خودشان را نقض
+        می‌کنند: «پیش‌تر سه فایل جدا: <code>RUNBOOK.md</code>، <code>RUNBOOK.md</code> و
+        <code>RUNBOOK.md</code>». نامِ اصلی از پیامِ همان کامیت و از نسخهٔ پیش از آن بازیابی شد.
+      </div>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><b>۱۷ خط در ۷ فایل</b> که یک نام را دوبار می‌گفتند، با نامِ واقعیِ همان زمان جایگزین شد — نه با حدس: هر کدام از <code>git show</code>ِ نسخهٔ پیش از ادغام درآمد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>دو ارجاعِ آویزان</b> به فایلی که هرگز در مخزن نبوده (<code>PRODUCTION_AUDIT.md</code>، <code>PRODUCTION_STATUS.md</code>) به جایی که آن متن واقعاً زندگی می‌کند برگشتند: <code>.claude/commands/prod-audit.md</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>دو لینکِ شکسته</b> که هیچ‌کس امتحانشان نکرده بود: <code>RUNBOOK.md</code> به <code>./api.md</code> اشاره می‌کرد (کنارِ خودش، که وجود ندارد) و <code>docs/api.md</code> به <code>./RUNBOOK.md</code>. حالا <b>هر لینکِ نسبیِ همهٔ سندها</b> با یک اسکریپت بررسی می‌شود: صفر شکسته</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>§۵ دربارهٔ کدی حرف می‌زد که §۱۷ حذفش کرده بود</b> — «جریانِ رزرو»، با ارجاع به <code>app/api/reservations/route.ts</code> که دیگر نیست. پاک نشد (استدلالِ همزمانی هنوز جواب است) ولی سرنویس گرفت و <b>شاهدش به جایی که واقعاً اثبات می‌شود</b> منتقل شد: تنها نوشتنِ غیرخودتوانِ محصول حالا <code>POST /api/listings</code> است، با همان الگو</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>خودارزیابیِ دفاع، کارِ خودش را کم می‌شمرد:</b> «۷۱ آزمونِ API» و «مجموعهٔ مرورگری نداریم» — هر دو غلط. <b>۱۳۹ آزمون و ۹ جریانِ مرورگر</b> وجود دارد. عدد ۱۶ ثبتِ تصمیم شد ۳۳، و «۲۸ نقطهٔ پایانی» شد ۴۲</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>جدولِ ۱۳ لایه هنوز می‌گفت «هنوز مخزنِ git نیست» و «آزمونی نیست که در CI اجرا شود».</b> شش یافتهٔ ممیزی (F1، F4، F6، F7، F12، F13، F14) هم باز مانده بودند در حالی که هر هفت‌تا کد و شاهدشان در مخزن هست — هر کدام پیش از بستن، <b>در خودِ کد بررسی شد</b></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><b>و U5 که «باید انجام شود» علامت داشت:</b> عددِ <code>۱۲M+</code>ِ ساختگی مدت‌هاست از کد رفته (لندینگ Server Component است و آمار را از <code>getCachedSiteStats()</code> می‌گیرد) و صفحهٔ «درباره» بازنویسی شده. دو موردِ باقی‌مانده — نظرِ مشتری و نوارِ برند — <b>عمداً بسته شد</b>: هر دو یعنی ساختنِ مشتری‌ای که وجود ندارد</div></div>
+      </div>
+      <div class="proof">
+        <b>چطور راستی‌آزمایی شد:</b> عددهای تازهٔ <code>README</code> از خودِ مخزن خوانده شدند،
+        نه تخمین — نقشهٔ کد با <code>build.py codemap</code> از گرافِ واقعیِ import دوباره ساخته
+        شد (<b>۱۶۲ فایل، ۴۹۳ یال</b>؛ پیش‌تر ۱۳۲ و ۴۰۱ نوشته بود) و شمارشِ سطر و مسیر از همان
+        گراف درآمد. زمانِ اجرا اندازه گرفته شد، نه نقل: <code>npm test</code> = <b>۴۵ ثانیه</b>
+        دیوارِ ساعت (پیش‌تر ۱۷٫۶ ثانیه ادعا شده بود). آمارِ پایگاه داده مستقیم از
+        <code>dev.db</code> پرس‌وجو شد و <b>درست بود</b> (۳٬۵۳۶ در ۱۰۱ شهر، ۳٬۰۲۰ مختصات‌دار).
+        <br><br>
+        <code>tsc</code> پاک، <code>lint</code> صفر هشدار، <code>npm run build</code> موفق،
+        <code>npm test</code> <b>۱۳۴ + ۵ = ۱۳۹ سبز</b> و <code>npm run test:e2e</code>
+        <b>۹ از ۹ سبز</b> (۳۸ ثانیه) — چون همین عددها حالا در پایان‌نامه و اسلایدها نوشته
+        شده‌اند، پس اجرا شدند نه نقل. هیچ کدِ اجرایی در این فاز تغییر نکرد — فقط سند و نقشهٔ کد.
       </div>
     </div>
   </div>
@@ -5033,7 +5072,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۲۱ شهریور ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۲۲ شهریور ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>

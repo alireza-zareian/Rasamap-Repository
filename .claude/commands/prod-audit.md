@@ -464,9 +464,9 @@ so in one or two lines, then proceed as instructed unless I tell you otherwise.
 ## 17. DELIVERABLES
 
 17.1 `docs/STATUS.md` — the triage and prioritised, checkbox-tracked task list.
-17.2 `docs/STATUS.md` — the 13-layer assessment table with verdicts and justifications,
-plus what you changed for each layer.
-17.3 `RUNBOOK.md` and `RUNBOOK.md`.
+17.2 The 13-layer assessment table, in that same file — verdicts, justifications, and
+what you changed for each layer.
+17.3 `RUNBOOK.md` — run and recovery procedures plus the pre-deploy checklist.
 17.4 An updated `README.md` and `.env.example`.
 17.5 A final summary in Persian for the presentation: what the project is, the
 architecture, which production concerns were addressed and how, what was deliberately left
@@ -475,9 +475,9 @@ out and why, and the honest known limitations.
 ## 18. START NOW
 
 18.1 Begin with Phase 0: read `docs/STATUS.md` and `docs/roadmap.html`, read the
-codebase, update `docs/STATUS.md` and `docs/STATUS.md`, show me the prioritised list in Persian,
-and then execute straight through the phases without waiting for me — stopping only under
-rule 0.7.
+codebase, update `docs/STATUS.md` (both the task list and the assessment table), show me
+the prioritised list in Persian, and then execute straight through the phases without
+waiting for me — stopping only under rule 0.7.
 
 ---
 
