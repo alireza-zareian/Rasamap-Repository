@@ -239,8 +239,8 @@ Leaflet. یک اسکریپرِ Python هم داده‌ی اولیه را از چ
 
 ### 1. Screenshots to capture  **[user action]**
 
-Run `npm run dev`, then `npm run db:seed:demo:full` once (idempotent) so every
-screen has realistic data. Accounts are in `RUNBOOK.md`. Capture on a
+Run `npm run demo` (never `npm run dev` — §22), then `npm run db:seed:demo` once
+(idempotent) so every screen has realistic data. Accounts are in `RUNBOOK.md`. Capture on a
 **normal desktop width** and repeat the starred ones on a **phone** (78% of
 Iranian users are mobile — worth a "responsive" slide).
 
@@ -288,7 +288,9 @@ Admin (`RUNBOOK.md` → super-admin):
 - [ ] Admin panel on a **phone** — topbar not overflowing, tabs wrapping ★
 
 Terminal / logs:
-- [ ] The JSON `api_request` lines scrolling in the `npm run dev` terminal
+- [ ] The JSON `api_request` lines scrolling in the `npm run demo` terminal
+      (`next start` logs them the same way — there is no reason to run `dev` on
+      the day, and §22 is the reason not to)
 - [ ] `logs/app.log` after some traffic (LOG_DIR is already set in `.env`) —
       shows `api_request`, an error with a `ref`, and `audit` lines in one file
 
@@ -335,7 +337,7 @@ is git-tracked-friendly (images aren't in `.gitignore` there).
 5. **"What did you leave out and why?"** — §16 (SMS built but dormant — a paid
    line isn't worth it for a demo, one env var switches it on), the P5–P10 /
    U5–U10 items in `docs/STATUS.md` (Postgres migration, PPR, map-first explore,
-   fabricated social proof), all deliberate and documented.
+   an Enamad badge that needs a real domain), all deliberate and documented.
 6. **Numbers to have ready:** 3536 billboards (3532 published) across 101 cities,
    42 API endpoints in 35 route files, 139 automated tests plus 9 browser flows,
    0 lint warnings, 10 CVEs patched, bundle 7.7 MB → 1.0 MB after the
@@ -620,6 +622,7 @@ bcryptjs بدونِ خطا قبولش می‌کند ولی بلافاصله `fal
 | «چرا رزرو آنلاین ندارید؟» | مالکِ رسانه‌ها نیستیم؛ رزروی که ما صادر کنیم الزام‌آور نیست. مدل: فهرست + تماس مستقیم، درآمد از آگهی‌دهنده. §۱۷ |
 | **«این امتیاز ۴.۳ از کجاست؟»** | ⚠️ **مهم‌ترین ریسکِ باقی‌مانده.** داده‌ی نمونه است. سیستمِ نظرِ واقعی کار می‌کند و امتیاز را در تراکنش بازمحاسبه می‌کند؛ کارتِ بدون نظر امتیاز نشان نمی‌دهد. **قبل از اینکه بپرسند خودتان بگویید.** |
 | «اعداد ترافیک واقعی‌اند؟» | تخمین heuristic با برچسبِ «تخمین هوشمند» و پانویس. فرمول را توضیح دهید. |
+| **«این سه مشتری و این پنج برند کی‌اند؟»** | همان دسته‌ی ریسکِ امتیاز — **خودتان اول بگویید.** بخشِ «تجربه مشتریان» و نوارِ برندِ لندینگ دادهٔ نمونه‌اند: سایت تازه‌کار است و مشتریِ واقعی ندارد، ولی یک لندینگِ خالی هم آنچه را محصول قرار است باشد نشان نمی‌دهد. بگویید جای این بخش در محصولِ واقعی با نامِ مشتری و اجازهٔ خودش پر می‌شود. |
 | «پرداخت کجاست؟» | درگاه در دسترس نیست؛ صفحه‌ی جعلی نساختم — ماشین حالتِ واقعی با تأیید دستی. §۱۸ |
 | **«خودتان اسکرپ کردید ولی ضدِ اسکرپ گذاشتید؟»** | تناقض را خودتان بپذیرید: «بله، و دقیقاً چون می‌دانم چقدر آسان است، ادعا نمی‌کنم غیرممکنش کردم — هزینه‌اش را بالا بردم.» |
 | «سخت‌ترین مسئله‌ی همزمانی چه بود؟» | ثبتِ آگهی: `Idempotency-Key` + ایندکسِ یکتای جزئی + تستِ ده درخواستِ همزمان. تاریخچه هم بگویید: این الگو اول روی رزرو بود و با تغییر مدل به مسیرِ ثبت منتقل شد. |

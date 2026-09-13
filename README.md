@@ -152,7 +152,7 @@ npm run demo                   # build + start → http://localhost:3000
 پیامی روشن متوقف می‌شود ([`lib/env.ts`](./lib/env.ts)) — به‌جای آنکه وسط کار کاربر خراب شود.
 
 حساب‌های آمادهٔ آزمون: [`RUNBOOK.md`](./RUNBOOK.md)
-(`npm run db:seed:demo:full`).
+(`npm run db:seed:demo`).
 
 ### حالت‌های اجرا و انتخاب درست میان آن‌ها
 
@@ -199,7 +199,7 @@ npm run bench               # سنجش کارایی زیر بار
 
 npx prisma migrate deploy   # اعمال مهاجرت‌ها
 npm run db:seed             # دادهٔ اولیه
-npm run db:seed:demo:full   # حساب‌ها و رکوردهای دمو
+npm run db:seed:demo   # حساب‌ها و رکوردهای دمو
 npm run db:backup           # نسخهٔ پشتیبان آنلاین SQLite → backups/
 npm run db:studio           # Prisma Studio
 ```

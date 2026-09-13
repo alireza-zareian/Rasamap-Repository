@@ -169,12 +169,14 @@
       Server Component است و هر چهار عدد را از `getCachedSiteStats()` می‌گیرد — همان
       پرس‌وجوهای cacheشده‌ای که فهرست استفاده می‌کند — پس عدد در خودِ HTMLِ اولیه و واقعی است
 - [x] About page: `app/about/page.tsx` داستان، «چرا رسامپ؟» و «ارزش‌های ما» را دارد
-- [ ] لندینگ: «مشتریان می‌گویند» و نوار برند — **عمداً انجام نشد.** هر دو یعنی نوشتنِ
-      مشتری و برندی که وجود ندارد. روی پروژه‌ای که داور قرار است صحتش را بسنجد، گواهیِ
-      ساختگی بدترین نوع بدهی است: اگر بپرسد «این سه نفر کی‌اند؟» جوابی نیست. اگر مشتریِ
-      واقعی پیدا شد، با اسم و اجازهٔ خودش اضافه شود — نه پیش از آن
-- [ ] Footer: نشانِ اینماد — **منتفی تا زمانِ استقرار.** اینماد به دامنهٔ ثبت‌شده و هویتِ
-      حقوقی نیاز دارد؛ جای خالیِ یک نشانی که هنوز صادر نشده، ادعای اعتبارِ نداشته است
+- [x] لندینگ «تجربه مشتریان»: سه کارت با آواتارِ رنگیِ حرفِ اول، نامِ فارسی، شرکت و
+      نقلِ‌قولِ متفاوت برای هر کدام — `app/LandingClient.tsx`. **دادهٔ نمونه است، نه
+      مشتریِ واقعی**؛ صفحه نباید خالی بماند و این در ارائه شفاف گفته می‌شود
+- [x] لندینگ نوار برند «همراه برندهایی مثل»: پنج نامِ تایپوگرافیِ ساده در همان فایل.
+      این هم نمونه است و همان‌جا اعلام می‌شود
+- [ ] Footer: نشانِ اینماد — **منتفی تا زمانِ استقرار.** برخلافِ دو موردِ بالا این یکی
+      دادهٔ نمایشی نیست بلکه *ادعای گواهیِ شخصِ ثالث* است: اینماد به دامنهٔ ثبت‌شده و
+      هویتِ حقوقی نیاز دارد و جعلِ نشانش با «نمونه است» توجیه نمی‌شود
 
 **فایل‌ها:** `app/page.tsx`, `app/about/page.tsx`
 
@@ -372,14 +374,15 @@ prisma/schema.prisma
 ### دستورات
 
 ```bash
-npm run dev              # localhost:3000
+npm run demo             # ساخت + اجرا روی localhost:3000 — برای دیدن و ارائه
+npm run dev              # فقط هنگام کدنویسی (۹۷ برابر CPU بیشتر — §۲۲)
 npm run build            # باید بدون خطا پاس شود
 npm run lint
-npm test                 # سوییت API (node:test) — ۵۷ تست
+npm test                 # ۱۳۹ آزمون روی یک ساخت تولیدی
 npm run bench            # بنچمارک بار (سرور dev باید بالا باشد)
 npm run db:migrate
 npm run db:seed          # 3545 رکورد
-npm run db:seed:demo:full # حساب‌های دموی کامل (RUNBOOK.md) — idempotent
+npm run db:seed:demo # حساب‌های دموی کامل (RUNBOOK.md) — idempotent
 npm run db:backup        # بکاپ آنلاین SQLite → backups/
 npm run db:studio        # Prisma Studio
 ```
@@ -656,9 +659,9 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 
 - 2026-09-01 — Batch: `docs/engineering-decisions.md` — the standing record of
   which systems the project runs, what structure each produces, why, and where it
-  applies (the spine for later visual reports). `npm run db:seed:demo:full` —
+  applies (the spine for later visual reports). `npm run db:seed:demo` —
   idempotent demo dataset: 8 users (one per state), 4 admins (one per role), 3
-  owners + 4 pending listings, 13 reservations across all statuses, 3 reviews;
+  owners + 8 listings across every status, 5 reviews;
   account sheet in `RUNBOOK.md`. `/api-docs` — self-hosted, no-CDN
   in-app render of `docs/api.md` (traced into the prod build via `next.config.ts`).
   Verified: tsc clean, build OK, `npm test` 25/25, lint 63 (unchanged), seed

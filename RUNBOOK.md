@@ -343,7 +343,7 @@ Run through this every time before deploying or before a live demo. Tick each li
 
 ## Demo accounts & data
 
-Created by `npm run db:seed:demo:full` (idempotent — safe to re-run). Every
+Created by `npm run db:seed:demo` (idempotent — safe to re-run). Every
 account's password is **`demo1234`**. Demo-only records carry a `[DEMO]` tag in
 visible text. The seed refuses to run against the test database and leaves any
 real admin row untouched.
@@ -380,12 +380,14 @@ The real `super_admin` account already in the database is not modified.
   the «ویژه» promotion granted) and `inactive` (rejected). Each is linked to the
   account that submitted it, so the admin approval queue shows a real submitter.
 - **3 owners** (agency records the listings point at).
-- **3 reviews** on published listings, with `billboards.rating` /
+- **5 reviews** on published listings, with `billboards.rating` /
   `reviewCount` recomputed from them — the same aggregate the API maintains.
+  Two of them sit on the one `featured` listing, because the catalogue sort puts
+  that row first and an empty rating slot is the first thing a visitor would see.
 
 ### Manual API testing
 
-With the app running (`npm run dev`):
+With the app running (`npm run demo` — never `npm run dev`, §22):
 
 ```bash
 # public

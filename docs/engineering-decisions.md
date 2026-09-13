@@ -481,14 +481,17 @@ DB; `npm run db:backup` + a recorded restore prove the recovery story.
 
 ## 15. Demo dataset & self-hosted API reference
 
-**Decision.** `npm run db:seed:demo:full` builds a broad, idempotent demo
+**Decision.** `npm run db:seed:demo` builds a broad, idempotent demo
 dataset; `/api-docs` renders the API reference in-app with no external
 dependency.
 
 **Structure it produces.** `prisma/seed-demo-full.ts` upserts 8 users (one per
 meaningful state — full dashboard, only-pending, fresh signup, cancelled,
 reviewer, multi-city, history-only, owner), 4 admins (one per role), 3 owners +
-4 `pending` listings, 13 reservations across every status, 3 reviews. All
+8 listings (4 `available` — one of them `featured`, 2 `pending`, 1
+`awaiting_payment`, 1 `rejected`), 5 reviews. Each listing carries the traffic
+`scraper/traffic_formula.py` computes for its city, type and size, so the demo
+rows vary the way the crawled ones do. All
 demo-only records carry a `[DEMO]` tag; the real admin row is left untouched;
 it refuses to run against the test DB. The account sheet is kept in
 `RUNBOOK.md`. `app/api-docs/page.tsx` is a Server Component that
@@ -1778,7 +1781,7 @@ old as the last successful crawl.
 | 2026-09-01 | Recovery + audit | `npm run db:backup` + verified restore. `npm audit` → `STATUS.md`. |
 | 2026-09-01 | Config safety + IP | `lib/env.ts` + `instrumentation.ts` (fail-closed). `lib/auth/client-ip.ts` (`TRUSTED_PROXY_COUNT`) across 20 routes. |
 | 2026-09-01 | Durable audit | `persistAudit()` → `audit_logs` for all admin mutations. `/api/admin/audit` → `{ logs, persisted }`. Race test → 10 concurrent. |
-| 2026-09-01 | Demo data + docs | `npm run db:seed:demo:full` (8 users / 4 admin roles / 3 owners / 4 listings / 13 reservations / 3 reviews, idempotent). `/api-docs` in-app reference. `docs/engineering-decisions.md`, `RUNBOOK.md`. |
+| 2026-09-01 | Demo data + docs | `npm run db:seed:demo` (8 users / 4 admin roles / 3 owners / 4 listings / 13 reservations / 3 reviews, idempotent; the reservations went with §17 and the listing set has grown since). `/api-docs` in-app reference. `docs/engineering-decisions.md`, `RUNBOOK.md`. |
 | 2026-09-02 | Idempotency + races | `Idempotency-Key` on reservation/listing POSTs; unique `(billboardId,userId,startDate,endDate)`; wider concurrency test. |
 | 2026-09-02 | Security patch | `next` 16.2.9 → 16.2.11 (10 CVEs incl. App-Router proxy bypass). Fail-closed env at boot. Non-spoofable client IP. |
 | 2026-09-02 | Icon system | Site-wide keyboard-emoji → Lucide sweep (admin panel + all customer pages). Shared `TypeIcon`. |
