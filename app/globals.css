@@ -527,6 +527,26 @@ html.page-hidden .skeleton {
   animation-play-state: paused !important;
 }
 
+/* Carousel dots.
+   A dot is 6px because that is what reads as a dot, and 6px is far under the
+   24px WCAG 2.2 (2.5.8) asks of a touch target — measured in Chrome at 390px
+   these were 6x6, which on a phone makes hitting the intended one close to
+   chance. The dot keeps its size and the *target* is widened underneath it, so
+   the row looks exactly as before and is still reachable with a thumb.
+   The gap in the two dot rows is what keeps neighbouring targets from
+   overlapping: at 18px, two 24px targets meet and do not cross. Narrowing it
+   would put one dot's target on top of the next. */
+.carousel-dot { position: relative; }
+.carousel-dot::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────── */
 /* Catalogue card: the photo eases in under the badges on hover. Hover only —
    a touch device never enters the state, so nothing moves on a phone. */

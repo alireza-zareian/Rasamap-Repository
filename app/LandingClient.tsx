@@ -256,9 +256,9 @@ export default function LandingClient({
             <button onClick={() => goGal(1)} aria-label="رسانهٔ بعدی" style={{ position: "absolute", top: "50%", left: -16, transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", background: dark ? "rgba(10,14,26,0.9)" : "rgba(255,255,255,0.95)", border: "1px solid var(--border)", color: "var(--text-main)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 10 }}><ChevronLeft size={22} /></button>
 
             {/* Dot indicators */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 20 }}>
+            <div style={{ display: "flex", justifyContent: "center", gap: 18, marginTop: 20 }}>
               {billboards.map((b, i) => (
-                <button key={b.id} onClick={() => setGalIdx(i)} aria-label={`نمایش رسانهٔ ${i + 1}`} style={{ width: i === galIdx ? 20 : 6, height: 6, borderRadius: 3, background: i === galIdx ? "var(--accent)" : "var(--border)", border: "none", cursor: "pointer", padding: 0, transition: "all 0.3s ease" }} />
+                <button key={b.id} onClick={() => setGalIdx(i)} className="carousel-dot" aria-label={`نمایش رسانهٔ ${i + 1}`} style={{ width: i === galIdx ? 20 : 6, height: 6, borderRadius: 3, background: i === galIdx ? "var(--accent)" : "var(--border)", border: "none", cursor: "pointer", padding: 0, transition: "all 0.3s ease" }} />
               ))}
             </div>
           </div>

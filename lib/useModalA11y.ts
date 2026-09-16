@@ -75,10 +75,19 @@ export function useModalA11y<T extends HTMLElement>(onClose: () => void) {
     box.addEventListener("keydown", onKey);
     return () => {
       box.removeEventListener("keydown", onKey);
-      // Only take focus back if it is still inside the dialog being torn down —
-      // otherwise a close that already moved focus somewhere deliberate (a
-      // redirect, a newly revealed field) would have it yanked away.
-      if (!box.contains(document.activeElement)) return;
+      // Give focus back to whatever opened the dialog — unless something else
+      // has deliberately taken it (a redirect, a newly revealed field), which
+      // should not be overridden.
+      //
+      // The test for that is subtler than it looks. This cleanup runs after
+      // React has already detached the dialog, so focus has usually fallen to
+      // <body> by now and the node is empty: a plain `box.contains(...)` check
+      // is false in exactly the ordinary case, which is why closing a dialog
+      // used to drop the keyboard at the top of the document and leave a
+      // visitor tabbing through the whole page to get back. Focus on <body>
+      // means nobody claimed it, so it is ours to restore.
+      const focused = document.activeElement;
+      if (focused && focused !== document.body && !box.contains(focused)) return;
       opener?.focus?.();
     };
   }, []);

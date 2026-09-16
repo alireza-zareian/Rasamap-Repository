@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import Image from "next/image";
 import { ImageOff, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useModalA11y } from "@/lib/useModalA11y";
 
 interface Props {
   images: string[];
@@ -36,17 +37,6 @@ export default function BillboardGallery({ images, name }: Props) {
   // A swipe ends in a synthetic click; on the main image that would pop the
   // lightbox open, so swallow the click that lands right after one.
   const openLightbox = () => { if (Date.now() - swipedAt.current > 250) setLightbox(true); };
-
-  useEffect(() => {
-    if (!lightbox) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") prev();
-      else if (e.key === "ArrowRight") next();
-      else if (e.key === "Escape") setLightbox(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [lightbox, prev, next]);
 
   if (!images.length) {
     return (
@@ -99,30 +89,78 @@ export default function BillboardGallery({ images, name }: Props) {
         </div>
       )}
 
-      {/* Lightbox */}
       {lightbox && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={`تصاویر ${name}`}
-          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center" }}
-          onClick={() => setLightbox(false)}
-        >
-          <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}
-            onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-            <Image src={images[active]} alt={name} width={500} height={500} sizes="90vw"
-              style={{ width: "90vw", height: "auto", maxHeight: "88vh", objectFit: "contain", borderRadius: 12, display: "block" }} />
-            {images.length > 1 && (
-              <>
-                <button type="button" onClick={prev} aria-label="تصویر قبلی" className="gallery-arrow gallery-arrow-prev" style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={22} /></button>
-                <button type="button" onClick={next} aria-label="تصویر بعدی" className="gallery-arrow gallery-arrow-next" style={{ position: "absolute", top: "50%", left: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronLeft size={22} /></button>
-              </>
-            )}
-            <button type="button" onClick={() => setLightbox(false)} aria-label="بستن نمای بزرگ" style={{ position: "absolute", top: -16, left: -16, background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>
-            <div style={{ position: "absolute", bottom: -28, left: "50%", transform: "translateX(-50%)", fontSize: "0.72rem", color: "rgba(255,255,255,0.6)" }}>{active + 1} / {images.length}</div>
-          </div>
-        </div>
+        <GalleryLightbox
+          images={images}
+          name={name}
+          active={active}
+          onPrev={prev}
+          onNext={next}
+          onClose={() => setLightbox(false)}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        />
       )}
     </>
+  );
+}
+
+/**
+ * The enlarged image, as a component of its own rather than a branch.
+ *
+ * That is what lets it use `useModalA11y`: the hook wires itself up once, when
+ * the element it is given exists, so a dialog that appears and disappears has
+ * to mount and unmount with it — which is why every other dialog in the app is
+ * built this way.
+ *
+ * This was the last one that was not, and it showed. It had its own Escape key
+ * bound to `window`, no focus trap — Tab wandered into the page behind the
+ * overlay, reading out a catalogue the visitor could not see — and no way back
+ * to the button that opened it, so closing dropped focus at the top of the
+ * document. The arrow keys stay here, because moving between photographs is
+ * this dialog's own business and not something every dialog needs.
+ */
+function GalleryLightbox({
+  images, name, active, onPrev, onNext, onClose, onTouchStart, onTouchEnd,
+}: {
+  images: string[];
+  name: string;
+  active: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onClose: () => void;
+  onTouchStart: (e: React.TouchEvent) => void;
+  onTouchEnd: (e: React.TouchEvent) => void;
+}) {
+  const boxRef = useModalA11y<HTMLDivElement>(onClose);
+
+  return (
+    <div
+      ref={boxRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`تصاویر ${name}`}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft") onPrev();
+        else if (e.key === "ArrowRight") onNext();
+      }}
+      style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", outline: "none" }}
+      onClick={onClose}
+    >
+      <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}
+        onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <Image src={images[active]} alt={name} width={500} height={500} sizes="90vw"
+          style={{ width: "90vw", height: "auto", maxHeight: "88vh", objectFit: "contain", borderRadius: 12, display: "block" }} />
+        {images.length > 1 && (
+          <>
+            <button type="button" onClick={onPrev} aria-label="تصویر قبلی" className="gallery-arrow gallery-arrow-prev" style={{ position: "absolute", top: "50%", right: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={22} /></button>
+            <button type="button" onClick={onNext} aria-label="تصویر بعدی" className="gallery-arrow gallery-arrow-next" style={{ position: "absolute", top: "50%", left: -52, transform: "translateY(-50%)", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronLeft size={22} /></button>
+          </>
+        )}
+        <button type="button" onClick={onClose} aria-label="بستن نمای بزرگ" style={{ position: "absolute", top: -16, left: -16, background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>
+        <div style={{ position: "absolute", bottom: -28, left: "50%", transform: "translateX(-50%)", fontSize: "0.72rem", color: "rgba(255,255,255,0.6)" }}>{active + 1} / {images.length}</div>
+      </div>
+    </div>
   );
 }

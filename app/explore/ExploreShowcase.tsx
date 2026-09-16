@@ -81,11 +81,13 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 5, marginTop: 10 }}>
+            {/* gap 18: two 24px dot targets meet without overlapping — see .carousel-dot */}
+              <div style={{ display: "flex", gap: 18, marginTop: 10 }}>
               {items.map((b, i) => (
                 <button
                   key={b.id}
                   onClick={() => setIdx(i)}
+                  className="carousel-dot"
                   aria-label={`نمایش رسانهٔ ${i + 1}`}
                   style={{
                     width: i === idx ? 18 : 6,
