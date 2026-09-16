@@ -13,6 +13,10 @@
 // the tests then exercise the same output that ships.
 
 import { spawn, execSync } from "node:child_process";
+import { openSync, readFileSync } from "node:fs";
+import { connect } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const PORT = Number(process.env.TEST_PORT || 3100);
@@ -45,6 +49,40 @@ function step(msg) {
   console.log(`\n\x1b[36m▶ ${msg}\x1b[0m`);
 }
 
+/**
+ * Refuse to start if something is already listening on our port.
+ *
+ * This is checked before spawning, and deterministically, because the readiness
+ * probe that follows cannot tell our server from a stranger: a leftover
+ * `next start` on this port answers the probe, the suite runs against its build
+ * and its database, and the failures that follow name code that is fine. It is
+ * not hypothetical — it happened twice while this guard was being written, once
+ * costing an afternoon to a "slow endpoint" that was really someone else's
+ * server. Checking the spawned process for an early exit is not enough on its
+ * own: the probe can succeed against the stranger before our own process has
+ * finished failing to bind.
+ */
+function portInUse(port) {
+  return new Promise((resolve) => {
+    const socket = connect({ port, host: "127.0.0.1" });
+    const done = (answer) => { socket.destroy(); resolve(answer); };
+    socket.setTimeout(500);
+    socket.on("connect", () => done(true));
+    socket.on("timeout", () => done(false));
+    socket.on("error", () => done(false));
+  });
+}
+
+if (await portInUse(PORT)) {
+  console.error(
+    `\n\u2717 port ${PORT} is already in use.\n` +
+      "  Something else is listening there — most likely a leftover `next start`.\n" +
+      "  The tests would silently run against it. Stop it and try again:\n" +
+      `      lsof -nP -iTCP:${PORT} -sTCP:LISTEN\n`,
+  );
+  process.exit(1);
+}
+
 step("reset test database");
 execSync("node test/reset-db.mjs", { stdio: "inherit", env });
 
@@ -55,17 +93,49 @@ step("build the app (production mode)");
 execSync("npx next build", { stdio: "inherit", env });
 
 step(`start next on :${PORT}`);
+/**
+ * Where the server's own output goes.
+ *
+ * It used to be a pipe, with the parent accumulating every line into a string.
+ * That only works while the parent's event loop is free to drain it — and it is
+ * not: `execSync` below blocks the parent for the whole test run. Once the 64 KB
+ * pipe buffer filled, the *server* blocked writing to its own stdout, stopped
+ * answering, and a request eventually tripped the suite's 30 s timeout. It read
+ * as a slow endpoint; it was the harness holding the server's mouth shut, and
+ * it got worse the more the server logged, so it surfaced as a flaky tail
+ * rather than as an obvious failure.
+ *
+ * A file has no backpressure, so the server never blocks on it, and the output
+ * is still there to print when something goes wrong.
+ */
+const SERVER_LOG = join(tmpdir(), `rasamap-server-${PORT}-${process.pid}.log`);
+const serverOut = openSync(SERVER_LOG, "w");
 const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
   env,
-  stdio: ["ignore", "pipe", "pipe"],
+  stdio: ["ignore", serverOut, serverOut],
 });
-let serverLog = "";
-server.stdout.on("data", (d) => (serverLog += d));
-server.stderr.on("data", (d) => (serverLog += d));
+
+/** The server's output so far, for a failure message. */
+function serverOutput() {
+  try {
+    return readFileSync(SERVER_LOG, "utf8");
+  } catch {
+    return "(no server output captured)";
+  }
+}
 
 async function waitForServer(timeoutMs = 60000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
+    // A server that has already exited will never become ready, and the usual
+    // reason is that the port was taken. That case must be caught here, because
+    // the readiness check below cannot tell our server from a stranger already
+    // answering on the same port — it would pass, and the whole suite would run
+    // against someone else's app and someone else's database. test/browser.mjs
+    // guards Chrome's debugging port against exactly this; the app's port had
+    // no such guard, and a stray `next start` on this port was enough to turn
+    // the run into a wall of meaningless failures.
+    if (server.exitCode !== null) return false;
     try {
       const r = await fetch(`${BASE}/api/billboards?limit=1`, {
         headers: { "user-agent": "Mozilla/5.0 (rasamap-test-suite)" },
@@ -82,7 +152,11 @@ async function waitForServer(timeoutMs = 60000) {
 let code = 1;
 try {
   if (!(await waitForServer())) {
-    console.error("\nserver did not become ready. Recent output:\n" + serverLog.slice(-3000));
+    console.error(
+      `\nserver did not become ready on ${BASE}. If something else is already\n` +
+        `listening on port ${PORT}, stop it and run again. Recent output:\n` +
+        serverOutput().slice(-3000),
+    );
     process.exit(1);
   }
   step("run tests");
