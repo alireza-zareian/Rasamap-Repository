@@ -149,7 +149,7 @@ enumeration by body **or by timing**), the OTP reset flow, the listing pipeline
 (upload magic-byte validation, plan → status, Idempotency-Key replay),
 object-level authorisation on `/api/listings`, admin RBAC, the approval state
 machine, reviews and the denormalised rating aggregate, analytics coverage
-counts, and the durable audit log. **139 tests** (134 API + 5 covering the nightly
+counts, and the durable audit log. **142 tests** (137 API + 5 covering the nightly
 importer), plus 9 browser flows in `npm run test:e2e`.
 
 ---

@@ -378,7 +378,7 @@ npm run demo             # ساخت + اجرا روی localhost:3000 — برا�
 npm run dev              # فقط هنگام کدنویسی (۹۷ برابر CPU بیشتر — §۲۲)
 npm run build            # باید بدون خطا پاس شود
 npm run lint
-npm test                 # ۱۳۹ آزمون روی یک ساخت تولیدی
+npm test                 # ۱۴۲ آزمون روی یک ساخت تولیدی
 npm run bench            # بنچمارک بار (سرور dev باید بالا باشد)
 npm run db:migrate
 npm run db:seed          # 3545 رکورد
@@ -489,13 +489,13 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 
 | # | Finding | Severity |
 |---|---------|----------|
-| F1 | **Repo is not a git repository** (`.git` absent) — Phases 11/12 blocked, no history, no rollback. → **fixed** — 144 commits on `main`. | High |
+| F1 | **Repo is not a git repository** (`.git` absent) — Phases 11/12 blocked, no history, no rollback. → **fixed** — 150+ commits on `main`. | High |
 | F2 | No `.env.example` in repo. → **fixed** | Med |
 | F3 | `dev.db` (12 MB + WAL) not in `.gitignore`; would be committed on `git init`, may hold real user data. → **fixed** | High |
 | F4 | `project-ai.zip` (265 KB) tracked at repo root; `.DS_Store` scattered. → **fixed** — `.gitignore` updated and neither is tracked. | Low |
 | F5 | No `PRE_DEPLOY_CHECKLIST.md` / `RUNBOOK.md`. → **fixed** | Med |
 | F6 | No `LICENSE`. → **fixed** — MIT. | Low |
-| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 139 tests (`npm test`, on a production build) plus 9 browser flows (`npm run test:e2e`). | Med |
+| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 142 tests (`npm test`, on a production build) plus 9 browser flows (`npm run test:e2e`). | Med |
 | F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. → **fixed** — every live count now reads the same (3,536 rows, 3,532 published, 101 cities, 3,020 geocoded, verified against `dev.db`); older figures survive only in dated history entries. The module split is stated in `AGENTS.md` rule 1 and F15: `lib/types.ts` is data-free, `lib/data.ts` holds the dataset and is imported only by `prisma/seed.ts`. | Low |
 | F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |
@@ -767,7 +767,7 @@ migration or touches product behaviour.
 | 4 | Auth & permissions | JWT HttpOnly + SameSite=Strict cookies, bcrypt cost 12, timing-safe dummy hash, no user enumeration, `proxy.ts` guard, RBAC `viewer<editor<admin<super_admin` | Object-level authz spot-check; password reset flow (none exists) | **Required** (authz check), **Worth it** (reset), **Overkill** (email verification) | Being logged in ≠ authorised for a given row — must verify. No email service in Iran → reset is a stretch. |
 | 5 | Hosting & deployment | Runs with `npm run build && npm start`; security headers + HSTS in `next.config.ts` | Deterministic documented deploy steps; env separation doc | **Required** | `PRE_DEPLOY_CHECKLIST.md` + `RUNBOOK.md` cover this. Cheap, expected. |
 | 6 | Cloud & compute | Single Node process, single SQLite file | Nothing | **Overkill** | Capstone demo. No cloud compute needed; say so. |
-| 7 | CI/CD & version control | Git repo, 144 commits on `main`, one behaviour change per commit; `.github/workflows/scrape.yml` runs the crawler | A tag for the presentation; a CI job that runs `npm test` | **Required = already met** (git), **Worth it** (tag), **Overkill** (full CI) | History and rollback exist. There is a suite to run now, but wiring CI for a single-author capstone buys little over running `npm test` before a commit. |
+| 7 | CI/CD & version control | Git repo, 150+ commits on `main`, one behaviour change per commit; `.github/workflows/scrape.yml` runs the crawler | A tag for the presentation; a CI job that runs `npm test` | **Required = already met** (git), **Worth it** (tag), **Overkill** (full CI) | History and rollback exist. There is a suite to run now, but wiring CI for a single-author capstone buys little over running `npm test` before a commit. |
 | 8 | Security & row-level security | CSP + security headers, bot-UA blocking, input validation, ORM-only (no string SQL), per-user listing scoping, upload magic-byte validation, anti-scraping limits, `npm` lockfile committed | Per-user data-isolation spot-check across all `[id]` routes; `npm audit` run; `LICENSE` | **Required** | Change-an-ID test and a dependency audit are quick and high-signal. |
 | 9 | Rate limiting | Sliding-window per-IP/per-user on login, register, public API, admin API; lockout + audit entry on breach | Persistence across restart (in-memory today) | **Required = already met**; persistence is **Overkill** | Single instance; a restart clearing counters is acceptable and disclosed. |
 | 10 | Caching & CDN | `Cache-Control: max-age + stale-while-revalidate` on public billboard API; Next static optimisation; font preload | Response compression config; fragment/page caching; image WebP+resize | **Worth it** (compression, image resize), **Overkill** (CDN, cache server) | Next/Node gzip is basically free. A CDN for a demo is pointless. |

@@ -144,7 +144,7 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 **9b. Run the tests with `npm test` — and never point them at `next dev`**
 
 `npm test` builds and serves a *production* server on :3100 (into `.next-test/`),
-reseeding its own `prisma/test.db`. It finishes in about 44 seconds: 134 API
+reseeding its own `prisma/test.db`. It finishes in about 44 seconds: 137 API
 tests, then the 5 importer tests in `test/sync.test.mjs` — two files, run one
 after the other on purpose, because the importer writes rows the API tests
 count.
@@ -156,12 +156,28 @@ passed undici's 300-second header timeout, the server wedged, and the last ~20
 tests failed naming code that was fine. The run took over twenty minutes and
 never reached the end.
 
+Two more faults wore the same disguise, and both are fixed — knowing them saves
+the next person the same afternoon:
+
+- **The harness used to gag the server.** Its stdout went to a pipe that the
+  parent, blocked inside `execSync` for the whole run, never drained. At 64 KB
+  the buffer filled and the server blocked writing its own log, went quiet, and
+  a request hit the 30-second timeout — as a *flaky tail*, because it depended
+  on how much had been logged. It writes to a file now.
+- **The suite would run against someone else's server.** The port was never
+  checked, and a leftover `next start` answers the readiness probe exactly as
+  well as our own. The whole run then went against its build and its database.
+  Both runners now probe the port before building and stop in 0.3 seconds.
+  If you start a server by hand, use a port the suites do not: **3100 is
+  `npm test`, 3200 is `npm run test:e2e`.**
+
 So: if the suite is slow or the tail fails, **the fix is never to switch it back
 to `next dev`, and never to delete the tests that look slow.** Check that the
-build step passed. Nothing in the suite waits on an external service — the SMS
-layer is dormant without `KAVENEGAR_API_KEY`, so the OTP tests issue and read
-their codes inside the local database and no message is ever sent. Every request
-aborts after 30 seconds, so a real stall reports itself immediately.
+build step passed, and that nothing else is on the port. Nothing in the suite
+waits on an external service — the SMS layer is dormant without
+`KAVENEGAR_API_KEY`, so the OTP tests issue and read their codes inside the local
+database and no message is ever sent. Every request aborts after 30 seconds, so
+a real stall reports itself immediately.
 
 The same rule that governs the demo governs the tests: §22 and §22b of
 `docs/engineering-decisions.md`.
