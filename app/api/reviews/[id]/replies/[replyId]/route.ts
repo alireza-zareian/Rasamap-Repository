@@ -29,14 +29,21 @@ async function DELETEHandler(
   const rl = userApiRateLimit(ip);
   if (!rl.allowed) return rateLimited(rl, { endpoint: "reviews/[id]/replies/[replyId]", ip });
 
-  const { replyId: raw } = await params;
+  const { id: rawReview, replyId: raw } = await params;
+  const reviewId = Number.parseInt(rawReview, 10);
   const replyId = Number.parseInt(raw, 10);
-  if (Number.isNaN(replyId) || replyId <= 0) {
+  if (Number.isNaN(replyId) || replyId <= 0 || Number.isNaN(reviewId) || reviewId <= 0) {
     return NextResponse.json({ error: "شناسه نامعتبر" }, { status: 400 });
   }
 
-  const reply = await prisma.reviewReply.findUnique({
-    where:  { id: replyId },
+  // Matched on both ids, not on the reply alone. The review in the path used to
+  // be decorative: DELETE /api/reviews/999999/replies/5 removed reply 5, which
+  // belongs to another review entirely and under a review that does not exist.
+  // Nothing could be reached that the checks below would not have allowed
+  // anyway, so this was never a way in — but a route whose path means less than
+  // it says is one a later reader will trust for more than it is worth.
+  const reply = await prisma.reviewReply.findFirst({
+    where:  { id: replyId, reviewId },
     select: { id: true, userId: true },
   });
   if (!reply) return NextResponse.json({ error: "پاسخ یافت نشد" }, { status: 404 });

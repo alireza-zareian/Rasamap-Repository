@@ -335,6 +335,32 @@ test("a reply can be removed by its author or by staff, but not by a stranger", 
   assert.equal(json.reviews.find(r => r.id === reviewId).replies.length, 0);
 });
 
+test("a reply can only be deleted through the review it belongs to", async () => {
+  const author = await mintSession({ userId: "1", role: "user" });
+  const review = await api("/api/reviews", {
+    method: "POST", token: author,
+    body: { billboardId: 2, rating: 3, comment: "نظری برای آزمودن مسیر پاسخ" },
+  });
+  const reviewId = review.json.review.id;
+  const reply = await api(`/api/reviews/${reviewId}/replies`, {
+    method: "POST", token: author, body: { body: "پاسخ آزمایشی" },
+  });
+  const replyId = reply.json.reply.id;
+
+  // The review in the path used to be ignored entirely, so this removed the
+  // reply under a review id that does not exist at all.
+  assert.equal(
+    (await api(`/api/reviews/999999/replies/${replyId}`, { method: "DELETE", token: author })).status,
+    404,
+    "a reply was deleted through the wrong review",
+  );
+  // Through its own review it still works.
+  assert.equal(
+    (await api(`/api/reviews/${reviewId}/replies/${replyId}`, { method: "DELETE", token: author })).status,
+    200,
+  );
+});
+
 // ── One sign-in form, two kinds of account ──────────────────────
 
 test("the public login accepts a staff email and hands back a staff session", async () => {
