@@ -13,13 +13,13 @@ async function GETHandler(req: NextRequest) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }
 
-  if (!hasPermission(session.role, "admin")) {
-    return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
-  }
-
   const ip = getClientIp(req);
   const rl = adminApiRateLimit(ip);
   if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/audit", ip });
+
+  if (!hasPermission(session.role, "admin")) {
+    return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
+  }
 
   const logs = getRecentAuditLogs(200);
 

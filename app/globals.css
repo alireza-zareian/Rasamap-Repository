@@ -123,12 +123,6 @@ html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
   .related-marquee { overflow-x: auto !important; }
 }
 
-/* Accent glow (now blue) */
-@keyframes pulse-glow {
-  0%,100% { box-shadow: 0 0 0 0 rgba(59,123,245,0.4); }
-  50%      { box-shadow: 0 0 0 8px rgba(59,123,245,0); }
-}
-
 /* Background orb drift */
 @keyframes orb-drift-1 {
   0%,100% { transform: translate(0,0) scale(1); }
@@ -154,7 +148,6 @@ html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
 
 .fade-in   { animation: fadeIn  0.3s ease forwards; }
 .slide-up  { animation: slideUp 0.3s ease forwards; }
-.pulse-glow { animation: pulse-glow 2s infinite; }
 
 .skeleton {
   background: linear-gradient(90deg, var(--bg-surface) 25%, #1e2d44 50%, var(--bg-surface) 75%);
@@ -553,7 +546,7 @@ html.page-hidden .skeleton {
 .card-photo-zoom { transition: transform 0.4s ease; will-change: transform; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bg-orb, .bg-scan { animation: none !important; }
+  .bg-orb { animation: none !important; }
   .btn-sheen::after { display: none !important; }
   /* A zoom is motion, so this drops the movement itself, not just its easing. */
   .card-photo-zoom { transition: none !important; transform: none !important; }

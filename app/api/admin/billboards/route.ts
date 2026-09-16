@@ -117,11 +117,11 @@ const CreateSchema = z.object({
 async function POSTHandler(req: NextRequest) {
   const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
-  if (!hasPermission(session.role, "editor")) return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
-
   const ip = getClientIp(req);
   const rl = adminApiRateLimit(ip);
   if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/billboards", ip });
+
+  if (!hasPermission(session.role, "editor")) return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
 
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }

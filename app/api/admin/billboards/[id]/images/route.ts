@@ -21,13 +21,13 @@ const PutSchema = z.object({
 async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
-  if (!hasPermission(session.role, "editor")) {
-    return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
-  }
-
   const ip = getClientIp(req);
   const rl = adminApiRateLimit(ip);
   if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/billboards/[id]/images", ip });
+
+  if (!hasPermission(session.role, "editor")) {
+    return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
+  }
 
   // Bound the body before reading it, so a huge payload is refused rather than
   // buffered into memory just to be rejected later. Base64 inflates by ~4/3.

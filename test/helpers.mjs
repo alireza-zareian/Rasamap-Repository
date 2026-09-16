@@ -149,7 +149,6 @@ export async function recoverOtpCode(phone, purpose = "password_reset") {
   }
 }
 
-/** How many unconsumed codes exist for a phone — used to prove none was issued. */
 /**
  * Open an account the way the sign-up screen does: ask for a code on the
  * number, read it back out of the store, and register with it.
