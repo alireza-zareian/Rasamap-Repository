@@ -87,7 +87,7 @@
 - [x] **A3** — ImageManager: PUT /api/admin/billboards/[id]/images واقعی
 - [x] **A4** — BookingModal: فیلدهای اضافی حذف، اطلاعات از JWT session
 - [x] **A5** — Admin reservation management panel
-- [x] **A6** — SEO: sitemap.xml (3545 billboard + 4 صفحه اصلی)
+- [x] **A6** — SEO: sitemap.xml (3532 بیلبورد منتشرشده + 4 صفحه اصلی = 3536 نشانی)
 
 #### ✅ بهبودهای پرفورمنس — کامل (۲۰۲۶ standards)
 
@@ -150,7 +150,7 @@
 
 - [x] **UX0** — Visual Audit: پالت قدیمی (نارنجی) جایگزین با آبی (#3B7BF5) + warm amber
 - [x] **U1** — Landing: hero parallax + gallery sliding + CTA + footer + stats از DB
-- [x] **U2** — Explore: server-side filter + map pins (3032 geocoded) + Topbar + URL params
+- [x] **U2** — Explore: server-side filter + map pins (3020 geocoded) + Topbar + URL params
 - [x] **U3** — Billboard detail: gallery lightbox + ShareButton + breadcrumb + TrafficMeter
 - [x] **U4** — Polish: BillboardCard یکپارچه + ticker زنده + about/contact/terms + footer سراسری + hero compact یک‌خطی
 - [x] **U4b** — BackgroundPattern: خطوط vine از صفر شروع می‌کنند و با اسکرول با ease-in-out و cascade تدریجی رشد می‌کنند (vine1 از scroll=0, vine2 از scroll=5%, vine3 از scroll=12%)

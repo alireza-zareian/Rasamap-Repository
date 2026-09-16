@@ -4189,6 +4189,28 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
 
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">AUD2</div>
+      <div class="ph-title"><h3>ممیزی مستقل دوم — امنیت، صحت، دسترس‌پذیری</h3><p>۲۵ شهریور ۱۴۰۵ · هر یافته روی سرور production بازتولید شد، نه از روی مستندات</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">قاعدهٔ این دور: <em>«هیچ ادعایی از سند پذیرفته نشود»</em>. هر ایراد اول با اجرای واقعی بازتولید شد و بعد اصلاح؛ هر اصلاح با اندازه‌گیری قبل/بعد سنجیده شد تا سرعت سایت و بار لپ‌تاپ تغییر نکند.</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>لغو دسترسی ادمین بی‌اثر بود</strong> — JWT هشت‌ساعته بود و هیچ مسیری نقش و <code>active</code> را دوباره از دیتابیس نمی‌خواند. بازتولید شد: ادمینِ غیرفعال‌شده همچنان ۲۰۰ می‌گرفت و ویرایشگرِ تنزل‌یافته همچنان می‌نوشت. بدتر: refreshِ لغزانِ <code>/api/auth/me</code> نقشِ کهنه را دوباره امضا می‌کرد، یعنی نشستِ لغو‌شده <b>بی‌نهایت</b> تمدید می‌شد. <code>getStaffSession()</code> نشستِ کارکنان را با ردیفش می‌سنجد؛ مشتری اصلاً خوانده نمی‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>هارنس تست، سرورِ خودش را خفه می‌کرد</strong> — stdout سرور به یک pipe می‌رفت که والد در <code>execSync</code> هرگز خالی‌اش نمی‌کرد؛ با پر شدن بافر ۶۴ کیلوبایتی، سرور روی نوشتنِ لاگِ خودش بلاک می‌شد و یک درخواست به تایم‌اوت ۳۰ ثانیه می‌خورد. این همان «دنبالهٔ بی‌ثباتِ» شناخته‌شده بود. حالا به فایل می‌نویسد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تست‌ها روی سرورِ غریبه اجرا می‌شدند</strong> — پورت هرگز بررسی نمی‌شد؛ یک <code>next start</code>ِ جامانده به probe سلامت جواب می‌داد و کل مجموعه روی build و دیتابیسِ او می‌رفت. دو بار همین‌جا اتفاق افتاد و یک بار <b>در دیتابیس دمو</b> ردیف نوشت. حالا پورت پیش از هر build بررسی می‌شود و در ۰٫۳ ثانیه با پیام روشن می‌ایستد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نقطه‌های کاروسل ۶×۶ پیکسل بودند</strong> — در برابر حداقل ۲۴ پیکسلِ WCAG 2.2 (بند ۲.۵.۸). روی گوشی زدنِ نقطهٔ درست تقریباً شانسی بود. ظاهر دست‌نخورده ماند و فقط <em>هدف</em> زیرش به ۲۴×۲۴ بزرگ شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>فوکوس هیچ دیالوگی برنمی‌گشت</strong> — <code>useModalA11y</code> فقط وقتی فوکوس را به بازکننده برمی‌گرداند که هنوز داخل دیالوگ باشد، ولی cleanup پس از جدا شدنِ دیالوگ اجرا می‌شود؛ پس شرط دقیقاً در حالت عادی غلط بود. هر هشت دیالوگ اصلاح شد. گالریِ عکس هم که تنها دیالوگِ دست‌ساز بود، به همان هوک منتقل شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حذف پاسخ، شناسهٔ نظر را نادیده می‌گرفت</strong> — <code>DELETE /api/reviews/999999/replies/5</code> پاسخ را حذف می‌کرد. راهِ نفوذ نبود (چک مالکیت سرجایش بود) ولی مسیری که کمتر از ادعایش معنا دارد، بعداً بیش از ارزشش اعتماد می‌گیرد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مرتب‌سازی tiebreakerِ یکتا نداشت</strong> — ۳٬۵۳۲ ردیف منتشرشده تنها ۷۱۷ گروهِ متمایز می‌سازند و بزرگ‌ترین گروه ۱۵۳ ردیف است. SQLite امروز ثابت جواب می‌دهد، ولی PostgreSQL (§۲۷) چنین تضمینی ندارد. یک ستون <code>id</code> اضافه شد — اندازه‌گیری: ۲ms قبل، ۲ms بعد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سه ادعای غلط در مستندات و کامنت‌ها</strong> — <code>docs/api.md</code> می‌گفت ورود ادمین از env می‌خواند (از جدول <code>admins</code> می‌خواند)؛ دو کامنت می‌گفتند ادمینِ env اصلاً ردیفی در <code>admins</code> ندارد (دارد — seed می‌سازدش، ردیف ۱). <code>/api/health</code> هم اصلاً مستند نشده بود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>کدِ مرده پاک شد</strong> — <code>.pulse-glow</code> و <code>.bg-scan</code> در CSS، یک docstringِ یتیم در تست‌ها، و یکدست‌سازیِ ترتیب نگهبان‌ها در سه مسیر ادمین</div></div>
+      </div>
+      <div class="proof">هر اصلاح اجرا و دیده شد، نه فرض: <strong>۱۳۷ تست API + ۵ تست واردکننده + ۹ جریان مرورگر، همه موفق</strong>؛ <code>tsc --noEmit</code> و <code>npm run lint</code> تمیز. کارایی با A/B واقعی روی همان ماشین سنجیده شد (build از کامیت پیش از ممیزی در برابر build فعلی): اختلافِ همهٔ مسیرها زیر ۰٫۵ میلی‌ثانیه، یعنی نویز — <code>/</code> ۵ms، <code>/explore</code> ۱۴٫۵ms، <code>/api/billboards</code> ۱۱٫۵ms در هر دو. هزینهٔ بررسی تازهٔ نشست ۰٫۰۵ میلی‌ثانیه است و فقط کارکنان آن را می‌پردازند. صفر سرریز افقی در ۱۰ صفحه × ۴ عرض (۳۶۰/۳۹۰/۷۶۸/۱۲۸۰).</div>
+    </div>
+  </div>
+  <div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">DOC</div>
       <div class="ph-title"><h3>بستهٔ تحویلی پایان‌نامه</h3><p>پایان‌نامه، پوستر، اسلاید دفاع، نقشهٔ کد — مهلت داوران ۱۷ شهریور، دفاع ۲۱ شهریور</p></div>
       <div class="ph-badge done">✓ تموم شده</div>
@@ -5111,7 +5133,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۲۲ شهریور ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۲۵ شهریور ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>

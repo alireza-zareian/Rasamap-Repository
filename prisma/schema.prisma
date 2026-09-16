@@ -253,10 +253,10 @@ model ReviewReply {
   review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   // A customer's reply carries the account it came from. A staff reply cannot:
-  // the administrator configured through the environment has no row in `admins`
-  // at all, which is the same reason audit_logs stores the actor's email rather
-  // than a foreign key. So `authorName` is written at the time of the reply and
-  // `isStaff` is what the badge reads.
+  // `userId` points into `users` and a staff account lives in `admins`, so no
+  // value would satisfy the key — which is also why audit_logs stores the
+  // actor's email rather than a foreign key. So `authorName` is written at the
+  // time of the reply and `isStaff` is what the badge reads.
   userId Int?
   user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 

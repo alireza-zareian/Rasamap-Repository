@@ -19,11 +19,14 @@ const ReplySchema = z.object({
  * say, and the team needs a way to answer in public rather than only in the
  * admin panel.
  *
- * A staff reply stores no account id. The administrator configured through the
- * environment has no row in `admins`, so a foreign key would reject exactly the
- * account most likely to be answering; the display name is written onto the
- * reply instead and `isStaff` is what the badge reads. Replies do not nest —
- * one level keeps the thread readable and the read a single join.
+ * A staff reply stores no account id. `ReviewReply.userId` is a foreign key into
+ * `users`, and a staff account lives in `admins` — two separate tables, so there
+ * is no id that would satisfy the constraint. (An earlier note here claimed the
+ * environment-configured administrator had no row at all; it does —
+ * `prisma/seed.ts` upserts it into `admins` from ADMIN_EMAIL. The conclusion was
+ * right for the wrong reason.) The display name is written onto the reply
+ * instead and `isStaff` is what the badge reads. Replies do not nest — one level
+ * keeps the thread readable and the read a single join.
  */
 async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();

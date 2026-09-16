@@ -54,6 +54,7 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 | POST | `/api/billboards/[slug]/contact` | user | The owner/agency phone number, plus **the lead it creates**. Kept out of every public response so it cannot be scraped (§20). POST rather than GET because the reveal is now an explicit click and an explicit click is a write: it get-or-creates a `contact_requests` row for (media, account) — a repeat reveal increments `count` instead of adding a row. 404 if the media is not published. A lead is written only for a `role: "user"` session (an admin's `userId` is not a `users` row). If the lead write fails the number is still returned and the failure is logged. `private, no-store`. |
 | GET | `/api/stats` | public | Aggregate counts for the landing page. |
 | GET | `/api/analytics` | public | Market analytics. Optional `?city=<name>`. |
+| GET | `/api/health` | public | Liveness **and** readiness for whatever watches the process. Answers 200 `{ status: "ok" }` only after a `SELECT 1` reaches the database; 503 `{ status: "degraded" }` when it cannot, with the reason going to the log and not to the caller. The body is deliberately bare — no engine, version or uptime — because this is an unauthenticated URL. Exempt from the bot-user-agent filter in `proxy.ts`, since every monitor identifies itself as one, and the only route not wrapped in `withApiLog` (it is polled forever and would bury the log). `no-store`. |
 
 ### User — reviews
 
@@ -79,7 +80,7 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
 | POST | `/api/auth/register` | public | Body (Zod): `name` (2–100), `phone` (`^09[0-9]{9}$`), `password` (6–128), `code` (6 digits, from `otp/send` with `purpose: "register"`). 409 if the phone exists; 400 if the code is wrong, spent or expired — the account is created only after it verifies. Sets the session cookie. Rate limit: 40 / hour / IP, plus the per-phone code ceiling. |
-| POST | `/api/auth/login` | public | Body (Zod): `phone`, `password`. Always runs a **real** bcrypt comparison — against `TIMING_PAD_HASH` when the phone is unknown — so response time cannot be used to enumerate accounts. 401 on bad credentials, identical body for "wrong password" and "unknown user". Rate limit: 10 / 15 min / IP → 429 + lockout. |
+| POST | `/api/auth/login` | public | Body (Zod): `identifier` (a `09…` mobile number **or** a staff email — `phone` and `email` are still accepted as aliases) and `password`. The credential's own shape decides which table is consulted, so one form serves customers and staff without either answer revealing which store was read. Always runs a **real** bcrypt comparison — against `TIMING_PAD_HASH` when the phone is unknown — so response time cannot be used to enumerate accounts. 401 on bad credentials, identical body for "wrong password" and "unknown user". Rate limit: 10 / 15 min / IP → 429 + lockout. |
 | POST | `/api/auth/otp/send` | public | Start a phone-verified flow. Body (Zod): `phone`, `purpose` (`password_reset` \| `register`). A reset responds identically whether or not the number is registered, so it is no membership oracle; a sign-up answers 409 on a number that already has an account, because the register step must refuse it anyway. Rate limited per phone (3 / 10 min) and per IP (40 / hour). SMS is dormant unless `KAVENEGAR_API_KEY` is set. |
 | POST | `/api/auth/otp/verify` | public | Password reset only (`purpose: "password_reset"`): verify the 6-digit code and set a new password in one step. A sign-up code lives under a different purpose and cannot be spent here. Codes are HMAC-hashed, 5-minute TTL, single-use, 5 attempts. Writes `password_reset_self`. |
 | POST | `/api/auth/logout` | public | Clears the session cookie. |
@@ -90,7 +91,7 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| POST | `/api/admin/auth/login` | public | Admin credentials from env (`ADMIN_EMAIL` / `ADMIN_PASSWORD_HASH`). bcrypt + JWT + audit entry. Rate limit: 5 / 15 min. |
+| POST | `/api/admin/auth/login` | public | Credentials are checked against the `admins` table, not against the environment: `ADMIN_EMAIL` / `ADMIN_PASSWORD_HASH` are read only by `prisma/seed.ts`, which upserts the first `admins` row from them. An inactive account never signs in. bcrypt + JWT + audit entry. Rate limit: 5 tries / 15 min **per account** (plus a loose per-address ceiling with no lockout — see `lib/auth/rate-limit.ts`). |
 | POST | `/api/admin/auth/logout` | admin | Clears the admin session. |
 | GET | `/api/admin/auth/me` | admin | Current admin session. |
 
