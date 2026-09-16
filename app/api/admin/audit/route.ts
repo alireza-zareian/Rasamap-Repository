@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
-import { getSession } from "@/lib/auth/session";
-import { hasPermission } from "@/lib/auth/users";
+import { getStaffSession, hasPermission } from "@/lib/auth/users";
 import { getRecentAuditLogs } from "@/lib/auth/audit";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { prisma } from "@/lib/db/client";
 import { withApiLog } from "@/lib/api-log";
 
 async function GETHandler(req: NextRequest) {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }

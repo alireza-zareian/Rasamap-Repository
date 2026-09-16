@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/client";
-import type { UserRole } from "./session";
+import { getSession, type SessionPayload, type UserRole } from "./session";
 
 export interface AdminUser {
   id:           string;
@@ -75,6 +75,41 @@ export async function validateCredentials(
   }
   const ok = await verifyPassword(password, user.passwordHash);
   return ok ? user : null;
+}
+
+/**
+ * The session, re-checked against the account it claims to belong to.
+ *
+ * A JWT is a signed statement about who someone was when they signed in, and it
+ * stays true for the whole eight hours — which is the wrong answer to "this
+ * administrator was deactivated a minute ago". Nothing read the `admins` row
+ * again, so a revoked account kept full access until the token expired, and the
+ * sliding refresh in /api/auth/me re-signed the stale role, so it never had to.
+ *
+ * A staff session is therefore confirmed against the row before it is trusted:
+ * a deleted or deactivated account is no session at all, and the role that
+ * counts is the one in the database rather than the one in the token, so a
+ * demotion takes effect on the next request instead of the next sign-in.
+ *
+ * Customers are deliberately not looked up. `role: "user"` carries no authority
+ * beyond "signed in", there is nothing to revoke short of deleting the account,
+ * and this runs on public pages — a query per visitor would buy nothing. The
+ * lookup measures 0.05 ms and only staff pay it.
+ *
+ * A database failure is left to throw rather than converted into a 401. Every
+ * caller queries the database immediately afterwards anyway, so a blip already
+ * ends as a 500 with a reference id; answering "you are not signed in" instead
+ * would sign an administrator out of a working panel over a transient error.
+ */
+export async function getStaffSession(): Promise<SessionPayload | null> {
+  const session = await getSession();
+  if (!session || session.role === "user") return session;
+
+  // Returns null when the row is gone or `active` is false — see findUserById.
+  const account = await findUserById(session.userId);
+  if (!account) return null;
+
+  return session.role === account.role ? session : { ...session, role: account.role };
 }
 
 /** RBAC: check if a role has at least the minimum required permission */

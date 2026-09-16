@@ -27,8 +27,21 @@ export function uniqueIp() {
   return `10.${(n >> 16) & 255}.${(n >> 8) & 255}.${n & 255}`;
 }
 
+/**
+ * The staff row each role's session belongs to, seeded by test/seed.mjs.
+ *
+ * A staff token is checked against its account now (getStaffSession), so a
+ * session has to name a real one: the role in the token is only honoured while
+ * the row still holds it. Defaulting the id per role keeps every existing call
+ * of the form `mintSession({ role: "editor" })` pointing at an editor, rather
+ * than at one shared id that would have to be a viewer, an editor and an admin
+ * at the same time.
+ */
+const STAFF_IDS = { viewer: "9001", editor: "9002", admin: "9003", super_admin: "9004" };
+
 /** Mint a valid session JWT signed with the same AUTH_SECRET the server uses. */
-export async function mintSession({ userId = "1", email = "tester", name = "Tester", role = "user" } = {}) {
+export async function mintSession({ userId, email = "tester", name = "Tester", role = "user" } = {}) {
+  userId ??= STAFF_IDS[role] ?? "1";
   return new SignJWT({ userId, email, name, role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

@@ -3,13 +3,13 @@ import { getClientIp } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import { BILLBOARD_STATUSES } from "@/lib/types";
-import { getSession } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/users";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { persistAudit } from "@/lib/auth/audit";
 import { getBillboardById, updateBillboard, deleteBillboard, hasReviews } from "@/lib/db/billboards";
 import { withApiLog } from "@/lib/api-log";
 
-function adminIdOf(session: Awaited<ReturnType<typeof getSession>>): number | null {
+function adminIdOf(session: Awaited<ReturnType<typeof getStaffSession>>): number | null {
   const n = Number.parseInt(session?.userId ?? "", 10);
   return Number.isNaN(n) ? null : n;
 }
@@ -17,7 +17,7 @@ function adminIdOf(session: Awaited<ReturnType<typeof getSession>>): number | nu
 const ALLOWED_TYPES    = new Set(["billboard", "digital", "bridge", "station", "vehicle"]);
 const ALLOWED_STATUSES = new Set<string>(BILLBOARD_STATUSES);
 
-function authGuard(session: Awaited<ReturnType<typeof getSession>>, req: NextRequest) {
+function authGuard(session: Awaited<ReturnType<typeof getStaffSession>>, req: NextRequest) {
   // A customer session is a valid session but not an admin one. proxy.ts already
   // rejects role "user" on /api/admin/*; the check is repeated here so the route
   // is safe on its own and does not depend on the proxy matcher staying correct.
@@ -49,7 +49,7 @@ const UpdateSchema = z.object({
 
 // GET /api/admin/billboards/[id] — single record for the admin edit view
 async function GETHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+  const session = await getStaffSession();
   const guard = authGuard(session, req);
   if (guard) return guard;
 
@@ -65,7 +65,7 @@ async function GETHandler(req: NextRequest, { params }: { params: Promise<{ id: 
 
 // PUT /api/admin/billboards/[id]
 async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+  const session = await getStaffSession();
   const guard = authGuard(session, req);
   if (guard) return guard;
 
@@ -114,7 +114,7 @@ async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: 
 
 // DELETE /api/admin/billboards/[id]
 async function DELETEHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+  const session = await getStaffSession();
   const guard = authGuard(session, req);
   if (guard) return guard;
 

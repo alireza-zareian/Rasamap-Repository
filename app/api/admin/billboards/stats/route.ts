@@ -3,13 +3,13 @@ import { getClientIp } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
 import type { AdminStats } from "@/lib/admin/types";
 import { getAllBillboards } from "@/lib/db/billboards";
-import { getSession } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/users";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { withApiLog } from "@/lib/api-log";
 
 async function GETHandler(req: NextRequest) {
   // ── Auth guard ── (role "user" is a customer, not an admin — see proxy.ts)
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session || session.role === "user") {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }

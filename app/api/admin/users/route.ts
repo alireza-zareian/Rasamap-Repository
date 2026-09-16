@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
-import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-import { hasPermission, hashPassword } from "@/lib/auth/users";
+import { getStaffSession, hasPermission, hashPassword } from "@/lib/auth/users";
 import { persistAudit } from "@/lib/auth/audit";
 import { prisma } from "@/lib/db/client";
 import { withApiLog } from "@/lib/api-log";
@@ -20,7 +19,7 @@ const CreateSchema = z.object({
 
 // GET /api/admin/users — list admin accounts (super_admin only)
 async function GETHandler(req: NextRequest) {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
 
   const ip = getClientIp(req);
@@ -41,7 +40,7 @@ async function GETHandler(req: NextRequest) {
 
 // POST /api/admin/users — create an admin account (super_admin only)
 async function POSTHandler(req: NextRequest) {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
 
   const ip = getClientIp(req);

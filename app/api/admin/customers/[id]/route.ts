@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getClientIp } from "@/lib/auth/client-ip";
-import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { rateLimited } from "@/lib/api-rate-limit";
-import { hasPermission } from "@/lib/auth/users";
+import { getStaffSession, hasPermission } from "@/lib/auth/users";
 import { persistAudit } from "@/lib/auth/audit";
 import { prisma } from "@/lib/db/client";
 import { withApiLog } from "@/lib/api-log";
@@ -18,15 +17,15 @@ const PatchSchema = z
   })
   .refine(d => d.name !== undefined || d.phone !== undefined, { message: "تغییری ارسال نشده" });
 
-function actorId(session: Awaited<ReturnType<typeof getSession>>): number | null {
+function actorId(session: Awaited<ReturnType<typeof getStaffSession>>): number | null {
   const n = Number.parseInt(session?.userId ?? "", 10);
   return Number.isNaN(n) ? null : n;
 }
 
-type Guarded = NextResponse | { session: NonNullable<Awaited<ReturnType<typeof getSession>>>; ip: string };
+type Guarded = NextResponse | { session: NonNullable<Awaited<ReturnType<typeof getStaffSession>>>; ip: string };
 
 async function guard(req: NextRequest): Promise<Guarded> {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   const ip = getClientIp(req);
   const rl = adminApiRateLimit(ip);

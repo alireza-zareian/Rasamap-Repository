@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
-import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { rateLimited } from "@/lib/api-rate-limit";
-import { hasPermission } from "@/lib/auth/users";
+import { getStaffSession, hasPermission } from "@/lib/auth/users";
 import { prisma } from "@/lib/db/client";
 import { withApiLog } from "@/lib/api-log";
 
@@ -15,7 +14,7 @@ const SORTS = {
 
 // GET /api/admin/customers — registered end-users directory (admin+)
 async function GETHandler(req: NextRequest) {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
 
   const ip = getClientIp(req);

@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
-import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-import { hasPermission } from "@/lib/auth/users";
+import { getStaffSession, hasPermission } from "@/lib/auth/users";
 import { persistAudit } from "@/lib/auth/audit";
 import { prisma } from "@/lib/db/client";
 import { withApiLog } from "@/lib/api-log";
@@ -20,7 +19,7 @@ const PatchSchema = z
 
 // PATCH /api/admin/users/[id] — change role / active flag (super_admin only)
 async function PATCHHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
 
   const ip = getClientIp(req);

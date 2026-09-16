@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { getClientIp } from "@/lib/auth/client-ip";
-import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { rateLimited } from "@/lib/api-rate-limit";
-import { hasPermission, hashPassword } from "@/lib/auth/users";
+import { getStaffSession, hasPermission, hashPassword } from "@/lib/auth/users";
 import { persistAudit } from "@/lib/auth/audit";
 import { prisma } from "@/lib/db/client";
 import { withApiLog } from "@/lib/api-log";
@@ -26,7 +25,7 @@ function generatePassword(): string {
 
 // POST /api/admin/customers/[id]/reset-password  (admin+)
 async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
 
   const ip = getClientIp(req);

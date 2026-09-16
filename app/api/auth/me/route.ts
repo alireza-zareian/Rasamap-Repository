@@ -4,6 +4,7 @@ import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getSession, createSession, buildSessionCookieHeader } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/users";
 import { prisma } from "@/lib/db/client";
 import { userApiRateLimit } from "@/lib/auth/rate-limit";
 import { withApiLog } from "@/lib/api-log";
@@ -21,7 +22,12 @@ const TWO_HOURS = 2 * 60 * 60; // seconds
  * account has no profile in `users` to edit.
  */
 async function GETHandler(req: NextRequest) {
-  const session = await getSession();
+  // Staff are re-checked against their row here, not just trusted from the
+  // token. This is where the sliding refresh below happens, so without it a
+  // deactivated administrator could keep re-signing a stale role indefinitely
+  // by doing nothing more than loading a page every few hours. A customer is
+  // never looked up — see getStaffSession.
+  const session = await getStaffSession();
   if (!session) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }

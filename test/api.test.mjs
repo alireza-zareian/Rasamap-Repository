@@ -948,7 +948,7 @@ test("POST /api/admin/billboards with role 'viewer' is 403 (insufficient permiss
 });
 
 test("an admin billboard create is written to the durable audit log", async () => {
-  const token = await mintSession({ role: "admin", userId: "1" });
+  const token = await mintSession({ role: "admin" });
 
   const created = await api("/api/admin/billboards", {
     method: "POST",
@@ -969,7 +969,7 @@ test("an admin billboard create is written to the durable audit log", async () =
 // ── Admin — user management ────────────────────────────────────────
 
 test("GET /api/admin/users with role 'admin' is 403 (super_admin only)", async () => {
-  const token = await mintSession({ role: "admin", userId: "1" });
+  const token = await mintSession({ role: "admin" });
   const { status } = await api("/api/admin/users", { token });
   assert.equal(status, 403);
 });
@@ -1000,6 +1000,43 @@ test("super_admin can create an admin, change its role, and both are audited", a
   assert.ok(audit.json.persisted.some((r) => r.action === "admin_user_update"));
 });
 
+// ── Admin — a session is only as good as the account behind it ─────
+
+test("a valid token for a deactivated admin is refused", async () => {
+  // The signature is genuine and the token has not expired. What changed is the
+  // account: `active` is false. Before getStaffSession nothing read the row
+  // again, so a revoked administrator kept working until the token ran out.
+  const token = await mintSession({ role: "admin", userId: "9005" });
+
+  assert.equal((await api("/api/admin/billboards", { token })).status, 401);
+  assert.equal((await api("/api/admin/auth/me", { token })).status, 401);
+  // /api/auth/me is where the sliding refresh lives, so it must refuse too —
+  // otherwise a revoked session could renew itself indefinitely.
+  assert.equal((await api("/api/auth/me", { token })).status, 401);
+});
+
+test("a token is judged by the role the account holds, not the one it claims", async () => {
+  const superToken = await mintSession({ role: "super_admin", userId: "99001" });
+  const email = `demoted_${Date.now()}@example.com`;
+
+  const created = await api("/api/admin/users", {
+    method: "POST",
+    token: superToken,
+    body: { email, name: "Demotion Fixture", role: "viewer", password: "secret123" },
+  });
+  assert.equal(created.status, 200, JSON.stringify(created.json));
+  const id = String(created.json.admin.id);
+
+  // A token claiming super_admin for an account that is only a viewer.
+  const inflated = await mintSession({ role: "super_admin", userId: id });
+
+  // Refused where the claim would have granted something...
+  assert.equal((await api("/api/admin/users", { token: inflated })).status, 403);
+  // ...and still allowed everything a viewer may really do. A stale role is
+  // corrected, not a reason to throw someone out of the panel.
+  assert.equal((await api("/api/admin/billboards", { token: inflated })).status, 200);
+});
+
 test("a duplicate admin email is rejected with 409", async () => {
   const token = await mintSession({ role: "super_admin", userId: "99002" });
   const email = `dup_${Date.now()}@example.com`;
@@ -1012,10 +1049,15 @@ test("a duplicate admin email is rejected with 409", async () => {
 
 test("a super_admin cannot change the role of its own account (409)", async () => {
   const token = await mintSession({ role: "super_admin", userId: "99003" });
+  // Created as a super_admin, because that is the account this test is about.
+  // It used to be created as an "admin" and then given a token claiming
+  // super_admin — which only reached the self-edit check while nothing verified
+  // the claim. The role is now read from the row, so the fixture has to hold
+  // the role it is meant to be exercising.
   const created = await api("/api/admin/users", {
     method: "POST",
     token,
-    body: { email: `self_${Date.now()}@example.com`, name: "Self", role: "admin", password: "secret123" },
+    body: { email: `self_${Date.now()}@example.com`, name: "Self", role: "super_admin", password: "secret123" },
   });
   const id = created.json.admin.id;
 
@@ -1036,13 +1078,13 @@ test("GET /api/admin/customers without a session is 401", async () => {
 });
 
 test("GET /api/admin/customers with role 'viewer' is 403", async () => {
-  const token = await mintSession({ role: "viewer", userId: "1" });
+  const token = await mintSession({ role: "viewer" });
   const { status } = await api("/api/admin/customers", { token });
   assert.equal(status, 403);
 });
 
 test("GET /api/admin/customers returns a paginated directory for an admin", async () => {
-  const token = await mintSession({ role: "admin", userId: "1" });
+  const token = await mintSession({ role: "admin" });
   const { status, json } = await api("/api/admin/customers?limit=5", { token });
   assert.equal(status, 200);
   assert.ok(Array.isArray(json.users));
@@ -1056,7 +1098,7 @@ test("GET /api/admin/customers returns a paginated directory for an admin", asyn
 });
 
 test("GET /api/admin/customers/[id] returns the user with their listings; hash never leaks", async () => {
-  const token = await mintSession({ role: "admin", userId: "1" });
+  const token = await mintSession({ role: "admin" });
   const { status, json } = await api("/api/admin/customers/1", { token });
   assert.equal(status, 200);
   assert.equal(json.user.id, 1);
@@ -1065,13 +1107,13 @@ test("GET /api/admin/customers/[id] returns the user with their listings; hash n
 });
 
 test("GET /api/admin/customers/[id] is 404 for an unknown user", async () => {
-  const token = await mintSession({ role: "admin", userId: "1" });
+  const token = await mintSession({ role: "admin" });
   const { status } = await api("/api/admin/customers/999999", { token });
   assert.equal(status, 404);
 });
 
 test("PATCH /api/admin/customers/[id] edits the name and audits it", async () => {
-  const token = await mintSession({ role: "admin", userId: "1" });
+  const token = await mintSession({ role: "admin" });
   const patched = await api("/api/admin/customers/2", {
     method: "PATCH", token, body: { name: "Sara Renamed" },
   });
@@ -1083,7 +1125,7 @@ test("PATCH /api/admin/customers/[id] edits the name and audits it", async () =>
 });
 
 test("POST /api/admin/customers/[id]/reset-password returns a fresh password (never the old one)", async () => {
-  const token = await mintSession({ role: "admin", userId: "1" });
+  const token = await mintSession({ role: "admin" });
   const res = await api("/api/admin/customers/1/reset-password", { method: "POST", token });
   assert.equal(res.status, 200, JSON.stringify(res.json));
   assert.equal(typeof res.json.password, "string");
@@ -1094,7 +1136,7 @@ test("POST /api/admin/customers/[id]/reset-password returns a fresh password (ne
 });
 
 test("customer routes are 403 for role 'viewer'", async () => {
-  const token = await mintSession({ role: "viewer", userId: "1" });
+  const token = await mintSession({ role: "viewer" });
   const a = await api("/api/admin/customers/1", { token });
   const b = await api("/api/admin/customers/1", { method: "PATCH", token, body: { name: "x" } });
   const c = await api("/api/admin/customers/1/reset-password", { method: "POST", token });

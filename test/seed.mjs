@@ -82,6 +82,8 @@ async function main() {
   await prisma.idempotencyKey.deleteMany();
   await prisma.billboard.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.admin.deleteMany();
 
   const passwordHash = await bcrypt.hash("secret123", 12);
   await prisma.user.create({ data: { id: 1, name: "Ali Tester", phone: "09120000000", passwordHash } });
@@ -91,6 +93,38 @@ async function main() {
   // budget follows the account now, so sharing a phone number across tests
   // makes one test's failures another test's 429.
   await prisma.user.create({ data: { id: 3, name: "Timing Probe", phone: "09120000004", passwordHash } });
+
+  // Staff accounts, one per role.
+  //
+  // These used to be absent, and every admin test minted a JWT for an id that
+  // had no row behind it. That passed for as long as nothing looked — but a
+  // session is only as good as the account it names, and the route that checks
+  // it (getStaffSession) reads the row to see whether the account is still
+  // active and still holds the role the token claims. A fabricated session is
+  // therefore not a session any more, and rightly so: one could never have
+  // existed in production, where the only way to hold a staff token is to have
+  // signed in against one of these rows.
+  //
+  // The ids are the defaults mintSession() hands out per role — see
+  // test/helpers.mjs — so `mintSession({ role: "editor" })` names this editor.
+  for (const [id, role] of [[9001, "viewer"], [9002, "editor"], [9003, "admin"], [9004, "super_admin"]]) {
+    await prisma.admin.create({
+      data: { id, email: `${role}@test.local`, passwordHash, name: `Test ${role}`, role, active: true },
+    });
+  }
+  // Three more super_admins, because the user-management tests need actors that
+  // are distinct from each other and from the account they are editing (one of
+  // them checks that a super_admin cannot change its own role).
+  for (const id of [99001, 99002, 99003]) {
+    await prisma.admin.create({
+      data: { id, email: `super${id}@test.local`, passwordHash, name: `Test super ${id}`, role: "super_admin", active: true },
+    });
+  }
+  // Deactivated on purpose: proof that a valid token for a disabled account is
+  // refused. Nothing else touches it.
+  await prisma.admin.create({
+    data: { id: 9005, email: "revoked@test.local", passwordHash, name: "Test revoked", role: "admin", active: false },
+  });
 
   for (const row of [
     // Distinct estimatedViews / area so the sort tests can assert a real order.
@@ -110,7 +144,7 @@ async function main() {
     await prisma.billboard.create({ data: row });
   }
 
-  console.log("seeded: 6 billboards (2 unpublished, 1 with an image), 2 users (password 'secret123')");
+  console.log("seeded: 6 billboards (2 unpublished, 1 with an image), 3 users, 8 admins (password 'secret123')");
   await prisma.$disconnect();
 }
 

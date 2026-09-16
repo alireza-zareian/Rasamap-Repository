@@ -4,9 +4,8 @@ import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import { getSession } from "@/lib/auth/session";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-import { hasPermission } from "@/lib/auth/users";
+import { getStaffSession, hasPermission } from "@/lib/auth/users";
 import { prisma } from "@/lib/db/client";
 import { revalidateCatalogue } from "@/lib/db/billboards";
 import { decodeImageDataUrl, MAX_IMAGE_BYTES } from "@/lib/uploads";
@@ -20,7 +19,7 @@ const PutSchema = z.object({
 
 // PUT /api/admin/billboards/[id]/images — editor+
 async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   if (!hasPermission(session.role, "editor")) {
     return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
