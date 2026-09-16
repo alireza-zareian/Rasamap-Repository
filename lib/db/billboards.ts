@@ -179,11 +179,21 @@ export const publishedOnly = { notIn: UNPUBLISHED_STATUSES };
 // `estimatedViews` and `area` columns: both are derived values (one from the
 // traffic JSON, one from width x height) and Prisma cannot ORDER BY an
 // expression or a JSON path.
+//
+// Every entry ends with `id`, which is not decoration: without a unique last
+// term the order *within* a group of equal keys is whatever the engine happens
+// to produce, and paging is LIMIT/OFFSET over that order. On this dataset the
+// 3,532 published rows fall into 717 distinct (featured, hasImages, price)
+// groups and the largest holds 153 rows — six pages of identical sort keys.
+// SQLite answers them consistently today, so nothing is visibly wrong; Postgres
+// makes no such promise, and the migration path in §27 is meant to be a change
+// of engine, not a change of behaviour. One indexed integer closes it, and it
+// measured the same 2 ms with and without.
 const SORT_MAP: Record<string, Prisma.BillboardOrderByWithRelationInput[]> = {
-  price_asc:    [{ featured: "desc" }, { hasImages: "desc" }, { price: "asc" }],
-  price_desc:   [{ featured: "desc" }, { hasImages: "desc" }, { price: "desc" }],
-  traffic_desc: [{ featured: "desc" }, { hasImages: "desc" }, { estimatedViews: "desc" }],
-  area_desc:    [{ featured: "desc" }, { hasImages: "desc" }, { area: "desc" }],
+  price_asc:    [{ featured: "desc" }, { hasImages: "desc" }, { price: "asc" },  { id: "asc" }],
+  price_desc:   [{ featured: "desc" }, { hasImages: "desc" }, { price: "desc" }, { id: "asc" }],
+  traffic_desc: [{ featured: "desc" }, { hasImages: "desc" }, { estimatedViews: "desc" }, { id: "asc" }],
+  area_desc:    [{ featured: "desc" }, { hasImages: "desc" }, { area: "desc" }, { id: "asc" }],
 };
 
 /**
@@ -377,7 +387,10 @@ export async function getAdminBillboardPage(
     ];
   }
 
-  const orderBy: Prisma.BillboardOrderByWithRelationInput = { [p.sortKey]: p.sortDir };
+  // `id` breaks ties for the same reason the public sort does — sorting the
+  // admin table by city puts hundreds of rows on one key.
+  const orderBy: Prisma.BillboardOrderByWithRelationInput[] =
+    p.sortKey === "id" ? [{ id: p.sortDir }] : [{ [p.sortKey]: p.sortDir }, { id: "asc" }];
 
   const [rows, total] = await Promise.all([
     prisma.billboard.findMany({ where, orderBy, skip: (p.page - 1) * p.limit, take: p.limit }),
