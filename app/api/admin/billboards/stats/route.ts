@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/auth/client-ip";
 import { rateLimited } from "@/lib/api-rate-limit";
 import type { AdminStats } from "@/lib/admin/types";
-import { getAllBillboards } from "@/lib/db/billboards";
+import { getAdminStatsRows } from "@/lib/db/stats";
 import { getStaffSession } from "@/lib/auth/users";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { withApiLog } from "@/lib/api-log";
@@ -19,7 +19,7 @@ async function GETHandler(req: NextRequest) {
   const rl = adminApiRateLimit(ip);
   if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/billboards/stats", ip });
 
-  const all = await getAllBillboards();
+  const all = await getAdminStatsRows();
   const now = Date.now();
   const week = 7 * 24 * 60 * 60 * 1000;
 
@@ -35,7 +35,7 @@ async function GETHandler(req: NextRequest) {
     byCity[b.city] = (byCity[b.city] || 0) + 1;
     byType[b.type] = (byType[b.type] || 0) + 1;
     if (b.lat && b.lng) withCoords++; else missingCoords++;
-    if (!b.images || b.images.length === 0) missingImages++;
+    if (((b.images ?? []) as string[]).length === 0) missingImages++;
     if (b.scrapedAt && now - new Date(b.scrapedAt).getTime() < week) recentlyImported++;
   }
 
