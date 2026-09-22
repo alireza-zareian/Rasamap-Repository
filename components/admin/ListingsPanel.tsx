@@ -139,6 +139,11 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
           {listings.map(l => {
             const [tone, toneBg] = STATUS_TONE[l.status] ?? [C.muted, C.surface];
             const busy = busyId === l.id;
+            // Disabling only the busy row's own buttons left every other row's
+            // decide buttons clickable while a decision was in flight — clicking
+            // one did nothing (decide() no-ops when busyId is already set), with
+            // no feedback, which reads as a broken button during a live demo.
+            const anyBusy = busyId !== null;
             return (
               <div key={l.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
                 <div style={{ display: "flex", gap: 12, padding: 14, flexWrap: "wrap" }}>
@@ -204,17 +209,17 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
 
                   {canDecide && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, justifyContent: "center" }}>
-                      <button onClick={() => decide(l.id, "approve")} disabled={busy}
-                        style={{ background: busy ? C.border : C.green, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: busy ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                      <button onClick={() => decide(l.id, "approve")} disabled={anyBusy}
+                        style={{ background: anyBusy ? C.border : C.green, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                         {l.plan === "featured" ? <Sparkles size={13} /> : <Check size={13} />}
                         {busy ? "..." : l.plan === "featured" ? "تأیید پرداخت و انتشار" : "تأیید و انتشار"}
                       </button>
-                      <button onClick={() => decide(l.id, "revision")} disabled={busy}
-                        style={{ background: "none", border: "1px solid rgba(249,115,22,0.5)", color: "#f97316", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: busy ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                      <button onClick={() => decide(l.id, "revision")} disabled={anyBusy}
+                        style={{ background: "none", border: "1px solid rgba(249,115,22,0.5)", color: "#f97316", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                         <PencilLine size={13} /> نیاز به اصلاح
                       </button>
-                      <button onClick={() => decide(l.id, "reject")} disabled={busy}
-                        style={{ background: "none", border: `1px solid ${C.border}`, color: "#ef4444", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: busy ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                      <button onClick={() => decide(l.id, "reject")} disabled={anyBusy}
+                        style={{ background: "none", border: `1px solid ${C.border}`, color: "#ef4444", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                         <X size={13} /> رد
                       </button>
                     </div>
