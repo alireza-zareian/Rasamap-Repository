@@ -181,6 +181,7 @@ model Billboard {
   @@index([city, status])
   @@index([city, type])
   @@index([type, price])
+  @@index([lat, lng])
   @@map("billboards")
 }
 
