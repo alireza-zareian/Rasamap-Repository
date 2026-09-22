@@ -4237,6 +4237,23 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
     </div>
   </div>
 
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">REF</div>
+      <div class="ph-title"><h3>تفکیکِ لایهٔ دادهٔ بیلبورد به خواندن و نوشتن</h3><p>۱ مهر ۱۴۰۵ · بازآراییِ محض — صفر تغییرِ رفتاری، صفر تغییر در محلِ فراخوانی</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">پرونده‌ٔ <code>lib/db/billboards.ts</code> با ۸۴۱ خط بزرگ‌ترین پروندهٔ کدبیس بود و هر دو جهتِ دسترسی به جدولِ بیلبورد را در یک جا نگه می‌داشت. به پوشه‌ای با سه پرونده تقسیم شد که مرزش «جهت» است، نه «موضوع».</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>billboards/core.ts</code></strong> — واژگانِ مشترکِ دو نیمه: نگاشتِ ردیفِ Prisma به رکوردِ دامنه، دو باریک‌سازیِ بیرونی (<code>toPublicBillboard</code>/<code>toCatalogueItem</code>)، برچسبِ کش و تعریفِ «منتشرشده»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>billboards/queries.ts</code></strong> — هر خواندن. هیچ‌چیزی در آن نمی‌نویسد و کش را باطل نمی‌کند، پس مسیرِ خواندن دیگر مسیرِ نوشتن را پشتِ خود به باندل نمی‌کشد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>billboards/mutations.ts</code></strong> — هر نوشتن، به‌همراه ابطالِ برچسبِ کش که ذاتاً به همین سمت تعلق دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>billboards/index.ts</code></strong> — همان مسیرِ import قبلی را حفظ می‌کند، پس <strong>هیچ‌کدام از ۱۸ محلِ فراخوانی تغییر نکرد</strong>. <code>core.ts</code> به‌جایِ <code>export *</code> با نامِ صریح دوباره صادر می‌شود تا <code>fromRow</code>، که لوله‌کشیِ داخلیِ پوشه است، وارد سطحِ عمومی نشود</div></div>
+      </div>
+      <div class="proof">معادل‌بودن اثبات شد نه ادعا: متنِ پروندهٔ اصلی با مجموعِ سه پروندهٔ تازه به‌صورت خط‌به‌خط مقایسه شد (<code>comm -23</code>) و <strong>صفر خط</strong> از نسخهٔ اصلی گم شده؛ تنها تفاوت‌ها کامنت‌های سرپروندهٔ تازه و خطوطِ <code>import</code>اند. سپس <code>tsc --noEmit</code> و <code>npm run lint</code> تمیز، <code>npm run build</code> موفق، و <code>npm test</code> <strong>۱۴۲/۱۴۲</strong> (۱۳۷ API + ۵ واردکننده). در میانهٔ کار دو خطایِ مرزیِ برش (یک کامنتِ دونیم‌شده و یک <code>/**</code> یتیم) را همین بررسی‌ها گرفتند — که خودش دلیلِ اجرای آن‌هاست.</div>
+    </div>
+  </div>
   <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">DOC</div>
@@ -5161,7 +5178,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۳۱ شهریور ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۱ مهر ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>
