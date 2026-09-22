@@ -759,9 +759,19 @@ export async function updateBillboard(id: number, data: BillboardUpdateInput): P
       area = (data.width ?? current.width) * (data.height ?? current.height);
     }
 
+    // `priceWeekly`/`priceQuarterly`/`priceYearly` are the same monthly-price
+    // derivation used at creation (newBillboardDefaults) and resubmission
+    // (resubmitListing) — an admin editing `price` alone must not leave the
+    // other three stale next to it on the detail page.
+    const derivedPrices = data.price === undefined ? undefined : {
+      priceWeekly:    Math.round(data.price / 4),
+      priceQuarterly: Math.round(data.price * 3 * 0.9),
+      priceYearly:    Math.round(data.price * 12 * 0.8),
+    };
+
     const row = await prisma.billboard.update({
       where: { id },
-      data: area === undefined ? data : { ...data, area },
+      data: { ...data, ...(area === undefined ? {} : { area }), ...derivedPrices },
     });
     revalidateCatalogue();
     return fromRow(row);
