@@ -106,8 +106,9 @@ function LoginForm() {
 
             {/* Email — force Latin */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: "0.75rem", color: C.muted, marginBottom: 5 }}>ایمیل</label>
+              <label htmlFor="admin-login-email" style={{ display: "block", fontSize: "0.75rem", color: C.muted, marginBottom: 5 }}>ایمیل</label>
               <input
+                id="admin-login-email"
                 ref={emailRef}
                 value={email}
                 onChange={e => setEmail(toLatin(e.target.value))}
@@ -122,9 +123,10 @@ function LoginForm() {
 
             {/* Password — show/hide + force Latin */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: "0.75rem", color: C.muted, marginBottom: 5 }}>رمز عبور</label>
+              <label htmlFor="admin-login-password" style={{ display: "block", fontSize: "0.75rem", color: C.muted, marginBottom: 5 }}>رمز عبور</label>
               <div style={{ position: "relative" }}>
                 <input
+                  id="admin-login-password"
                   value={password}
                   onChange={e => setPassword(toLatin(e.target.value))}
                   type={showPass ? "text" : "password"}
