@@ -117,8 +117,8 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
         ) : data ? (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-              <div><label style={lS}>نام</label><input style={iS} value={name} onChange={e => { setName(e.target.value); setSavedOk(false); }} /></div>
-              <div><label style={lS}>شماره موبایل</label><input style={{ ...iS, direction: "ltr", textAlign: "left" }} value={phone} onChange={e => { setPhone(e.target.value); setSavedOk(false); }} placeholder="09xxxxxxxxx" /></div>
+              <div><label htmlFor="cust-name" style={lS}>نام</label><input id="cust-name" style={iS} value={name} onChange={e => { setName(e.target.value); setSavedOk(false); }} /></div>
+              <div><label htmlFor="cust-phone" style={lS}>شماره موبایل</label><input id="cust-phone" style={{ ...iS, direction: "ltr", textAlign: "left" }} value={phone} onChange={e => { setPhone(e.target.value); setSavedOk(false); }} placeholder="09xxxxxxxxx" /></div>
             </div>
             <div style={{ display: "flex", gap: 16, fontSize: "0.75rem", color: C.muted, marginBottom: 16, flexWrap: "wrap" }}>
               <span>ثبت‌نام: {fmt(data.createdAt)}</span>

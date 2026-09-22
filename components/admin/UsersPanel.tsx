@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { fetchJson, errorMessage } from "@/lib/fetch-json";
+import { useModalA11y } from "@/lib/useModalA11y";
 import type { UserRole } from "@/lib/auth/session";
 import { C, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
@@ -309,6 +310,7 @@ function CustomersSection() {
 }
 
 function AddAdminModal({ onClose, onCreated }: { onClose: () => void; onCreated: (a: AdminRow) => void }) {
+  const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [form, setForm] = useState({ name: "", email: "", role: "viewer" as UserRole, password: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -335,20 +337,20 @@ function AddAdminModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 26, width: "min(440px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-label="کاربر مدیریتی جدید" tabIndex={-1} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 26, width: "min(440px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.95rem", fontWeight: 700 }}><Plus size={16} /> کاربر مدیریتی جدید</div>
           <button type="button" aria-label="بستن فرم کاربر" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div><label style={lS}>نام</label><input style={iS} value={form.name} onChange={set("name")} /></div>
-          <div><label style={lS}>ایمیل</label><input style={{ ...iS, direction: "ltr", textAlign: "left" }} value={form.email} onChange={set("email")} type="email" autoComplete="off" /></div>
-          <div><label style={lS}>نقش</label>
-            <select style={iS} value={form.role} onChange={set("role")}>
+          <div><label htmlFor="admn-name" style={lS}>نام</label><input id="admn-name" style={iS} value={form.name} onChange={set("name")} /></div>
+          <div><label htmlFor="admn-email" style={lS}>ایمیل</label><input id="admn-email" style={{ ...iS, direction: "ltr", textAlign: "left" }} value={form.email} onChange={set("email")} type="email" autoComplete="off" /></div>
+          <div><label htmlFor="admn-role" style={lS}>نقش</label>
+            <select id="admn-role" style={iS} value={form.role} onChange={set("role")}>
               {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
           </div>
-          <div><label style={lS}>رمز عبور (حداقل ۸ نویسه)</label><input style={{ ...iS, direction: "ltr", textAlign: "left" }} value={form.password} onChange={set("password")} type="password" autoComplete="new-password" /></div>
+          <div><label htmlFor="admn-password" style={lS}>رمز عبور (حداقل ۸ نویسه)</label><input id="admn-password" style={{ ...iS, direction: "ltr", textAlign: "left" }} value={form.password} onChange={set("password")} type="password" autoComplete="new-password" /></div>
         </div>
         {error && <div style={{ marginTop: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>}
         <div style={{ display: "flex", gap: 10, marginTop: 18 }}>

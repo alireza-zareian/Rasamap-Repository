@@ -188,58 +188,58 @@ export default function EditListingModal({
           )}
 
           <div style={{ marginBottom: 12 }}>
-            <label style={label}>نام رسانه</label>
-            <input value={form.name} onChange={e => s("name", e.target.value)} style={field} />
+            <label htmlFor="elm-name" style={label}>نام رسانه</label>
+            <input id="elm-name" value={form.name} onChange={e => s("name", e.target.value)} style={field} />
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={label}>توضیحات</label>
-            <textarea value={form.desc} onChange={e => s("desc", e.target.value)} rows={3} maxLength={1000} style={{ ...field, resize: "vertical", lineHeight: 1.8 }} />
+            <label htmlFor="elm-desc" style={label}>توضیحات</label>
+            <textarea id="elm-desc" value={form.desc} onChange={e => s("desc", e.target.value)} rows={3} maxLength={1000} style={{ ...field, resize: "vertical", lineHeight: 1.8 }} />
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={label}>شماره تماس</label>
-            <input value={form.phone} onChange={e => s("phone", e.target.value)} dir="ltr" style={{ ...field, textAlign: "right" }} placeholder="09xxxxxxxxx" />
+            <label htmlFor="elm-phone" style={label}>شماره تماس</label>
+            <input id="elm-phone" value={form.phone} onChange={e => s("phone", e.target.value)} dir="ltr" style={{ ...field, textAlign: "right" }} placeholder="09xxxxxxxxx" />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
-              <label style={label}>نوع رسانه</label>
-              <select value={form.type} onChange={e => s("type", e.target.value)} style={field}>
+              <label htmlFor="elm-type" style={label}>نوع رسانه</label>
+              <select id="elm-type" value={form.type} onChange={e => s("type", e.target.value)} style={field}>
                 {TYPES.map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
               </select>
             </div>
             <div>
-              <label style={label}>شهر</label>
-              <select value={form.city} onChange={e => s("city", e.target.value)} style={field}>
+              <label htmlFor="elm-city" style={label}>شهر</label>
+              <select id="elm-city" value={form.city} onChange={e => s("city", e.target.value)} style={field}>
                 {cities.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={label}>منطقه / محله</label>
-            <input value={form.region} onChange={e => s("region", e.target.value)} style={field} />
+            <label htmlFor="elm-region" style={label}>منطقه / محله</label>
+            <input id="elm-region" value={form.region} onChange={e => s("region", e.target.value)} style={field} />
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={label}>آدرس دقیق</label>
-            <input value={form.location} onChange={e => s("location", e.target.value)} style={field} />
+            <label htmlFor="elm-location" style={label}>آدرس دقیق</label>
+            <input id="elm-location" value={form.location} onChange={e => s("location", e.target.value)} style={field} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
-              <label style={label}>عرض (متر)</label>
-              <input value={form.width} onChange={e => s("width", e.target.value)} inputMode="numeric" style={field} />
+              <label htmlFor="elm-width" style={label}>عرض (متر)</label>
+              <input id="elm-width" value={form.width} onChange={e => s("width", e.target.value)} inputMode="numeric" style={field} />
             </div>
             <div>
-              <label style={label}>ارتفاع (متر)</label>
-              <input value={form.height} onChange={e => s("height", e.target.value)} inputMode="numeric" style={field} />
+              <label htmlFor="elm-height" style={label}>ارتفاع (متر)</label>
+              <input id="elm-height" value={form.height} onChange={e => s("height", e.target.value)} inputMode="numeric" style={field} />
             </div>
             <div>
-              <label style={label}>تعداد وجوه</label>
-              <select value={form.faces} onChange={e => s("faces", e.target.value)} style={field}>
+              <label htmlFor="elm-faces" style={label}>تعداد وجوه</label>
+              <select id="elm-faces" value={form.faces} onChange={e => s("faces", e.target.value)} style={field}>
                 {["1", "2", "4", "6"].map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={label}>قیمت پایه ماهانه (میلیون تومان)</label>
-            <input value={form.price} onChange={e => s("price", e.target.value)} inputMode="numeric" style={field} />
+            <label htmlFor="elm-price" style={label}>قیمت پایه ماهانه (میلیون تومان)</label>
+            <input id="elm-price" value={form.price} onChange={e => s("price", e.target.value)} inputMode="numeric" style={field} />
           </div>
 
           <div style={{ marginBottom: 12 }}>

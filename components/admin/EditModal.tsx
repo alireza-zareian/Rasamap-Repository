@@ -89,24 +89,25 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
           </div>
         </div>
         <div className="admin-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <div style={{ gridColumn: "1/-1" }}><label style={lS}>نام</label><input style={iS} value={form.name} onChange={set("name")} /></div>
-          <div style={{ gridColumn: "1/-1" }}><label style={lS}>آدرس</label><input style={iS} value={form.location} onChange={set("location")} /></div>
-          <div><label style={lS}>شهر</label><input style={iS} value={form.city} onChange={set("city")} /></div>
-          <div><label style={lS}>قیمت (میلیون تومان)</label><input style={iS} value={form.price} onChange={set("price")} type="number" min="0" /></div>
-          <div><label style={lS}>نوع</label><select style={iS} value={form.type} onChange={set("type")}>{Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
-          <div><label style={lS}>وضعیت</label><select style={iS} value={form.status} onChange={set("status")}>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
-          <div><label style={lS}>عرض (m)</label><input style={iS} value={form.width} onChange={set("width")} type="number" min="0" /></div>
-          <div><label style={lS}>ارتفاع (m)</label><input style={iS} value={form.height} onChange={set("height")} type="number" min="0" /></div>
-          <div><label style={lS}>آژانس</label><input style={iS} value={form.agency} onChange={set("agency")} /></div>
-          <div><label style={lS}>تلفن</label><input style={iS} value={form.phone} onChange={set("phone")} /></div>
+          <div style={{ gridColumn: "1/-1" }}><label htmlFor="em-name" style={lS}>نام</label><input id="em-name" style={iS} value={form.name} onChange={set("name")} /></div>
+          <div style={{ gridColumn: "1/-1" }}><label htmlFor="em-location" style={lS}>آدرس</label><input id="em-location" style={iS} value={form.location} onChange={set("location")} /></div>
+          <div><label htmlFor="em-city" style={lS}>شهر</label><input id="em-city" style={iS} value={form.city} onChange={set("city")} /></div>
+          <div><label htmlFor="em-price" style={lS}>قیمت (میلیون تومان)</label><input id="em-price" style={iS} value={form.price} onChange={set("price")} type="number" min="0" /></div>
+          <div><label htmlFor="em-type" style={lS}>نوع</label><select id="em-type" style={iS} value={form.type} onChange={set("type")}>{Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+          <div><label htmlFor="em-status" style={lS}>وضعیت</label><select id="em-status" style={iS} value={form.status} onChange={set("status")}>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+          <div><label htmlFor="em-width" style={lS}>عرض (m)</label><input id="em-width" style={iS} value={form.width} onChange={set("width")} type="number" min="0" /></div>
+          <div><label htmlFor="em-height" style={lS}>ارتفاع (m)</label><input id="em-height" style={iS} value={form.height} onChange={set("height")} type="number" min="0" /></div>
+          <div><label htmlFor="em-agency" style={lS}>آژانس</label><input id="em-agency" style={iS} value={form.agency} onChange={set("agency")} /></div>
+          <div><label htmlFor="em-phone" style={lS}>تلفن</label><input id="em-phone" style={iS} value={form.phone} onChange={set("phone")} /></div>
           <div style={{ gridColumn: "1/-1", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.75rem", color: C.green, fontWeight: 700, marginBottom: 10 }}><MapPin size={13} /> مختصات — ایران: lat ۲۴–۴۰ | lng ۴۴–۶۴</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div><label style={lS}>عرض (lat)</label><input style={iS} value={form.lat} onChange={set("lat")} placeholder="35.6892" /></div>
-              <div><label style={lS}>طول (lng)</label><input style={iS} value={form.lng} onChange={set("lng")} placeholder="51.3890" /></div>
+              <div><label htmlFor="em-lat" style={lS}>عرض (lat)</label><input id="em-lat" style={iS} value={form.lat} onChange={set("lat")} placeholder="35.6892" /></div>
+              <div><label htmlFor="em-lng" style={lS}>طول (lng)</label><input id="em-lng" style={iS} value={form.lng} onChange={set("lng")} placeholder="51.3890" /></div>
             </div>
             <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
               <input
+                aria-label="لینک گوگل مپ برای استخراج مختصات"
                 style={{ ...iS, flex: 1, fontSize: "0.75rem", direction: "ltr" }}
                 value={mapsUrl}
                 onChange={e => { setMapsUrl(e.target.value); setUrlError(""); }}
@@ -157,7 +158,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
               </div>
             )}
           </div>
-          <div style={{ gridColumn: "1/-1" }}><label style={lS}>توضیحات</label><textarea style={{ ...iS, minHeight: 60, resize: "vertical" }} value={form.description} onChange={set("description")} /></div>
+          <div style={{ gridColumn: "1/-1" }}><label htmlFor="em-description" style={lS}>توضیحات</label><textarea id="em-description" style={{ ...iS, minHeight: 60, resize: "vertical" }} value={form.description} onChange={set("description")} /></div>
         </div>
         {error && <div style={{ marginTop: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>}
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>

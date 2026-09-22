@@ -60,21 +60,21 @@ export function CreateModal({ onClose, onCreated }: { onClose: () => void; onCre
           <button type="button" aria-label="بستن فرم ایجاد" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
         </div>
         <div className="admin-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <div style={{ gridColumn: "1/-1" }}><label style={lS}>نام <span style={{ color: C.accent }}>*</span></label><input style={iS} value={form.name} onChange={set("name")} placeholder="بیلبورد اتوبان..." /></div>
-          <div style={{ gridColumn: "1/-1" }}><label style={lS}>آدرس <span style={{ color: C.accent }}>*</span></label><input style={iS} value={form.location} onChange={set("location")} placeholder="اتوبان همت، تقاطع..." /></div>
-          <div><label style={lS}>شهر <span style={{ color: C.accent }}>*</span></label><input style={iS} value={form.city} onChange={set("city")} placeholder="تهران" /></div>
-          <div><label style={lS}>قیمت ماهانه (میلیون تومان) <span style={{ color: C.accent }}>*</span></label><input style={iS} value={form.price} onChange={set("price")} type="number" min="0" placeholder="15" /></div>
-          <div><label style={lS}>نوع</label><select style={iS} value={form.type} onChange={set("type")}>{Object.entries(TYPE_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+          <div style={{ gridColumn: "1/-1" }}><label htmlFor="cm-name" style={lS}>نام <span style={{ color: C.accent }}>*</span></label><input id="cm-name" style={iS} value={form.name} onChange={set("name")} placeholder="بیلبورد اتوبان..." /></div>
+          <div style={{ gridColumn: "1/-1" }}><label htmlFor="cm-location" style={lS}>آدرس <span style={{ color: C.accent }}>*</span></label><input id="cm-location" style={iS} value={form.location} onChange={set("location")} placeholder="اتوبان همت، تقاطع..." /></div>
+          <div><label htmlFor="cm-city" style={lS}>شهر <span style={{ color: C.accent }}>*</span></label><input id="cm-city" style={iS} value={form.city} onChange={set("city")} placeholder="تهران" /></div>
+          <div><label htmlFor="cm-price" style={lS}>قیمت ماهانه (میلیون تومان) <span style={{ color: C.accent }}>*</span></label><input id="cm-price" style={iS} value={form.price} onChange={set("price")} type="number" min="0" placeholder="15" /></div>
+          <div><label htmlFor="cm-type" style={lS}>نوع</label><select id="cm-type" style={iS} value={form.type} onChange={set("type")}>{Object.entries(TYPE_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-            <div><label style={lS}>عرض (m)</label><input style={iS} value={form.width} onChange={set("width")} type="number" min="1" /></div>
-            <div><label style={lS}>ارتفاع (m)</label><input style={iS} value={form.height} onChange={set("height")} type="number" min="1" /></div>
-            <div><label style={lS}>وجه</label><input style={iS} value={form.faces} onChange={set("faces")} type="number" min="1" /></div>
+            <div><label htmlFor="cm-width" style={lS}>عرض (m)</label><input id="cm-width" style={iS} value={form.width} onChange={set("width")} type="number" min="1" /></div>
+            <div><label htmlFor="cm-height" style={lS}>ارتفاع (m)</label><input id="cm-height" style={iS} value={form.height} onChange={set("height")} type="number" min="1" /></div>
+            <div><label htmlFor="cm-faces" style={lS}>وجه</label><input id="cm-faces" style={iS} value={form.faces} onChange={set("faces")} type="number" min="1" /></div>
           </div>
-          <div><label style={lS}>آژانس</label><input style={iS} value={form.agency} onChange={set("agency")} placeholder="آژانس رسانه‌ای..." /></div>
-          <div><label style={lS}>تلفن</label><input style={iS} value={form.phone} onChange={set("phone")} placeholder="021-XXXXXXXX" /></div>
-          <div><label style={lS}>عرض جغرافیایی (lat)</label><input style={iS} value={form.lat} onChange={set("lat")} placeholder="35.6892" /></div>
-          <div><label style={lS}>طول جغرافیایی (lng)</label><input style={iS} value={form.lng} onChange={set("lng")} placeholder="51.3890" /></div>
-          <div style={{ gridColumn: "1/-1" }}><label style={lS}>توضیحات</label><textarea style={{ ...iS, minHeight: 60, resize: "vertical" }} value={form.description} onChange={set("description")} placeholder="موقعیت ممتاز..." /></div>
+          <div><label htmlFor="cm-agency" style={lS}>آژانس</label><input id="cm-agency" style={iS} value={form.agency} onChange={set("agency")} placeholder="آژانس رسانه‌ای..." /></div>
+          <div><label htmlFor="cm-phone" style={lS}>تلفن</label><input id="cm-phone" style={iS} value={form.phone} onChange={set("phone")} placeholder="021-XXXXXXXX" /></div>
+          <div><label htmlFor="cm-lat" style={lS}>عرض جغرافیایی (lat)</label><input id="cm-lat" style={iS} value={form.lat} onChange={set("lat")} placeholder="35.6892" /></div>
+          <div><label htmlFor="cm-lng" style={lS}>طول جغرافیایی (lng)</label><input id="cm-lng" style={iS} value={form.lng} onChange={set("lng")} placeholder="51.3890" /></div>
+          <div style={{ gridColumn: "1/-1" }}><label htmlFor="cm-description" style={lS}>توضیحات</label><textarea id="cm-description" style={{ ...iS, minHeight: 60, resize: "vertical" }} value={form.description} onChange={set("description")} placeholder="موقعیت ممتاز..." /></div>
         </div>
         {error && <div style={{ marginTop: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>}
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
