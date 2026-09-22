@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X, Check, Lightbulb, CircleCheckBig, ArrowRight, ArrowLeft, ChevronLeft } from "lucide-react";
@@ -54,6 +54,16 @@ export default function ListMediaPage() {
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s=(k:string,v:string)=>setForm(f=>({...f,[k]:v}));
+
+  // Nothing here is persisted across a reload — a refresh or an accidental tab
+  // close mid-wizard silently drops everything the owner typed, with no
+  // explanation. This at least stops the browser from doing it unprompted.
+  useEffect(() => {
+    if (step === 0 || step >= DONE_STEP) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [step]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -140,6 +150,9 @@ export default function ListMediaPage() {
       if (!form.height || parseInt(form.height) < 1) return "ارتفاع رسانه را وارد کنید.";
       if (!form.price || parseInt(form.price) < 1) return "قیمت پایه ماهانه را وارد کنید.";
     }
+    if (current === 3) {
+      if (photos.length === 0) return "حداقل یک تصویر از رسانه اضافه کنید.";
+    }
     return null;
   }
 
@@ -152,15 +165,15 @@ export default function ListMediaPage() {
 
   const inp=(label:string,key:keyof typeof form,ph:string,type="text")=>(
     <div style={{marginBottom:14}}>
-      <label style={{fontSize:"0.78rem",color:"var(--text-muted)",display:"block",marginBottom:5}}>{label}</label>
-      <input value={form[key]} onChange={e=>s(key,e.target.value)} type={type} placeholder={ph}
+      <label htmlFor={`list-media-${key}`} style={{fontSize:"0.78rem",color:"var(--text-muted)",display:"block",marginBottom:5}}>{label}</label>
+      <input id={`list-media-${key}`} value={form[key]} onChange={e=>s(key,e.target.value)} type={type} placeholder={ph}
         style={{width:"100%",background:"var(--bg-surface)",border:"1px solid var(--border)",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.88rem",padding:"10px 14px",borderRadius:9,outline:"none"}}/>
     </div>
   );
   const sel=(label:string,key:keyof typeof form,opts:string[])=>(
     <div style={{marginBottom:14}}>
-      <label style={{fontSize:"0.78rem",color:"var(--text-muted)",display:"block",marginBottom:5}}>{label}</label>
-      <select value={form[key]} onChange={e=>s(key,e.target.value)}
+      <label htmlFor={`list-media-${key}`} style={{fontSize:"0.78rem",color:"var(--text-muted)",display:"block",marginBottom:5}}>{label}</label>
+      <select id={`list-media-${key}`} value={form[key]} onChange={e=>s(key,e.target.value)}
         style={{width:"100%",background:"var(--bg-surface)",border:"1px solid var(--border)",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.88rem",padding:"10px 14px",borderRadius:9,outline:"none"}}>
         {opts.map(o=><option key={o}>{o}</option>)}
       </select>
