@@ -88,13 +88,6 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
   });
   if (!existing) return NextResponse.json({ error: "آگهی یافت نشد" }, { status: 404 });
 
-  if (!UNPUBLISHED_STATUSES.includes(existing.status)) {
-    return NextResponse.json(
-      { error: "این آگهی قبلاً بررسی شده است" },
-      { status: 409 },
-    );
-  }
-
   const decision = parsed.data.decision;
   const note = parsed.data.note?.trim() || null;
   const approve = decision === "approve";
@@ -102,8 +95,14 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
   // asked and paid for one — never from the submitted plan alone.
   const grantFeatured = approve && existing.plan === "featured";
 
-  const updated = await prisma.billboard.update({
-    where: { id },
+  // The "still awaiting a decision" check and the write happen in one
+  // conditional update, not a separate read followed by a write — otherwise two
+  // concurrent decisions on the same id (a double-click, a retried request, two
+  // admin tabs) could both pass the earlier read and both land, with the later
+  // one silently overwriting the first (§8 of docs/engineering-decisions.md;
+  // the same guard resubmitListing already uses).
+  const { count } = await prisma.billboard.updateMany({
+    where: { id, status: { in: UNPUBLISHED_STATUSES } },
     data: {
       status:     STATUS_BY_DECISION[decision],
       featured:   grantFeatured,
@@ -111,8 +110,19 @@ async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id:
       // revision it carries the admin's message to the submitter's dashboard.
       reviewNote: note,
     },
+  });
+  if (count === 0) {
+    return NextResponse.json(
+      { error: "این آگهی قبلاً بررسی شده است" },
+      { status: 409 },
+    );
+  }
+
+  const updated = await prisma.billboard.findUnique({
+    where:  { id },
     select: { id: true, name: true, status: true, plan: true, featured: true },
   });
+  if (!updated) return NextResponse.json({ error: "آگهی یافت نشد" }, { status: 404 });
   revalidateCatalogue();
 
   const actorId = Number.parseInt(session.userId, 10);
