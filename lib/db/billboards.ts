@@ -827,3 +827,15 @@ export async function deleteBillboard(id: number): Promise<boolean> {
 export async function hasReviews(id: number): Promise<boolean> {
   return (await prisma.review.count({ where: { billboardId: id } })) > 0;
 }
+
+/**
+ * ContactRequest.billboardId is onDelete: Cascade, unlike Review, so deleting
+ * a billboard silently destroys every lead ever generated for it — the "one
+ * number worth knowing" per docs/engineering-decisions.md §23. This does not
+ * block the delete (a lead that predates the removal of its billboard has
+ * nowhere left to point), but the admin route records the count on the audit
+ * row before it is gone, so the loss is at least visible after the fact.
+ */
+export async function countContactRequests(id: number): Promise<number> {
+  return prisma.contactRequest.count({ where: { billboardId: id } });
+}

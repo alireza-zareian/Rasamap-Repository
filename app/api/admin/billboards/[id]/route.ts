@@ -6,7 +6,7 @@ import { BILLBOARD_STATUSES } from "@/lib/types";
 import { getStaffSession } from "@/lib/auth/users";
 import { adminApiRateLimit } from "@/lib/auth/rate-limit";
 import { persistAudit } from "@/lib/auth/audit";
-import { getBillboardById, updateBillboard, deleteBillboard, hasReviews } from "@/lib/db/billboards";
+import { getBillboardById, updateBillboard, deleteBillboard, hasReviews, countContactRequests } from "@/lib/db/billboards";
 import { withApiLog } from "@/lib/api-log";
 
 function adminIdOf(session: Awaited<ReturnType<typeof getStaffSession>>): number | null {
@@ -133,6 +133,11 @@ async function DELETEHandler(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ error: "نمی‌توان رسانه‌ای را که نظر ثبت‌شده دارد حذف کرد" }, { status: 409 });
   }
 
+  // Unlike reviews, contact requests cascade-delete with the billboard (no
+  // block) — a lead that predates the removal has nowhere left to point. The
+  // count is captured before the delete so the loss is on the audit record.
+  const deletedLeads = await countContactRequests(id);
+
   const ok = await deleteBillboard(id);
   if (!ok) return NextResponse.json({ error: "خطا در حذف" }, { status: 500 });
 
@@ -143,7 +148,7 @@ async function DELETEHandler(req: NextRequest, { params }: { params: Promise<{ i
     userEmail: session!.email,
     ip: getClientIp(req),
     userAgent: req.headers.get("user-agent"),
-    details: { billboardId: id, slug: existing.slug, name: existing.name },
+    details: { billboardId: id, slug: existing.slug, name: existing.name, deletedLeads },
   });
 
   return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
