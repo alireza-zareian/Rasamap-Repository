@@ -23,8 +23,8 @@ export default function Topbar({ }: Props) {
     { id: "compare",   label: "مقایسه", Icon: Scale,    href: "/compare" },
   ];
 
-  const btn = (style: React.CSSProperties, onClick: () => void, children: React.ReactNode) => (
-    <button onClick={onClick} style={{ fontFamily: "inherit", cursor: "pointer", transition: "all 0.2s", ...style }}>{children}</button>
+  const btn = (style: React.CSSProperties, onClick: () => void, children: React.ReactNode, ariaLabel?: string) => (
+    <button onClick={onClick} aria-label={ariaLabel} style={{ fontFamily: "inherit", cursor: "pointer", transition: "all 0.2s", ...style }}>{children}</button>
   );
 
   return (
@@ -41,7 +41,7 @@ export default function Topbar({ }: Props) {
       {/* Nav tabs */}
       <nav className="topbar-tabs" style={{ display: "flex", gap: 4 }}>
         {tabs.map(t => (
-          <Link key={t.id} href={t.href} style={{
+          <Link key={t.id} href={t.href} aria-label={t.label} style={{
             fontFamily: "inherit", cursor: "pointer",
             background: activeTab === t.id ? "var(--bg-surface)" : "none",
             color: activeTab === t.id ? "var(--accent)" : "var(--text-muted)",
@@ -62,7 +62,7 @@ export default function Topbar({ }: Props) {
           background: "var(--bg-surface)", border: "1px solid var(--border)",
           color: "var(--text-main)", padding: "7px 10px", borderRadius: 8,
           display: "flex", alignItems: "center",
-        }, toggle, dark ? <Sun size={16} /> : <Moon size={16} />)}
+        }, toggle, dark ? <Sun size={16} /> : <Moon size={16} />, dark ? "تغییر به تم روشن" : "تغییر به تم تاریک")}
 
         <Link href="/list-media" className="topbar-list-cta" style={{ border: "1px solid var(--border)", background: "none", color: "var(--text-main)", fontSize: "0.8rem", padding: "7px 14px", borderRadius: 8, textDecoration: "none" }}>ثبت رسانه</Link>
 
@@ -81,7 +81,7 @@ export default function Topbar({ }: Props) {
               border: "1px solid var(--border)", background: "none",
               color: "var(--text-muted)", fontSize: "0.78rem", padding: "6px 12px", borderRadius: 8,
               display: "flex", alignItems: "center", gap: 5,
-            }, logout, <><LogOut size={13} /> <span className="topbar-logout-label">خروج</span></>)}
+            }, logout, <><LogOut size={13} /> <span className="topbar-logout-label">خروج</span></>, "خروج از حساب کاربری")}
           </>
         ) : user === null ? (
           <Link href="/login" style={{ background: "var(--accent)", color: "#fff", fontSize: "0.8rem", fontWeight: 700, padding: "7px 16px", borderRadius: 8, textDecoration: "none", boxShadow: "0 2px 10px rgba(59,123,245,0.25)" }}>

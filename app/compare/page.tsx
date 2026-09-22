@@ -79,7 +79,7 @@ export default function ComparePage() {
                     </div>
                   )}
                   <div style={{ padding: "12px 14px 14px" }}>
-                    <button onClick={() => remove(b.id)} title="حذف از مقایسه" style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.55)", border: "none", borderRadius: 6, width: 24, height: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                    <button onClick={() => remove(b.id)} aria-label={`حذف ${b.name} از مقایسه`} style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.55)", border: "none", borderRadius: 6, width: 24, height: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
                       <X size={12} />
                     </button>
                     {compareList.indexOf(b) >= 2 && (

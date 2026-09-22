@@ -174,7 +174,7 @@ function AdminDashboard() {
               collapses into a row of tab buttons that pushes it further down
               still. This sits in the topbar instead, which is sticky, so it is
               on screen from every tab. */}
-          <Link href="/" className="admin-topbar-sitelink" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.75rem", fontWeight: 600, padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.accent}55`, background: `${C.accent}12`, color: C.accent, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}>
+          <Link href="/" className="admin-topbar-sitelink" aria-label="مشاهده سایت" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.75rem", fontWeight: 600, padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.accent}55`, background: `${C.accent}12`, color: C.accent, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}>
             <Globe size={13} /> <span className="admin-topbar-sitelink-label">مشاهده سایت</span>
           </Link>
           <button onClick={handleLogout} disabled={loggingOut} style={{ fontSize: "0.75rem", padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: "pointer", flexShrink: 0 }}>
