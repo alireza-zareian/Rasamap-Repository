@@ -66,6 +66,15 @@ export async function verifyOtp(phone: string, purpose: OtpPurpose, code: string
     return { ok: false, reason: "mismatch" };
   }
 
-  await prisma.otpCode.update({ where: { id: row.id }, data: { consumedAt: new Date() } });
+  // Consumption is conditional on the row still being unconsumed, not a bare
+  // update, so two concurrent verifies with the same correct code (a
+  // double-submit, a retried request) cannot both succeed — the second finds
+  // count === 0 and is treated as already-spent rather than authorizing a
+  // second password write.
+  const { count } = await prisma.otpCode.updateMany({
+    where: { id: row.id, consumedAt: null },
+    data: { consumedAt: new Date() },
+  });
+  if (count === 0) return { ok: false, reason: "not_found" };
   return { ok: true };
 }
