@@ -4210,6 +4210,33 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
       <div class="proof">هر اصلاح اجرا و دیده شد، نه فرض: <strong>۱۳۷ تست API + ۵ تست واردکننده + ۹ جریان مرورگر، همه موفق</strong> (سه تست تازه، خودِ همین اصلاح‌ها را قفل می‌کنند)؛ <code>tsc --noEmit</code> و <code>npm run lint</code> تمیز. کارایی با A/B واقعی روی همان ماشین سنجیده شد (build از کامیت پیش از ممیزی در برابر build فعلی): اختلافِ همهٔ مسیرها زیر ۰٫۵ میلی‌ثانیه، یعنی نویز — <code>/</code> ۵ms، <code>/explore</code> ۱۴٫۵ms، <code>/api/billboards</code> ۱۱٫۵ms در هر دو. هزینهٔ بررسی تازهٔ نشست ۰٫۰۵ میلی‌ثانیه است و فقط کارکنان آن را می‌پردازند. صفر سرریز افقی در ۱۰ صفحه × ۴ عرض (۳۶۰/۳۹۰/۷۶۸/۱۲۸۰).</div>
     </div>
   </div>
+
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">AUD3</div>
+      <div class="ph-title"><h3>ممیزی مستقل سوم — هشت خط موازی (A تا H)</h3><p>۳۱ شهریور ۱۴۰۵ · هر خط جداگانه و فقط از روی کد واقعی، نه سند؛ ۲۴ یافته، همه Required یا Worth it اصلاح شدند</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">هشت خط مستقل (صحت/رقابت، امنیت، سطح API، کارایی، سه‌جریانِ اصلی، فرانت‌اند/دسترس‌پذیری، معماری، عملیات/صداقتِ سند) به‌صورت موازی روی کدِ واقعی اجرا شدند؛ یافته‌های Overkill (ناوبریِ کیبوردِ نقشه، ابطالِ نشست با تغییرِ رمز، UI شمارشِ معکوسِ ارسالِ دوبارهٔ OTP و…) عمداً پیاده‌سازی نشدند.</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>قیمت‌های مشتق‌شده با ویرایشِ قیمت توسط ادمین به‌روز نمی‌شدند</strong> — <code>updateBillboard()</code> فقط <code>area</code> را با تغییرِ ابعاد دوباره حساب می‌کرد؛ سه ستونِ هفتگی/فصلی/سالانه با تغییرِ قیمتِ ماهانه دست‌نخورده می‌ماندند و در صفحهٔ رسانه جلوی چشمِ بازدیدکننده ناهماهنگ می‌شدند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>race condition در تصمیمِ ادمین روی آگهی</strong> — چکِ وضعیت و نوشتن دو عملیاتِ جدا بودند؛ دو تصمیمِ هم‌زمان روی یک آگهی می‌توانستند هر دو بنویسند و آخری بی‌صدا برنده شود. با همان الگوی <code>resubmitListing</code> (updateMany شرطی) بسته شد؛ همان الگو برای <b>مصرفِ کدِ OTP</b> هم تکرار شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پنلِ ادمین در حینِ یک تصمیمِ در حال اجرا، دکمه‌های ردیف‌های دیگر را غیرفعال نمی‌کرد</strong> — کلیک روی ردیفِ دیگر بی‌صدا هیچ اثری نداشت؛ در یک دموی زنده با تأخیرِ شبکه دقیقاً همین اتفاق می‌افتد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong><code>TRUSTED_PROXY_COUNT</code> پیشِ‌فرضش با توپولوژیِ دمو نمی‌خواند</strong> — <code>npm run demo</code> بدونِ nginx اجرا می‌شود؛ پیشِ‌فرضِ ۱ به یک <code>X-Forwarded-For</code>ِ جعلی اعتماد می‌کرد و سقف‌هایِ ضدِ‌اسکرپ و OTP-به‌ازای-IP را دور می‌زد. برای همین توپولوژی به ۰ تنظیم شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>خطاهایِ رندرِ صفحه به لاگِ ساختاریافته نمی‌رسیدند</strong> — مسیرهایِ API یک <code>ref</code> قابلِ‌جست‌وجو داشتند، ولی صفحه‌ای که مستقیم از دیتابیس می‌خواند فقط <code>error.digest</code>ِ خودِ Next را نشان می‌داد — شناسه‌ای که هرگز به <code>logs/app.log</code> نمی‌رسید. با هوکِ <code>onRequestError</code> در <code>instrumentation.ts</code> بسته شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>~۴۰ فیلدِ فرم در ۱۰ فایل، برچسبِ متصل نداشتند</strong> — <code>label</code> و <code>input</code> خواهر-برادر بودند بدونِ <code>htmlFor</code>/<code>id</code>؛ فقط ۳ نمونهٔ درست در کلِ کدبیس بود. صفحاتِ ورود/بازیابیِ رمز، هر مودالِ ادمین، و فرمِ ثبتِ آگهی اصلاح شدند؛ دکمهٔ تغییرِ تم و لینک‌های ناوبریِ موبایل (که با <code>display:none</code> نامِ دسترس‌پذیرشان کامل حذف می‌شد، نه فقط ظاهرشان) هم <code>aria-label</code> گرفتند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ثبتِ آگهی بدونِ هیچ عکسی ممکن بود</strong> و رفرش یا دکمهٔ برگشتِ مرورگر، فرمِ ۴مرحله‌ای را بی‌هشدار پاک می‌کرد — حداقلِ یک عکس در ولیدیشنِ کلاینت و یک <code>beforeunload</code> اضافه شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سه ناسازگاریِ کوچک در سطحِ API</strong> — <code>GET /api/reviews</code> با <code>parseInt</code> خام به‌جایِ Zod؛ <code>GET /api/listings</code> بدونِ rate-limit برخلافِ الگویِ خودِ پروژه؛ قالبِ نمونهٔ مسیرِ ادمین در <code>docs/api.md</code> از <code>getSession</code>/<code>getIP</code>ی استفاده می‌کرد که یا نادرست یا ناموجود بودند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حذفِ بیلبورد، سرنخ‌ها را بی‌صدا نابود می‌کرد</strong> — <code>ContactRequest</code> برخلافِ <code>Review</code>، با حذفِ بیلبورد cascade می‌شود؛ حالا شمارشِ سرنخ‌هایِ ازدست‌رفته پیش از حذف در ردیفِ audit ثبت می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ایندکسِ <code>(lat, lng)</code> نبود</strong> — جست‌وجویِ شعاعی و نقاطِ نقشه با فیلترِ lat/lng، اسکنِ کاملِ جدول می‌زدند؛ کامنتِ خودِ کد ادعا می‌کرد ایندکس این را کوتاه می‌کند. ایندکس مستقیم روی <code>dev.db</code> اضافه شد (بدونِ لمسِ داده) چون <code>prisma migrate dev</code> به‌خاطرِ یک drift قدیمی و بی‌ربط می‌خواست کل دیتابیس را ریست کند — که رد شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سه سطحِ ساختگی مستند شد نه پنهان</strong> — <code>getAllBillboards()</code> (تمامِ ستون‌ها، بدونِ حد) با کامنتی هشدار گرفت چون AGENTS.md/CLAUDE.md آن را نقطهٔ ورودِ رسمی معرفی می‌کنند؛ <code>AuditLog.adminId</code> (FK+ایندکسی که هرگز نوشته نمی‌شود) و مدلِ <code>Owner</code> (فقط seedِ دمو پرش می‌کند) هر دو در schema.prisma توضیح گرفتند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>کنتراستِ متنِ کم‌رنگ در تمِ روشن ~۴٫۱۵:۱ بود</strong> — زیرِ آستانهٔ ۴٫۵:۱ استاندارد AA، درست همان تمی که در بارگذاریِ اول دیده می‌شود. یک پله تیره‌تر شد؛ کیف‌فریم مردهٔ CSS هم حذف شد</div></div>
+      </div>
+      <div class="proof">هر اصلاح روی همان build تأیید شد: <code>tsc --noEmit</code> و <code>npm run lint</code> تمیز؛ <code>npm test</code> <strong>۱۴۲/۱۴۲</strong> (۱۳۷ API + ۵ واردکننده)؛ <code>npm run test:e2e</code> <strong>۹/۹</strong> — از جمله جریانِ ثبتِ آگهی که خودِ همین اصلاح‌ها (حداقلِ عکس) را از مسیرِ واقعیِ کاربر رد می‌کند. ایندکسِ تازه با <code>EXPLAIN QUERY PLAN</code> تأیید شد: از <code>SCAN</code> به <code>SEARCH ... USING INDEX</code>. دموی واقعی با env تازه یک بار بالا آمد و <code>/api/health</code> پاسخ داد. هر commit یک نگرانی — ۱۸ commit جدا، هیچ رفتاری بدونِ تست تغییر نکرد.</div>
+    </div>
+  </div>
+
   <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">DOC</div>
@@ -5134,7 +5161,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۲۵ شهریور ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۳۱ شهریور ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>
