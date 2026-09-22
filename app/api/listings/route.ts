@@ -16,11 +16,14 @@ import { withApiLog } from "@/lib/api-log";
 const MAX_BODY_BYTES = Math.ceil(MAX_LISTING_IMAGES * MAX_IMAGE_BYTES * 1.4) + 64 * 1024;
 
 const ListingSchema = z.object({
-  name:     z.string().min(3, "نام رسانه باید حداقل ۳ کاراکتر باشد").max(100),
+  // Trimmed because the partial unique index on (submittedById, name, city)
+  // that guards against a duplicate submission compares bytes exactly — a
+  // trailing space would silently let a near-identical resubmit through it.
+  name:     z.string().trim().min(3, "نام رسانه باید حداقل ۳ کاراکتر باشد").max(100),
   desc:     z.string().max(1000).optional().default(""),
   phone:    z.string().regex(/^09\d{9}$/, "شماره تماس معتبر نیست (مثال: 09123456789)"),
   type:     z.enum(["billboard", "digital", "bridge", "station"]),
-  city:     z.string().min(1, "شهر الزامی است").max(50),
+  city:     z.string().trim().min(1, "شهر الزامی است").max(50),
   region:   z.string().max(100).optional().default(""),
   location: z.string().max(200).optional().default(""),
   width:    z.coerce.number().int().positive("عرض باید عدد مثبت باشد").max(200),
@@ -108,11 +111,15 @@ async function POSTHandler(req: NextRequest) {
 }
 
 // GET /api/listings — the signed-in user's own submissions and their state.
-async function GETHandler() {
+async function GETHandler(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
   }
+
+  const ip = getClientIp(req);
+  const rl = userApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "listings", ip, userId: session.userId });
 
   const userId = parseInt(session.userId, 10);
   if (Number.isNaN(userId)) {
