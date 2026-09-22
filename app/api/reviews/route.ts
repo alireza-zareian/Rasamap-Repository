@@ -19,14 +19,21 @@ const ReviewSchema = z.object({
   comment:     z.string().min(10).max(1000),
 });
 
+const ReviewQuerySchema = z.object({
+  billboardId: z.coerce.number().int().positive(),
+});
+
 // GET /api/reviews?billboardId=X — public
 async function GETHandler(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = userApiRateLimit(ip);
   if (!rl.allowed) return rateLimited(rl, { endpoint: "reviews", ip });
 
-  const billboardId = parseInt(req.nextUrl.searchParams.get("billboardId") ?? "", 10);
-  if (isNaN(billboardId)) return NextResponse.json({ error: "billboardId الزامی است" }, { status: 400 });
+  const parsedQuery = ReviewQuerySchema.safeParse({
+    billboardId: req.nextUrl.searchParams.get("billboardId") ?? undefined,
+  });
+  if (!parsedQuery.success) return NextResponse.json({ error: "billboardId الزامی است" }, { status: 400 });
+  const { billboardId } = parsedQuery.data;
 
   const reviews = await prisma.review.findMany({
     where:   { billboardId },
