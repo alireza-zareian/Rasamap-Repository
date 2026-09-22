@@ -139,13 +139,6 @@ html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
   50%     { transform: translate(60px,50px); }
 }
 
-@keyframes scan-drift {
-  0%   { transform: translateY(-5vh); opacity: 0; }
-  8%   { opacity: 1; }
-  92%  { opacity: 1; }
-  100% { transform: translateY(105vh); opacity: 0; }
-}
-
 .fade-in   { animation: fadeIn  0.3s ease forwards; }
 .slide-up  { animation: slideUp 0.3s ease forwards; }
 
@@ -247,7 +240,12 @@ input[type=range] { accent-color: var(--accent); }
   --accent-glow: rgba(59,123,245,0.12);
 
   --text-main:  #14223A;
-  --text-muted: #5C7298;
+  /* Darkened from #5C7298 — that shade read ~4.15:1 against the bare page
+     background (--bg-deep), just under WCAG AA's 4.5:1 for normal text, and
+     light is the SSR default theme (app/layout.tsx), so it's what a cold
+     visitor sees first. This reads ~4.8:1 against --bg-deep while staying in
+     the same muted-blue family. */
+  --text-muted: #52698A;
 
   --border:    #B0C4E4;
   --border-hi: #8AACDC;
