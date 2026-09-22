@@ -168,23 +168,29 @@ Every admin route follows this exact order:
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
-import { adminApiRateLimit, getIP } from "@/lib/auth/rate-limit";
+import { getStaffSession } from "@/lib/auth/users";
+import { getClientIp } from "@/lib/auth/client-ip";
+import { adminApiRateLimit } from "@/lib/auth/rate-limit";
+import { rateLimited } from "@/lib/api-rate-limit";
 import { z } from "zod";
 
 export async function GET(req: NextRequest) {
-  // 1. Auth
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // 1. Auth — getStaffSession, never getSession: getSession also returns a
+  // valid session for a role:"user" (customer) account, which is exactly the
+  // hole an admin route must not have. It re-reads the admins row on every
+  // request, so a demoted/deactivated admin loses access immediately.
+  const session = await getStaffSession();
+  if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
 
   // 2. Rate limit
-  const rl = adminApiRateLimit(getIP(req));
-  if (!rl.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  const ip = getClientIp(req);
+  const rl = adminApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/example", ip, userId: session.userId, userEmail: session.email });
 
   // 3. Zod validation of query params
   const schema = z.object({ /* ... */ });
   const parsed = schema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid params" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "پارامترهای نامعتبر" }, { status: 400 });
 
   // 4. Business logic
   const data = await someDbQuery(parsed.data);
@@ -198,11 +204,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session || session.role !== "user")
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
 
-  const body = await req.json();
+  const ip = getClientIp(req);
+  const rl = userApiRateLimit(ip);
+  if (!rl.allowed) return rateLimited(rl, { endpoint: "example", ip, userId: session.userId });
+
+  let body: unknown;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "اطلاعات نامعتبر" }, { status: 400 });
 
   // business logic
 }
