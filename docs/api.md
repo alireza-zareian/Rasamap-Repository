@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
 ```ts
 export async function GET(req: NextRequest) {
   // Zod validate query params
-  // Query DB via lib/db/billboards.ts
+  // Query DB via lib/db/billboards/
   return NextResponse.json(data);
 }
 ```

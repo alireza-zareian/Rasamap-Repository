@@ -50,7 +50,7 @@ Leaflet. یک اسکریپرِ Python هم داده‌ی اولیه را از چ
    هنگامِ رندر مستقیم لایه‌ی داده را صدا می‌زند: یک پرش، بدونِ تبدیل به JSON،
    بدونِ درخواستِ شبکه‌ی سرور به خودش. این الگوی پیشنهادیِ خودِ Next.js است.
 
-هر دو مسیر از **یک لایه‌ی داده** (`lib/db/billboards.ts`) عبور می‌کنند؛ یک منبعِ
+هر دو مسیر از **یک لایه‌ی داده** (`lib/db/billboards/`) عبور می‌کنند؛ یک منبعِ
 حقیقت، بدونِ کدِ تکراری. یک فریم‌ورکِ headless (مثل Django + DRF) فقط مسیرِ API را
 دارد چون رابطِ کاربریِ رندرشده‌ی سمت سرور ندارد؛ Next.js هر دو را دارد و هرکدام را
 جایی به کار می‌برد که سریع‌تر است.
@@ -218,7 +218,7 @@ Leaflet. یک اسکریپرِ Python هم داده‌ی اولیه را از چ
 > | Doc | What it carries |
 > |-----|-----------------|
 > | `docs/architecture.md` | the two data paths, kitchen analogy, perf comparison, why it isn't a headless DRF API — **must appear in every reviewer-facing report** |
-> | `docs/engineering-decisions.md` | 33 decision records (Decision / Context / Structure / Why / Where / Verified) + milestone log — the spine of the "what we built and why" chapter |
+> | `docs/engineering-decisions.md` | 34 decision records (Decision / Context / Structure / Why / Where / Verified) + milestone log — the spine of the "what we built and why" chapter |
 > | `docs/defense.md` | defense-ready Persian summary + one-line opener (this file) |
 > | `docs/api.md` | the 42-endpoint HTTP reference (also served at `/api-docs`) |
 > | `docs/STATUS.md` | production-readiness triage, 13-layer assessment, `npm audit` status, current phase state and the remaining work list |
@@ -248,9 +248,11 @@ Public site:
 - [ ] Landing `/` — hero + stats bar + featured gallery ★
 - [ ] Explore `/explore` — filters open, grid of results, the co-located map/list
 - [ ] Billboard detail `/billboard/<slug>` — gallery, specs chips, traffic meter,
-      booking CTA, map ★
-- [ ] Booking modal — step 1 with the **booked-range chips + clash warning**
-      visible — submit a listing with a photo and watch it reach the admin queue ★
+      the contact CTA, map ★
+- [ ] Contact reveal — signed out it asks for a sign-in; signed in it hands over
+      the owner's number and writes a lead row ★
+- [ ] List-media wizard `/list-media` — submit a listing with a photo and watch
+      it reach the admin queue ★
 - [ ] Compare `/compare` with 2 boards + the CompareModal
 - [ ] Login `/login` and the `/reset-password` 3-step flow (step 2 shows the
       "کد تست" line only because `OTP_DEV_ECHO=1` locally)
@@ -284,7 +286,7 @@ Admin (`RUNBOOK.md` → super-admin):
       open a customer → edit + "بازنشانی رمز" showing a generated password ★
 - [ ] Quality tab — the explanatory note + an "اصلاح رکورد" button
 - [ ] Log tab — both "زنده (حافظه)" and "پایدار (دیتابیس)"; to populate a
-      `rate_limit_hit` row, hammer a booking POST ~60× from one IP first
+      `rate_limit_hit` row, hammer a sign-in POST past its per-account ceiling first
 - [ ] Admin panel on a **phone** — topbar not overflowing, tabs wrapping ★
 
 Terminal / logs:
@@ -309,10 +311,11 @@ is git-tracked-friendly (images aren't in `.gitignore` there).
 - [ ] Dark/light toggle works; the phone's own dark mode does **not** override
       the site theme.
 - [ ] Book a media as a user → it shows "pending" in the dashboard → confirm it
-      as admin → the billboard's status flips to "reserved" → cancel → back to
-      "available".
-- [ ] Try to double-book the same dates → 409 with a Persian message, and the
-      BookingModal blocks "next" before you even submit.
+      as admin → the listing's status flips from "pending" to "available" and it
+      appears in the catalogue on the next refresh.
+- [ ] Decide the same listing twice (two tabs, or a double-click) → the second
+      attempt gets a 409 with a Persian message, and the panel disables every
+      row's buttons while any decision is in flight.
 
 ---
 
@@ -367,10 +370,9 @@ is git-tracked-friendly (images aren't in `.gitignore` there).
 
 - Postgres migration (config, not rewrite) — `engineering-decisions.md` §14 has
   the story if a reviewer pushes on it; don't do it before the defense.
-- `next/image` for scraped images, PPR on explore, `useOptimistic` on the
-  booking modal — `docs/STATUS.md` P5–P10.
+- PPR on explore and streaming more of the page chrome — `docs/STATUS.md`.
 - A cron to expire a paid `featured` slot after 30 days (right now a granted
-  booking keeps the board "reserved" until an admin cancels it).
+  promotion stays until an admin removes it).
 - Marketing polish (testimonials, brand bar, Enamad placeholder) —
   `docs/STATUS.md` U5.
 
@@ -628,6 +630,9 @@ bcryptjs بدونِ خطا قبولش می‌کند ولی بلافاصله `fal
 | «سخت‌ترین مسئله‌ی همزمانی چه بود؟» | ثبتِ آگهی: `Idempotency-Key` + ایندکسِ یکتای جزئی + تستِ ده درخواستِ همزمان. تاریخچه هم بگویید: این الگو اول روی رزرو بود و با تغییر مدل به مسیرِ ثبت منتقل شد. |
 | «چرا SQLite؟» | خواندن‌محور، نوشتنِ کم و تراکنشی، تک‌ماشین، هزینه‌ی عملیاتی صفر. اولین گلوگاه: قفلِ تک‌نویسنده روی `POST /api/listings`. |
 | «چرا هر صفحه API صدا نمی‌زند؟» | `docs/architecture.md` — دو مسیر داده + تشبیه آشپزخانه. **الگوی توصیه‌شده‌ی Next.js است، نه میان‌بر.** |
+| **«این فایل‌بندی شبیه پروژه‌های استاندارد نیست — چرا اپ‌محور مثل Django نیست؟»** | Django با **app** گروه‌بندی می‌کند، App Router با **مسیر**: ساختارِ پوشه همان ساختارِ URL است — این قراردادِ خودِ فریم‌ورک است، نه سلیقه. معادلِ هر لایهٔ Django اینجا هست (`urls.py`→ساختار `app/`، `views.py`→۳۵ تا `route.ts`، `models.py`→`schema.prisma`+`lib/db/`، `serializers.py`→Zod، `services.py`→`lib/db/billboards/`، `templates/`→`components/`، middleware→`proxy.ts`). و ادعا نکنید «تمیز است» — **عدد بدهید**: ۱۶۵ فایل، ۴۸۹ وابستگی، **صفر** نقضِ لایه و **صفر** حلقه در گراف. §۳۴ |
+| **«این‌همه import بین پوشه‌ها از نظر امنیتی خطرناک نیست؟»** | `import` پیامِ زمانِ اجرا نیست؛ موقعِ build همه در یک باندل حل می‌شوند — نه کانالی، نه سطحِ حمله‌ای. مرزِ امنیتیِ واقعی **یکی** است: مرزِ client/server و مرزِ HTTP — و همان‌جاست که ترتیبِ اجباریِ `نشست ← سقف نرخ ← Zod ← منطق` از آن محافظت می‌کند. |
+| **«سقفِ نرخ‌تان را با تغییرِ IP دور نمی‌زنند؟»** | بله، اگر فقط به آدرس تکیه می‌کرد. برای همین **هیچ محافظتی در این کدبیس فقط روی آدرس بنا نشده**: ورود به‌ازای حساب هم محدود است و کدِ یک‌بارمصرف به‌ازای شماره. در توپولوژیِ دمو (بدون nginx) آدرس اصلاً خوانده نمی‌شود و همهٔ دستگاه‌ها یک سطلِ مشترک دارند — که با سقفِ ۶۰۰ درخواست در دقیقه برای چند داور جا دارد. پشتِ nginx (پوشهٔ `deploy/`) آدرس معنا پیدا می‌کند. |
 | «آپلود امن است؟» | بخش ۵ — و صادقانه بگویید آنتی‌ویروس نیست. |
 
 ---
@@ -692,7 +697,7 @@ Overall: **A−**
 | **Observability** | A− | One JSON object per log line, one `api_request` per request, `withApiLog` on every route, audit lines routed through the same logger, optional rotated file via `LOG_DIR`. §7 + §7a explain the deliberate stop point and the path forward. | No dashboards/alerting — that's the deployment layer, and the format is built for it, but it isn't wired. |
 | **Testing** | A− | 142 dependency-free tests (`node:test` + `fetch` against a real **production** build on an isolated DB): 137 API — validation, allowlists, rate limits, no enumeration **by body or by timing**, upload magic-byte rejection, the approval state machine, object-level authz, the OTP reset flow, sort correctness (each guarded against a vacuous pass) — plus 5 covering the nightly importer's rule that it may never undo a person (§33). On top of that, 9 E2E flows drive the installed Chrome over CDP (§31). `npm run bench` for load. | No component/unit tests, and the browser suite covers the main flows rather than every page. Reasonable for the scope and timeline; worth naming as future work. |
 | **Code quality** | A− | Consistent structure across 35 route files (43 endpoints), single-responsibility modules, `0` lint warnings, no `TODO`/`FIXME`/`@ts-ignore` in the codebase, TypeScript strict. Inline-style rule inflates line counts but that's a deliberate design-system choice. | `page.tsx` files are large (600+ lines) because of inline styles; the admin billboards list was loading all rows and filtering in JS until this pass (now DB-side); one O(n²) stat was replaced with O(n). |
-| **Documentation** | A | `docs/` carries architecture, a 42-endpoint API reference, 33 decision records with a milestone log, a security audit, a production-readiness triage, demo-account sheet, and this prep checklist. README is a readable narrative, not a command dump. | — |
+| **Documentation** | A | `docs/` carries architecture, a 43-endpoint API reference, 34 decision records with a milestone log, a security audit, a production-readiness triage, demo-account sheet, and this prep checklist. README is a readable narrative, not a command dump. | — |
 
 ### Where a stricter grader would push
 

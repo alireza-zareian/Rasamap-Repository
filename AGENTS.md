@@ -18,9 +18,21 @@ Six hard rules. Follow them without exception on every task, every file, every P
 ✅  import { getAllBillboards, getFilteredBillboards } from "@/lib/db/billboards";
 ✅  import type { Billboard } from "@/lib/types";   // types + typeLabels, data-free
 ❌  import { everyBillboard, allBillboards, scrapedBillboards } from "@/lib/data";
+❌  import { getFilteredBillboards } from "@/lib/db/billboards/queries";  // reach past index.ts
 ```
 
 `lib/data.ts` is a TypeScript constant file (static + scraped arrays + a 4 MB JSON import). It cannot receive DB writes and always serves stale data. Any API route or server function that reads from it instead of Prisma is silently serving old records — and any client/page import of it ships the entire dataset into the browser bundle. It is imported **only** by `prisma/seed.ts`. Everything else takes types from `lib/types.ts`.
+
+**Where a new billboard helper goes.** `lib/db/billboards/` is split by *direction*, not by topic:
+
+| File | Holds |
+|---|---|
+| `queries.ts` | every read. Nothing in it writes or invalidates the cache. |
+| `mutations.ts` | every write, each ending in `revalidateCatalogue()` when it changes what a visitor sees. |
+| `core.ts` | what both halves need: `fromRow`, `toPublicBillboard`, `toCatalogueItem`, `CATALOGUE_TAG`, `UNPUBLISHED_STATUSES`, `publishedOnly`. |
+| `index.ts` | the public surface. Re-exports `core.ts` **by name** so `fromRow` stays internal, and `export *` for the other two. |
+
+Import from `@/lib/db/billboards` — the folder, never a file inside it. A caller that reaches past `index.ts` pins itself to which half a function currently lives in. If you add an export to `queries.ts` or `mutations.ts` it is public automatically; if you add one to `core.ts`, decide first whether it belongs in `index.ts`'s named list.
 
 ---
 

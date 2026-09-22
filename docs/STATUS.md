@@ -50,7 +50,7 @@
 
 1. Zod `.safeParse()` — هرگز `.parse()` یا `JSON.parse(userInput)`
 2. Admin route order: `session → rate limit → Zod → business logic`
-3. DB reads: همیشه از `lib/db/billboards.ts` — هرگز از `lib/data.ts`
+3. DB reads: همیشه از `lib/db/billboards/` — هرگز از `lib/data.ts`
 4. همه رشته‌های user-visible به فارسی
 5. Styling: فقط `style={{}}` inline — هیچ Tailwind class در JSX
 6. بعد از هر تسک: این فایل را آپدیت کن (تیک بزن)
@@ -347,7 +347,9 @@ app/
     admin/billboards/*/       PUT + DELETE + images
 
 lib/
-  db/billboards.ts            getAllBillboards, getFilteredBillboards, ...
+  db/billboards/queries.ts    getFilteredBillboards, getBillboardBySlug, getMapPins, ...
+  db/billboards/mutations.ts  createListing, resubmitListing, updateBillboard, ...
+  db/billboards/core.ts       toPublicBillboard, publishedOnly, revalidateCatalogue
   db/client.ts                Prisma singleton با driver adapter
   data.ts                     ⚠️ دست نزن — فقط type definitions
   auth/useCurrentUser.ts      hook کاربر جاری
@@ -355,7 +357,7 @@ lib/
 
 components/
   BillboardCard.tsx
-  BookingModal.tsx
+  BillboardContact.tsx
   CompareBar.tsx
   CompareModal.tsx
   BillboardGallery.tsx
@@ -395,12 +397,12 @@ npm run db:studio        # Prisma Studio
 ### کارهای دور دوم (شهریور ۱۴۰۵) — کامل
 
 - **امنیت پایه:** `next` 16.2.11 (۱۰ CVE)، env fail-closed، client-IP غیرقابل جعل، Idempotency-Key + یکتایی بازه رزرو + تست همزمانی.
-- **حریم خصوصی:** شماره مالک از همه پاسخ‌های عمومی و RSC حذف شد؛ `GET /api/billboards/[slug]/contact` فقط برای کاربر واردشده؛ دکمه رزرو اول login می‌خواهد.
+- **حریم خصوصی:** شماره مالک از همه پاسخ‌های عمومی و RSC حذف شد (`toPublicBillboard`)؛ `POST /api/billboards/[slug]/contact` فقط برای کاربر واردشده و هر افشا یک ردیف سرنخ می‌نویسد؛ دکمه تماس اول login می‌خواهد.
 - **آیکون‌ها:** جاروی کل سایت — ایموجی کیبوردی → Lucide (پنل ادمین + همه صفحات کاربر).
 - **موبایل:** فونت self-host، خنثی‌سازی dark-mode مرورگر، رفع سرریزهای topbar / explore / جزئیات / پنل ادمین / نوار مقایسه.
 - **پنل ادمین:** مدیریت چند-ادمین (`/api/admin/users`)، فهرست کاربران ثبت‌نام‌شده (`/api/admin/customers`)، کلیک روی کاربر → مشاهده/ویرایش/بازنشانی رمز، کلیک روی بیلبورد در پنل رزرو → مدیریت کامل، بخش کیفیت با توضیح + دکمه اصلاح، lightbox تصاویر.
 - **Rate limit:** قفل ۲ دقیقه‌ای برای `userApi` (نه ۱۵ دقیقه)، پاسخ ۴۲۹ با `Retry-After` + پیام فارسی «N دقیقه دیگر»، یک ردیف durable `rate_limit_hit` به‌ازای هر قفل، سقف ۵۰هزار کلید در حافظه.
-- **منطق On-Time:** تأیید رزرو → وضعیت بیلبورد `reserved` (تراکنش)؛ لغو → آزاد. BookingModal بازه‌های رزروشده را نشان می‌دهد و انتخاب متداخل را همان‌جا می‌بندد.
+- **منطق تصمیم آگهی:** تأیید/رد در یک `updateMany` شرطی انجام می‌شود که خودِ شرطِ «هنوز بررسی‌نشده» را در `where` دارد؛ تلاش دوم `409` می‌گیرد و پنل تا پایانِ یک تصمیم، دکمه‌های همهٔ ردیف‌ها را غیرفعال می‌کند.
 - **لاگ:** `auditLog` از `logger` رد می‌شود؛ `LOG_DIR` → `app.log` چرخشی. `engineering-decisions §7a` = چرا هنوز Docker/ELK/Sentry نداریم + مسیر افزودنش.
 - **SMS (خاموش):** `engineering-decisions §16` — آداپتر کاوه‌نگار + `otp_codes` + `/api/auth/otp/{send,verify}` + صفحه `/reset-password` + پیامک خوش‌آمد. تا `KAVENEGAR_API_KEY` خالی باشد بی‌اثر.
 - **کارایی:** فهرست بیلبورد ادمین حالا در DB فیلتر/مرتب/صفحه‌بندی می‌شود (نه بارگذاری ۳۵۴۵ ردیف). آمار «خوشه هم‌مکان» از O(n²) به O(n). lint تمیز (۰ هشدار).
@@ -469,7 +471,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 - **User model:** anonymous visitor · registered `user` (reserve) · admin roles
   `viewer < editor < admin < super_admin` (env-var single admin today).
 - **Auth:** `proxy.ts` guards `/admin/*`, `/api/admin/*`, `/dashboard/*`,
-  `/api/reservations`, `/api/listings`. bcrypt cost 12, timing-safe dummy hash, sliding
+  `/api/listings`, `/api/reviews`. bcrypt cost 12, timing-safe dummy hash, sliding
   window rate limiting, in-memory audit ring buffer.
 
 ### (b) Remaining from STATUS.md / roadmap (practical, unfinished)
@@ -502,7 +504,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 | F11 | CSP allows `script-src 'self' 'unsafe-inline'` — the App Router streams its payload through inline scripts (§۲۹). `'unsafe-eval'` is **not** granted, and no map library needs it: the map is SVG drawn from vendored outlines (§۳۲). | Low (accepted) |
 | F12 | No structured logging / rotating log file — only `console.error` guarded by `NODE_ENV`. Professors often ask. → **fixed** — `lib/logger.ts` (one JSON object per line, optional rotated file via `LOG_DIR`), `withApiLog` on every route, and a short reference id surfaced to the user on a 500 (`lib/api-error.ts`). §7. | Med |
 | F13 | No DB backup script or documented restore. → **fixed** — `scripts/backup-db.sh` (`npm run db:backup`, engine-aware since §27, keeps the last 10) and a restore drill in `RUNBOOK.md`. | Med |
-| F14 | Object-level authz on `/api/reservations/my` and admin routes: verify a user cannot read another user's row by ID. → **verified** — covered by tests; a row that is not yours answers 404, not 403, so the response cannot be used to discover which ids exist. | Med |
+| F14 | Object-level authz on `/api/listings` and admin routes: verify a user cannot read another user's row by ID. → **verified** — covered by tests; a row that is not yours answers 404, not 403, so the response cannot be used to discover which ids exist, and `PATCH /api/listings/[id]` carries the ownership guard inside the `where` of the write. | Med |
 | F15 | **`lib/data.ts` mixed pure types + `typeLabels` + a 4 MB `billboards.json` import in one module.** Every page rendering a billboard card imported `typeLabels`, so the bundler pulled the whole module → a **6.7 MB client chunk** of scraped billboard JSON shipped to every visitor (verified in `.next/static/chunks`). Fixed: split into `lib/types.ts` (data-free). Client chunks 7.7 MB → 1.0 MB. | High → **fixed 2026-09-01** |
 
 ### (d) Priority ranking
@@ -538,13 +540,13 @@ admins review, approve and publish them through a separate RBAC-gated panel.
       `LOG_DIR` set, level filter, no deps, PII rule documented) + `lib/api-error.ts`
       `serverError()` — logs the stack with a short ref id, returns a generic Persian
       500 carrying that id. Wired into `/api/billboards`, `/billboards/[slug]`,
-      `/billboards/pins`, `/reservations`, `/admin/billboards`. `app/error.tsx` shows
+      `/listings`, `/reviews`, `/admin/billboards`. `app/error.tsx` shows
       `error.digest` as «کد خطا». (F12, Phase 4 + 5.3)
 - [x] T2.5 `npm audit` → `STATUS.md`. 10 advisories (1 mod, 9 high), **all**
       build-time (postcss) or in an unused feature (sharp / `next/image`), none on the
       request path. The `next` CVEs were fixed by bumping to `16.2.11` (2026-09-02); the
       post-presentation bump, documented with rationale + monthly re-check note.
-- [x] T2.6 Object-level authz — `/api/reservations/my` confirmed scoped by session
+- [x] T2.6 Object-level authz — `GET /api/listings` confirmed scoped by session
       (test: user B cannot see user A's reservation). Admin GET/POST confirmed to
       enforce role at the route, not just the UI. `/api/reviews` + admin `[id]` still
       worth a direct read. (F14, Phase 7.4)
@@ -589,7 +591,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 - Full load test 50–200 concurrent users (Phase 8.8) — partially done: `npm run bench`
   gives ~108 req/s on `/api/billboards` in dev mode, throughput flat from 20→50 clients
   (single Node process + sync SQLite reads = the ceiling). First hard limit under write
-  load is SQLite's single-writer lock on `POST /api/reservations`.
+  load is SQLite's single-writer lock on `POST /api/listings`.
 - CI/CD pipeline (Phase 13.4) — no test suite to run; not worth it for a local demo.
 - Writing a real test suite (Phase 7 / 16) — 5 days is not enough to do it honestly.
 - Redis-backed rate limit / audit persistence (Phase 8.7 / 6.6) — single instance,
@@ -683,7 +685,7 @@ migration or touches product behaviour.
 - [x] Persist status-change audit — `persistAudit()` to the existing `audit_logs`
       table (no migration). `billboard_create/update/delete`, `reservation_status_change`.
       `/api/admin/audit` now returns `{ logs, persisted }`.
-- [x] **Idempotency-Key** on `POST /api/reservations` and `POST /api/listings` +
+- [x] **Idempotency-Key** on `POST /api/listings` +
       `Reservation(billboardId,userId,startDate,endDate)` unique constraint. Migration
       `20260901120500` hand-applied to dev.db (additive only; `prisma migrate dev`
       wanted a full reset over pre-existing billboards-table drift). `lib/idempotency.ts`,

@@ -497,7 +497,7 @@ waiting for me — stopping only under rule 0.7.
   check already wrapped in a `prisma.$transaction`, in-memory audit log
   (`lib/auth/audit.ts`).
 - **Hard constraints (never violate):** Zod `.safeParse()` only; admin route order
-  `session -> rate limit -> Zod -> business logic`; DB reads via `lib/db/billboards.ts`
+  `session -> rate limit -> Zod -> business logic`; DB reads via `lib/db/billboards/`
   never `lib/data.ts`; all user-visible strings in Persian; styling is inline
   `style={{}}` only, no Tailwind classes in JSX; `proxy.ts` not `middleware.ts`.
 - **Deferred by decision (out of scope for this audit):** scraper/geocoding pipeline,

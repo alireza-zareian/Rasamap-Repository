@@ -30,7 +30,7 @@ state, the 13-layer production assessment and the security audit, all in one fil
       │                                  │                               │
       └──────────────┬───────────────────┴───────────────┬───────────────┘
                      ▼                                    ▼
-           lib/db/billboards.ts  ◄── one data layer ──►  lib/auth/*
+           lib/db/billboards/    ◄── one data layer ──►  lib/auth/*
            (Prisma 7 + SQLite/WAL)                       session · RBAC · rate-limit · audit
                      │
                      ▼
@@ -39,9 +39,9 @@ state, the 13-layer production assessment and the security audit, all in one fil
 
 | Layer | Module(s) | State |
 |-------|-----------|-------|
-| Auth boundary | `proxy.ts` | Guards `/admin/*`, `/api/admin/*`, `/dashboard/*`, `/api/reservations`, `/api/listings`; blocks headless UAs |
+| Auth boundary | `proxy.ts` | Guards `/admin/*`, `/dashboard/*`, `/list-media/*` and all of `/api/*`; also runs the anti-scraping checks on the catalogue pages and listing media; blocks headless UAs |
 | API | `app/api/**/route.ts` | Every route: session check → rate limit → Zod `.safeParse()` → business logic |
-| Data access | `lib/db/billboards.ts`, `lib/db/client.ts` | The only path to billboard/reservation reads and writes |
+| Data access | `lib/db/billboards/` (`queries.ts` reads, `mutations.ts` writes, `core.ts` shared), `lib/db/client.ts` | The only path to billboard/reservation reads and writes |
 | Types | `lib/types.ts` | Domain types + label maps, **data-free** |
 | Auth internals | `lib/auth/{session,users,rate-limit,audit,client-ip}.ts` | JWT, RBAC, sliding-window limits, audit, trusted-proxy IP |
 | Observability | `lib/logger.ts`, `lib/api-error.ts` | JSON-line logs, user-facing error reference ids |
@@ -54,7 +54,7 @@ state, the 13-layer production assessment and the security audit, all in one fil
 ## 1. One data layer, two entry paths
 
 **Decision.** All billboard/reservation data access goes through
-`lib/db/billboards.ts`. The browser reaches it over `/api/...`; a Server
+`lib/db/billboards/`. The browser reaches it over `/api/...`; a Server
 Component reaches it by calling it directly.
 
 **Context.** A Next.js full-stack app can serve data two ways. Routing every
@@ -65,7 +65,7 @@ letting each page query Prisma independently duplicates logic and invites drift.
 the `/billboard/[slug]` Server Component import the same functions
 (`getFilteredBillboards`, `getBillboardBySlug`, …). No query is written twice.
 
-**Why here.** The dataset changes (scraper, admin CRUD, reservations); the
+**Why here.** The dataset changes (scraper, admin CRUD, owner submissions); the
 client needs live filtering and pagination → those go over `/api/`. The detail
 page renders once on the server → it reads the DB directly (one hop, no JSON
 round-trip). Full rationale + performance table in `architecture.md`.
@@ -121,7 +121,7 @@ body for "wrong password" and "unknown account".
 battle-tested primitives (jose, bcrypt cost 12) rather than anything hand-rolled.
 
 **Where it applies.** `proxy.ts`, every `app/api/admin/**`, `app/api/auth/**`,
-`app/api/reservations`, `app/api/listings`. Admin accounts themselves live in
+`app/api/listings`, `app/api/reviews/**`. Admin accounts themselves live in
 the `admins` table and are managed from the super-admin panel
 (`/api/admin/users`, `super_admin` only): create hashes with bcrypt, role/active
 changes refuse to touch the caller's own row so a super-admin can't lock itself
@@ -129,7 +129,9 @@ out, every change is audit-logged.
 
 **Verified.** Tests: no user enumeration, 401 without a session, 401 for role
 `user` on admin routes, 403 for `viewer` on a write, object-level scoping on
-`/api/reservations/my`.
+`GET /api/listings` (a row that is not yours is simply not in the answer) and on
+`PATCH /api/listings/[id]`, whose ownership guard sits in the `where` of the
+write itself.
 
 ---
 
@@ -166,9 +168,10 @@ in-memory log only, so a burst cannot flood `audit_logs`.
 the endpoints an abuser hammers; the fix is one small helper, not a service.
 
 **Where it applies.** All rate-limited routes; audit log IP field.
-`rateLimited()` wired into `POST /api/reservations`.
+`rateLimited()` is the one shared 429 response — every limited route returns it
+rather than hand-rolling a fourth spelling of the same status.
 
-**Verified.** Tests: 12 rapid logins from one IP → `429`; 60+ rapid reservation
+**Verified.** Tests: 12 rapid logins from one IP → `429`; 60+ rapid listing
 POSTs → `429` with a positive `Retry-After` and a Persian message naming the
 minutes. Benchmark: `BENCH_SINGLE_IP=1` shows 60 requests then `429`.
 
@@ -183,6 +186,14 @@ minutes. Benchmark: `BENCH_SINGLE_IP=1` shows 60 requests then `429`.
 > one transaction, with a partial unique index on `(submittedById, name, city)` as the
 > DB-level floor and an opt-in `Idempotency-Key` on top (`lib/idempotency.ts`).
 > Read the paragraphs below as the reasoning; read §17 for why the flow itself went away.
+>
+> Two further read-modify-writes are closed with the same principle in a different
+> shape — the condition lives inside the write rather than in a read before it, so
+> the database, not the application, decides who wins:
+> `resubmitListing()` and the listing-decision endpoint both use a conditional
+> `updateMany` whose `where` carries the state guard (`count === 0` means another
+> request got there first), and an OTP is marked consumed by the same statement that
+> claims it, so one code cannot be spent twice.
 
 **Decision.** The overlap check and the insert run inside one
 `prisma.$transaction`. `POST` responses are safe to retry (planned:
@@ -330,7 +341,7 @@ migration needed — the table was already in the schema. Pattern from the Djang
 reference's decoupled `statuslog` app.
 
 **Where it applies.** `POST/PUT/DELETE /api/admin/billboards`,
-`PATCH /api/admin/reservations/[id]`, `POST /api/admin/users`,
+`POST /api/admin/listings/[id]/decision`, `POST /api/admin/users`,
 `PATCH /api/admin/users/[id]` (`admin_user_create` / `admin_user_update`,
 severity `warn`).
 
@@ -387,7 +398,7 @@ on cacheable GET routes; `no-store` on anything user-specific or write-related.
 
 **Structure it produces.** `/api/billboards` 60 s, `/api/billboards/[slug]`
 60 s, `/api/billboards/pins` 300 s, `/api/stats` 120 s, `/api/analytics` 60 s,
-`/api/reviews` 30 s. `/api/reservations*`, `/api/auth/*`, `/api/admin/*` →
+`/api/reviews` 30 s. `/api/listings*`, `/api/auth/*`, `/api/admin/*` →
 `no-store`. Server-side pagination caps every list payload regardless of dataset
 size.
 
@@ -441,23 +452,23 @@ Postgres is a config change, not a code change.
 
 **Context.** The data started as hardcoded arrays in `lib/data.ts` — fine for
 prototyping, wrong the moment the data became mutable (scraper, admin edits,
-reservations). A real store was needed. SQLite is a full ACID SQL engine that
+owner submissions). A real store was needed. SQLite is a full ACID SQL engine that
 runs as a library on one file rather than as a separate server.
 
 **Structure it produces.** One file (`dev.db`), zero database ops, WAL mode for
 concurrent readers. Prisma owns the schema (`prisma/schema.prisma`), generates
 a type-safe client, and versions changes under `prisma/migrations/`. The entire
-app talks to the DB through `lib/db/billboards.ts` — no route calls `prisma`
+app talks to the DB through `lib/db/billboards/` — no route calls `prisma`
 directly, no string-built SQL anywhere.
 
 **Why here.** The workload is read-heavy (a ~3.5k-row catalogue, filtered and
-paginated constantly), has one transactional write path (reservations, rare,
-serialised in a transaction), and runs as a single instance for a thesis demo.
+paginated constantly), has one transactional write path (listing submission,
+rare, serialised in a transaction), and runs as a single instance for a thesis demo.
 For that shape SQLite is the *correct* tool, not a compromise: fastest reads,
 nothing to install, a backup is a file copy. Consciously given up: truly
 concurrent writes (one writer at a time), multi-machine access, built-in
 replication — none of which this scale needs. First hard limit under write load
-is the single-writer lock on `POST /api/reservations`, named in
+is the single-writer lock on `POST /api/listings`, named in
 `architecture.md`.
 
 **Migration path.** Because everything goes through Prisma + one `lib/db/`
@@ -1769,6 +1780,65 @@ old as the last successful crawl.
 
 ---
 
+## 34. Splitting the data layer by direction, and two numbers that say it held
+
+`lib/db/billboards/` is one module in four files. The boundary is **direction**,
+not topic: `queries.ts` reads, `mutations.ts` writes, `core.ts` holds what both
+need, `index.ts` is the public surface.
+
+Direction is the useful cut here because the two halves have genuinely different
+obligations. Every write that changes what a visitor sees has to drop the
+catalogue cache tag; no read ever does. Putting them in one file meant that rule
+lived in prose — a reviewer had to read each function to know which kind it was.
+Split, the rule is the file name, and a read can no longer pull the write path
+into a bundle behind it.
+
+`index.ts` re-exports `core.ts` **by name** rather than with `export *`. That is
+the one asymmetry in the file and it is deliberate: `fromRow` is the folder's own
+plumbing — the Prisma row → domain record mapper that both halves call — and a
+blanket re-export would have made it part of the API the rest of the app can
+reach for. Callers import `@/lib/db/billboards`, the folder, so which half a
+function lives in stays an internal detail and can change without touching a
+call site.
+
+### What is worth measuring about an arrangement like this
+
+"Clean architecture" is a claim every project makes about itself. Two properties
+of the import graph can be checked instead of asserted, and both are computed
+from the same data `docs/thesis/build.py` already extracts:
+
+- **Direction of dependency is one-way.** Layers are ordered — pages and routes
+  on top, UI components under them, shared utilities and the data layer at the
+  bottom — and an edge may only point downward. An edge from `lib/` up into
+  `app/` ties two layers together so neither can be read or moved alone. Count
+  across the repository: **zero**.
+- **The graph is acyclic.** A cycle means A depends on B and B, directly or
+  through intermediates, back on A. Cyclic code cannot be read from the
+  beginning, its initialisation order becomes a property of the bundler, and no
+  piece of it can be isolated for a test. A depth-first search over all 489
+  edges finds **zero**.
+
+165 TypeScript files, 489 edges, 135 of those files connected to something.
+These are the numbers the thesis, `docs/codemap.html` and
+`docs/thesis/shots/import-graph.svg` all render, and they come from one script
+reading the repository — not from an estimate.
+
+### The check that catches a mechanical split
+
+Moving line ranges between files is the kind of edit that looks finished and is
+not. Two boundary faults happened here and neither showed up as a syntax error
+in the moved code: a doc comment cut in half across two files, and its orphaned
+`/**` left behind to swallow the sixty lines that followed it.
+
+The check that catches this is cheap and worth repeating on any future split:
+sort the non-blank, non-import lines of the original and of the concatenated
+result, and diff them. Every line of the original must still be present; the only
+additions should be the new file headers. `tsc --noEmit`, `npm run lint`,
+`npm run build` and `npm test` then confirm it, in that order — the type checker
+is what named both faults above.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -1813,3 +1883,6 @@ old as the last successful crawl.
 | 2026-09-09 | **V7 — browser tests** | §31 — `test/browser.mjs`, a 359-line CDP driver over the installed Chrome, no new dependency. `npm run test:e2e`: 8 flows on the production build, screenshots on failure. Found the headless-UA 403, missing image placeholders on four surfaces (`MediaImage`), and Latin digits in prices (`faCompact`/`faNum`). Five flakiness causes diagnosed and fixed. |
 | 2026-09-08 | **V6 — findability** | §30 — titles on the seven pages that had none (three `noindex`); generated Open Graph card with the project's own font, explicit RTL word order and ZWNJ handling; `Product`/`Offer` JSON-LD on media pages with Toman→IRR conversion; sitemap verified at 3,532/3,532 with no unpublished leak; `manifest.ts` + 192/512 icons. |
 | 2026-09-12 | **Nightly data sync** | §33 — `prisma/sync-scraped.ts` + `npm run db:sync-scraped`, three-way merge on `sourceSnapshot`, `missingSince` for vanished rows, `source_tombstones` so a deleted or deduped row never returns, `deploy/rasamap-sync.{service,timer}`. Crawler's invented fields made deterministic per listing so change detection is possible at all. 5 tests in `test/sync.test.mjs`. |
+| 2026-09-22 | **Third independent audit — eight parallel lines** | Twelve findings fixed, each with its own commit: derived price tiers recomputed when an admin edits the monthly price; the listing-decision check-then-write closed with a conditional `updateMany` and the same guard applied to OTP consumption; admin rows disabled while any decision is in flight; `TRUSTED_PROXY_COUNT` defaulted to the demo topology; Server-Component render errors routed to the structured logger via `onRequestError` in `instrumentation.ts`; ~40 form fields given associated labels across 10 files; a photo minimum and `beforeunload` on the listing wizard; Zod on the reviews query and a rate limit on `GET /api/listings`; lead count recorded on the audit row before a billboard delete cascades its contact requests; an index on `(lat, lng)` (`SCAN` → `SEARCH ... USING INDEX`); light-theme muted text lifted above 4.5:1. Three fabricated surfaces documented in `schema.prisma` rather than hidden. |
+| 2026-09-23 | **Data layer split by direction** | §34 — `lib/db/billboards/`: `queries.ts` reads, `mutations.ts` writes, `core.ts` shared, `index.ts` the public surface. No call site changed. Equivalence proved by line-level diff of the original against the three files (zero lines lost) before the type checker, linter, build and 142 tests. Import graph measured at 165 files / 489 edges with **zero** layer violations and **zero** cycles. |
+| 2026-09-23 | **Demo verified over the LAN, not localhost** | `npm run demo` exercised from the network address a reviewer's phone would use: 19 public routes, user and admin sign-in, dashboard, contact reveal, RBAC (`admin` 403 / `super_admin` 200 on staff management), styled Persian 404, identical error text for a known and an unknown phone. Session cookie `HttpOnly; SameSite=Strict` and **no `Secure`** over plain HTTP; owner phone absent from public HTML. 240 concurrent requests: all 200, zero 429, zero logged errors, CPU back to 0% at idle. Anti-scraping confirmed live — a UA-less client gets 403 where a browser gets 200. |

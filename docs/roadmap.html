@@ -4254,7 +4254,26 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
       <div class="proof">معادل‌بودن اثبات شد نه ادعا: متنِ پروندهٔ اصلی با مجموعِ سه پروندهٔ تازه به‌صورت خط‌به‌خط مقایسه شد (<code>comm -23</code>) و <strong>صفر خط</strong> از نسخهٔ اصلی گم شده؛ تنها تفاوت‌ها کامنت‌های سرپروندهٔ تازه و خطوطِ <code>import</code>اند. سپس <code>tsc --noEmit</code> و <code>npm run lint</code> تمیز، <code>npm run build</code> موفق، و <code>npm test</code> <strong>۱۴۲/۱۴۲</strong> (۱۳۷ API + ۵ واردکننده). در میانهٔ کار دو خطایِ مرزیِ برش (یک کامنتِ دونیم‌شده و یک <code>/**</code> یتیم) را همین بررسی‌ها گرفتند — که خودش دلیلِ اجرای آن‌هاست. سپس <code>npm run demo</code> بالا آمد و <strong>از رویِ آدرسِ LAN</strong> (نه <code>localhost</code>) آزموده شد: ۱۹ مسیرِ عمومی، ورودِ کاربر و ادمین، داشبورد، افشایِ شمارهٔ تماس، و RBAC. کوکیِ نشست روی HTTP ساده <code>HttpOnly; SameSite=Strict</code> و بدونِ <code>Secure</code> بود (قانون ۹)؛ شمارهٔ مالک در HTML عمومی نشت نکرد — یعنی همان <code>toPublicBillboard()</code>ی که در این بازآرایی به <code>core.ts</code> منتقل شد، سرِ جایش کار می‌کند. ۲۴۰ درخواستِ هم‌زمان: همه ۲۰۰، صفر ۴۲۹، صفر خطا در لاگ، و CPU پس از آرام‌شدن به ۰٪ برگشت.</div>
     </div>
   </div>
-  <div class="phase-card is-done open">
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">SYNC</div>
+      <div class="ph-title"><h3>هم‌ترازیِ مستندات با کدِ واقعی</h3><p>۱ مهر ۱۴۰۵ · هر سندِ داورمحور دوباره از روی خودِ مخزن راستی‌آزمایی شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">سندی که با کد نخواند، در جلسهٔ دفاع بدتر از سندِ نداشته است. همهٔ اعداد و همهٔ نامِ فایل‌ها از روی مخزن بازخوانی شدند، نه از روی نسخهٔ قبلیِ سند.</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>اعدادِ پایان‌نامه از اسکریپتِ خودش بازتولید شد</strong> — ۱۶۵ فایل و ۴۸۹ وابستگی (به‌جای ۱۵۵ و ۴۵۶)، ۱۱ جدول، ۲۹ نمایه، ۱۶ مهاجرت، و ۱۴۲ آزمون. <code>docs/codemap.html</code> و <code>import-graph.svg</code> از گرافِ واقعی دوباره ساخته شدند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>دو سنجهٔ عینیِ معماری به پایان‌نامه اضافه شد</strong> — صفر نقضِ جهتِ لایه و صفر حلقه در گراف، هر دو از همان دادهٔ <code>import</code>. جوابِ عددیِ پرسشِ «این فایل‌بندی اسپاگتی نیست؟» که در <code>defense.md</code> هم به‌صورت سه پرسش‌وپاسخ آمد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نقشهٔ دسترسیِ داده در <code>architecture.md</code> با واقعیت خواند</strong> — سند هنوز <code>/</code> و <code>/explore</code> را «مرورگر به API» معرفی می‌کرد در حالی که هر چهار صفحهٔ پربازدید از V1 به این‌سو Server Component‌اند و از <code>lib/db/cached.ts</code> می‌خوانند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>بازمانده‌های زیرسیستمِ رزرو از بخش‌های «وضعیتِ فعلی» پاک شدند</strong> — <code>BookingModal</code> و <code>/api/reservations</code> در جدولِ مرزِ احراز هویت، سقفِ نرخ، ثبتِ ممیزی و چک‌لیستِ دمو نام برده می‌شدند در حالی که §۱۷ آن‌ها را حذف کرده بود. ردیف‌های تاریخ‌دارِ تاریخچه و بلوکی که خودش می‌گوید «سابقه است» دست‌نخورده ماندند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>رکوردِ تصمیمِ §۳۴ نوشته شد</strong> — چرا مرزِ لایهٔ داده «جهت» است نه «موضوع»، چرا <code>index.ts</code> واژه‌به‌واژه صادر می‌کند نه <code>export *</code>، و آن بررسیِ خط‌به‌خطی که یک جابه‌جاییِ مکانیکیِ ناقص را می‌گیرد. قانونِ ۱ در <code>AGENTS.md</code> حالا می‌گوید هر کمک‌تابعِ تازه کجا می‌نشیند</div></div>
+      </div>
+      <div class="proof">هیچ عددی دستی نوشته نشد: <code>docs/thesis/build.py</code> برای گراف، <code>schema.prisma</code> برای جدول و نمایه، <code>ls prisma/migrations</code> برای مهاجرت، و خروجیِ خودِ <code>npm test</code> برای شمارِ آزمون. جست‌وجویِ پایانی در کلِ <code>docs/</code> و فایل‌های ریشه هیچ ارجاعِ زنده‌ای به <code>lib/db/billboards.ts</code>، <code>BookingModal</code> یا <code>/api/reservations</code> باقی نگذاشت.</div>
+    </div>
+  </div>
+
+    <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">DOC</div>
       <div class="ph-title"><h3>بستهٔ تحویلی پایان‌نامه</h3><p>پایان‌نامه، پوستر، اسلاید دفاع، نقشهٔ کد — مهلت داوران ۱۷ شهریور، دفاع ۲۱ شهریور</p></div>

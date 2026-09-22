@@ -8,7 +8,9 @@ Steps:
 1. Determine if this is a public, user-auth, or admin route
 2. Use the correct template from docs/api.md (session check → rate limit → Zod → business logic)
 3. Create the file at the appropriate path under `app/api/`
-4. For DB queries, add a helper to `lib/db/billboards.ts` if needed
+4. For DB queries, add a helper to `lib/db/billboards/` if needed — reads go in
+   `queries.ts`, writes in `mutations.ts`, and anything both halves need in `core.ts`.
+   Export it from `index.ts` so callers keep importing `@/lib/db/billboards`.
 5. Update `proxy.ts` if the route needs auth guarding at the proxy level
 
 Arguments: $ARGUMENTS
