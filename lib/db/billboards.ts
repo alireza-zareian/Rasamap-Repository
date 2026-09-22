@@ -110,6 +110,16 @@ export function toCatalogueItem(b: Billboard): CatalogueItem {
   };
 }
 
+/**
+ * Every column of every row, unbounded — including the JSON blobs (`traffic`,
+ * `images`, `allImages`, `features`, `nearbyLandmarks`). Nothing in this
+ * codebase calls it today; `getAdminStatsRows()` (lib/db/stats.ts) used to be
+ * built on exactly this shape and was refactored away from it specifically
+ * because it cost ~95ms against ~8ms for the eight columns it actually needs.
+ * Reach for `getFilteredBillboards()` or a narrower `select` instead — this
+ * exists as the documented ORM entry point AGENTS.md/CLAUDE.md point future
+ * work at, not as something to call on a read-heavy path.
+ */
 export async function getAllBillboards(): Promise<Billboard[]> {
   const rows = await prisma.billboard.findMany({ orderBy: [{ hasImages: "desc" }, { id: "asc" }] });
   return rows.map(fromRow);

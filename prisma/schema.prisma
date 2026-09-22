@@ -15,6 +15,13 @@ datasource db {
 }
 
 // ── Owner ──────────────────────────────────────────────────────
+// No live write path populates this today — createBillboard, createListing,
+// resubmitListing and prisma/sync-scraped.ts all write `agency`/`phone`
+// directly onto Billboard, which is what every page actually reads. Only
+// prisma/seed-demo-full.ts creates Owner rows, to make the demo dataset look
+// richer. Kept as a real relation (not folded away) for the day an owner
+// account feature reads/writes it for real, rather than dropped and rebuilt
+// later.
 model Owner {
   id        Int      @id @default(autoincrement())
   name      String
@@ -326,14 +333,21 @@ model OtpCode {
 }
 
 // ── AuditLog ───────────────────────────────────────────────────
-// In-memory ring buffer in lib/auth/audit.ts; DB table reserved for
-// future persistence.
+// In-memory ring buffer in lib/auth/audit.ts (lost on restart) AND persisted
+// here on every write via persistAudit(), pruned opportunistically past 90
+// days.
 model AuditLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
   action    String // AuditAction, e.g. login_success | billboard_update | ...
   severity  String // info | warn | critical
 
+  // Always null in practice — persistAudit() (lib/auth/audit.ts) never writes
+  // it, because the actor is usually the env-configured bootstrap admin with
+  // no `admins` row, which would trip this FK. The real actor id lives in
+  // `details.actorId` instead; `userEmail` carries "who" for display. Kept as
+  // a column (rather than dropped) for the day every admin does have a real
+  // row and this can start being populated for real.
   adminId   Int?
   admin     Admin?  @relation(fields: [adminId], references: [id])
   userEmail String?
