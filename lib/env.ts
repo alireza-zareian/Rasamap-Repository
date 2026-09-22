@@ -25,6 +25,20 @@ const optional = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
   // Reverse proxies in front of the app (see lib/auth/client-ip.ts)
   TRUSTED_PROXY_COUNT: z.string().regex(/^\d+$/, "must be a non-negative integer").optional(),
+  // SMS (lib/sms.ts) — the whole layer is a no-op until KAVENEGAR_API_KEY is set.
+  KAVENEGAR_API_KEY: z.string().optional(),
+  KAVENEGAR_SENDER: z.string().optional(),
+  KAVENEGAR_OTP_TEMPLATE: z.string().optional(),
+  // Echoes the OTP code in the API response for local testing — read directly
+  // against NODE_ENV in app/api/auth/otp/send/route.ts, so "1" is a no-op in
+  // production regardless of this value.
+  OTP_DEV_ECHO: z.enum(["0", "1"]).optional(),
+  // Absolute site URL for sitemap/OG/canonical links (lib/site-url.ts);
+  // defaults to https://rasamap.ir.
+  NEXT_PUBLIC_BASE_URL: z.string().url("must be a valid URL").optional(),
+  // Shared cache (cache-handler.js, next.config.ts) — dormant until set.
+  REDIS_URL: z.string().url("must be a valid redis:// URL").optional(),
+  REDIS_PREFIX: z.string().optional(),
 });
 
 let done = false;
