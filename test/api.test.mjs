@@ -1310,6 +1310,19 @@ test("PUT /api/admin/billboards/[id] with role 'admin' updates the row", async (
   assert.equal(json.billboard?.price, 13500);
 });
 
+test("the photo list keeps only photos the record already has", async () => {
+  const editor = await mintSession({ role: "editor" });
+  // id 6 (photo-board) carries /uploads/test/1.jpg in the fixtures.
+  const keep = await api("/api/admin/billboards/6/images", { method: "PUT", token: editor, body: { images: ["/uploads/test/1.jpg"] } });
+  assert.equal(keep.status, 200, JSON.stringify(keep.json));
+  assert.deepEqual(keep.json.images, ["/uploads/test/1.jpg"]);
+
+  for (const foreign of ["https://tracker.example/pixel.png", "/uploads/other/9.jpg"]) {
+    const res = await api("/api/admin/billboards/6/images", { method: "PUT", token: editor, body: { images: [foreign] } });
+    assert.equal(res.status, 400, `${foreign} was stored as if it were this record's photo`);
+  }
+});
+
 test("DELETE /api/admin/billboards/[id] with role 'editor' is 403 (needs admin+)", async () => {
   const token = await mintSession({ role: "editor" });
   const { status } = await api("/api/admin/billboards/2", { method: "DELETE", token });

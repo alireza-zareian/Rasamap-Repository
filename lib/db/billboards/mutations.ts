@@ -198,13 +198,23 @@ export async function deleteBillboard(id: number): Promise<{ slug: string; name:
 /**
  * Replace a media item's photos, in the order given.
  *
- * The list mixes two kinds of entry: URLs already on the record, kept as they
+ * The list mixes two kinds of entry: photos already on the record, kept as they
  * are, and newly picked files as data URLs — validated by their own magic bytes
  * (lib/uploads.ts), then written under public/uploads/billboards/<id>/.
+ *
+ * A kept photo must be one the record already has. Anything else that is not a
+ * data URL is refused: this used to keep any string starting with "/" or
+ * "http", so an arbitrary external address could be stored and then shown on
+ * the public page. The customer's resubmission applies the same rule
+ * (../listings.ts).
  */
 export async function replaceBillboardImages(id: number, entries: string[]): Promise<string[]> {
-  const existing = await prisma.billboard.findUnique({ where: { id }, select: { id: true } });
+  const existing = await prisma.billboard.findUnique({ where: { id }, select: { images: true, allImages: true } });
   if (!existing) throw notFound("بیلبورد یافت نشد");
+  const current = new Set([
+    ...((existing.images as string[] | null) ?? []),
+    ...((existing.allImages as string[] | null) ?? []),
+  ]);
 
   const dir = join(process.cwd(), "public", "uploads", "billboards", String(id));
   await mkdir(dir, { recursive: true });
@@ -213,7 +223,8 @@ export async function replaceBillboardImages(id: number, entries: string[]): Pro
   const stamp = Date.now();
   for (let i = 0; i < entries.length; i++) {
     const src = entries[i];
-    if (src.startsWith("/") || src.startsWith("http")) {
+    if (!src.startsWith("data:")) {
+      if (!current.has(src)) throw invalid("تصویر انتخاب‌شده متعلق به این رسانه نیست");
       images.push(src);
       continue;
     }
