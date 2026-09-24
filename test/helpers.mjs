@@ -39,10 +39,17 @@ export function uniqueIp() {
  */
 const STAFF_IDS = { viewer: "9001", editor: "9002", admin: "9003", super_admin: "9004" };
 
-/** Mint a valid session JWT signed with the same AUTH_SECRET the server uses. */
+/**
+ * Mint a valid session JWT signed with the same AUTH_SECRET the server uses, in
+ * the claims format of lib/auth/session.ts. `role: "user"` means a customer
+ * (whose `email` argument is their phone); any other role is a staff member.
+ */
 export async function mintSession({ userId, email = "tester", name = "Tester", role = "user" } = {}) {
   userId ??= STAFF_IDS[role] ?? "1";
-  return new SignJWT({ userId, email, name, role })
+  const claims = role === "user"
+    ? { kind: "customer", sub: String(userId), name, phone: email }
+    : { kind: "staff", sub: String(userId), name, email, role };
+  return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("1h")

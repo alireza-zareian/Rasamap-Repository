@@ -1,159 +1,68 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getClientIp } from "@/lib/auth/client-ip";
-import { rateLimited } from "@/lib/api-rate-limit";
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { BILLBOARD_STATUSES } from "@/lib/types";
-import { getStaffSession } from "@/lib/auth/users";
-import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-import { persistAudit } from "@/lib/auth/audit";
-import { getBillboardById, updateBillboard, deleteBillboard, hasReviews, countContactRequests } from "@/lib/db/billboards";
-import { withApiLog } from "@/lib/api-log";
+import { defineRoute } from "@/lib/http/route";
+import { idParams } from "@/lib/http/params";
+import { adminApiRateLimit } from "@/lib/rate-limit";
+import { getBillboardById, updateBillboard, deleteBillboard } from "@/lib/db/billboards";
+import { notFound } from "@/lib/domain/errors";
+import { BILLBOARD_STATUSES, BILLBOARD_TYPES } from "@/lib/types";
 
-function adminIdOf(session: Awaited<ReturnType<typeof getStaffSession>>): number | null {
-  const n = Number.parseInt(session?.userId ?? "", 10);
-  return Number.isNaN(n) ? null : n;
-}
+// GET /api/admin/billboards/[id] — one record for the edit view (any staff).
+export const GET = defineRoute(
+  { name: "admin/billboards/[id]", access: { staff: "viewer" }, rateLimit: adminApiRateLimit, params: idParams },
+  async ({ params }) => {
+    const billboard = await getBillboardById(params.id);
+    if (!billboard) throw notFound("بیلبورد یافت نشد");
+    return NextResponse.json({ billboard });
+  },
+);
 
-const ALLOWED_TYPES    = new Set(["billboard", "digital", "bridge", "station", "vehicle"]);
-const ALLOWED_STATUSES = new Set<string>(BILLBOARD_STATUSES);
+// PUT /api/admin/billboards/[id] — edit (editor+).
+export const PUT = defineRoute(
+  {
+    name: "admin/billboards/[id]",
+    access: { staff: "editor" },
+    rateLimit: adminApiRateLimit,
+    params: idParams,
+    body: z.object({
+      name:        z.string().min(1).max(200).optional(),
+      location:    z.string().max(500).optional(),
+      city:        z.string().min(1).max(100).optional(),
+      type:        z.enum(BILLBOARD_TYPES).optional(),
+      status:      z.enum(BILLBOARD_STATUSES).optional(),
+      lat:         z.number().min(24).max(40).nullable().optional(),
+      lng:         z.number().min(44).max(64).nullable().optional(),
+      price:       z.number().min(0).optional(),
+      description: z.string().max(2000).optional(),
+      agency:      z.string().max(200).optional(),
+      phone:       z.string().max(50).optional(),
+      width:       z.number().min(0).optional(),
+      height:      z.number().min(0).optional(),
+      faces:       z.number().int().min(1).optional(),
+    }),
+  },
+  async ({ params, body, audit }) => {
+    const billboard = await updateBillboard(params.id, body);
+    await audit("billboard_update", { details: { billboardId: params.id, changed: Object.keys(body) } });
+    return NextResponse.json({ billboard });
+  },
+);
 
-function authGuard(session: Awaited<ReturnType<typeof getStaffSession>>, req: NextRequest) {
-  // A customer session is a valid session but not an admin one. proxy.ts already
-  // rejects role "user" on /api/admin/*; the check is repeated here so the route
-  // is safe on its own and does not depend on the proxy matcher staying correct.
-  if (!session || session.role === "user") {
-    return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
-  }
-  const ip = getClientIp(req);
-  const rl = adminApiRateLimit(ip);
-  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/billboards/[id]", ip });
-  return null;
-}
-
-const UpdateSchema = z.object({
-  name:        z.string().min(1).max(200).optional(),
-  location:    z.string().max(500).optional(),
-  city:        z.string().min(1).max(100).optional(),
-  type:        z.string().optional(),
-  status:      z.string().optional(),
-  lat:         z.number().min(24).max(40).nullable().optional(),
-  lng:         z.number().min(44).max(64).nullable().optional(),
-  price:       z.number().min(0).optional(),
-  description: z.string().max(2000).optional(),
-  agency:      z.string().max(200).optional(),
-  phone:       z.string().max(50).optional(),
-  width:       z.number().min(0).optional(),
-  height:      z.number().min(0).optional(),
-  faces:       z.number().int().min(1).optional(),
-});
-
-// GET /api/admin/billboards/[id] — single record for the admin edit view
-async function GETHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getStaffSession();
-  const guard = authGuard(session, req);
-  if (guard) return guard;
-
-  const { id: idStr } = await params;
-  const id = parseInt(idStr, 10);
-  if (isNaN(id)) return NextResponse.json({ error: "شناسه نامعتبر" }, { status: 400 });
-
-  const billboard = await getBillboardById(id);
-  if (!billboard) return NextResponse.json({ error: "بیلبورد یافت نشد" }, { status: 404 });
-
-  return NextResponse.json({ billboard }, { headers: { "Cache-Control": "no-store" } });
-}
-
-// PUT /api/admin/billboards/[id]
-async function PUTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getStaffSession();
-  const guard = authGuard(session, req);
-  if (guard) return guard;
-
-  if (!["super_admin", "admin", "editor"].includes(session!.role)) {
-    return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
-  }
-
-  const { id: idStr } = await params;
-  const id = parseInt(idStr, 10);
-  if (isNaN(id)) return NextResponse.json({ error: "شناسه نامعتبر" }, { status: 400 });
-
-  const existing = await getBillboardById(id);
-  if (!existing) return NextResponse.json({ error: "بیلبورد یافت نشد" }, { status: 404 });
-
-  let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }
-
-  const parsed = UpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "اطلاعات نامعتبر", details: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const data = parsed.data;
-
-  if (data.type !== undefined && !ALLOWED_TYPES.has(data.type)) {
-    return NextResponse.json({ error: "نوع رسانه نامعتبر است" }, { status: 400 });
-  }
-  if (data.status !== undefined && !ALLOWED_STATUSES.has(data.status)) {
-    return NextResponse.json({ error: "وضعیت نامعتبر است" }, { status: 400 });
-  }
-
-  const updated = await updateBillboard(id, data);
-  if (!updated) return NextResponse.json({ error: "خطا در بروزرسانی" }, { status: 500 });
-
-  await persistAudit({
-    action: "billboard_update",
-    adminId: adminIdOf(session),
-    userEmail: session!.email,
-    ip: getClientIp(req),
-    userAgent: req.headers.get("user-agent"),
-    details: { billboardId: id, changed: Object.keys(data) },
-  });
-
-  return NextResponse.json({ billboard: updated }, { headers: { "Cache-Control": "no-store" } });
-}
-
-// DELETE /api/admin/billboards/[id]
-async function DELETEHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getStaffSession();
-  const guard = authGuard(session, req);
-  if (guard) return guard;
-
-  if (!["super_admin", "admin"].includes(session!.role)) {
-    return NextResponse.json({ error: "فقط ادمین می‌تواند بیلبورد حذف کند" }, { status: 403 });
-  }
-
-  const { id: idStr } = await params;
-  const id = parseInt(idStr, 10);
-  if (isNaN(id)) return NextResponse.json({ error: "شناسه نامعتبر" }, { status: 400 });
-
-  const existing = await getBillboardById(id);
-  if (!existing) return NextResponse.json({ error: "بیلبورد یافت نشد" }, { status: 404 });
-
-  if (await hasReviews(id)) {
-    return NextResponse.json({ error: "نمی‌توان رسانه‌ای را که نظر ثبت‌شده دارد حذف کرد" }, { status: 409 });
-  }
-
-  // Unlike reviews, contact requests cascade-delete with the billboard (no
-  // block) — a lead that predates the removal has nowhere left to point. The
-  // count is captured before the delete so the loss is on the audit record.
-  const deletedLeads = await countContactRequests(id);
-
-  const ok = await deleteBillboard(id);
-  if (!ok) return NextResponse.json({ error: "خطا در حذف" }, { status: 500 });
-
-  await persistAudit({
-    action: "billboard_delete",
-    severity: "warn",
-    adminId: adminIdOf(session),
-    userEmail: session!.email,
-    ip: getClientIp(req),
-    userAgent: req.headers.get("user-agent"),
-    details: { billboardId: id, slug: existing.slug, name: existing.name, deletedLeads },
-  });
-
-  return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
-}
-
-export const GET = withApiLog("admin/billboards/[id]", GETHandler);
-export const PUT = withApiLog("admin/billboards/[id]", PUTHandler);
-export const DELETE = withApiLog("admin/billboards/[id]", DELETEHandler);
+// DELETE /api/admin/billboards/[id] — admin+ only.
+export const DELETE = defineRoute(
+  {
+    name: "admin/billboards/[id]",
+    access: { staff: "admin" },
+    rateLimit: adminApiRateLimit,
+    params: idParams,
+    messages: { forbidden: "فقط ادمین می‌تواند بیلبورد حذف کند" },
+  },
+  async ({ params, audit }) => {
+    const removed = await deleteBillboard(params.id);
+    await audit("billboard_delete", {
+      severity: "warn",
+      details: { billboardId: params.id, ...removed },
+    });
+    return NextResponse.json({ success: true });
+  },
+);

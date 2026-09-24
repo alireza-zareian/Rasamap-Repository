@@ -1,12 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getClientIp } from "@/lib/auth/client-ip";
-import { rateLimited } from "@/lib/api-rate-limit";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { defineRoute } from "@/lib/http/route";
 import { getFilteredBillboards, toPublicBillboard } from "@/lib/db/billboards";
 import { ALLOWED_TYPES, ALLOWED_STATUS, ALLOWED_SORT, MIN_RADIUS_KM, MAX_RADIUS_KM, DEFAULT_RADIUS_KM } from "@/lib/explore-query";
-import { publicApiRateLimit } from "@/lib/auth/rate-limit";
-import { serverError } from "@/lib/api-error";
-import { withApiLog } from "@/lib/api-log";
+import { publicApiRateLimit } from "@/lib/rate-limit";
+import { invalid } from "@/lib/domain/errors";
 
 // Bot user agents are rejected in proxy.ts for every /api/* path, so the
 // per-route copies of that list are gone — one matcher, one place to update.
@@ -31,48 +29,35 @@ const querySchema = z.object({
   radiusKm: z.coerce.number().int().min(MIN_RADIUS_KM).max(MAX_RADIUS_KM).optional(),
 });
 
-async function getHandler(req: NextRequest) {
-  const ip = getClientIp(req);
+export const GET = defineRoute(
+  {
+    name: "billboards",
+    access: "public",
+    rateLimit: publicApiRateLimit,
+    query: querySchema,
+  },
+  async ({ query }) => {
+    const { cities: citiesRaw, lat, lng, radiusKm, ...rest } = query;
+    const cityIn = citiesRaw
+      ? citiesRaw.split(",").map(c => c.trim()).filter(Boolean).slice(0, 50)
+      : undefined;
 
-  const rl = publicApiRateLimit(ip);
-  if (!rl.allowed) return rateLimited(rl, { endpoint: "billboards", ip });
+    // Both coordinates or neither — half a centre is not a narrower search, and
+    // quietly keeping the half that parsed would centre it somewhere nobody asked
+    // for. Same rule as parseNear() in lib/explore-query.ts.
+    if ((lat === undefined) !== (lng === undefined)) {
+      throw invalid("برای جست‌وجوی شعاعی باید هر دو مختصات داده شود");
+    }
+    const near = lat !== undefined && lng !== undefined
+      ? { lat, lng, radiusKm: radiusKm ?? DEFAULT_RADIUS_KM }
+      : undefined;
 
-  const raw = Object.fromEntries(req.nextUrl.searchParams.entries());
-  const parsed = querySchema.safeParse(raw);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "پارامترهای نامعتبر" }, { status: 400 });
-  }
-
-  const { cities: citiesRaw, lat, lng, radiusKm, ...rest } = parsed.data;
-  const cityIn = citiesRaw
-    ? citiesRaw.split(",").map(c => c.trim()).filter(Boolean).slice(0, 50)
-    : undefined;
-
-  // Both coordinates or neither — half a centre is not a narrower search, and
-  // quietly keeping the half that parsed would centre it somewhere nobody asked
-  // for. Same rule as parseNear() in lib/explore-query.ts.
-  if ((lat === undefined) !== (lng === undefined)) {
-    return NextResponse.json(
-      { error: "برای جست‌وجوی شعاعی باید هر دو مختصات داده شود" },
-      { status: 400 },
-    );
-  }
-  const near = lat !== undefined && lng !== undefined
-    ? { lat, lng, radiusKm: radiusKm ?? DEFAULT_RADIUS_KM }
-    : undefined;
-
-  try {
     const { items, total } = await getFilteredBillboards({ ...rest, cityIn, near });
-    const limit = parsed.data.limit ?? 24;
-    const page  = parsed.data.page  ?? 1;
-    const publicItems = items.map(toPublicBillboard);
+    const limit = query.limit ?? 24;
+    const page  = query.page  ?? 1;
     return NextResponse.json(
-      { items: publicItems, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) },
+      { items: items.map(toPublicBillboard), total, page, pageSize: limit, totalPages: Math.ceil(total / limit) },
       { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } },
     );
-  } catch (err) {
-    return serverError("GET /api/billboards", err);
-  }
-}
-
-export const GET = withApiLog("billboards", getHandler);
+  },
+);

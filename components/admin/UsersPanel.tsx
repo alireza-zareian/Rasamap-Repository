@@ -2,20 +2,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { useModalA11y } from "@/lib/useModalA11y";
-import type { UserRole } from "@/lib/auth/session";
+import type { StaffRole } from "@/lib/domain/roles";
 import { C, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
 import { Users, ShieldCheck, Plus, X, AlertTriangle, Search } from "lucide-react";
 import { CustomerModal } from "./CustomerModal";
 import { faNum } from "@/lib/format";
 
-interface SessionUser { id: string; name: string; role: UserRole; email: string; }
+interface SessionUser { id: string; name: string; role: StaffRole; email: string; }
 
 interface AdminRow {
   id: number;
   email: string;
   name: string;
-  role: UserRole;
+  role: StaffRole;
   active: boolean;
   createdAt: string;
 }
@@ -29,7 +29,7 @@ interface CustomerRow {
   reviewCount: number;
 }
 
-const ROLES: { value: UserRole; label: string }[] = [
+const ROLES: { value: StaffRole; label: string }[] = [
   { value: "viewer", label: "بیننده" },
   { value: "editor", label: "ویرایشگر" },
   { value: "admin", label: "ادمین" },
@@ -88,7 +88,7 @@ function AdminAccounts() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
-  const patch = async (id: number, body: { role?: UserRole; active?: boolean }) => {
+  const patch = async (id: number, body: { role?: StaffRole; active?: boolean }) => {
     setBusyId(id); setError("");
     try {
       const data = await fetchJson<{ admin: AdminRow }>(`/api/admin/users/${id}`, {
@@ -154,7 +154,7 @@ function AdminAccounts() {
                       <select
                         value={u.role}
                         disabled={isSelf || busyId === u.id}
-                        onChange={e => patch(u.id, { role: e.target.value as UserRole })}
+                        onChange={e => patch(u.id, { role: e.target.value as StaffRole })}
                         style={{ background: C.card, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.78rem", padding: "5px 8px", borderRadius: 7, outline: "none", cursor: isSelf ? "not-allowed" : "pointer" }}
                       >
                         {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
@@ -311,7 +311,7 @@ function CustomersSection() {
 
 function AddAdminModal({ onClose, onCreated }: { onClose: () => void; onCreated: (a: AdminRow) => void }) {
   const boxRef = useModalA11y<HTMLDivElement>(onClose);
-  const [form, setForm] = useState({ name: "", email: "", role: "viewer" as UserRole, password: "" });
+  const [form, setForm] = useState({ name: "", email: "", role: "viewer" as StaffRole, password: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 

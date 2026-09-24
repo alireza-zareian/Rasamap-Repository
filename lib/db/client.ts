@@ -22,6 +22,7 @@
 // prisma/seed.ts already does for the seed script.
 // ============================================================
 
+import "server-only";
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { DB_ENGINE } from "./engine";

@@ -1,48 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getClientIp } from "@/lib/auth/client-ip";
-import { rateLimited } from "@/lib/api-rate-limit";
-import { z } from "zod";
-import { getBillboardBySlug } from "@/lib/db/billboards";
-import { publicApiRateLimit } from "@/lib/auth/rate-limit";
-import { serverError } from "@/lib/api-error";
-import { withApiLog } from "@/lib/api-log";
+import { NextResponse } from "next/server";
+import { defineRoute } from "@/lib/http/route";
+import { slugParams } from "@/lib/http/params";
+import { publicApiRateLimit } from "@/lib/rate-limit";
+import { getBillboardBySlug, toPublicBillboard } from "@/lib/db/billboards";
+import { notFound } from "@/lib/domain/errors";
 
-// Bot user agents are rejected in proxy.ts for every /api/* path.
-
-// Slugs are lowercase latin + digits + hyphens (see prisma/seed.ts).
-const slugSchema = z.string().min(1).max(120).regex(/^[a-z0-9-]+$/);
-
-// GET /api/billboards/[slug] — PUBLIC: one billboard by slug.
-// The detail page (app/billboard/[slug]/page.tsx) reads through the same
-// getBillboardBySlug() data layer as a Server Component; this endpoint exposes
-// the same resource over REST for API clients and tests.
-async function getHandler(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const ip = getClientIp(req);
-
-  const rl = publicApiRateLimit(ip);
-  if (!rl.allowed) return rateLimited(rl, { endpoint: "billboards/[slug]", ip });
-
-  const { slug } = await params;
-  const parsed = slugSchema.safeParse(slug);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "شناسه نامعتبر" }, { status: 400 });
-  }
-
-  try {
-    const full = await getBillboardBySlug(parsed.data);
-    if (!full) {
-      return NextResponse.json({ error: "رسانه یافت نشد" }, { status: 404 });
-    }
-    // Owner/agency phone is never in a public response — see
-    // POST /api/billboards/[slug]/contact (signed-in only). JSON.stringify drops
-    // the undefined value, so no `phone` key ships.
+// GET /api/billboards/[slug] — one published media item. The detail page reads
+// the same getBillboardBySlug() as a Server Component; this is the same
+// resource over REST, for API clients and tests. The owner's phone is never in
+// it — see POST /api/billboards/[slug]/contact.
+export const GET = defineRoute(
+  { name: "billboards/[slug]", access: "public", rateLimit: publicApiRateLimit, params: slugParams },
+  async ({ params }) => {
+    const billboard = await getBillboardBySlug(params.slug);
+    if (!billboard) throw notFound("رسانه یافت نشد");
     return NextResponse.json(
-      { billboard: { ...full, phone: undefined } },
+      { billboard: toPublicBillboard(billboard) },
       { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } },
     );
-  } catch (err) {
-    return serverError("GET /api/billboards/[slug]", err, { slug });
-  }
-}
-
-export const GET = withApiLog("billboards/[slug]", getHandler);
+  },
+);

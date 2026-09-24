@@ -1,14 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getClientIp, isClientIpTrusted } from "@/lib/auth/client-ip";
-import { rateLimited } from "@/lib/api-rate-limit";
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/db/client";
-import { createSession, buildSessionCookieHeader } from "@/lib/auth/session";
-import { userLoginAttempt, resetAccountAttempts } from "@/lib/auth/rate-limit";
-import { TIMING_PAD_HASH, validateCredentials } from "@/lib/auth/users";
-import { auditLog } from "@/lib/auth/audit";
-import { withApiLog } from "@/lib/api-log";
+import { defineRoute } from "@/lib/http/route";
+import { isClientIpTrusted } from "@/lib/auth/client-ip";
+import { startSession } from "@/lib/auth/actor";
+import { userLoginAttempt, resetAccountAttempts } from "@/lib/rate-limit";
+import { verifyStaffCredentials } from "@/lib/db/staff";
+import { verifyCustomerCredentials } from "@/lib/db/customers";
+import { auditLog } from "@/lib/audit";
 
 /**
  * One sign-in form, two kinds of account.
@@ -25,10 +23,6 @@ import { withApiLog } from "@/lib/api-log";
  * and it meant an administrator browsing the public catalogue was a stranger to
  * it: unable to answer a review, with no way in but a URL they had to remember.
  */
-const LoginSchema = z.object({
-  identifier: z.string().trim().min(1).max(160),
-  password:   z.string().min(1).max(128),
-});
 
 // Every refusal says exactly this, whichever store was consulted and whatever
 // went wrong — a different wording for "no such account" would be an oracle.
@@ -37,91 +31,62 @@ const DENIED = "شماره/ایمیل یا رمز عبور اشتباه است";
 const PHONE = /^09[0-9]{9}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function POSTHandler(req: NextRequest) {
-  const ip = getClientIp(req);
+// The identifier is accepted under its older names too, so a client from
+// before the shared form keeps working; `identifier` is what the form sends now.
+const LoginSchema = z
+  .object({
+    identifier: z.string().optional(),
+    phone:      z.string().optional(),
+    email:      z.string().optional(),
+    password:   z.string().min(1).max(128),
+  })
+  .transform(b => ({ identifier: (b.identifier ?? b.phone ?? b.email ?? "").trim(), password: b.password }))
+  .refine(b => b.identifier.length > 0 && b.identifier.length <= 160);
 
-  // The body is parsed before the limit is checked, because the half of the
-  // limit that matters is keyed on the account being attacked and that lives in
-  // the body. The schema caps it at a few hundred bytes.
-  let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }
+export const POST = defineRoute(
+  {
+    name: "auth/login",
+    access: "public",
+    // One budget per identifier, whichever store it belongs to: a staff email
+    // and a customer phone never collide, so a caller cannot double their tries
+    // by alternating between the two shapes.
+    rateLimit: { afterBody: (b, ip) => userLoginAttempt(b.identifier, ip) },
+    body: LoginSchema,
+    messages: { invalidBody: DENIED },
+  },
+  async ({ req, ip, userAgent, body }) => {
+    const { identifier, password } = body;
 
-  // The body accepts the field under either name so an older client keeps
-  // working; `identifier` is what the form sends now.
-  const raw = body as Record<string, unknown> | null;
-  const parsed = LoginSchema.safeParse({
-    identifier: raw?.identifier ?? raw?.phone ?? raw?.email,
-    password:   raw?.password,
-  });
-  if (!parsed.success) {
-    return NextResponse.json({ error: DENIED }, { status: 400 });
-  }
+    if (EMAIL.test(identifier)) {
+      const staff = await verifyStaffCredentials(identifier.toLowerCase(), password);
+      if (!staff) {
+        auditLog("login_failure", "warn", {
+          ip,
+          userAgent: userAgent ?? undefined,
+          details: { email: identifier, via: "public form", ipTrusted: isClientIpTrusted(req) },
+        });
+        return NextResponse.json({ error: DENIED }, { status: 401 });
+      }
 
-  const { identifier, password } = parsed.data;
-
-  // One identifier, whichever store it belongs to: the tight budget follows the
-  // account someone is trying to get into, and the address keeps only a loose
-  // backstop. A staff email and a customer phone can never collide, so a single
-  // scope is safe — and it means a caller cannot double their tries by
-  // alternating between the two shapes.
-  const attempt = userLoginAttempt(identifier, ip);
-  if (!attempt.result.allowed) {
-    return rateLimited(attempt.result, {
-      endpoint: "auth/login",
-      ip,
-      limitedBy: attempt.limitedBy,
-    });
-  }
-
-  if (EMAIL.test(identifier)) {
-    const staff = await validateCredentials(identifier.toLowerCase(), password);
-    if (!staff) {
-      auditLog("login_failure", "warn", {
-        ip,
-        userAgent: req.headers.get("user-agent") ?? undefined,
-        details: { email: identifier, via: "public form", ipTrusted: isClientIpTrusted(req) },
+      await resetAccountAttempts("user_login", identifier);
+      auditLog("login_success", "info", {
+        userId: `staff:${staff.id}`, userEmail: staff.email, ip,
+        userAgent: userAgent ?? undefined,
+        details: { via: "public form" },
       });
-      return NextResponse.json({ error: DENIED }, { status: 401 });
+      const res = NextResponse.json({
+        ok: true, user: { id: String(staff.id), name: staff.name, role: staff.role, isStaff: true },
+      });
+      return startSession(res, { kind: "staff", ...staff }, req);
     }
 
-    const token = await createSession({
-      userId: staff.id, email: staff.email, name: staff.name, role: staff.role,
-    });
-    resetAccountAttempts("user_login", identifier);
-    auditLog("login_success", "info", {
-      userId: staff.id, userEmail: staff.email, ip,
-      userAgent: req.headers.get("user-agent") ?? undefined,
-      details: { via: "public form" },
-    });
+    if (!PHONE.test(identifier)) return NextResponse.json({ error: DENIED }, { status: 400 });
 
-    const res = NextResponse.json({
-      ok: true, user: { id: staff.id, name: staff.name, role: staff.role, isStaff: true },
-    });
-    res.headers.set("Set-Cookie", buildSessionCookieHeader(token, req));
-    return res;
-  }
+    const customer = await verifyCustomerCredentials(identifier, password);
+    if (!customer) return NextResponse.json({ error: DENIED }, { status: 401 });
 
-  if (!PHONE.test(identifier)) {
-    return NextResponse.json({ error: DENIED }, { status: 400 });
-  }
-
-  const user = await prisma.user.findUnique({ where: { phone: identifier } });
-
-  // Timing-safe: always run a real bcrypt comparison, even when the phone is
-  // not registered, so response time can't be used to enumerate accounts.
-  const hashToCheck = user?.passwordHash ?? TIMING_PAD_HASH;
-  const match = await bcrypt.compare(password, hashToCheck);
-
-  if (!user || !match) {
-    return NextResponse.json({ error: DENIED }, { status: 401 });
-  }
-
-  const token = await createSession({ userId: user.id.toString(), email: user.phone, name: user.name, role: "user" });
-  resetAccountAttempts("user_login", identifier);
-
-  const res = NextResponse.json({ ok: true, user: { id: user.id, name: user.name, phone: user.phone, isStaff: false } });
-  res.headers.set("Set-Cookie", buildSessionCookieHeader(token, req));
-  return res;
-}
-
-export const POST = withApiLog("auth/login", POSTHandler);
+    await resetAccountAttempts("user_login", identifier);
+    const res = NextResponse.json({ ok: true, user: { ...customer, isStaff: false } });
+    return startSession(res, { kind: "customer", ...customer }, req);
+  },
+);

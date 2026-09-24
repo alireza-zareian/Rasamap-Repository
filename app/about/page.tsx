@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Search, Scale, MapPin, Shield, Zap, TrendingUp } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
-import { prisma } from "@/lib/db/client";
+import { getCachedSiteStats } from "@/lib/db/cached";
+import { logger } from "@/lib/logger";
 import { faNum } from "@/lib/format";
 
 const advantages = [
@@ -39,15 +40,15 @@ const advantages = [
 ];
 
 export default async function AboutPage() {
+  // The same published-only figures the landing page shows. A page about the
+  // project is still worth rendering without them, so a failed read leaves the
+  // counters at zero — and says why in the log.
   let total = 0;
   let cityCount = 0;
   try {
-    [total, cityCount] = await Promise.all([
-      prisma.billboard.count({ where: { status: { not: "pending" } } }),
-      prisma.billboard.groupBy({ by: ["city"], where: { status: { not: "pending" } } }).then(r => r.length),
-    ]);
-  } catch {
-    // DB unavailable — render with fallback values
+    ({ total, cityCount } = await getCachedSiteStats());
+  } catch (err) {
+    logger.error("about: site stats unavailable", { error: String(err) });
   }
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>

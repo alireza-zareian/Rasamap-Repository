@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { defineRoute } from "@/lib/http/route";
 import { buildLogoutCookieHeader } from "@/lib/auth/session";
-import { withApiLog } from "@/lib/api-log";
 
-async function POSTHandler(req: NextRequest) {
-  const res = NextResponse.json({ ok: true });
-  res.headers.set("Set-Cookie", buildLogoutCookieHeader(req));
-  return res;
-}
-
-export const POST = withApiLog("auth/logout", POSTHandler);
+// Not rate limited: see "none" in lib/http/route.ts.
+export const POST = defineRoute(
+  { name: "auth/logout", access: "public", rateLimit: "none" },
+  async ({ req }) => {
+    const res = NextResponse.json({ ok: true });
+    res.headers.set("Set-Cookie", buildLogoutCookieHeader(req));
+    return res;
+  },
+);

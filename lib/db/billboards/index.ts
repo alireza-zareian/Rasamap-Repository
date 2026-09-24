@@ -17,6 +17,7 @@ export {
   toCatalogueItem,
   UNPUBLISHED_STATUSES,
   publishedOnly,
+  isPublished,
 } from "./core";
 
 export * from "./queries";

@@ -1,150 +1,54 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getClientIp } from "@/lib/auth/client-ip";
-import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-import { rateLimited } from "@/lib/api-rate-limit";
-import { getStaffSession, hasPermission } from "@/lib/auth/users";
-import { persistAudit } from "@/lib/auth/audit";
-import { prisma } from "@/lib/db/client";
-import { UNPUBLISHED_STATUSES, revalidateCatalogue } from "@/lib/db/billboards";
-import { withApiLog } from "@/lib/api-log";
+import { defineRoute } from "@/lib/http/route";
+import { idParams } from "@/lib/http/params";
+import { adminApiRateLimit } from "@/lib/rate-limit";
+import { decideListing } from "@/lib/db/listings";
+import { LISTING_DECISIONS } from "@/lib/domain/listing";
 
-/**
- * POST /api/admin/listings/[id]/decision — decide on a submission.
- *
- * The one place the listing state machine is enforced:
- *
- *   pending          --approve--> available   (content checked)
- *   awaiting_payment --approve--> available + featured=true
- *                                 (admin confirms the transfer by hand; there
- *                                  is no payment gateway — see §17 of
- *                                  docs/engineering-decisions.md)
- *   either           --reject----> rejected        (never publicly reachable)
- *   either           --revision--> needs_revision  (submitter edits & resends)
- *
- * `note` is the admin's message to the submitter, shown on their dashboard. It
- * is required for `reject` and `revision` (a bare refusal helps no one) and
- * optional for `approve`. It is stored on the row and cleared when the
- * submitter resubmits a `needs_revision` listing.
- *
- * Only rows still awaiting a decision are accepted, so a second click cannot
- * re-approve a live listing or silently re-grant a paid promotion.
- */
-const BodySchema = z.object({
-  decision: z.enum(["approve", "reject", "revision"]),
-  note:     z.string().trim().max(1000).optional(),
-}).refine(
-  d => d.decision === "approve" || !!d.note,
-  { message: "برای رد کردن یا درخواست اصلاح، نوشتن توضیح برای فرستنده الزامی است", path: ["note"] },
-);
-
-const STATUS_BY_DECISION = {
-  approve:  "available",
-  reject:   "rejected",
-  revision: "needs_revision",
-} as const;
-
-const AUDIT_ACTION_BY_DECISION = {
+const AUDIT_ACTION = {
   approve:  "listing_approved",
   reject:   "listing_rejected",
   revision: "listing_revision_requested",
 } as const;
 
-async function POSTHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getStaffSession();
-  if (!session || session.role === "user") {
-    return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
-  }
-
-  const ip = getClientIp(req);
-  const rl = adminApiRateLimit(ip);
-  if (!rl.allowed) {
-    return rateLimited(rl, { endpoint: "admin/listings/[id]/decision", ip, userId: session.userId, userEmail: session.email });
-  }
-
-  // Publishing someone's paid listing is a money decision, not an edit.
-  if (!hasPermission(session.role, "admin")) {
-    return NextResponse.json({ error: "فقط ادمین می‌تواند آگهی را تأیید یا رد کند" }, { status: 403 });
-  }
-
-  const { id: raw } = await params;
-  const id = Number.parseInt(raw, 10);
-  if (Number.isNaN(id) || id <= 0) {
-    return NextResponse.json({ error: "شناسه نامعتبر" }, { status: 400 });
-  }
-
-  let body: unknown;
-  try { body = await req.json(); } catch {
-    return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 });
-  }
-  const parsed = BodySchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "اطلاعات نامعتبر" }, { status: 400 });
-  }
-
-  const existing = await prisma.billboard.findUnique({
-    where:  { id },
-    select: { id: true, name: true, status: true, plan: true, submittedById: true },
-  });
-  if (!existing) return NextResponse.json({ error: "آگهی یافت نشد" }, { status: 404 });
-
-  const decision = parsed.data.decision;
-  const note = parsed.data.note?.trim() || null;
-  const approve = decision === "approve";
-  // A featured slot is granted only here, on an approval of a row that actually
-  // asked and paid for one — never from the submitted plan alone.
-  const grantFeatured = approve && existing.plan === "featured";
-
-  // The "still awaiting a decision" check and the write happen in one
-  // conditional update, not a separate read followed by a write — otherwise two
-  // concurrent decisions on the same id (a double-click, a retried request, two
-  // admin tabs) could both pass the earlier read and both land, with the later
-  // one silently overwriting the first (§8 of docs/engineering-decisions.md;
-  // the same guard resubmitListing already uses).
-  const { count } = await prisma.billboard.updateMany({
-    where: { id, status: { in: UNPUBLISHED_STATUSES } },
-    data: {
-      status:     STATUS_BY_DECISION[decision],
-      featured:   grantFeatured,
-      // On approve with no note this clears any earlier feedback; on reject or
-      // revision it carries the admin's message to the submitter's dashboard.
-      reviewNote: note,
-    },
-  });
-  if (count === 0) {
-    return NextResponse.json(
-      { error: "این آگهی قبلاً بررسی شده است" },
-      { status: 409 },
-    );
-  }
-
-  const updated = await prisma.billboard.findUnique({
-    where:  { id },
-    select: { id: true, name: true, status: true, plan: true, featured: true },
-  });
-  if (!updated) return NextResponse.json({ error: "آگهی یافت نشد" }, { status: 404 });
-  revalidateCatalogue();
-
-  const actorId = Number.parseInt(session.userId, 10);
-  await persistAudit({
-    action: AUDIT_ACTION_BY_DECISION[decision],
-    severity: "warn",
-    adminId: Number.isNaN(actorId) ? null : actorId,
-    userEmail: session.email,
-    ip,
-    userAgent: req.headers.get("user-agent"),
-    details: {
-      billboardId: id,
-      from: existing.status,
-      to: updated.status,
-      plan: existing.plan,
-      featuredGranted: grantFeatured,
-      submittedById: existing.submittedById,
-      ...(note ? { note } : {}),
-    },
-  });
-
-  return NextResponse.json({ listing: updated }, { headers: { "Cache-Control": "no-store" } });
-}
-
-export const POST = withApiLog("admin/listings/[id]/decision", POSTHandler);
+/**
+ * POST /api/admin/listings/[id]/decision — approve, reject, or send back.
+ *
+ * admin+ only: publishing someone's paid listing is a money decision, not an
+ * edit. `note` is required for reject and revision — a bare refusal helps no
+ * one. The transitions are in decisionOutcome (lib/domain/listing.ts).
+ */
+export const POST = defineRoute(
+  {
+    name: "admin/listings/[id]/decision",
+    access: { staff: "admin" },
+    rateLimit: adminApiRateLimit,
+    params: idParams,
+    body: z.object({
+      decision: z.enum(LISTING_DECISIONS),
+      note:     z.string().trim().max(1000).optional(),
+    }).refine(
+      d => d.decision === "approve" || !!d.note,
+      { message: "برای رد کردن یا درخواست اصلاح، نوشتن توضیح برای فرستنده الزامی است", path: ["note"] },
+    ),
+    messages: { forbidden: "فقط ادمین می‌تواند آگهی را تأیید یا رد کند" },
+  },
+  async ({ params, body, audit }) => {
+    const note = body.note || null;
+    const { before, after } = await decideListing(params.id, body.decision, note);
+    await audit(AUDIT_ACTION[body.decision], {
+      severity: "warn",
+      details: {
+        billboardId: params.id,
+        from: before.status,
+        to: after.status,
+        plan: before.plan,
+        featuredGranted: after.featured,
+        submittedById: before.submittedById,
+        ...(note ? { note } : {}),
+      },
+    });
+    return NextResponse.json({ listing: after });
+  },
+);

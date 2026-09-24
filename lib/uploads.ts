@@ -25,9 +25,16 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { faNum } from "@/lib/format";
+import { MAX_IMAGE_BYTES, MAX_LISTING_IMAGES } from "@/lib/domain/listing";
 
-export const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB per image, after decoding
-export const MAX_LISTING_IMAGES = 5;
+/**
+ * The largest request body that can carry `images` photos: base64 inflates by
+ * about 4/3, plus the JSON envelope. Routes refuse anything bigger before
+ * reading it, so an oversized payload is never buffered just to be rejected.
+ */
+export function maxUploadBodyBytes(images: number): number {
+  return Math.ceil(images * MAX_IMAGE_BYTES * 1.4) + 64 * 1024;
+}
 
 const DATA_URL_RE = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=\s]+)$/;
 

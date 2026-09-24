@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck, Crosshair } from "lucide-react";
 import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
 import { getCachedBillboardBySlug, getCachedRelatedBillboards } from "@/lib/db/cached";
-import { getSession } from "@/lib/auth/session";
+import { getActor } from "@/lib/auth/actor";
 import BillboardGallery from "@/components/BillboardGallery";
 import RelatedBillboards from "@/components/RelatedBillboards";
 import ShareButton from "@/components/ShareButton";
@@ -121,12 +121,11 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
   const { slug } = await params;
 
   // A reviewer needs to see a submission the way an advertiser eventually will,
-  // not only as rows in a form — so a staff session may open a listing that is
+  // not only as rows in a form — so a staff member may open a listing that is
   // still pending, and gets told plainly that it is. The check happens here, on
   // the server: the page is rendered before anything reaches the browser, so
   // there is no moment where the markup exists and the permission does not.
-  const session = await getSession();
-  const isStaff = !!session && session.role !== "user";
+  const isStaff = (await getActor())?.kind === "staff";
 
   // isStaff is part of the cache key, not something read inside the cached
   // function: a reviewer's view of a listing still under review can never be

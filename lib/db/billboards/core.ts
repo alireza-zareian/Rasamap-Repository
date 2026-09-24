@@ -1,3 +1,4 @@
+import "server-only";
 import type { Billboard as Row } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 import type { Billboard, CatalogueItem, TrafficData } from "../../types";
@@ -125,3 +126,8 @@ export const UNPUBLISHED_STATUSES = ["pending", "awaiting_payment", "rejected", 
 
 /** Prisma filter for "only rows the public may see". */
 export const publishedOnly = { notIn: UNPUBLISHED_STATUSES };
+
+/** The same rule as publishedOnly, for a row already in hand. */
+export function isPublished(status: string): boolean {
+  return !UNPUBLISHED_STATUSES.includes(status);
+}

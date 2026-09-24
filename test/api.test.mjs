@@ -1569,10 +1569,10 @@ test("guard: every 429 goes through the shared helper", () => {
   // outlived a limit that had become 600, and how two of them forgot
   // Retry-After entirely. One path, one place to fix.
   for (const [file, src] of sourceFiles()) {
-    if (file.endsWith("lib/api-rate-limit.ts")) continue;
+    if (file.endsWith("lib/http/responses.ts")) continue;
     assert.ok(
       !/status:\s*429/.test(src),
-      `${file}: build the 429 with rateLimited() from lib/api-rate-limit.ts — it sets Retry-After, says how long to wait in Persian, and writes the audit row.`,
+      `${file}: build the 429 with rateLimited() from lib/http/responses.ts — it sets Retry-After, says how long to wait in Persian, and writes the audit row.`,
     );
   }
 });
@@ -1744,7 +1744,7 @@ test("guard: no credential lockout rests on the address alone", () => {
   // A per-address ceiling is fine and stays. What must never come back is a
   // per-address *lockout* on a credential path, because that is the shape that
   // lets one person's mistakes shut out everyone beside them.
-  const src = stripComments(readFileSync("lib/auth/rate-limit.ts", "utf8"));
+  const src = stripComments(readFileSync("lib/rate-limit/index.ts", "utf8"));
 
   for (const m of src.matchAll(/checkRateLimit\(\s*`([^`]+)`\s*,\s*\{([^}]*)\}/g)) {
     const [, key, body] = m;
@@ -1759,29 +1759,36 @@ test("guard: no credential lockout rests on the address alone", () => {
   }
 });
 
-test("guard: every admin route is rate limited", () => {
-  // Rule 2 of AGENTS.md fixes the order session -> rate limit -> Zod, and
-  // GET /api/admin/auth/me was the one route that skipped the middle step.
-  // The risk was small (it sits behind proxy.ts and needs a session), but a
-  // rule with one unexplained exception stops reading as a rule, and the next
-  // person to add a route copies whichever neighbour they happened to open.
-  // Logout is the one deliberate exception, and it is exempt here rather than
-  // silently passing: throttling it fails in the dangerous direction. Someone
-  // who taps "sign out" twice would be told to wait and left signed in, which
-  // is the opposite of what they asked for. It writes at most one audit line
-  // per call and only when a session exists, so there is nothing to exhaust.
-  const EXEMPT = ["app/api/admin/auth/logout/route.ts"];
-
+test("guard: every API route goes through defineRoute", () => {
+  // Rule 2 of AGENTS.md fixes the order session -> rate limit -> permission ->
+  // Zod -> logic. It used to be typed out by hand in every handler, and this
+  // test used to grep each admin route for the word "RateLimit" — which is how
+  // GET /api/admin/auth/me once shipped without the middle step. The order now
+  // lives in one place (lib/http/route.ts) and the compiler requires every
+  // route to name its rate limit; what is left to check is that no handler is
+  // exported around the pipeline.
   for (const [file, src] of sourceFiles()) {
     const path = file.replaceAll("\\", "/");
-    if (!/^app\/api\/admin\/.*route\.ts$/.test(path)) continue;
+    if (!/^app\/api\/.*route\.ts$/.test(path)) continue;
+    const methods = [...src.matchAll(/export\s+(?:const|async function|function)\s+(GET|POST|PUT|PATCH|DELETE)\b(.*)/g)];
+    assert.ok(methods.length > 0, `${file}: exports no HTTP method`);
+    for (const [, method, rest] of methods) {
+      assert.ok(
+        /^\s*=\s*defineRoute\(/.test(rest),
+        `${file}: ${method} must be declared with defineRoute() from lib/http/route.ts, so the session → rate limit → Zod order cannot be skipped.`,
+      );
+    }
+  }
+});
+
+test("guard: only signing out is exempt from rate limiting", () => {
+  // Throttling sign-out fails in the dangerous direction: someone who taps it
+  // twice would be told to wait and left signed in. Nothing else may opt out.
+  const EXEMPT = ["app/api/auth/logout/route.ts", "app/api/admin/auth/logout/route.ts"];
+  for (const [file, src] of sourceFiles()) {
+    const path = file.replaceAll("\\", "/");
     if (EXEMPT.includes(path)) continue;
-    assert.ok(
-      // Two shapes count: the single-dimension presets (…RateLimit) and the
-      // two-dimension credential check (…Attempt), which the sign-in routes use.
-      /RateLimit\(|LoginAttempt\(/.test(src),
-      `${file}: every /api/admin route checks a rate limit after the session check — see lib/auth/rate-limit.ts.`,
-    );
+    assert.ok(!/rateLimit:\s*"none"/.test(src), `${file}: only the sign-out routes may declare rateLimit: "none".`);
   }
 });
 

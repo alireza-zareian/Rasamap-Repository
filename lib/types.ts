@@ -112,6 +112,9 @@ export const typeLabels: Record<BillboardType, string> = {
   vehicle: "وسیله نقلیه",
 };
 
+/** The type allowlist, derived from the labels so the two cannot disagree. */
+export const BILLBOARD_TYPES = Object.keys(typeLabels) as [BillboardType, ...BillboardType[]];
+
 // One label per status for the whole app — the card, the detail page, the
 // analytics bars and the admin panel all read from here, so a status can never
 // be spelled two ways in two places.
@@ -137,7 +140,7 @@ export const statusLabels: Record<string, string> = STATUS_LABELS;
  * never disagree. Admin routes validate incoming `status` values against this;
  * adding a status means adding one label above and nothing else.
  */
-export const BILLBOARD_STATUSES = Object.keys(STATUS_LABELS) as BillboardStatus[];
+export const BILLBOARD_STATUSES = Object.keys(STATUS_LABELS) as [BillboardStatus, ...BillboardStatus[]];
 
 export const planLabels: Record<string, string> = {
   free:     "رایگان",
@@ -159,5 +162,5 @@ const LEAD_STATUS_LABELS = {
 export const leadStatusLabels: Record<string, string> = LEAD_STATUS_LABELS;
 
 /** Allowlist for the admin PATCH, derived from the labels so they cannot drift. */
-export const LEAD_STATUSES = Object.keys(LEAD_STATUS_LABELS) as LeadStatus[];
+export const LEAD_STATUSES = Object.keys(LEAD_STATUS_LABELS) as [LeadStatus, ...LeadStatus[]];
 

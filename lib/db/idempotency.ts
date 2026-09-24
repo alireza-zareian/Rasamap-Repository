@@ -1,8 +1,10 @@
-import type { NextRequest } from "next/server";
-import { prisma } from "@/lib/db/client";
+import "server-only";
+import { prisma } from "./client";
 
 /**
- * Opt-in Idempotency-Key support for non-idempotent POSTs.
+ * Opt-in Idempotency-Key support for non-idempotent POSTs. `raw` is the
+ * request's Idempotency-Key header, or null when it sent none; keys are scoped
+ * to a customer account.
  *
  * - No header  → `{ replay: null, save: null }`; the route runs normally.
  * - Header, unseen → `{ replay: null, save }`; the route runs, then calls
@@ -33,11 +35,10 @@ type Result =
     };
 
 export async function idempotency(
-  req: NextRequest,
+  raw: string | null,
   userId: number,
   endpoint: string,
 ): Promise<Result> {
-  const raw = req.headers.get("idempotency-key");
   if (!raw) return { replay: null, save: null };
   if (!KEY_RE.test(raw)) {
     return { error: "Idempotency-Key نامعتبر است (۸ تا ۱۲۸ نویسه: حروف، عدد، خط تیره)" };

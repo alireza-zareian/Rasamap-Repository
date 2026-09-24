@@ -1,7 +1,9 @@
+import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./client";
 import { publishedOnly } from "./billboards";
 import { isPostgres } from "./engine";
+import type { AdminStats } from "@/lib/admin/types";
 
 export interface SiteStats {
   total: number;
@@ -69,7 +71,9 @@ export async function getSiteStats(): Promise<SiteStats> {
 }
 
 /**
- * The columns — and only the columns — the admin dashboard's counters read.
+ * The admin dashboard's counters.
+ *
+ * They read the columns — and only the columns — they need.
  *
  * This used to call getAllBillboards(), which selects every column of every
  * row. The counters need eight of them; the other twenty include `traffic`,
@@ -88,9 +92,7 @@ export async function getSiteStats(): Promise<SiteStats> {
  * answering the question it claims to answer and cannot quietly start tracking
  * a flag instead.
  */
-export type AdminStatsRow = Awaited<ReturnType<typeof getAdminStatsRows>>[number];
-
-export async function getAdminStatsRows() {
+async function getAdminStatsRows() {
   return prisma.billboard.findMany({
     select: {
       status: true, source: true, city: true, type: true,
@@ -103,4 +105,49 @@ export async function getAdminStatsRows() {
     // sort would have quietly reshuffled the admin dashboard.
     orderBy: [{ hasImages: "desc" }, { id: "asc" }],
   });
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  const all = await getAdminStatsRows();
+  const now = Date.now();
+  const week = 7 * 24 * 60 * 60 * 1000;
+
+  const bySource: Record<string, number> = {};
+  const byCity:   Record<string, number> = {};
+  const byType:   Record<string, number> = {};
+
+  let withCoords = 0, missingCoords = 0, missingImages = 0, recentlyImported = 0;
+
+  for (const b of all) {
+    const src = b.source || "manual";
+    bySource[src] = (bySource[src] || 0) + 1;
+    byCity[b.city] = (byCity[b.city] || 0) + 1;
+    byType[b.type] = (byType[b.type] || 0) + 1;
+    if (b.lat && b.lng) withCoords++; else missingCoords++;
+    if (((b.images ?? []) as string[]).length === 0) missingImages++;
+    if (b.scrapedAt && now - new Date(b.scrapedAt).getTime() < week) recentlyImported++;
+  }
+
+  // Rough count of "boards sitting on top of each other": bucket coordinates
+  // into a ~50 m grid and count cells holding two or more. O(n) instead of the
+  // O(n²) pairwise scan — for ~3.5k rows that's the difference between a few
+  // million ops and a few thousand. It's only a heuristic either way.
+  const GRID = 0.00045; // ≈ 50 m in latitude degrees
+  const cell = new Map<string, number>();
+  for (const b of all) {
+    if (!b.lat || !b.lng) continue;
+    const key = `${Math.round(b.lat / GRID)}:${Math.round(b.lng / GRID)}`;
+    cell.set(key, (cell.get(key) ?? 0) + 1);
+  }
+  let duplicateGroups = 0;
+  for (const n of cell.values()) if (n >= 2) duplicateGroups++;
+
+  return {
+    total: all.length,
+    active: all.filter(b => b.status !== "inactive").length,
+    inactive: all.filter(b => b.status === "inactive").length,
+    bySource, byCity, byType,
+    withCoords, missingCoords, missingImages,
+    recentlyImported, duplicateGroups,
+  };
 }

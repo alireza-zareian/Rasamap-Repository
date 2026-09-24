@@ -1,37 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getClientIp } from "@/lib/auth/client-ip";
-import { rateLimited } from "@/lib/api-rate-limit";
-import { getStaffSession, hasPermission } from "@/lib/auth/users";
-import { getRecentAuditLogs } from "@/lib/auth/audit";
-import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-import { prisma } from "@/lib/db/client";
-import { withApiLog } from "@/lib/api-log";
+import { NextResponse } from "next/server";
+import { defineRoute } from "@/lib/http/route";
+import { adminApiRateLimit } from "@/lib/rate-limit";
+import { getRecentAuditLogs } from "@/lib/audit";
+import { listAuditRows } from "@/lib/db/audit-log";
+import { logger } from "@/lib/logger";
 
-async function GETHandler(req: NextRequest) {
-  const session = await getStaffSession();
-  if (!session) {
-    return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
-  }
+// GET /api/admin/audit — the live ring buffer and the durable rows (admin+).
+export const GET = defineRoute(
+  { name: "admin/audit", access: { staff: "admin" }, rateLimit: adminApiRateLimit },
+  async () => {
+    const logs = getRecentAuditLogs(200);
 
-  const ip = getClientIp(req);
-  const rl = adminApiRateLimit(ip);
-  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/audit", ip });
-
-  if (!hasPermission(session.role, "admin")) {
-    return NextResponse.json({ error: "دسترسی کافی ندارید" }, { status: 403 });
-  }
-
-  const logs = getRecentAuditLogs(200);
-
-  // Durable audit rows (survive a restart, unlike the in-memory buffer above).
-  let persisted: unknown[] = [];
-  try {
-    persisted = await prisma.auditLog.findMany({ orderBy: { timestamp: "desc" }, take: 200 });
-  } catch {
-    // table unavailable / db error — the in-memory logs are still returned
-  }
-
-  return NextResponse.json({ logs, persisted }, { headers: { "Cache-Control": "no-store" } });
-}
-
-export const GET = withApiLog("admin/audit", GETHandler);
+    // The durable rows survive a restart, unlike the buffer. If the table
+    // cannot be read, the live view is still worth showing rather than a 500.
+    let persisted: unknown[] = [];
+    try {
+      persisted = await listAuditRows(200);
+    } catch (err) {
+      logger.error("admin/audit: durable rows unreadable", { error: String(err) });
+    }
+    return NextResponse.json({ logs, persisted });
+  },
+);

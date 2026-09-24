@@ -1,23 +1,50 @@
 /**
  * RASAMAP — Session Management
- * Uses signed JWT stored in an HttpOnly, Secure, SameSite=Strict cookie.
- * Never expose raw tokens to client JS.
+ * Uses signed JWT stored in an HttpOnly, SameSite=Strict cookie (Secure over
+ * HTTPS — see isSecureRequest). Never expose raw tokens to client JS.
  */
-import { SignJWT, jwtVerify, type JWTPayload } from "jose";
+import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
+import { STAFF_ROLES } from "@/lib/domain/roles";
 
 const SESSION_COOKIE = "rasamap_session";
 const MAX_AGE_SECS  = 60 * 60 * 8; // 8 hours
 
-export type UserRole = "super_admin" | "admin" | "editor" | "viewer" | "user";
+/**
+ * What a session token asserts, as two kinds of account rather than one.
+ *
+ * Customers and staff live in different tables (`users`, `admins`) with
+ * overlapping ids, so "user 7" means nothing until you know which table. The
+ * token used to carry a bare `userId` plus a `role` in which "user" meant
+ * customer and anything else meant staff — so every caller had to decode the
+ * table from the role, and one that forgot wrote a staff id into a customer
+ * foreign key (a staff session could submit a listing that was then attributed
+ * to whichever customer happened to share the number). `kind` makes the table
+ * part of the identity, and the type system makes every caller say which one
+ * it wants.
+ */
+const ClaimsSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind:  z.literal("customer"),
+    sub:   z.string().regex(/^\d+$/),
+    name:  z.string(),
+    phone: z.string(),
+  }),
+  z.object({
+    kind:  z.literal("staff"),
+    sub:   z.string().regex(/^\d+$/),
+    name:  z.string(),
+    email: z.string(),
+    role:  z.enum(STAFF_ROLES),
+  }),
+]);
 
-export interface SessionPayload extends JWTPayload {
-  userId: string;
-  email:  string;
-  role:   UserRole;
-  name:   string;
-}
+export type SessionClaims = z.infer<typeof ClaimsSchema>;
+
+/** A verified token: its claims plus the expiry the sliding refresh reads. */
+export type Session = SessionClaims & { exp: number };
 
 function getSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
@@ -27,36 +54,42 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-export async function createSession(payload: Omit<SessionPayload, "iat" | "exp">): Promise<string> {
-  const token = await new SignJWT(payload)
+export async function createSession(claims: SessionClaims): Promise<string> {
+  return new SignJWT({ ...claims })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${MAX_AGE_SECS}s`)
     .sign(getSecret());
-  return token;
 }
 
-export async function verifySession(token: string): Promise<SessionPayload | null> {
+/**
+ * A token is trusted only if its signature holds *and* its claims have the
+ * shape above. The signature proves we issued it; the shape check is what
+ * turns a token minted before this format — or by a future version with a
+ * field renamed — into "signed out" instead of an object whose missing field
+ * surfaces three calls later as `NaN`.
+ */
+export async function verifySession(token: string): Promise<Session | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecret(), {
-      algorithms: ["HS256"],
-    });
-    return payload as SessionPayload;
+    const { payload } = await jwtVerify(token, getSecret(), { algorithms: ["HS256"] });
+    const claims = ClaimsSchema.safeParse(payload);
+    if (!claims.success || typeof payload.exp !== "number") return null;
+    return { ...claims.data, exp: payload.exp };
   } catch {
     return null;
   }
 }
 
 /** Read session from server-side cookies (Server Components / Route Handlers) */
-export async function getSession(): Promise<SessionPayload | null> {
+export async function getSession(): Promise<Session | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return verifySession(token);
 }
 
-/** Read session from an incoming NextRequest (Middleware) */
-export async function getSessionFromRequest(req: NextRequest): Promise<SessionPayload | null> {
+/** Read session from an incoming NextRequest (proxy.ts) */
+export async function getSessionFromRequest(req: NextRequest): Promise<Session | null> {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return verifySession(token);

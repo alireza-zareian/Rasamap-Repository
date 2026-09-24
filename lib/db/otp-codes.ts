@@ -5,8 +5,9 @@
 // The purpose is part of every lookup, so a code issued to reset a password can
 // never be spent to open an account, and the two flows cannot share a row.
 
+import "server-only";
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
-import { prisma } from "@/lib/db/client";
+import { prisma } from "./client";
 
 const TTL_MS = 5 * 60 * 1000;
 const MAX_ATTEMPTS = 5;

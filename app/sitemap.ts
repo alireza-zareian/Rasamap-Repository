@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-import { prisma } from "@/lib/db/client";
-import { publishedOnly } from "@/lib/db/billboards";
+import { getPublishedSlugs } from "@/lib/db/billboards";
 import { SITE_URL } from "@/lib/site-url";
 
 // Without this, Next prerenders the sitemap once at build time and serves that
@@ -12,11 +11,7 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = SITE_URL;
 
-  const billboards = await prisma.billboard.findMany({
-    where:  { status: publishedOnly },
-    select: { slug: true, updatedAt: true },
-    orderBy: { id: "asc" },
-  });
+  const billboards = await getPublishedSlugs();
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: base,               lastModified: new Date(), changeFrequency: "daily",   priority: 1 },

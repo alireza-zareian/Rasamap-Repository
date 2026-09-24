@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Billboard } from "@/lib/types";
 import type { AdminStats } from "@/lib/admin/types";
-import type { UserRole } from "@/lib/auth/session";
+import type { StaffRole } from "@/lib/domain/roles";
 import { LayoutDashboard, ClipboardList, ClipboardCheck, Handshake, ShieldCheck, Bot, Users, ScrollText, Plus, Lock, Trash2, AlertTriangle, MapPin, CheckCircle2, ImageOff, Sparkles, Copy, Globe } from "lucide-react";
 import { C, TYPE_LABEL, STATUS_LABEL, ROLE_LABEL, ROLE_COLOR } from "@/components/admin/constants";
 import { TypeIcon } from "@/components/TypeIcon";
@@ -24,7 +24,7 @@ import { faNum } from "@/lib/format";
 
 const TABS = ["overview", "billboards", "listings", "leads", "quality", "scraper", "users", "audit"] as const;
 type Tab = (typeof TABS)[number];
-interface SessionUser { id: string; name: string; role: UserRole; email: string; }
+interface SessionUser { id: string; name: string; role: StaffRole; email: string; }
 
 function AdminDashboard() {
   const router = useRouter();

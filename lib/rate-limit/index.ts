@@ -1,66 +1,22 @@
+import "server-only";
+import { createMemoryStore, createRedisStore, type RateLimitOptions, type RateLimitResult } from "./stores";
+
 /**
- * RASAMAP — Rate Limiter
+ * RASAMAP — rate limits.
  *
- * In-memory sliding window rate limiter.
- * Production note: for multi-instance deployments, replace with Redis-backed
- * rate limiting (e.g. @upstash/ratelimit).
+ * Every limit the app enforces is a named policy below, so the numbers live in
+ * one file and a route names the policy it applies rather than inventing one.
+ * The counters themselves live in ./stores.ts: in memory for one process, in
+ * Redis when REDIS_URL is set.
  */
 
-interface Window {
-  count:     number;
-  resetAt:   number;
-  lockedUntil?: number;
-}
+export type { RateLimitOptions, RateLimitResult };
 
-const store = new Map<string, Window>();
+const memory = createMemoryStore();
+const store = process.env.REDIS_URL ? createRedisStore(process.env.REDIS_URL, memory) : memory;
 
-// Hard cap on tracked keys. A distributed flood (one key per source IP) must not
-// let this Map grow without bound. When the cap is hit, drop the oldest-inserted
-// entries first (Map preserves insertion order) — a key that is still being
-// hammered gets re-added on its next request, so active limiters survive.
-const MAX_KEYS = 50_000;
-
-function evictIfNeeded() {
-  if (store.size <= MAX_KEYS) return;
-  const drop = store.size - MAX_KEYS + 1000; // trim a slug at once, not one-by-one
-  let n = 0;
-  for (const key of store.keys()) {
-    store.delete(key);
-    if (++n >= drop) break;
-  }
-}
-
-// Clean expired entries every 5 minutes
-if (typeof setInterval !== "undefined") {
-  const timer = setInterval(() => {
-    const now = Date.now();
-    for (const [key, w] of store.entries()) {
-      if (w.resetAt < now && (!w.lockedUntil || w.lockedUntil < now)) {
-        store.delete(key);
-      }
-    }
-  }, 5 * 60 * 1000);
-  // Don't keep the process alive just for the sweeper.
-  timer.unref?.();
-}
-
-export interface RateLimitOptions {
-  /** Window duration in milliseconds */
-  windowMs:    number;
-  /** Max requests allowed within the window */
-  maxRequests: number;
-  /** Lockout duration in ms after limit is exceeded (default: 15 min) */
-  lockoutMs?:  number;
-}
-
-export interface RateLimitResult {
-  allowed:    boolean;
-  remaining:  number;
-  resetAt:    number;
-  lockedUntil?: number;
-  /** True only on the single call that trips the lockout — used to write one
-   *  durable audit row per lockout instead of one per rejected request. */
-  justLocked?: boolean;
+export function checkRateLimit(key: string, opts: RateLimitOptions): Promise<RateLimitResult> {
+  return store.hit(key, opts);
 }
 
 /** Whole seconds until the caller may retry (lockout end, else window end). */
@@ -69,39 +25,8 @@ export function retryAfterSeconds(r: RateLimitResult): number {
   return Math.max(1, Math.ceil((until - Date.now()) / 1000));
 }
 
-export function checkRateLimit(key: string, opts: RateLimitOptions): RateLimitResult {
-  const now = Date.now();
-  const lockoutMs = opts.lockoutMs ?? 15 * 60 * 1000;
-
-  let w = store.get(key);
-
-  // Locked out?
-  if (w?.lockedUntil && w.lockedUntil > now) {
-    return { allowed: false, remaining: 0, resetAt: w.resetAt, lockedUntil: w.lockedUntil };
-  }
-
-  // Expired window — reset
-  if (!w || w.resetAt <= now) {
-    w = { count: 0, resetAt: now + opts.windowMs };
-    store.set(key, w);
-    evictIfNeeded();
-  }
-
-  w.count++;
-
-  if (w.count > opts.maxRequests) {
-    // With no lockout the caller is free again when the window rolls over, so
-    // `lockedUntil` stays unset and `retryAfterSeconds` falls back to `resetAt`
-    // — otherwise it would answer "1 second" while the window still had most of
-    // a minute left on it.
-    if (lockoutMs > 0) w.lockedUntil = now + lockoutMs;
-    store.set(key, w);
-    return { allowed: false, remaining: 0, resetAt: w.resetAt, lockedUntil: w.lockedUntil, justLocked: true };
-  }
-
-  const remaining = Math.max(0, opts.maxRequests - w.count);
-  return { allowed: true, remaining, resetAt: w.resetAt };
-}
+/** The two credential forms: the staff-only form and the shared public one. */
+export type CredentialScope = "login" | "user_login";
 
 /**
  * A credential attempt, judged on two independent questions.
@@ -148,17 +73,17 @@ function accountKey(identifier: string): string {
  * The account is checked first so that a caller who has genuinely exhausted one
  * account's tries is told so, rather than being told the network is busy.
  */
-function credentialAttempt(
+async function credentialAttempt(
   scope: string,
   identifier: string,
   ip: string,
   account: RateLimitOptions,
   address: RateLimitOptions,
-): CredentialAttempt {
-  const acct = checkRateLimit(`${scope}_acct:${accountKey(identifier)}`, account);
+): Promise<CredentialAttempt> {
+  const acct = await checkRateLimit(`${scope}_acct:${accountKey(identifier)}`, account);
   if (!acct.allowed) return { result: acct, limitedBy: "account" };
 
-  const addr = checkRateLimit(`${scope}_ip:${ip}`, address);
+  const addr = await checkRateLimit(`${scope}_ip:${ip}`, address);
   if (!addr.allowed) return { result: addr, limitedBy: "address" };
 
   return { result: addr, limitedBy: null };
@@ -168,7 +93,7 @@ function credentialAttempt(
  * Staff sign-in. Five tries against one email, then that email waits a quarter
  * of an hour; the address gets a much looser ceiling and is never locked.
  */
-export function adminLoginAttempt(email: string, ip: string): CredentialAttempt {
+export function adminLoginAttempt(email: string, ip: string): Promise<CredentialAttempt> {
   return credentialAttempt("login", email, ip,
     { windowMs: 15 * 60 * 1000, maxRequests: 5,   lockoutMs: 15 * 60 * 1000 },
     { windowMs: 15 * 60 * 1000, maxRequests: 100, lockoutMs: 0 },
@@ -180,7 +105,7 @@ export function adminLoginAttempt(email: string, ip: string): CredentialAttempt 
  * are more often mistyped than an email is, and the account lockout is shorter
  * for the same reason.
  */
-export function userLoginAttempt(identifier: string, ip: string): CredentialAttempt {
+export function userLoginAttempt(identifier: string, ip: string): Promise<CredentialAttempt> {
   return credentialAttempt("user_login", identifier, ip,
     { windowMs: 15 * 60 * 1000, maxRequests: 10,  lockoutMs: 10 * 60 * 1000 },
     { windowMs: 15 * 60 * 1000, maxRequests: 150, lockoutMs: 0 },
@@ -188,8 +113,8 @@ export function userLoginAttempt(identifier: string, ip: string): CredentialAtte
 }
 
 /** Clear an account's failures after it signs in successfully. */
-export function resetAccountAttempts(scope: string, identifier: string): void {
-  store.delete(`${scope}_acct:${accountKey(identifier)}`);
+export function resetAccountAttempts(scope: CredentialScope, identifier: string): Promise<void> {
+  return store.reset(`${scope}_acct:${accountKey(identifier)}`);
 }
 
 /**
@@ -201,7 +126,7 @@ export function resetAccountAttempts(scope: string, identifier: string): void {
  * admin who trips this is working, not attacking, and should be free again when
  * the window rolls over rather than locked out of their own panel.
  */
-export function adminApiRateLimit(ip: string): RateLimitResult {
+export function adminApiRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`admin_api:${ip}`, {
     windowMs:    60 * 1000,
     maxRequests: 600,
@@ -219,7 +144,7 @@ export function adminApiRateLimit(ip: string): RateLimitResult {
  * burst — double-taps on a failing form — must not cost a real person the
  * 15-minute penalty that belongs to credential guessing.
  */
-export function userApiRateLimit(ip: string): RateLimitResult {
+export function userApiRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`user_api:${ip}`, {
     windowMs:    60 * 1000,
     maxRequests: 300,
@@ -241,7 +166,7 @@ export function userApiRateLimit(ip: string): RateLimitResult {
  * of people drains as the window rolls rather than being shut out by the first
  * five.
  */
-export function registrationRateLimit(ip: string): RateLimitResult {
+export function registrationRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`register:${ip}`, {
     windowMs:    60 * 60 * 1000,
     maxRequests: 40,
@@ -251,7 +176,7 @@ export function registrationRateLimit(ip: string): RateLimitResult {
 
 /** OTP send — per phone: 3 per 10 min, 10 min lockout (SMS costs money and
  *  spamming a number is abuse). Verify is limited separately per phone. */
-export function otpSendRateLimit(phone: string): RateLimitResult {
+export function otpSendRateLimit(phone: string): Promise<RateLimitResult> {
   return checkRateLimit(`otp_send:${phone}`, {
     windowMs:    10 * 60 * 1000,
     maxRequests: 3,
@@ -266,7 +191,7 @@ export function otpSendRateLimit(phone: string): RateLimitResult {
  * shared address that trips it would otherwise take everyone behind it out of
  * the password-reset flow for half an hour.
  */
-export function otpSendIpRateLimit(ip: string): RateLimitResult {
+export function otpSendIpRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`otp_send_ip:${ip}`, {
     windowMs:    60 * 60 * 1000,
     maxRequests: 40,
@@ -276,7 +201,7 @@ export function otpSendIpRateLimit(ip: string): RateLimitResult {
 
 /** OTP verify — per phone: 10 attempts per 10 min (the code itself is also
  *  attempt-capped at 5; this stops brute-forcing across fresh codes). */
-export function otpVerifyRateLimit(phone: string): RateLimitResult {
+export function otpVerifyRateLimit(phone: string): Promise<RateLimitResult> {
   return checkRateLimit(`otp_verify:${phone}`, {
     windowMs:    10 * 60 * 1000,
     maxRequests: 10,
@@ -288,7 +213,7 @@ export function otpVerifyRateLimit(phone: string): RateLimitResult {
  * Public API rate limit — applied to /api/billboards to slow automated
  * crawling. Normal browser usage never comes close to this ceiling.
  */
-export function publicApiRateLimit(ip: string): RateLimitResult {
+export function publicApiRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`public_api:${ip}`, {
     windowMs:    60 * 1000,
     maxRequests: 600,

@@ -1,3 +1,4 @@
+import "server-only";
 import type { Billboard as Row, Prisma } from "@prisma/client";
 import { prisma } from "../client";
 import { isPostgres } from "../engine";
@@ -377,43 +378,12 @@ export async function getRelatedBillboards(
 
   return picked.map(fromRow);
 }
-/**
- * A submitter's own listings, in any state — powers the user dashboard.
- *
- * The full editable field set is returned (not just the summary) so a listing
- * an admin sent back for revision can be edited in place on the dashboard
- * without a second round-trip. `reviewNote` carries the admin's feedback.
- */
-export async function getListingsForUser(userId: number) {
-  return prisma.billboard.findMany({
-    where:   { submittedById: userId },
-    orderBy: { createdAt: "desc" },
-    take:    50,
-    select: {
-      id: true, slug: true, name: true, city: true, type: true, price: true,
-      status: true, plan: true, featured: true, images: true, createdAt: true,
-      reviewNote: true, description: true, phone: true, region: true,
-      location: true, width: true, height: true, faces: true,
-    },
-  });
-}
-/**
- * Reviews reference a billboard with no cascade, so deleting a reviewed row
- * would fail deep inside Prisma and surface as an opaque 500. The admin DELETE
- * route checks this first and answers with a clear 409 instead.
- */
-export async function hasReviews(id: number): Promise<boolean> {
-  return (await prisma.review.count({ where: { billboardId: id } })) > 0;
-}
 
-/**
- * ContactRequest.billboardId is onDelete: Cascade, unlike Review, so deleting
- * a billboard silently destroys every lead ever generated for it — the "one
- * number worth knowing" per docs/engineering-decisions.md §23. This does not
- * block the delete (a lead that predates the removal of its billboard has
- * nowhere left to point), but the admin route records the count on the audit
- * row before it is gone, so the loss is at least visible after the fact.
- */
-export async function countContactRequests(id: number): Promise<number> {
-  return prisma.contactRequest.count({ where: { billboardId: id } });
+/** Every published media item's address and last change, for the sitemap. */
+export function getPublishedSlugs(): Promise<{ slug: string; updatedAt: Date }[]> {
+  return prisma.billboard.findMany({
+    where:   { status: publishedOnly },
+    select:  { slug: true, updatedAt: true },
+    orderBy: { id: "asc" },
+  });
 }

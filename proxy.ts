@@ -129,7 +129,7 @@ export async function proxy(req: NextRequest) {
   // which is what this did — tells a customer their session failed and leaves
   // them retyping a password that was never the problem.
   if (isAdminPage || isAdminApi) {
-    const isAdminRole = session && session.role !== "user";
+    const isAdminRole = session?.kind === "staff";
     if (!isAdminRole) {
       if (isAdminApi) {
         return session
