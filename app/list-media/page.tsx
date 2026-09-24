@@ -6,7 +6,7 @@ import { ImagePlus, X, Check, Lightbulb, CircleCheckBig, ArrowRight, ArrowLeft, 
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import { faNum } from "@/lib/format";
-import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/fetch-json";
+import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/client/fetch-json";
 
 const steps = ["اطلاعات اصلی","موقعیت و نوع","قیمت‌گذاری","تصاویر","انتخاب پلن","تأیید"];
 const SUBMIT_STEP = 4;   // the plan step is the last one with a submit button

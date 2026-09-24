@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/fetch-json";
-import { useModalA11y } from "@/lib/useModalA11y";
+import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/client/fetch-json";
+import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import { X, ImagePlus, Check } from "lucide-react";
 import { faNum } from "@/lib/format";
 

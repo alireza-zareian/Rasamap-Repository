@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useCurrentUser } from "@/lib/auth/useCurrentUser";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
+import { useCurrentUser } from "@/lib/client/use-current-user";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
 
 interface Reply {

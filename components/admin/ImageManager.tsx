@@ -1,8 +1,8 @@
 "use client";
 import { useState, useRef } from "react";
-import { fetchJson, errorMessage, TIMEOUT_MS } from "@/lib/fetch-json";
+import { fetchJson, errorMessage, TIMEOUT_MS } from "@/lib/client/fetch-json";
 import { Lightbox } from "./Lightbox";
-import { useModalA11y } from "@/lib/useModalA11y";
+import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import type { Billboard } from "@/lib/types";
 import { C } from "./constants";
 import { Badge } from "./Badge";

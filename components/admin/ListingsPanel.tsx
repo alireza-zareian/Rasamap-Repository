@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { Lightbox } from "./Lightbox";
 import { C, MODERATION_COLOR, MODERATION_LABEL } from "./constants";
 import { Badge } from "./Badge";

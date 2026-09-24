@@ -167,7 +167,7 @@ export const PROVINCE_RINGS: Record<string, Ring[]> = {{
 {body},
 }};
 '''
-    dest = "lib/iran-provinces.ts"
+    dest = "lib/geo/iran-provinces.ts"
     open(dest, "w", encoding="utf-8").write(ts)
     print(f"✓ {dest}")
     print(f"  provinces {len(out)} · points {before} → {after} "

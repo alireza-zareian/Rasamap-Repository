@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Check, Share2, X } from "lucide-react";
-import { copyText } from "@/lib/clipboard";
+import { copyText } from "@/lib/client/clipboard";
 
 type State = "idle" | "copied" | "failed";
 

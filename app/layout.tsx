@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site-url";
-import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/theme";
-import { CurrentUserProvider } from "@/lib/auth/useCurrentUser";
+import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/client/theme";
+import { CurrentUserProvider } from "@/lib/client/use-current-user";
 import BackgroundPattern from "@/components/BackgroundPattern";
 import StaffBar from "@/components/StaffBar";
 
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             A blocking inline script in <head> is the only place that runs
             earlier than paint. CSP allows it: script-src keeps 'unsafe-inline'
             for the App Router's own streaming payload (§29).
-            Kept in sync with lib/theme.tsx by THEME_STORAGE_KEY. */}
+            Kept in sync with lib/client/theme.tsx by THEME_STORAGE_KEY. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==="dark"||t==="light"){var e=document.documentElement;e.setAttribute("data-theme",t);e.style.colorScheme=t;}}catch(e){}})();`,

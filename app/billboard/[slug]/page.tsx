@@ -170,7 +170,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
             <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.9 }}>
               این آگهی هنوز <b style={{ color: "var(--text-main)" }}>{moderationLabels[b.moderation] ?? b.moderation}</b> است و برای بازدیدکنندگان دیده نمی‌شود.
             </span>
-            <Link href="/admin?tab=listings" style={{ marginRight: "auto", fontSize: "0.75rem", color: "#8B7BE0", textDecoration: "none", border: "1px solid rgba(98,71,196,0.4)", borderRadius: 8, padding: "5px 13px", whiteSpace: "nowrap" }}>
+            <Link href="/admin/listings" style={{ marginRight: "auto", fontSize: "0.75rem", color: "#8B7BE0", textDecoration: "none", border: "1px solid rgba(98,71,196,0.4)", borderRadius: 8, padding: "5px 13px", whiteSpace: "nowrap" }}>
               رفتن به صف تأیید ←
             </Link>
           </div>

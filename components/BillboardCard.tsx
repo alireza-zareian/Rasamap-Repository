@@ -4,7 +4,7 @@ import MediaImage from "@/components/MediaImage";
 import Link from "next/link";
 import { CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
 import { Scale, Star, Sparkles } from "lucide-react";
-import { useTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/client/theme";
 import { faNum, faCompact } from "@/lib/format";
 
 interface BillboardCardProps {

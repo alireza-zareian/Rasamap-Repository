@@ -1546,12 +1546,12 @@ test("guard: an origin check never compares against req.nextUrl.host", () => {
   }
 });
 
-test("guard: clipboard access goes through lib/clipboard.ts", () => {
+test("guard: clipboard access goes through lib/client/clipboard.ts", () => {
   for (const [file, src] of sourceFiles()) {
-    if (file.endsWith("lib/clipboard.ts")) continue;
+    if (file.endsWith("lib/client/clipboard.ts")) continue;
     assert.ok(
       !/navigator\.clipboard\s*[.?]/.test(src),
-      `${file}: navigator.clipboard is undefined outside a secure context (a phone on http://<lan-ip>). Use copyText() from lib/clipboard.ts.`,
+      `${file}: navigator.clipboard is undefined outside a secure context (a phone on http://<lan-ip>). Use copyText() from lib/client/clipboard.ts.`,
     );
   }
 });
@@ -1709,12 +1709,46 @@ test("a signed-in customer is refused the panel, not asked to sign in again", as
   );
 });
 
+test("every panel section is its own address, rendered on the server for staff", async () => {
+  const admin = await mintSession({ role: "admin" });
+  for (const [path, marker] of [
+    ["/admin", "نمای کلی داشبورد"],
+    ["/admin/billboards", "مدیریت بیلبوردها"],
+    ["/admin/listings", "تأیید آگهی‌ها"],
+    ["/admin/leads", "سرنخ"],
+    ["/admin/quality", "کیفیت"],
+    ["/admin/scraper", "اسکرپر"],
+    ["/admin/users", "کاربران"],
+    ["/admin/audit", "لاگ"],
+  ]) {
+    const page = await api(path, { token: admin });
+    assert.equal(page.status, 200, `${path} did not render for an admin`);
+    assert.ok(String(page.json).includes(marker), `${path} is missing "${marker}"`);
+  }
+});
+
+test("an old ?tab= panel address still lands on its section", async () => {
+  const admin = await mintSession({ role: "admin" });
+  const res = await api("/admin?tab=billboards&q=valiasr-tower", { token: admin, redirect: "manual" });
+  assert.ok(res.status === 307 || res.status === 308, `expected a redirect, got ${res.status}`);
+  assert.equal(new URL(res.headers.get("location"), "http://x").pathname + new URL(res.headers.get("location"), "http://x").search, "/admin/billboards?q=valiasr-tower");
+});
+
+test("a deactivated staff account is sent to sign in, not shown the panel", async () => {
+  // Its token is still validly signed, so proxy.ts lets it through; the panel's
+  // own layout reads the account and refuses.
+  const revoked = await mintSession({ role: "admin", userId: "9005" });
+  const res = await api("/admin/leads", { token: revoked, redirect: "manual" });
+  assert.ok(res.status === 307 || res.status === 303, `expected a redirect, got ${res.status}`);
+  assert.match(res.headers.get("location") ?? "", /\/admin\/login/);
+});
+
 test("guard: a write from the browser goes through fetchJson", () => {
   // A bare fetch() has no timeout, and `await` on a request that never answers
   // never returns — so the `finally` that releases the button never runs and it
   // spins on "در حال ارسال…" forever, with no error and no way back but a
   // reload, which on a form risks sending it twice. §5 asks for a timeout and a
-  // defined fallback on every outbound call; lib/fetch-json.ts is both.
+  // defined fallback on every outbound call; lib/client/fetch-json.ts is both.
   //
   // Reads are left alone: a list that fails to load is visibly empty, while a
   // write that hangs looks like it is still working.
@@ -1731,7 +1765,7 @@ test("guard: a write from the browser goes through fetchJson", () => {
 
     assert.ok(
       !WRITE.test(src),
-      `${file}: send writes with fetchJson() from lib/fetch-json.ts — a bare fetch has no timeout, so a stalled request leaves the button spinning for good.`,
+      `${file}: send writes with fetchJson() from lib/client/fetch-json.ts — a bare fetch has no timeout, so a stalled request leaves the button spinning for good.`,
     );
   }
 });

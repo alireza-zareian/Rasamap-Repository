@@ -10,6 +10,7 @@ const USER_API_PATTERN   = /^\/api\/listings(\/.*)?$/;
 const LOGIN_PATH         = "/admin/login";
 const USER_LOGIN_PATH    = "/login";
 const FORBIDDEN_PATH     = "/forbidden";
+const LEGACY_ADMIN_TABS  = ["billboards", "listings", "leads", "quality", "scraper", "users", "audit"];
 
 // Catalogue pages worth protecting from bulk copying. These are the only pages
 // that carry listing data; marketing pages are cheap and left alone.
@@ -108,6 +109,19 @@ export async function proxy(req: NextRequest) {
   // page cap of 48 records, the owner phone behind a session, hotlink
   // protection on the media, and rate limits on the endpoints that write or
   // authenticate. See §20.
+
+  // The panel used to be one page that picked its section with `?tab=`. Each
+  // section has its own address now; the old links live on in bookmarks and
+  // chat history, so they are forwarded rather than left on the overview.
+  if (pathname === "/admin") {
+    const tab = req.nextUrl.searchParams.get("tab");
+    if (tab && LEGACY_ADMIN_TABS.includes(tab)) {
+      const target = req.nextUrl.clone();
+      target.pathname = `/admin/${tab}`;
+      target.searchParams.delete("tab");
+      return NextResponse.redirect(target);
+    }
+  }
 
   const isAdminPage = ADMIN_PAGE_PATTERN.test(pathname);
   const isAdminApi  = ADMIN_API_PATTERN.test(pathname);

@@ -2,7 +2,7 @@
 import { useState, useCallback, useRef } from "react";
 import Image from "next/image";
 import { ImageOff, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { useModalA11y } from "@/lib/useModalA11y";
+import { useModalA11y } from "@/lib/client/use-modal-a11y";
 
 interface Props {
   images: string[];

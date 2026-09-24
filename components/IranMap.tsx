@@ -2,8 +2,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin as PinIcon, ArrowRight } from "lucide-react";
-import { PROVINCE_RINGS, IRAN_BOUNDS, type Ring } from "@/lib/iran-provinces";
-import { project, type Bounds } from "@/lib/geo";
+import { PROVINCE_RINGS, IRAN_BOUNDS, type Ring } from "@/lib/geo/iran-provinces";
+import { project, type Bounds } from "@/lib/geo/distance";
 import type { MapPin } from "@/lib/db/billboards";
 import { exploreHref, type ExploreFilters } from "@/lib/explore-query";
 import { faNum } from "@/lib/format";

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
-import { useModalA11y } from "@/lib/useModalA11y";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
+import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import type { Billboard } from "@/lib/types";
 import { C, TYPE_LABEL, AVAILABILITY_LABEL } from "./constants";
 import { Image as ImageIcon, X, MapPin, AlertTriangle, ExternalLink } from "lucide-react";

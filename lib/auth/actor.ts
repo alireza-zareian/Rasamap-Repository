@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import type { NextRequest, NextResponse } from "next/server";
+import { redirect } from "next/navigation";
 import { buildSessionCookieHeader, createSession, getSession, type Session, type SessionClaims } from "./session";
 import { findActiveStaff } from "@/lib/db/staff";
 import type { StaffRole } from "@/lib/domain/roles";
@@ -79,4 +80,17 @@ export function claimsFor(actor: Actor): SessionClaims {
 export async function startSession(res: NextResponse, actor: Actor, req: NextRequest): Promise<NextResponse> {
   res.headers.set("Set-Cookie", buildSessionCookieHeader(await createSession(claimsFor(actor)), req));
   return res;
+}
+
+/**
+ * The staff member viewing a panel page, or a redirect to sign in.
+ *
+ * proxy.ts has already turned away anyone without a staff token; this is the
+ * check that reads the account, so a deactivated one is sent to sign in rather
+ * than shown a panel in which every request would then fail.
+ */
+export async function requireStaff(): Promise<StaffActor> {
+  const actor = await getActor();
+  if (actor?.kind !== "staff") redirect("/admin/login");
+  return actor;
 }

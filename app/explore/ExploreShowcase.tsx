@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import MediaImage from "@/components/MediaImage";
 import { MapPin, Building2 } from "lucide-react";
-import { useTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/client/theme";
 import type { CatalogueItem } from "@/lib/types";
 import { faNum } from "@/lib/format";
 

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowRight, Check } from "lucide-react";

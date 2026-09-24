@@ -1,5 +1,5 @@
 import { AVAILABILITIES, BILLBOARD_TYPES, type Availability, type BillboardType } from "./types";
-import { provinces, getProvince } from "./iranLocations";
+import { provinces, getProvince } from "@/lib/geo/iran-cities";
 import type { BillboardFilterParams } from "./db/billboards";
 
 /**

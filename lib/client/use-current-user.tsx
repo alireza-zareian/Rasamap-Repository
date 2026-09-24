@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { fetchJson } from "@/lib/fetch-json";
+import { fetchJson } from "@/lib/client/fetch-json";
 
 export interface CurrentUser {
   id: number;

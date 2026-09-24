@@ -128,7 +128,7 @@ every mistake in this class is invisible.
 ✅  new URL(referer).host === (req.headers.get("x-forwarded-host") ?? req.headers.get("host"))
 
 ❌  await navigator.clipboard.writeText(x)       // undefined outside a secure context — throws
-✅  await copyText(x)                            // lib/clipboard.ts, with an execCommand fallback
+✅  await copyText(x)                            // lib/client/clipboard.ts, with an execCommand fallback
 
 ❌  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 ✅  SITE_URL                                     // lib/site-url.ts — one name, one fallback

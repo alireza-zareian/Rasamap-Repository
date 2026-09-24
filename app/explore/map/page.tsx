@@ -6,7 +6,7 @@ import IranMap from "@/components/IranMap";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedMapPins, getCachedSiteStats } from "@/lib/db/cached";
 import { parseExploreParams, toFilterParams, exploreHref } from "@/lib/explore-query";
-import { countByProvince, isPlottable } from "@/lib/geo";
+import { countByProvince, isPlottable } from "@/lib/geo/distance";
 
 /**
  * The catalogue as a map.

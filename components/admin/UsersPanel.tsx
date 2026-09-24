@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
-import { useModalA11y } from "@/lib/useModalA11y";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
+import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import type { StaffRole } from "@/lib/domain/roles";
 import { C, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";

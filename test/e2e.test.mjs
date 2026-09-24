@@ -245,6 +245,26 @@ test("the admin login page refuses a customer's credentials", async () => {
   });
 });
 
+test("a reviewer signs in and moves between panel sections by their addresses", async () => {
+  await withBrowser("admin-sections", async (b) => {
+    // Staff use the same sign-in form as customers, on its staff tab.
+    await b.goto(`${BASE}/login?as=staff`);
+    await b.fill("input[type='email']", "admin@test.local");
+    await b.fill("input[type='password']", "secret123");
+    await b.click("button[type='submit']");
+    await b.waitFor("location.pathname === '/admin'", { label: "the panel overview after a staff sign-in" });
+    await b.waitFor("document.body.innerText.includes('نمای کلی داشبورد')", { label: "the server-rendered counters" });
+
+    // The menu is links now: each section is an address of its own.
+    await b.click("a[href='/admin/listings']");
+    await b.waitFor("location.pathname === '/admin/listings'", { label: "the approval queue's address" });
+    await b.waitFor("document.body.innerText.includes('Pending Listing')", { label: "the pending submission in the queue" });
+
+    await b.click("a[href='/admin/leads']");
+    await b.waitFor("location.pathname === '/admin/leads'", { label: "the leads section's address" });
+  });
+});
+
 // ── the phone-width run the card asks for ─────────────────────────────────
 test("the catalogue is usable at phone width", async () => {
   await withBrowser("phone-width", async (b) => {

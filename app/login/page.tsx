@@ -1,7 +1,7 @@
 "use client";
 import { useState, Suspense } from "react";
-import { useCurrentUser } from "@/lib/auth/useCurrentUser";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
+import { useCurrentUser } from "@/lib/client/use-current-user";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, AlertTriangle, ArrowRight, User, ShieldCheck } from "lucide-react";

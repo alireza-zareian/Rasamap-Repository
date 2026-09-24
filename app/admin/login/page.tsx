@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, Suspense } from "react";
-import { fetchJson, FetchError, errorMessage } from "@/lib/fetch-json";
+import { fetchJson, FetchError, errorMessage } from "@/lib/client/fetch-json";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, AlertTriangle, ArrowRight } from "lucide-react";

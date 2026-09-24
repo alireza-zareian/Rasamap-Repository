@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useModalA11y } from "@/lib/useModalA11y";
+import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import { CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Scale, X, Star } from "lucide-react";

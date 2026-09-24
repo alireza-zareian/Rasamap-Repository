@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";

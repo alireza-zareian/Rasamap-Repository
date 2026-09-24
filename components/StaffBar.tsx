@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { ShieldCheck, LayoutDashboard, ClipboardCheck, Handshake, PencilLine, BarChart3, Users } from "lucide-react";
-import { useCurrentUser } from "@/lib/auth/useCurrentUser";
+import { useCurrentUser } from "@/lib/client/use-current-user";
 
 /**
  * A thin bar shown across the public site to whoever is signed in as staff —
@@ -34,9 +34,9 @@ function actionsFor(pathname: string): { where: string; actions: Action[] } {
     return {
       where: "صفحهٔ رسانه",
       actions: [
-        { href: `/admin?tab=billboards&q=${encodeURIComponent(slug)}`, label: "ویرایش همین رسانه", Icon: PencilLine },
-        { href: "/admin?tab=listings", label: "صف تأیید", Icon: ClipboardCheck },
-        { href: "/admin?tab=leads", label: "سرنخ‌ها", Icon: Handshake },
+        { href: `/admin/billboards?q=${encodeURIComponent(slug)}`, label: "ویرایش همین رسانه", Icon: PencilLine },
+        { href: "/admin/listings", label: "صف تأیید", Icon: ClipboardCheck },
+        { href: "/admin/leads", label: "سرنخ‌ها", Icon: Handshake },
       ],
     };
   }
@@ -44,9 +44,9 @@ function actionsFor(pathname: string): { where: string; actions: Action[] } {
     return {
       where: "کاتالوگ",
       actions: [
-        { href: "/admin?tab=billboards", label: "جدول رسانه‌ها", Icon: PencilLine },
-        { href: "/admin?tab=quality", label: "کنترل کیفیت", Icon: ShieldCheck },
-        { href: "/admin?tab=listings", label: "صف تأیید", Icon: ClipboardCheck },
+        { href: "/admin/billboards", label: "جدول رسانه‌ها", Icon: PencilLine },
+        { href: "/admin/quality", label: "کنترل کیفیت", Icon: ShieldCheck },
+        { href: "/admin/listings", label: "صف تأیید", Icon: ClipboardCheck },
       ],
     };
   }
@@ -55,7 +55,7 @@ function actionsFor(pathname: string): { where: string; actions: Action[] } {
       where: "تحلیل بازار",
       actions: [
         { href: "/admin", label: "آمار پنل", Icon: BarChart3 },
-        { href: "/admin?tab=leads", label: "سرنخ‌ها", Icon: Handshake },
+        { href: "/admin/leads", label: "سرنخ‌ها", Icon: Handshake },
       ],
     };
   }
@@ -63,8 +63,8 @@ function actionsFor(pathname: string): { where: string; actions: Action[] } {
     return {
       where: "ناحیهٔ کاربر",
       actions: [
-        { href: "/admin?tab=users", label: "کاربران", Icon: Users },
-        { href: "/admin?tab=listings", label: "صف تأیید", Icon: ClipboardCheck },
+        { href: "/admin/users", label: "کاربران", Icon: Users },
+        { href: "/admin/listings", label: "صف تأیید", Icon: ClipboardCheck },
       ],
     };
   }
@@ -72,8 +72,8 @@ function actionsFor(pathname: string): { where: string; actions: Action[] } {
     where: "سایت عمومی",
     actions: [
       { href: "/admin", label: "پنل مدیریت", Icon: LayoutDashboard },
-      { href: "/admin?tab=listings", label: "صف تأیید", Icon: ClipboardCheck },
-      { href: "/admin?tab=leads", label: "سرنخ‌ها", Icon: Handshake },
+      { href: "/admin/listings", label: "صف تأیید", Icon: ClipboardCheck },
+      { href: "/admin/leads", label: "سرنخ‌ها", Icon: Handshake },
     ],
   };
 }

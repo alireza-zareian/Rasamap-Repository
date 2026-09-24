@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import Link from "next/link";
 import { Phone } from "lucide-react";
-import { useCurrentUser } from "@/lib/auth/useCurrentUser";
+import { useCurrentUser } from "@/lib/client/use-current-user";
 
 interface Props {
   hasPhone: boolean;

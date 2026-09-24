@@ -1,6 +1,6 @@
 "use client";
 import { X } from "lucide-react";
-import { useModalA11y } from "@/lib/useModalA11y";
+import { useModalA11y } from "@/lib/client/use-modal-a11y";
 
 /**
  * One enlarged photograph, over everything else.

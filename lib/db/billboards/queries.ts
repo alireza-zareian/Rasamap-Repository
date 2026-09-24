@@ -3,7 +3,7 @@ import type { Billboard as Row, Prisma } from "@prisma/client";
 import { prisma } from "../client";
 import { isPostgres } from "../engine";
 import type { Availability, Billboard, BillboardType, Moderation } from "../../types";
-import { distanceKm } from "../../geo";
+import { distanceKm } from "@/lib/geo/distance";
 import { fromRow, published } from "./core";
 
 /** Every read of the billboards table. Nothing here writes or invalidates. */

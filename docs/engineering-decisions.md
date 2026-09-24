@@ -1113,7 +1113,7 @@ substitutes that agree with reality only on the machine that wrote the code.
 Concretely: `Secure` is now set from `x-forwarded-proto` / the request
 protocol; the hotlink check reads `X-Forwarded-Host` / `Host`; the two base-URL
 variables became one (`lib/site-url.ts`); clipboard access goes through
-`lib/clipboard.ts`, which falls back to `execCommand` and reports honestly
+`lib/client/clipboard.ts`, which falls back to `execCommand` and reports honestly
 whether it worked; and `loading="lazy"` was removed from the two places where
 the element can never enter the viewport on its own, and deliberately kept
 everywhere the user scrolls vertically.
@@ -1656,13 +1656,13 @@ blocked cross-origin frame reports load either way and cannot be detected.
 Every hosted alternative fails at least one of the same three tests — billed,
 keyed, or unreachable from Iran. So the map is drawn instead of fetched.
 
-**What that costs at runtime: nothing.** `lib/iran-provinces.ts` is 42 KB of
+**What that costs at runtime: nothing.** `lib/geo/iran-provinces.ts` is 42 KB of
 province outlines vendored into the bundle — geoBoundaries gbOpen ADM1, CC BY
 4.0, credited under the map, reduced from 26,946 points to 2,658 by
 Douglas-Peucker at 0.02° (about 2 km, far below one pixel at the size it is
 drawn) by `scripts/build-iran-map.py`. The projection is equirectangular with
 longitude squeezed by the cosine of the middle latitude, which is a dozen lines
-in `lib/geo.ts`. No tile server, no key, no request that can be blocked.
+in `lib/geo/distance.ts`. No tile server, no key, no request that can be blocked.
 
 **Two levels, because they answer different questions.** The country view
 shades each province by how much inventory sits in it, and is built from the
@@ -1879,7 +1879,7 @@ is what named both faults above.
 | 2026-09-07 | **V3 — PostgreSQL, dormant** | §27 — engine read from `DATABASE_URL`; the two engine-specific spots (JSON path, `contains` case) handled; `npm run db:to-postgres` / `db:to-sqlite`. Proved against PostgreSQL 16: 3,562 rows moved, counts matched, app served, identical answers from both engines, switched back, 113/113. Still on SQLite. |
 | 2026-09-08 | **V4 — deployment surface** | §28 — `/api/health` (real DB ping, exempt from the bot filter, 3 tests); `backup-db.sh` made engine-aware after §27 and both paths exercised; restore rehearsed; `deploy/` nginx + systemd + backup timer; RUNBOOK deployment order. Acceptance test run over a `trycloudflare` tunnel: rule 9 verified against a real proxy (`Secure` present over HTTPS, absent over localhost, same build). Domain and host still to buy. |
 | 2026-09-08 | **V5 — CSP and security cleanup** | §29 — six dead origins removed from the CSP (incl. `unpkg.com` in `script-src`); `'unsafe-eval'` dropped after proving zero `eval(` in the bundle; `X-XSS-Protection` removed; `robots.txt` reduced to one generated source whose `Sitemap` follows `SITE_URL`; dead `NEXT_PUBLIC_NESHAN_KEY` removed and `NESHAN_API_KEY` demoted to optional. Nonce-based `script-src` measured at 1.86 → 8.30 ms on the landing page and declined. |
-| 2026-09-11 | **Map view, no provider** | §32 — `/explore/map`: 31 provinces as SVG shaded by inventory, pins for a chosen province, filters carried in the URL. `lib/iran-provinces.ts` (42 KB, vendored, geoBoundaries CC BY 4.0) + `lib/geo.ts` + `scripts/build-iran-map.py`. No key, no tiles, no runtime request. MAP-B confirmed and quarantined: `isPlottable()` holds back the ~1-in-6 coordinates that sit far from their own city, and the map states the count it is hiding. No new query — the province counts come from a `groupBy` `getSiteStats` already ran. |
+| 2026-09-11 | **Map view, no provider** | §32 — `/explore/map`: 31 provinces as SVG shaded by inventory, pins for a chosen province, filters carried in the URL. `lib/geo/iran-provinces.ts` (42 KB, vendored, geoBoundaries CC BY 4.0) + `lib/geo/distance.ts` + `scripts/build-iran-map.py`. No key, no tiles, no runtime request. MAP-B confirmed and quarantined: `isPlottable()` holds back the ~1-in-6 coordinates that sit far from their own city, and the map states the count it is hiding. No new query — the province counts come from a `groupBy` `getSiteStats` already ran. |
 | 2026-09-09 | **V7 — browser tests** | §31 — `test/browser.mjs`, a 359-line CDP driver over the installed Chrome, no new dependency. `npm run test:e2e`: 8 flows on the production build, screenshots on failure. Found the headless-UA 403, missing image placeholders on four surfaces (`MediaImage`), and Latin digits in prices (`faCompact`/`faNum`). Five flakiness causes diagnosed and fixed. |
 | 2026-09-08 | **V6 — findability** | §30 — titles on the seven pages that had none (three `noindex`); generated Open Graph card with the project's own font, explicit RTL word order and ZWNJ handling; `Product`/`Offer` JSON-LD on media pages with Toman→IRR conversion; sitemap verified at 3,532/3,532 with no unpublished leak; `manifest.ts` + 192/512 icons. |
 | 2026-09-12 | **Nightly data sync** | §33 — `prisma/sync-scraped.ts` + `npm run db:sync-scraped`, three-way merge on `sourceSnapshot`, `missingSince` for vanished rows, `source_tombstones` so a deleted or deduped row never returns, `deploy/rasamap-sync.{service,timer}`. Crawler's invented fields made deterministic per listing so change detection is possible at all. 5 tests in `test/sync.test.mjs`. |

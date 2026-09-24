@@ -1,4 +1,4 @@
-import { coordsForCity, findProvinceOfCity } from "./iranLocations";
+import { coordsForCity, findProvinceOfCity } from "./iran-cities";
 
 /**
  * The arithmetic behind the map view.

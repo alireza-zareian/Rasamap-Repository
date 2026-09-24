@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, LayoutGrid, List, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train, MapPin, ChevronDown, Crosshair } from "lucide-react";
 import type { BillboardType } from "@/lib/types";
-import { provinces, getProvince } from "@/lib/iranLocations";
+import { provinces, getProvince } from "@/lib/geo/iran-cities";
 import { faNum } from "@/lib/format";
 import {
   type ExploreFilters, type SortKey, ALLOWED_SORT,

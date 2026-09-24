@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { fetchJson, errorMessage } from "@/lib/fetch-json";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { C } from "./constants";
 import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";

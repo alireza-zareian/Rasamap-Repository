@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTheme } from "@/lib/theme";
-import { useCurrentUser } from "@/lib/auth/useCurrentUser";
+import { useTheme } from "@/lib/client/theme";
+import { useCurrentUser } from "@/lib/client/use-current-user";
 import { Map, BarChart2, Scale, Sun, Moon, User, LogOut } from "lucide-react";
 
 interface Props { activeTab?: string; onTabChange?: (t: string) => void; onAddListing?: () => void; }

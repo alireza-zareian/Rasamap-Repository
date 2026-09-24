@@ -35,3 +35,12 @@ export function BarRow({ label, value, max, color }: { label: string; value: num
     </div>
   );
 }
+
+/** The card a panel section's content sits in. */
+export function SectionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
+      {children}
+    </div>
+  );
+}
