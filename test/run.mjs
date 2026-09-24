@@ -1,4 +1,4 @@
-// Orchestrator: reset test DB -> seed fixtures -> build -> start the app on an
+// Orchestrator: unit tests -> reset test DB -> seed fixtures -> build -> start the app on an
 // isolated port with test env -> run the API tests against it -> tear down.
 //
 //   npm test
@@ -82,6 +82,11 @@ if (await portInUse(PORT)) {
   );
   process.exit(1);
 }
+
+// The pure rules first: they need no build, take under a second, and a broken
+// rule is better reported now than after a minute of building.
+step("unit tests (lib/domain)");
+execSync("npm run --silent test:unit", { stdio: "inherit" });
 
 step("reset test database");
 execSync("node test/reset-db.mjs", { stdio: "inherit", env });

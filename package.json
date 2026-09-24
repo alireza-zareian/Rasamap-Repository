@@ -9,6 +9,7 @@
     "demo": "next build && next start",
     "lint": "eslint",
     "test": "node test/run.mjs",
+    "test:unit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/unit/",
     "test:seed": "node test/seed.mjs",
     "test:reset": "node test/reset-db.mjs",
     "bench": "node test/bench.mjs",
