@@ -8,8 +8,9 @@ const AUDIT_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;   // 90 days
 export interface AuditRowInput {
   action:    string;
   severity:  "info" | "warn" | "critical";
-  /** A staff actor's account — a real foreign key into `admins`. */
+  /** The actor, as a real foreign key into its own table — or neither. */
   adminId:   number | null;
+  userId:    number | null;
   userEmail: string | null;
   ip:        string | null;
   userAgent: string | null;

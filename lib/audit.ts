@@ -93,9 +93,10 @@ export function getRecentAuditLogs(limit = 100): AuditEntry[] {
  * ring buffer. Best-effort: a write failure is logged and swallowed — recording
  * an action must never break the action it records.
  *
- * The actor is taken whole rather than as loose fields, so the row can carry a
- * staff account as a real foreign key and a customer as their id, instead of
- * every caller re-deriving both from a session by hand.
+ * The actor is taken whole rather than as loose fields, so the row records it
+ * as a real foreign key into whichever table it belongs to — `adminId` for
+ * staff, `userId` for a customer — instead of every caller re-deriving both
+ * from a session by hand.
  */
 export async function recordAudit(
   action: AuditAction,
@@ -108,10 +109,7 @@ export async function recordAudit(
   },
 ): Promise<void> {
   const { actor = null, severity = "info" } = ctx;
-  const details = {
-    ...(actor?.kind === "customer" ? { customerId: actor.id } : {}),
-    ...(ctx.details ?? {}),
-  };
+  const details = ctx.details ?? {};
   const userEmail = actor?.kind === "staff" ? actor.email : null;
 
   auditLog(action, severity, {
@@ -127,6 +125,7 @@ export async function recordAudit(
       action,
       severity,
       adminId:   actor?.kind === "staff" ? actor.id : null,
+      userId:    actor?.kind === "customer" ? actor.id : null,
       userEmail,
       ip:        ctx.ip ?? null,
       userAgent: ctx.userAgent ?? null,
