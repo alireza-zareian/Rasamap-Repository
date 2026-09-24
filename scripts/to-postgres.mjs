@@ -60,17 +60,18 @@ const DUMP = join(tmpdir(), "rasamap-migration.json");
  */
 const TABLES = [
   // no foreign keys of their own
-  "owner",
   "user",
   "admin",
-  // points at owner and user
+  "sourceTombstone",
+  // points at user
   "billboard",
-  // point at billboard and user
+  // point at billboard (and user)
+  "billboardSource",
   "review",
   "contactRequest",
-  // points at review
+  // points at review, user and admin
   "reviewReply",
-  // independent bookkeeping
+  // independent bookkeeping (auditLog points at user and admin)
   "otpCode",
   "auditLog",
   "idempotencyKey",
@@ -78,10 +79,11 @@ const TABLES = [
 
 /** Prisma's @@map names — what the tables are actually called in PostgreSQL. */
 const TABLE_NAMES = {
-  owner: "owners",
   user: "users",
   admin: "admins",
+  sourceTombstone: "source_tombstones",
   billboard: "billboards",
+  billboardSource: "billboard_sources",
   review: "reviews",
   contactRequest: "contact_requests",
   reviewReply: "review_replies",

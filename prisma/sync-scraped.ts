@@ -13,8 +13,9 @@
 // the feed's values would silently undo the corrections, which is worse than
 // stale data because nobody sees it happen.
 //
-// So each row keeps a snapshot of what the feed last said (`sourceSnapshot`),
-// and every field is decided by three values rather than two:
+// So each row keeps a snapshot of what the feed last said (its
+// billboard_sources row's `snapshot`), and every field is decided by three
+// values rather than two:
 //
 //   row == snapshot   → nobody has touched it since the last sync; the feed
 //                       may write, and only if it actually changed something
@@ -26,8 +27,9 @@
 // snapshot there is no way to tell an admin's correction from the feed's own
 // value, and guessing wrong would erase the correction.
 //
-// Rows that stop appearing in the feed are marked with `missingSince`, never
-// deleted — reviews, contact requests and submitted listings reference them.
+// Rows that stop appearing in the feed are marked with `missingSince` (on the
+// same billboard_sources row), never deleted — reviews, contact requests and
+// submitted listings reference them.
 //
 // The same argument applies in the other direction. A row the feed has and the
 // database does not may be new, or it may be one somebody removed on purpose —
@@ -49,7 +51,10 @@
 import "dotenv/config";
 import { readFileSync } from "fs";
 import path from "path";
-import { PrismaClient, Prisma, type Billboard as Row } from "@prisma/client";
+import {
+  PrismaClient, Prisma, Availability, BillboardType,
+  type Billboard, type BillboardSource,
+} from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
@@ -74,23 +79,36 @@ const FEED = FEED_FLAG
  *                   review. The crawler still invents both for a brand-new
  *                   row, but once the row exists the database is the authority
  *                   and a sync must not push invented numbers over real ones
- *   status        — see BLOCKED_WHEN_CLAIMED below
+ *   status        — the feed's status is an availability, and moves under its
+ *                   own rule: see availabilityWrite below
+ *   moderation    — review state is the database's alone; a crawled row is
+ *                   approved when it is inserted and the feed never touches it
  *   scrapedAt     — it changes on every crawl by definition, so treating it as
  *                   a field would mark all 3.5k rows changed every night. It
  *                   rides along only on rows that changed for another reason
  *   plan,
  *   featured      — monetisation state, owned by the admin panel alone
+ *
+ * The feed still carries `icon`, `mapX` and `mapY`; those columns are gone
+ * (migration 20260925090000) and the fields are ignored.
  */
-const SYNCED_FIELDS = [
+const BILLBOARD_FIELDS = [
   "name", "location", "region", "city", "type",
   "width", "height", "faces", "age",
   "price", "priceWeekly", "priceQuarterly", "priceYearly",
-  "traffic", "mapX", "mapY", "lat", "lng",
-  "icon", "images", "agency", "phone", "description",
-  "features", "nearbyLandmarks", "url", "structureCode",
+  "traffic", "lat", "lng",
+  "images", "agency", "phone", "description",
+  "features", "nearbyLandmarks",
 ] as const;
 
+/** The feed's fields that live on the row's billboard_sources record. */
+const SOURCE_FIELDS = ["url", "structureCode"] as const;
+
+const SYNCED_FIELDS = [...BILLBOARD_FIELDS, ...SOURCE_FIELDS] as const;
+
 type SyncedField = (typeof SYNCED_FIELDS)[number];
+
+type Row = Billboard & { sourceRecord: BillboardSource | null };
 
 /** A row of the feed, in the shape prisma/seed.ts already maps. */
 interface FeedRow {
@@ -103,16 +121,21 @@ interface FeedRow {
 }
 
 /**
- * Status is the one field where "the admin edited it" is not the only reason
- * the database may be ahead of the feed.
+ * Availability is the one field where "the admin edited it" is not the only
+ * reason the database may be ahead of the feed.
  *
- * A listing the admin took off the site (`inactive`), or one the submission
- * pipeline owns (`pending`, `rejected`, …), must not be quietly republished
- * because the feed still reports it as available. Those states are decisions
- * about the row, not descriptions of it, so the feed cannot move a row out of
- * one — while `available` ⇄ `busy`, which is a description, it can.
+ * A board an admin took off the site (`inactive`) or marked `reserved` must
+ * not be quietly put back because the feed still reports it as available.
+ * Those states are decisions about the row, not descriptions of it, so the
+ * feed cannot move a row out of one — while `available` ⇄ `busy`, which is a
+ * description, it can.
  */
-const BLOCKED_WHEN_CLAIMED = ["pending", "awaiting_payment", "rejected", "needs_revision", "inactive", "reserved"];
+const DECIDED_AVAILABILITY: Availability[] = ["inactive", "reserved"];
+
+/** A feed value, if it is one of the enum's values; otherwise null. */
+function asEnum<T extends string>(value: unknown, allowed: Record<string, T>): T | null {
+  return typeof value === "string" && (Object.values(allowed) as string[]).includes(value) ? (value as T) : null;
+}
 
 /** Compare the way the database stores it — JSON columns come back as objects. */
 function same(a: unknown, b: unknown): boolean {
@@ -122,11 +145,24 @@ function same(a: unknown, b: unknown): boolean {
   return false;
 }
 
-/** The feed's value for a field, normalised to what the column holds. */
+/**
+ * The feed's value for a field, normalised to what the column holds. A `type`
+ * outside the enum reads as absent rather than failing the whole run on one
+ * row — the column cannot hold it anyway.
+ */
 function feedValue(feed: FeedRow, field: SyncedField): unknown {
   const v = feed[field];
   if (v === undefined) return null;
+  if (field === "type") return asEnum(v, BillboardType);
   return v;
+}
+
+/** A row's current value for a synced field, wherever that field lives. */
+function currentValue(row: Row, field: SyncedField): unknown {
+  if ((SOURCE_FIELDS as readonly string[]).includes(field)) {
+    return row.sourceRecord?.[field as (typeof SOURCE_FIELDS)[number]] ?? null;
+  }
+  return (row as unknown as Record<string, unknown>)[field] ?? null;
 }
 
 interface Decision {
@@ -151,7 +187,7 @@ export function decide(row: Row, feed: FeedRow, snapshot: Record<string, unknown
     const then = snapshot[field] ?? null;
     if (same(now, then)) continue;              // the feed did not change it
 
-    if (same((row as unknown as Record<string, unknown>)[field] ?? null, then)) {
+    if (same(currentValue(row, field), then)) {
       writes[field] = now;                      // untouched since last sync
     } else {
       protectedFields.push(field);              // an admin's value lives here
@@ -161,12 +197,25 @@ export function decide(row: Row, feed: FeedRow, snapshot: Record<string, unknown
   return { writes, protectedFields };
 }
 
-/** Status moves under its own rule — see BLOCKED_WHEN_CLAIMED. */
-function statusWrite(row: Row, feed: FeedRow): string | null {
-  const next = typeof feed.status === "string" ? feed.status : null;
-  if (!next || next === row.status) return null;
-  if (BLOCKED_WHEN_CLAIMED.includes(row.status)) return null;
+/** Availability moves under its own rule — see DECIDED_AVAILABILITY. */
+function availabilityWrite(row: Row, feed: FeedRow): Availability | null {
+  const next = asEnum(feed.status, Availability);
+  if (!next || next === row.availability) return null;
+  if (DECIDED_AVAILABILITY.includes(row.availability)) return null;
   return next;
+}
+
+/** Split a set of writes between the billboard and its source record. */
+function splitWrites(writes: Partial<Record<SyncedField, unknown>>) {
+  const billboard: Record<string, unknown> = {};
+  const source: Record<string, unknown> = {};
+  for (const [field, value] of Object.entries(writes)) {
+    // A type the enum does not know reads as null (see feedValue); the column
+    // is required, so the row keeps the type it has.
+    if (field === "type" && value === null) continue;
+    ((SOURCE_FIELDS as readonly string[]).includes(field) ? source : billboard)[field] = value;
+  }
+  return { billboard, source };
 }
 
 function snapshotOf(feed: FeedRow): Record<string, unknown> {
@@ -200,7 +249,10 @@ async function main() {
   if (feedSources.length === 0) {
     throw new Error("the feed names no source — refusing to run rather than guess which rows it covers");
   }
-  const existing = await prisma.billboard.findMany({ where: { source: { in: feedSources } } });
+  const existing: Row[] = await prisma.billboard.findMany({
+    where:   { source: { in: feedSources } },
+    include: { sourceRecord: true },
+  });
   const dbBySlug = new Map(existing.map(r => [r.slug, r]));
 
   const tombstoned = new Set(
@@ -212,7 +264,7 @@ async function main() {
   // own history rather than the feed's news. A database with no crawler rows at
   // all — a fresh install, a restored-from-empty — has no history to protect
   // and takes the whole feed.
-  const firstSync = existing.length > 0 && existing.every(r => r.sourceSnapshot === null);
+  const firstSync = existing.length > 0 && existing.every(r => r.sourceRecord?.snapshot == null);
 
   const counts = { adopted: 0, updated: 0, unchanged: 0, inserted: 0, marked: 0, returned: 0, refused: 0, entombed: 0 };
   const newTombstones: string[] = [];
@@ -235,29 +287,31 @@ async function main() {
       continue;
     }
 
-    const snapshot = (row.sourceSnapshot ?? null) as Record<string, unknown> | null;
+    const snapshot = (row.sourceRecord?.snapshot ?? null) as Record<string, unknown> | null;
 
     if (snapshot === null) {
       // First sight: record what the feed says and write nothing.
       counts.adopted += 1;
       if (APPLY) {
-        await prisma.billboard.update({
-          where: { id: row.id },
-          data: { sourceSnapshot: snapshotOf(feed) as Prisma.InputJsonValue, missingSince: null },
+        const record = { snapshot: snapshotOf(feed) as Prisma.InputJsonValue, missingSince: null };
+        await prisma.billboardSource.upsert({
+          where:  { billboardId: row.id },
+          create: { billboardId: row.id, ...record },
+          update: record,
         });
       }
       continue;
     }
 
     const { writes, protectedFields } = decide(row, feed, snapshot);
-    const nextStatus = statusWrite(row, feed);
+    const nextAvailability = availabilityWrite(row, feed);
     for (const f of protectedFields) protectedByField.set(f, (protectedByField.get(f) ?? 0) + 1);
     for (const f of Object.keys(writes)) changedByField.set(f, (changedByField.get(f) ?? 0) + 1);
 
-    const returning = row.missingSince !== null;
+    const returning = row.sourceRecord?.missingSince != null;
     if (returning) counts.returned += 1;
 
-    if (Object.keys(writes).length === 0 && !nextStatus && !returning) {
+    if (Object.keys(writes).length === 0 && !nextAvailability && !returning) {
       // Nothing to write, so the row is not touched at all — not even to
       // advance its snapshot. Prisma stamps `updatedAt` on any update, and a
       // nightly run that stamped 3.5k rows would invalidate the catalogue cache
@@ -274,11 +328,18 @@ async function main() {
 
     counts.updated += 1;
     if (APPLY) {
+      const split = splitWrites(writes);
+      const record = {
+        ...split.source,
+        scrapedAt: feed.scrapedAt ?? row.sourceRecord?.scrapedAt ?? null,
+        missingSince: null,
+        snapshot: snapshotOf(feed) as Prisma.InputJsonValue,
+      };
       await prisma.billboard.update({
         where: { id: row.id },
         data: {
-          ...(writes as Prisma.BillboardUpdateInput),
-          ...(nextStatus ? { status: nextStatus } : {}),
+          ...(split.billboard as Prisma.BillboardUpdateInput),
+          ...(nextAvailability ? { availability: nextAvailability } : {}),
           // Denormalised sort keys, recomputed only when their inputs moved —
           // the same rule updateBillboard() follows.
           ...(writes.width !== undefined || writes.height !== undefined
@@ -290,9 +351,7 @@ async function main() {
           ...(writes.images !== undefined
             ? { hasImages: Array.isArray(writes.images) && writes.images.length > 0 }
             : {}),
-          scrapedAt: feed.scrapedAt ?? row.scrapedAt,
-          missingSince: null,
-          sourceSnapshot: snapshotOf(feed) as Prisma.InputJsonValue,
+          sourceRecord: { upsert: { create: record, update: record } },
         },
       });
     }
@@ -305,13 +364,21 @@ async function main() {
   }
 
   // Gone from the feed. Marked once, on the run that first misses it.
-  const vanished = existing.filter(r => !bySlug.has(r.slug) && r.missingSince === null);
+  const vanished = existing.filter(r => !bySlug.has(r.slug) && r.sourceRecord?.missingSince == null);
   counts.marked = vanished.length;
   if (APPLY && vanished.length > 0) {
-    await prisma.billboard.updateMany({
-      where: { id: { in: vanished.map(r => r.id) } },
-      data: { missingSince: new Date() },
+    const now = new Date();
+    const withRecord = vanished.filter(r => r.sourceRecord).map(r => r.id);
+    const withoutRecord = vanished.filter(r => !r.sourceRecord).map(r => r.id);
+    await prisma.billboardSource.updateMany({
+      where: { billboardId: { in: withRecord } },
+      data:  { missingSince: now },
     });
+    if (withoutRecord.length > 0) {
+      await prisma.billboardSource.createMany({
+        data: withoutRecord.map(billboardId => ({ billboardId, missingSince: now })),
+      });
+    }
   }
 
   report(counts, changedByField, protectedByField, feedRows.length, existing.length);
@@ -335,8 +402,8 @@ async function insert(feed: FeedRow) {
       location: String(feed.location ?? ""),
       region: String(feed.region ?? ""),
       city: String(feed.city ?? ""),
-      type: String(feed.type ?? "billboard"),
-      status: String(feed.status ?? "available"),
+      type: asEnum(feed.type, BillboardType) ?? "billboard",
+      availability: asEnum(feed.status, Availability) ?? "available",
       width, height,
       area: Math.round(width * height),
       faces: Number(feed.faces ?? 1),
@@ -347,11 +414,8 @@ async function insert(feed: FeedRow) {
       priceYearly: Number(feed.priceYearly ?? 0),
       traffic: traffic as Prisma.InputJsonValue,
       estimatedViews: Number(traffic.estimatedViews ?? 0),
-      mapX: Number(feed.mapX ?? 0),
-      mapY: Number(feed.mapY ?? 0),
       lat: feed.lat === undefined ? null : Number(feed.lat),
       lng: feed.lng === undefined ? null : Number(feed.lng),
-      icon: String(feed.icon ?? "📋"),
       hasImages: images.length > 0,
       images: images as Prisma.InputJsonValue,
       agency: String(feed.agency ?? ""),
@@ -363,11 +427,15 @@ async function insert(feed: FeedRow) {
       // once the row exists these come from the reviews table.
       rating: Number(feed.rating ?? 0),
       reviewCount: Number(feed.reviewCount ?? 0),
-      url: feed.url === undefined ? null : String(feed.url),
       source: feed.source ?? null,
-      structureCode: feed.structureCode === undefined ? null : String(feed.structureCode),
-      scrapedAt: feed.scrapedAt ?? null,
-      sourceSnapshot: snapshotOf(feed) as Prisma.InputJsonValue,
+      sourceRecord: {
+        create: {
+          url: feed.url === undefined ? null : String(feed.url),
+          structureCode: feed.structureCode === undefined ? null : String(feed.structureCode),
+          scrapedAt: feed.scrapedAt ?? null,
+          snapshot: snapshotOf(feed) as Prisma.InputJsonValue,
+        },
+      },
     },
   });
 }

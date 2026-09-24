@@ -38,7 +38,6 @@ function billboard({ views = 7500, width = 12, height = 4, ...overrides } = {}) 
     region: "Region 1",
     city: "تهران",
     type: "billboard",
-    status: "available",
     faces: 2,
     age: 3,
     price: 5000,
@@ -55,9 +54,6 @@ function billboard({ views = 7500, width = 12, height = 4, ...overrides } = {}) 
       estimatedViews: views,
       viewabilityScore: 72,
     },
-    mapX: 50,
-    mapY: 50,
-    icon: "location",
     hasImages: false,
     images: [],
     agency: "Test Agency",
@@ -78,6 +74,7 @@ function billboard({ views = 7500, width = 12, height = 4, ...overrides } = {}) 
 async function main() {
   // Order matters: children before parents.
   await prisma.contactRequest.deleteMany();
+  await prisma.reviewReply.deleteMany();
   await prisma.review.deleteMany();
   await prisma.idempotencyKey.deleteMany();
   await prisma.billboard.deleteMany();
@@ -128,18 +125,18 @@ async function main() {
 
   for (const row of [
     // Distinct estimatedViews / area so the sort tests can assert a real order.
-    billboard({ id: 1, name: "Valiasr Tower",   slug: "valiasr-tower",   city: "تهران", type: "billboard", status: "available", price: 8000,  views: 9000, width: 20, height: 5 }),
-    billboard({ id: 2, name: "Mashhad Digital", slug: "mashhad-digital", city: "مشهد",  type: "digital",   status: "available", price: 12000, views: 3000, width: 6,  height: 3 }),
-    billboard({ id: 3, name: "Inactive Board",  slug: "inactive-board",  city: "تهران", type: "billboard", status: "inactive",  price: 3000,  views: 500,  width: 4,  height: 2 }),
+    billboard({ id: 1, name: "Valiasr Tower",   slug: "valiasr-tower",   city: "تهران", type: "billboard", availability: "available", price: 8000,  views: 9000, width: 20, height: 5 }),
+    billboard({ id: 2, name: "Mashhad Digital", slug: "mashhad-digital", city: "مشهد",  type: "digital",   availability: "available", price: 12000, views: 3000, width: 6,  height: 3 }),
+    billboard({ id: 3, name: "Inactive Board",  slug: "inactive-board",  city: "تهران", type: "billboard", availability: "inactive",  price: 3000,  views: 500,  width: 4,  height: 2 }),
     // ── Radial-search fixtures ──
-    billboard({ id: 90, name: "Near Centre",  slug: "near-centre",  city: "تهران", status: "available", price: 6000, lat: 35.7590, lng: 51.4110 }),  // ~0.15 km
-    billboard({ id: 91, name: "Just Outside", slug: "just-outside", city: "تهران", status: "available", price: 6100, lat: 35.8300, lng: 51.4100 }),  // ~8 km
-    billboard({ id: 92, name: "No Coords",    slug: "no-coords",    city: "تهران", status: "available", price: 6200 }),                              // lat/lng null
+    billboard({ id: 90, name: "Near Centre",  slug: "near-centre",  city: "تهران", availability: "available", price: 6000, lat: 35.7590, lng: 51.4110 }),  // ~0.15 km
+    billboard({ id: 91, name: "Just Outside", slug: "just-outside", city: "تهران", availability: "available", price: 6100, lat: 35.8300, lng: 51.4100 }),  // ~8 km
+    billboard({ id: 92, name: "No Coords",    slug: "no-coords",    city: "تهران", availability: "available", price: 6200 }),                              // lat/lng null
     // Submission-pipeline fixtures: neither may appear in any public read.
-    billboard({ id: 4, name: "Pending Listing", slug: "pending-listing", city: "تهران", type: "billboard", status: "pending", price: 100, source: "listing", submittedById: 1 }),
-    billboard({ id: 5, name: "Unpaid Listing",  slug: "unpaid-listing",  city: "تهران", type: "digital",   status: "awaiting_payment", plan: "featured", price: 200, source: "listing", submittedById: 1 }),
+    billboard({ id: 4, name: "Pending Listing", slug: "pending-listing", city: "تهران", type: "billboard", moderation: "pending", price: 100, source: "listing", submittedById: 1 }),
+    billboard({ id: 5, name: "Unpaid Listing",  slug: "unpaid-listing",  city: "تهران", type: "digital",   moderation: "awaiting_payment", plan: "featured", price: 200, source: "listing", submittedById: 1 }),
     // Has an image, so the analytics coverage count has something to find.
-    billboard({ id: 6, name: "Photo Board", slug: "photo-board", city: "شیراز", type: "billboard", status: "available", price: 4000, views: 6000, width: 10, height: 3, hasImages: true, images: ["/uploads/test/1.jpg"] }),
+    billboard({ id: 6, name: "Photo Board", slug: "photo-board", city: "شیراز", type: "billboard", availability: "available", price: 4000, views: 6000, width: 10, height: 3, hasImages: true, images: ["/uploads/test/1.jpg"] }),
   ]) {
     await prisma.billboard.create({ data: row });
   }

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2, CheckCircle2, Plus, Menu, X as XIcon, Sparkles } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
-import { statusLabels, planLabels } from "@/lib/types";
+import { moderationLabels, planLabels } from "@/lib/types";
 import EditListingModal, { type EditableListing } from "@/components/EditListingModal";
 import UserAvatar from "@/components/UserAvatar";
 import { faNum } from "@/lib/format";
@@ -22,7 +22,7 @@ interface Listing {
   city: string;
   type: string;
   price: number;
-  status: string;
+  moderation: string;
   plan: string;
   featured: boolean;
   image: string | null;
@@ -41,10 +41,7 @@ interface Listing {
 const STATUS_COLOR: Record<string, [string, string]> = {
   pending:          ["#f59e0b", "rgba(245,158,11,0.12)"],
   awaiting_payment: ["#f59e0b", "rgba(245,158,11,0.12)"],
-  available:        ["var(--green)", "rgba(34,197,94,0.12)"],
-  busy:             ["#f59e0b", "rgba(245,158,11,0.12)"],
-  reserved:         ["#8b5cf6", "rgba(139,92,246,0.12)"],
-  inactive:         ["var(--text-muted)", "rgba(148,163,184,0.12)"],
+  approved:         ["var(--green)", "rgba(34,197,94,0.12)"],
   rejected:         ["#ef4444", "rgba(239,68,68,0.12)"],
   needs_revision:   ["#f97316", "rgba(249,115,22,0.12)"],
 };
@@ -53,7 +50,7 @@ const STATUS_COLOR: Record<string, [string, string]> = {
 const STATUS_HINT: Record<string, string> = {
   pending:          "کارشناسان رسامپ در حال بررسی محتوای آگهی هستند.",
   awaiting_payment: "برای فعال شدن پلن ویژه، هزینه را واریز کنید و رسید را برای پشتیبانی بفرستید.",
-  available:        "آگهی شما منتشر شده و در جستجو دیده می‌شود.",
+  approved:         "آگهی شما منتشر شده و در جستجو دیده می‌شود.",
   rejected:         "این آگهی تأیید نشد. برای پیگیری با پشتیبانی تماس بگیرید.",
   needs_revision:   "کارشناس از شما خواسته آگهی را اصلاح کنید. توضیح زیر را بخوانید، آگهی را ویرایش کنید و دوباره بفرستید.",
 };
@@ -127,8 +124,8 @@ export default function Dashboard() {
 
   const card: React.CSSProperties = { background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 18 };
 
-  const underReview = listings.filter(l => l.status === "pending" || l.status === "awaiting_payment").length;
-  const published   = listings.filter(l => l.status === "available").length;
+  const underReview = listings.filter(l => l.moderation === "pending" || l.moderation === "awaiting_payment").length;
+  const published   = listings.filter(l => l.moderation === "approved").length;
 
   if (!user) return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", color: "var(--text-muted)" }}>
@@ -221,8 +218,8 @@ export default function Dashboard() {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {listings.map(l => {
-                    const [sc, sbg] = STATUS_COLOR[l.status] ?? ["var(--text-muted)", "transparent"];
-                    const published = l.status === "available";
+                    const [sc, sbg] = STATUS_COLOR[l.moderation] ?? ["var(--text-muted)", "transparent"];
+                    const published = l.moderation === "approved";
                     const created = new Date(l.createdAt).toLocaleDateString("fa-IR");
                     return (
                       <div key={l.id} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
@@ -245,23 +242,23 @@ export default function Dashboard() {
                             <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>{l.city} · {faNum(l.price)}M تومان/ماه · {created}</div>
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, padding: "12px 14px", flexShrink: 0 }}>
-                            <Badge text={statusLabels[l.status] ?? l.status} color={sc} bg={sbg} />
+                            <Badge text={moderationLabels[l.moderation] ?? l.moderation} color={sc} bg={sbg} />
                             {l.featured
                               ? <span style={{ fontSize: "0.66rem", color: "#f59e0b", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 3 }}><Sparkles size={10} /> ویژه</span>
                               : <span style={{ fontSize: "0.66rem", color: "var(--text-muted)" }}>پلن {planLabels[l.plan] ?? l.plan}</span>}
                           </div>
                         </div>
-                        {STATUS_HINT[l.status] && (
+                        {STATUS_HINT[l.moderation] && (
                           <div style={{ borderTop: "1px solid var(--border)", padding: "8px 14px", fontSize: "0.72rem", color: "var(--text-muted)", lineHeight: 1.7 }}>
-                            {STATUS_HINT[l.status]}
+                            {STATUS_HINT[l.moderation]}
                           </div>
                         )}
-                        {l.reviewNote && (l.status === "needs_revision" || l.status === "rejected") && (
+                        {l.reviewNote && (l.moderation === "needs_revision" || l.moderation === "rejected") && (
                           <div style={{ borderTop: "1px solid var(--border)", padding: "10px 14px", fontSize: "0.74rem", color: "#f97316", lineHeight: 1.8, background: "rgba(249,115,22,0.06)" }}>
                             <span style={{ fontWeight: 700 }}>پیام کارشناس رسامپ:</span> {l.reviewNote}
                           </div>
                         )}
-                        {l.status === "needs_revision" && (
+                        {l.moderation === "needs_revision" && (
                           <div style={{ borderTop: "1px solid var(--border)", padding: "10px 14px" }}>
                             <button
                               onClick={() => setEditing(l)}

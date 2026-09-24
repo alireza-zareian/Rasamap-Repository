@@ -15,8 +15,7 @@ export {
   revalidateCatalogue,
   toPublicBillboard,
   toCatalogueItem,
-  UNPUBLISHED_STATUSES,
-  publishedOnly,
+  published,
   isPublished,
 } from "./core";
 

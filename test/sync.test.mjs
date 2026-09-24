@@ -135,14 +135,31 @@ test("a row that disappears from the feed is marked, not deleted — and unmarke
     const gone = sync([feedRow(A, { id: 900001, price: 1500 })]);
     assert.equal(counted(gone, "marked missing"), 1, gone);
 
-    const b = await db.billboard.findUnique({ where: { slug: B } });
+    const b = await db.billboard.findUnique({ where: { slug: B }, include: { sourceRecord: true } });
     assert.ok(b, "a row that left the feed was deleted — its reviews would have gone with it");
-    assert.ok(b.missingSince instanceof Date, "the row was not marked as missing");
+    assert.ok(b.sourceRecord?.missingSince instanceof Date, "the row was not marked as missing");
 
     const back = sync([feedRow(A, { id: 900001, price: 1500 }), feedRow(B, { id: 900002, price: 2500 })]);
     assert.equal(counted(back, "back after being missing"), 1, back);
-    const returned = await db.billboard.findUnique({ where: { slug: B } });
-    assert.equal(returned?.missingSince, null);
+    const returned = await db.billboard.findUnique({ where: { slug: B }, include: { sourceRecord: true } });
+    assert.equal(returned?.sourceRecord?.missingSince, null);
+  } finally { await db.$disconnect(); }
+});
+
+test("a board an admin took off the site stays off, whatever the feed reports", async () => {
+  const db = prisma();
+  try {
+    // The feed says A is busy, then available — a description it owns. An admin
+    // then takes A off the site: a decision the feed knows nothing about.
+    sync([feedRow(A, { id: 900001, price: 1500, status: "busy" }), feedRow(B, { id: 900002, price: 2500 })]);
+    assert.equal((await db.billboard.findUnique({ where: { slug: A } }))?.availability, "busy");
+
+    await db.billboard.update({ where: { slug: A }, data: { availability: "inactive" } });
+    sync([feedRow(A, { id: 900001, price: 1500, status: "available" }), feedRow(B, { id: 900002, price: 2500 })]);
+
+    const a = await db.billboard.findUnique({ where: { slug: A } });
+    assert.equal(a?.availability, "inactive", "the feed put back a board an admin had taken off the site");
+    assert.equal(a?.moderation, "approved", "the feed must never touch review state");
   } finally { await db.$disconnect(); }
 });
 

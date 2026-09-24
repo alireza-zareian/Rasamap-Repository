@@ -152,7 +152,7 @@ export async function getCustomer(id: number) {
         orderBy: { createdAt: "desc" },
         take: 50,
         select: {
-          id: true, name: true, city: true, status: true, plan: true,
+          id: true, name: true, city: true, moderation: true, availability: true, plan: true,
           featured: true, price: true, createdAt: true,
         },
       },

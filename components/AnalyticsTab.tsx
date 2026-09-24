@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PieChart, LayoutGrid, Building2, Wallet, Database, X } from "lucide-react";
-import { typeLabels, statusLabels } from "@/lib/types";
+import { typeLabels, availabilityLabels } from "@/lib/types";
 import { faNum } from "@/lib/format";
 
 interface AnalyticsData {
   total: number;
   byType: Record<string, number>;
-  byStatus: Record<string, number>;
+  byAvailability: Record<string, number>;
   topCities: { city: string; count: number }[];
   allCities: string[];
   price: { avg: number; min: number; max: number };
@@ -18,7 +18,7 @@ interface AnalyticsData {
 // Shared label maps, so a type or status never reads differently here than on
 // a card or in the admin panel.
 const TYPE_FA = typeLabels as Record<string, string>;
-const STATUS_FA = statusLabels as Record<string, string>;
+const STATUS_FA = availabilityLabels;
 
 const STATUS_COLOR: Record<string, string> = {
   available: "var(--green)", busy: "var(--red, #ef4444)",
@@ -68,7 +68,7 @@ export default function AnalyticsTab() {
     );
   }
 
-  const available  = data.byStatus["available"]  ?? 0;
+  const available  = data.byAvailability["available"]  ?? 0;
   const maxCityCount = Math.max(...data.topCities.map(c => c.count), 1);
   const maxTypeCount = Math.max(...Object.values(data.byType), 1);
   const maxBracket   = Math.max(...data.priceBrackets.map(b => b.count), 1);
@@ -112,7 +112,7 @@ export default function AnalyticsTab() {
       {/* Status breakdown */}
       <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px" }}>
         <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}><PieChart size={14} /> وضعیت اشغال</div>
-        {Object.entries(data.byStatus).map(([status, count]) => (
+        {Object.entries(data.byAvailability).map(([status, count]) => (
           <Bar key={status} label={STATUS_FA[status] ?? status} value={count} max={data.total} color={STATUS_COLOR[status] ?? "var(--accent)"} />
         ))}
       </div>

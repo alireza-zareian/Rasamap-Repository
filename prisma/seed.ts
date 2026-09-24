@@ -26,6 +26,11 @@ const adapter = new PrismaBetterSqlite3({
 
 const prisma = new PrismaClient({ adapter });
 
+/**
+ * The source's single `status` is always a description of the board, so it
+ * becomes the row's availability; review state is the database's own and a
+ * seeded row starts `approved` (the column default).
+ */
 function toRow(b: StaticBillboard) {
   return {
     id: b.id,
@@ -35,7 +40,7 @@ function toRow(b: StaticBillboard) {
     region: b.region,
     city: b.city,
     type: b.type,
-    status: b.status,
+    availability: b.status,
     width: b.width,
     height: b.height,
     // Denormalised sort keys — see the comments on the schema fields.
@@ -48,11 +53,8 @@ function toRow(b: StaticBillboard) {
     priceYearly: b.priceYearly,
     traffic: b.traffic as unknown as object,
     estimatedViews: b.traffic?.estimatedViews ?? 0,
-    mapX: b.mapX,
-    mapY: b.mapY,
     lat: b.lat ?? null,
     lng: b.lng ?? null,
-    icon: b.icon,
     hasImages: Array.isArray(b.images) && b.images.length > 0,
     images: b.images as unknown as object,
     allImages: b.allImages ? (b.allImages as unknown as object) : Prisma.JsonNull,
@@ -65,11 +67,16 @@ function toRow(b: StaticBillboard) {
     nearbyLandmarks: b.nearbyLandmarks as unknown as object,
     rating: b.rating,
     reviewCount: b.reviewCount,
-    url: b.url ?? null,
     source: b.source ?? null,
+  };
+}
+
+/** A crawled row's bookkeeping — see BillboardSource in the schema. */
+function toSourceRecord(b: StaticBillboard) {
+  return {
+    url: b.url ?? null,
     structureCode: b.structureCode ?? null,
     scrapedAt: b.scrapedAt ?? null,
-    // ownerId intentionally omitted — no real Owner accounts exist yet (Phase 7).
   };
 }
 
@@ -105,10 +112,12 @@ async function main() {
 
   let created = 0;
   for (const b of everyBillboard) {
+    // Only a crawled row has source bookkeeping; the curated set has no source.
+    const source = b.source ? toSourceRecord(b) : null;
     await prisma.billboard.upsert({
       where: { id: b.id },
-      update: toRow(b),
-      create: toRow(b),
+      update: { ...toRow(b), ...(source ? { sourceRecord: { upsert: { create: source, update: source } } } : {}) },
+      create: { ...toRow(b), ...(source ? { sourceRecord: { create: source } } : {}) },
     });
     created++;
   }

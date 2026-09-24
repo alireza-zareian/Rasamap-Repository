@@ -3,7 +3,7 @@ import { useState } from "react";
 import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { useModalA11y } from "@/lib/useModalA11y";
 import type { Billboard } from "@/lib/types";
-import { C, TYPE_LABEL, STATUS_LABEL } from "./constants";
+import { C, TYPE_LABEL, AVAILABILITY_LABEL } from "./constants";
 import { Image as ImageIcon, X, MapPin, AlertTriangle, ExternalLink } from "lucide-react";
 
 function parseGoogleMapsUrl(url: string): { lat: string; lng: string } | null {
@@ -34,7 +34,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
   const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [form, setForm] = useState({
     name: billboard.name, location: billboard.location, city: billboard.city,
-    type: billboard.type as string, status: billboard.status as string,
+    type: billboard.type as string, availability: billboard.availability as string,
     lat: billboard.lat?.toString() ?? "", lng: billboard.lng?.toString() ?? "",
     price: billboard.price.toString(), description: billboard.description ?? "",
     agency: billboard.agency ?? "", phone: billboard.phone ?? "",
@@ -62,7 +62,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
     try {
       const body: Record<string, unknown> = {
         name: form.name, location: form.location, city: form.city,
-        type: form.type, status: form.status,
+        type: form.type, availability: form.availability,
         lat: lat ?? null, lng: lng ?? null,
         price: parseFloat(form.price) || 0,
         description: form.description, agency: form.agency, phone: form.phone,
@@ -94,7 +94,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
           <div><label htmlFor="em-city" style={lS}>شهر</label><input id="em-city" style={iS} value={form.city} onChange={set("city")} /></div>
           <div><label htmlFor="em-price" style={lS}>قیمت (میلیون تومان)</label><input id="em-price" style={iS} value={form.price} onChange={set("price")} type="number" min="0" /></div>
           <div><label htmlFor="em-type" style={lS}>نوع</label><select id="em-type" style={iS} value={form.type} onChange={set("type")}>{Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
-          <div><label htmlFor="em-status" style={lS}>وضعیت</label><select id="em-status" style={iS} value={form.status} onChange={set("status")}>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+          <div><label htmlFor="em-availability" style={lS}>وضعیت</label><select id="em-availability" style={iS} value={form.availability} onChange={set("availability")}>{Object.entries(AVAILABILITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
           <div><label htmlFor="em-width" style={lS}>عرض (m)</label><input id="em-width" style={iS} value={form.width} onChange={set("width")} type="number" min="0" /></div>
           <div><label htmlFor="em-height" style={lS}>ارتفاع (m)</label><input id="em-height" style={iS} value={form.height} onChange={set("height")} type="number" min="0" /></div>
           <div><label htmlFor="em-agency" style={lS}>آژانس</label><input id="em-agency" style={iS} value={form.agency} onChange={set("agency")} /></div>

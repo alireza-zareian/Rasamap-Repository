@@ -2,7 +2,7 @@
 import { useState } from "react";
 import MediaImage from "@/components/MediaImage";
 import Link from "next/link";
-import { CatalogueItem, typeLabels, statusLabels } from "@/lib/types";
+import { CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
 import { Scale, Star, Sparkles } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { faNum, faCompact } from "@/lib/format";
@@ -19,8 +19,8 @@ export default function BillboardCard({
 }: BillboardCardProps) {
   const { theme } = useTheme();
   const dark = theme === "dark";
-  const statusColor = b.status === "available" ? "var(--green-accent)" : b.status === "busy" ? "var(--red)" : "var(--accent-warm)";
-  const statusLabel = `● ${statusLabels[b.status] ?? b.status}`;
+  const statusColor = b.availability === "available" ? "var(--green-accent)" : b.availability === "busy" ? "var(--red)" : "var(--accent-warm)";
+  const statusLabel = `● ${availabilityLabels[b.availability] ?? b.availability}`;
   // Hover lift/shadow only — 2 renders per hover, nothing on mousemove.
   const [hovered, setHovered] = useState(false);
   const views = b.traffic?.estimatedViews ?? 0;

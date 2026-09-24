@@ -2,9 +2,14 @@
 //
 // Notes on deliberate choices:
 // - Billboard.id: explicit Int PK so seeded numeric ids are preserved —
-//   RealMap.tsx, CompareBar, and detail routes depend on stable ids.
+//   CompareBar and the detail routes depend on stable ids.
 // - Arrays (images, allImages, features, nearbyLandmarks) and TrafficData
-//   are stored as Json — SQLite has no native array type.
+//   are stored as Json — SQLite has no native array type. What they may hold
+//   is validated on the way out, in lib/db/billboards/core.ts.
+// - Enums on SQLite are TEXT columns whose values the Prisma client refuses
+//   to write or read outside the list below. The list is also what the
+//   TypeScript types are checked against (lib/db/billboards/core.ts), so a
+//   value added here and forgotten in the UI's label maps fails the build.
 
 generator client {
   provider = "prisma-client-js"
@@ -14,30 +19,76 @@ datasource db {
   provider = "sqlite"
 }
 
-// ── Owner ──────────────────────────────────────────────────────
-// No live write path populates this today — createBillboard, createListing,
-// resubmitListing and prisma/sync-scraped.ts all write `agency`/`phone`
-// directly onto Billboard, which is what every page actually reads. Only
-// prisma/seed-demo-full.ts creates Owner rows, to make the demo dataset look
-// richer. Kept as a real relation (not folded away) for the day an owner
-// account feature reads/writes it for real, rather than dropped and rebuilt
-// later.
-model Owner {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String?
-  email     String?
-  company   String?
-  createdAt DateTime @default(now())
+// ── Enums ──────────────────────────────────────────────────────
 
-  billboards Billboard[]
+enum BillboardType {
+  billboard
+  digital
+  bridge
+  station
+  vehicle
+}
 
-  @@map("owners")
+/// What the media item itself is doing. Describes the board, not the listing.
+enum Availability {
+  available
+  busy
+  reserved
+  inactive
+}
+
+/// Where a listing is in review. Only `approved` is ever publicly visible.
+/// Crawled and admin-created rows start approved; a customer's submission
+/// starts at `pending` (or `awaiting_payment` on a paid plan) and moves only
+/// through POST /api/admin/listings/[id]/decision.
+enum Moderation {
+  pending
+  awaiting_payment
+  needs_revision
+  rejected
+  approved
+}
+
+enum ListingPlan {
+  free
+  featured
+}
+
+enum LeadStatus {
+  new
+  contacted
+  closed
+}
+
+enum StaffRole {
+  viewer
+  editor
+  admin
+  super_admin
+}
+
+enum OtpPurpose {
+  password_reset
+  register
+}
+
+enum AuditSeverity {
+  info
+  warn
+  critical
+}
+
+enum TombstoneReason {
+  dedupe
+  admin_delete
+  first_sync
 }
 
 // ── User ───────────────────────────────────────────────────────
-// A registered account. Users submit media for listing and write reviews;
-// buying advertising space happens off-platform, directly with the media owner.
+// A customer account. Customers submit media for listing, write reviews and
+// ask for owners' numbers; buying advertising space happens off-platform,
+// directly with the media owner. Staff are a separate kind of account
+// (`Admin`) — see lib/db/staff.ts for why.
 model User {
   id           Int      @id @default(autoincrement())
   name         String
@@ -49,42 +100,49 @@ model User {
   reviews         Review[]
   reviewReplies   ReviewReply[]
   contactRequests ContactRequest[]
+  auditLogs       AuditLog[]
 
   @@map("users")
 }
 
 // ── Admin ──────────────────────────────────────────────────────
+// A staff account. `ADMIN_EMAIL` is upserted here by the seed as the first
+// super_admin, so every staff session names a real row.
 model Admin {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
   passwordHash String
   name         String
-  role         String   @default("viewer") // viewer | editor | admin | super_admin
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  role         StaffRole @default(viewer)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
 
-  auditLogs AuditLog[]
+  auditLogs     AuditLog[]
+  reviewReplies ReviewReply[]
 
   @@map("admins")
 }
 
 // ── Billboard ──────────────────────────────────────────────────
-// Field-for-field mirror of the Billboard interface in lib/data.ts.
+// One outdoor media item, however it arrived: curated in lib/data.ts, crawled
+// (see BillboardSource), created in the admin panel, or submitted by a
+// customer through /list-media.
 model Billboard {
-  id       Int    @id @default(autoincrement())
+  id       Int           @id @default(autoincrement())
   name     String
-  slug     String @unique
+  slug     String        @unique
   location String
   region   String
   city     String
-  type     String // BillboardType: billboard | digital | bridge | station | vehicle
-  // BillboardStatus. Two values belong to the submission pipeline rather than to
-  // the media itself:
-  //   pending          — submitted via /list-media, awaiting admin review
-  //   awaiting_payment — reviewed, waiting for the owner to settle a paid plan
-  // the rest describe a published item: available | busy | reserved | inactive.
-  // Only published items are returned by a public read (see getPublicWhere()).
-  status   String
+  type     BillboardType
+
+  // Two independent questions, once one `status` column that answered both:
+  // whether the board is free to book, and whether the listing has passed
+  // review. Mixed together, an admin editing "availability" could set a row to
+  // `pending` and skip the review state machine entirely, and every public
+  // query had to remember a list of four statuses to exclude.
+  availability Availability @default(available)
+  moderation   Moderation   @default(approved)
 
   width  Int
   height Int
@@ -92,7 +150,7 @@ model Billboard {
   age    Int
 
   // Denormalised width * height, for the "largest surface" sort — Prisma cannot
-  // ORDER BY an expression. Recomputed by updateBillboard() on any size change.
+  // ORDER BY an expression. Recomputed by every write that changes a size.
   area Int @default(0)
 
   price          Int
@@ -106,15 +164,12 @@ model Billboard {
   // Denormalised copy of traffic.estimatedViews. SQLite can read a JSON path
   // (json_extract) but Prisma cannot ORDER BY one and an index cannot cover it,
   // so the single field the catalogue sorts on ("بیشترین بازدید") is kept in its
-  // own indexed column. Written by the seed and by newBillboardDefaults().
+  // own indexed column.
   estimatedViews Int @default(0)
 
-  mapX Float
-  mapY Float
-  lat  Float?
-  lng  Float?
+  lat Float?
+  lng Float?
 
-  icon            String
   hasImages       Boolean @default(false)
   images          Json // string[]
   allImages       Json? // string[] | null
@@ -123,59 +178,44 @@ model Billboard {
   description     String
   features        Json // string[]
   nearbyLandmarks Json // string[]
-  rating          Float
-  reviewCount     Int
 
-  // Scraper-specific (optional — absent on static/legacy records)
-  url           String?
-  source        String?
-  structureCode String?
-  scrapedAt     String?
+  // A denormalised summary of the reviews table, recomputed in the same
+  // transaction as every review write (lib/db/reviews.ts).
+  rating      Float
+  reviewCount Int
 
-  // What the source last said about this row, field by field
-  // (prisma/sync-scraped.ts). It is the third side of a three-way merge: a
-  // column whose current value still equals its snapshot is the source's to
-  // update, and one that has drifted from it was edited by an admin and is
-  // never overwritten. Null until the row has been through one sync.
-  sourceSnapshot Json?
-
-  // When the row stopped appearing in the source feed. A vanished listing is
-  // marked, never deleted — reviews, contact requests and admin edits hang off
-  // it. Cleared if it comes back.
-  missingSince DateTime?
-
-  ownerId Int?
-  owner   Owner? @relation(fields: [ownerId], references: [id])
+  // Where the row came from: a crawler's name ("billboardiha", …), "listing",
+  // "manual", or null for the curated set. Kept as text because the crawler
+  // set is open-ended; the crawler's own bookkeeping is in BillboardSource.
+  source String?
 
   // Set when the row was created through /list-media, so the submitter can see
-  // its review status on their dashboard. Null for scraped and admin-created
-  // rows, which have no submitting account.
+  // its review status on their dashboard.
   submittedById Int?
   submittedBy   User? @relation(fields: [submittedById], references: [id])
 
   // An admin's written feedback to the submitter, shown on their dashboard.
-  // Required when a submission is rejected or sent back for revision
-  // (status "needs_revision"); optional on approval. Cleared when the user
-  // edits and resubmits the listing.
+  // Required when a submission is rejected or sent back for revision; cleared
+  // when the submitter resubmits.
   reviewNote String?
 
   // Monetisation. `plan` is what the submitter asked for; `featured` is what an
   // admin actually granted after confirming payment. Keeping them apart means a
   // requested-but-unpaid plan can never promote a listing on its own.
-  plan     String  @default("free") // free | featured
-  featured Boolean @default(false)
+  plan     ListingPlan @default(free)
+  featured Boolean     @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  sourceRecord    BillboardSource?
   reviews         Review[]
   contactRequests ContactRequest[]
 
   @@index([city])
   @@index([type])
-  @@index([status])
+  @@index([moderation, availability])
   @@index([price])
-  @@index([ownerId])
   @@index([submittedById])
   // A partial unique index on (submittedById, name, city) WHERE source='listing'
   // also exists — see migration 20260902140000_listing_submit_unique. Prisma
@@ -185,25 +225,53 @@ model Billboard {
   @@index([hasImages, price])
   @@index([hasImages, estimatedViews])
   @@index([hasImages, area])
-  @@index([city, status])
+  @@index([city, moderation])
   @@index([city, type])
   @@index([type, price])
   @@index([lat, lng])
   @@map("billboards")
 }
 
+// ── BillboardSource ────────────────────────────────────────────
+// A crawled row's bookkeeping: where it was read from, and what the nightly
+// import (prisma/sync-scraped.ts) needs to merge the feed into it safely. It
+// describes the row's provenance, not the media item, so it lives beside the
+// billboard instead of in it — and a listing or an admin-created row simply has
+// none.
+model BillboardSource {
+  billboardId Int       @id
+  billboard   Billboard @relation(fields: [billboardId], references: [id], onDelete: Cascade)
+
+  url           String?
+  structureCode String?
+  scrapedAt     String?
+
+  // What the source last said about this row, field by field. It is the third
+  // side of a three-way merge: a column whose current value still equals its
+  // snapshot is the source's to update, and one that has drifted from it was
+  // edited by an admin and is never overwritten. Null until the first sync.
+  snapshot Json?
+
+  // When the row stopped appearing in the source feed. A vanished listing is
+  // marked, never deleted — reviews, contact requests and admin edits hang off
+  // it. Cleared if it comes back.
+  missingSince DateTime?
+
+  @@map("billboard_sources")
+}
+
 // ── SourceTombstone ────────────────────────────────────────────
 // A crawler row this database deliberately does not have.
 //
-// The nightly import (prisma/sync-scraped.ts) inserts anything the feed has
-// and the database does not — which, without this table, would resurrect every
-// duplicate `db:dedupe` merged away and every scraped row an admin deleted, one
-// night after the decision. A tombstone is that decision, written down.
+// The nightly import inserts anything the feed has and the database does not —
+// which, without this table, would resurrect every duplicate `db:dedupe`
+// merged away and every scraped row an admin deleted, one night after the
+// decision. A tombstone is that decision, written down.
 model SourceTombstone {
-  slug      String   @id
-  reason    String // dedupe | admin_delete | first_sync
+  slug      String          @id
+  reason    TombstoneReason
   note      String?
-  createdAt DateTime @default(now())
+  createdAt DateTime        @default(now())
 
   @@map("source_tombstones")
 }
@@ -211,7 +279,7 @@ model SourceTombstone {
 // No Reservation model by design. Rasamap is a directory: it does not own the
 // media it lists and cannot sell inventory it does not control, so buyers are
 // handed the owner's phone number instead of a checkout. Revenue comes from the
-// listing side (see Billboard.plan). Removed in the 2026-09-02 review.
+// listing side (see Billboard.plan).
 
 // One row per Idempotency-Key seen on a non-idempotent POST. A repeated key
 // returns the stored response instead of creating a second record.
@@ -228,10 +296,8 @@ model IdempotencyKey {
 }
 
 // ── Review ─────────────────────────────────────────────────────
-// Any signed-in user may post; the unique constraint below is what keeps one
-// account from inflating a rating. (Before the 2026-09-02 review this required
-// a confirmed reservation — with booking gone there is no purchase record to
-// verify against, so the honest rule is one review per account per media.)
+// Any signed-in customer may post; the unique constraint below is what keeps
+// one account from inflating a rating.
 model Review {
   id          Int       @id @default(autoincrement())
   billboardId Int
@@ -253,20 +319,20 @@ model Review {
 
 // ── ReviewReply ────────────────────────────────────────────────
 // A reply under a review, the way a comment thread works: other customers can
-// answer, and so can the team. One level deep only — a reply cannot be replied
-// to, which keeps the thread readable and the query a single join.
+// answer, and so can the team. One level deep only.
+//
+// Its author is exactly one of a customer (`userId`) or a staff member
+// (`staffId`) — each a real foreign key into its own table. `authorName` is the
+// name as it was when the reply was written, which is what a thread shows.
 model ReviewReply {
   id       Int    @id @default(autoincrement())
   reviewId Int
   review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
-  // A customer's reply carries the account it came from. A staff reply cannot:
-  // `userId` points into `users` and a staff account lives in `admins`, so no
-  // value would satisfy the key — which is also why audit_logs stores the
-  // actor's email rather than a foreign key. So `authorName` is written at the
-  // time of the reply and `isStaff` is what the badge reads.
-  userId Int?
-  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  Int?
+  user    User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  staffId Int?
+  staff   Admin? @relation(fields: [staffId], references: [id], onDelete: SetNull)
 
   authorName String
   isStaff    Boolean @default(false)
@@ -276,12 +342,13 @@ model ReviewReply {
 
   @@index([reviewId, createdAt])
   @@index([userId])
+  @@index([staffId])
   @@map("review_replies")
 }
 
 // ── ContactRequest ─────────────────────────────────────────────
-// A lead. When a signed-in user asks for the owner's phone on a media page,
-// this row is created. Rasamap does not process the deal (see §17 of
+// A lead. When a signed-in customer asks for the owner's phone on a media
+// page, this row is created. Rasamap does not process the deal (see §17 of
 // docs/engineering-decisions.md), so the reveal is the last thing the platform
 // can observe — without this table the product has no record that demand
 // happened at all.
@@ -297,9 +364,9 @@ model ContactRequest {
   userId      Int
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Follow-up state, moved by an admin: new → contacted → closed. `note` is an
-  // internal admin memo — it is never shown to the user who made the request.
-  status String  @default("new")
+  // Follow-up state, moved by staff: new → contacted → closed. `note` is an
+  // internal memo — it is never shown to the customer who made the request.
+  status LeadStatus @default(new)
   note   String?
 
   count           Int      @default(1)
@@ -315,46 +382,46 @@ model ContactRequest {
 }
 
 // ── OtpCode ────────────────────────────────────────────────────
-// One-time codes for phone-verified flows (password reset). The code itself is
-// never stored — only an HMAC-SHA256 hash. Short-lived, single-use, attempt-
-// capped. Consumed rows are kept briefly for audit then pruned opportunistically.
+// One-time codes for phone-verified flows (sign-up, password reset). The code
+// itself is never stored — only an HMAC-SHA256 hash. Short-lived, single-use,
+// attempt-capped. Consumed rows are kept briefly then pruned opportunistically.
 model OtpCode {
-  id         Int       @id @default(autoincrement())
+  id         Int        @id @default(autoincrement())
   phone      String
   codeHash   String
-  purpose    String // "password_reset"
+  purpose    OtpPurpose
   expiresAt  DateTime
   consumedAt DateTime?
-  attempts   Int       @default(0)
-  createdAt  DateTime  @default(now())
+  attempts   Int        @default(0)
+  createdAt  DateTime   @default(now())
 
   @@index([phone, purpose])
   @@map("otp_codes")
 }
 
 // ── AuditLog ───────────────────────────────────────────────────
-// In-memory ring buffer in lib/auth/audit.ts (lost on restart) AND persisted
-// here on every write via persistAudit(), pruned opportunistically past 90
-// days.
+// The durable half of lib/audit.ts. The actor is a real foreign key into
+// whichever table it belongs to — `adminId` for staff, `userId` for a
+// customer — or neither, for an anonymous event such as a lockout.
+// `userEmail` keeps a staff actor's address as it was, for display after the
+// account is gone. Pruned opportunistically past 90 days.
 model AuditLog {
-  id        Int      @id @default(autoincrement())
-  timestamp DateTime @default(now())
+  id        Int           @id @default(autoincrement())
+  timestamp DateTime      @default(now())
   action    String // AuditAction, e.g. login_success | billboard_update | ...
-  severity  String // info | warn | critical
+  severity  AuditSeverity
 
-  // Always null in practice — persistAudit() (lib/auth/audit.ts) never writes
-  // it, because the actor is usually the env-configured bootstrap admin with
-  // no `admins` row, which would trip this FK. The real actor id lives in
-  // `details.actorId` instead; `userEmail` carries "who" for display. Kept as
-  // a column (rather than dropped) for the day every admin does have a real
-  // row and this can start being populated for real.
   adminId   Int?
-  admin     Admin?  @relation(fields: [adminId], references: [id])
+  admin     Admin?  @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  userId    Int?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   userEmail String?
   ip        String?
   userAgent String?
   details   Json?
 
   @@index([adminId])
+  @@index([userId])
+  @@index([timestamp])
   @@map("audit_logs")
 }

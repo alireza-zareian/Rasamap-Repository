@@ -76,7 +76,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
   // The badge has to answer a narrower question — how many filters are hidden
   // behind this toggle right now — so it counts only what the fold covers.
   const activeCount = [filters.province, filters.city, filters.type !== "all" ? filters.type : "",
-    filters.status].filter(Boolean).length;
+    filters.availability].filter(Boolean).length;
 
   // The search box and the price slider are continuous inputs: they echo the
   // user immediately and navigate once the input settles. Everything else is a
@@ -294,11 +294,11 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
             animation: "fadeIn 0.2s ease",
           }}>
             <div style={{ marginBottom: 12 }}>
-              <label htmlFor="explore-status" style={labelStyle}>وضعیت</label>
+              <label htmlFor="explore-availability" style={labelStyle}>وضعیت</label>
               <select
-                id="explore-status"
-                value={filters.status}
-                onChange={e => apply({ status: e.target.value as ExploreFilters["status"] })}
+                id="explore-availability"
+                value={filters.availability}
+                onChange={e => apply({ availability: e.target.value as ExploreFilters["availability"] })}
                 style={selectStyle}
               >
                 <option value="">همه وضعیت‌ها</option>
@@ -319,7 +319,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
               />
             </div>
             {hasActiveFilters(filters) && (
-              <button onClick={() => apply({ search: "", type: "all", status: "", province: "", city: "", maxPrice: MAX_PRICE })} style={{
+              <button onClick={() => apply({ search: "", type: "all", availability: "", province: "", city: "", maxPrice: MAX_PRICE })} style={{
                 marginTop: 10, padding: "6px 14px", borderRadius: 7, fontSize: "0.75rem",
                 border: "1px solid var(--border)", background: "none", color: "var(--text-muted)",
                 fontFamily: "inherit", cursor: "pointer",

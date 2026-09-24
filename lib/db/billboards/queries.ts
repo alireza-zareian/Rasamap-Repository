@@ -2,9 +2,9 @@ import "server-only";
 import type { Billboard as Row, Prisma } from "@prisma/client";
 import { prisma } from "../client";
 import { isPostgres } from "../engine";
-import type { Billboard } from "../../types";
+import type { Availability, Billboard, BillboardType, Moderation } from "../../types";
 import { distanceKm } from "../../geo";
-import { fromRow, UNPUBLISHED_STATUSES, publishedOnly } from "./core";
+import { fromRow, published } from "./core";
 
 /** Every read of the billboards table. Nothing here writes or invalidates. */
 
@@ -25,8 +25,8 @@ export async function getAllBillboards(): Promise<Billboard[]> {
 
 export interface BillboardFilterParams {
   search?: string;
-  type?: string;
-  status?: string;
+  type?: BillboardType;
+  availability?: Availability;
   city?: string;
   cityIn?: string[];   // province-level: all cities in that province
   maxPrice?: number;
@@ -108,13 +108,11 @@ const SORT_MAP: Record<string, Prisma.BillboardOrderByWithRelationInput[]> = {
 const caseInsensitive = isPostgres() ? { mode: "insensitive" as const } : {};
 
 function buildWhere(p: BillboardFilterParams): Prisma.BillboardWhereInput {
-  const where: Prisma.BillboardWhereInput = {};
-  if (p.type)      where.type   = p.type;
-  // An unpublished row is never public, whatever status the caller asked for —
-  // the exclusion is applied here rather than left to each route's allowlist.
-  where.status = p.status && !UNPUBLISHED_STATUSES.includes(p.status)
-    ? p.status
-    : publishedOnly;
+  // Published first and unconditionally: no filter a caller passes can widen
+  // a public read to a listing still in review.
+  const where: Prisma.BillboardWhereInput = { ...published };
+  if (p.type)         where.type         = p.type;
+  if (p.availability) where.availability = p.availability;
   if (p.city)      where.city   = p.city;
   else if (p.cityIn?.length) where.city = { in: p.cityIn };
   if (p.maxPrice !== undefined) where.price = { lte: p.maxPrice };
@@ -200,7 +198,7 @@ export async function getFilteredBillboards(
  */
 export async function getShowcaseBillboards(limit: number): Promise<Billboard[]> {
   const rows = await prisma.billboard.findMany({
-    where:   { status: publishedOnly, hasImages: true },
+    where:   { ...published, hasImages: true },
     orderBy: [{ featured: "desc" }, { estimatedViews: "desc" }],
     take:    limit,
   });
@@ -259,8 +257,9 @@ export async function getMapPins(p: BillboardFilterParams): Promise<MapPin[]> {
 export interface AdminBillboardQuery {
   q?: string;
   city?: string;
-  type?: string;
-  status?: string;
+  type?: BillboardType;
+  availability?: Availability;
+  moderation?: Moderation;
   sortKey: "id" | "price" | "name" | "city";
   sortDir: "asc" | "desc";
   page: number;
@@ -272,8 +271,9 @@ export async function getAdminBillboardPage(
 ): Promise<{ items: Billboard[]; total: number; pages: number }> {
   const where: Prisma.BillboardWhereInput = {};
   if (p.city)   where.city   = p.city;
-  if (p.type)   where.type   = p.type;
-  if (p.status) where.status = p.status;
+  if (p.type)         where.type         = p.type;
+  if (p.availability) where.availability = p.availability;
+  if (p.moderation)   where.moderation   = p.moderation;
   if (p.q) {
     where.OR = [
       { name:     { contains: p.q, ...caseInsensitive } },
@@ -303,13 +303,6 @@ export async function getBillboardById(id: number): Promise<Billboard | null> {
 }
 
 /**
- * Public lookup by slug. Every caller (the REST route, the contact route and
- * the detail Server Component) is public, so a listing still awaiting admin
- * approval must not resolve here — otherwise an unapproved submission would be
- * reachable at its own URL even though it is hidden from search, the map, the
- * stats and the sitemap. Admin screens read by id via getBillboardById().
- */
-/**
  * One media item by its slug.
  *
  * Unpublished rows are invisible: a submission awaiting review must not be
@@ -326,9 +319,12 @@ export async function getBillboardBySlug(
   slug: string,
   { includeUnpublished = false } = {},
 ): Promise<Billboard | null> {
-  const row = await prisma.billboard.findUnique({ where: { slug } });
+  const row = await prisma.billboard.findUnique({
+    where:   { slug },
+    include: { sourceRecord: { select: { scrapedAt: true } } },
+  });
   if (!row) return null;
-  if (!includeUnpublished && UNPUBLISHED_STATUSES.includes(row.status)) return null;
+  if (!includeUnpublished && row.moderation !== published.moderation) return null;
   return fromRow(row);
 }
 
@@ -366,7 +362,7 @@ export async function getRelatedBillboards(
   for (const ring of rings) {
     if (picked.length >= limit) break;
     const rows = await prisma.billboard.findMany({
-      where:   { ...ring, status: publishedOnly, id: { notIn: [...seen] } },
+      where:   { ...ring, ...published, id: { notIn: [...seen] } },
       orderBy,
       take:    limit - picked.length,
     });
@@ -382,7 +378,7 @@ export async function getRelatedBillboards(
 /** Every published media item's address and last change, for the sitemap. */
 export function getPublishedSlugs(): Promise<{ slug: string; updatedAt: Date }[]> {
   return prisma.billboard.findMany({
-    where:   { status: publishedOnly },
+    where:   published,
     select:  { slug: true, updatedAt: true },
     orderBy: { id: "asc" },
   });

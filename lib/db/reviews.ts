@@ -69,8 +69,8 @@ export async function saveReview(
   // The media has to exist and be published — a review on an unapproved
   // listing would be invisible anyway, and this keeps an arbitrary id from
   // creating one.
-  const billboard = await prisma.billboard.findUnique({ where: { id: billboardId }, select: { status: true } });
-  if (!billboard || !isPublished(billboard.status)) throw notFound("رسانه یافت نشد");
+  const billboard = await prisma.billboard.findUnique({ where: { id: billboardId }, select: { moderation: true } });
+  if (!billboard || !isPublished(billboard.moderation)) throw notFound("رسانه یافت نشد");
 
   const review = await prisma.$transaction(async tx => {
     const saved = await tx.review.upsert({
@@ -107,9 +107,9 @@ export async function deleteReview(author: CustomerActor, id: number): Promise<v
  * panel. Replies do not nest — one level keeps the thread readable and the read
  * a single join.
  *
- * A staff reply stores no customer id — `userId` is a foreign key into `users`
- * — so the author's name is written onto the reply and `isStaff` drives the
- * badge.
+ * The author is recorded as a foreign key into their own table — `userId` for
+ * a customer, `staffId` for the team — and their name as it is now, which is
+ * what the thread shows. `isStaff` drives the badge.
  */
 export async function addReply(author: Actor, reviewId: number, body: string) {
   const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true } });
@@ -120,6 +120,7 @@ export async function addReply(author: Actor, reviewId: number, body: string) {
     data: {
       reviewId,
       userId:     isStaff ? null : author.id,
+      staffId:    isStaff ? author.id : null,
       authorName: author.name || (isStaff ? "تیم رسامپ" : "کاربر"),
       isStaff,
       body,

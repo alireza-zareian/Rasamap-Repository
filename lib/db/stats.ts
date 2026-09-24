@@ -1,7 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./client";
-import { publishedOnly } from "./billboards";
+import { published } from "./billboards";
 import { isPostgres } from "./engine";
 import type { AdminStats } from "@/lib/admin/types";
 
@@ -35,21 +35,21 @@ function dailyReachQuery(): Prisma.Sql {
   return Prisma.sql`
     SELECT SUM(${daily}) AS total
     FROM billboards
-    WHERE status NOT IN ('pending', 'awaiting_payment')
+    WHERE moderation = 'approved'
   `;
 }
 
 export async function getSiteStats(): Promise<SiteStats> {
   const [total, typeCounts, cityCounts, trafficRows] = await Promise.all([
-    prisma.billboard.count({ where: { status: publishedOnly } }),
+    prisma.billboard.count({ where: published }),
     prisma.billboard.groupBy({
       by: ["type"],
-      where: { status: publishedOnly },
+      where: published,
       _count: { _all: true },
     }),
     prisma.billboard.groupBy({
       by: ["city"],
-      where: { status: publishedOnly },
+      where: published,
       _count: { _all: true },
     }),
     prisma.$queryRaw<{ total: number | bigint | null }[]>(dailyReachQuery()),
@@ -95,8 +95,9 @@ export async function getSiteStats(): Promise<SiteStats> {
 async function getAdminStatsRows() {
   return prisma.billboard.findMany({
     select: {
-      status: true, source: true, city: true, type: true,
-      lat: true, lng: true, images: true, scrapedAt: true,
+      availability: true, source: true, city: true, type: true,
+      lat: true, lng: true, images: true,
+      sourceRecord: { select: { scrapedAt: true } },
     },
     // The same order getAllBillboards() used. Nothing here depends on it
     // arithmetically — but `bySource`, `byCity` and `byType` are built by
@@ -125,7 +126,8 @@ export async function getAdminStats(): Promise<AdminStats> {
     byType[b.type] = (byType[b.type] || 0) + 1;
     if (b.lat && b.lng) withCoords++; else missingCoords++;
     if (((b.images ?? []) as string[]).length === 0) missingImages++;
-    if (b.scrapedAt && now - new Date(b.scrapedAt).getTime() < week) recentlyImported++;
+    const scrapedAt = b.sourceRecord?.scrapedAt;
+    if (scrapedAt && now - new Date(scrapedAt).getTime() < week) recentlyImported++;
   }
 
   // Rough count of "boards sitting on top of each other": bucket coordinates
@@ -144,8 +146,8 @@ export async function getAdminStats(): Promise<AdminStats> {
 
   return {
     total: all.length,
-    active: all.filter(b => b.status !== "inactive").length,
-    inactive: all.filter(b => b.status === "inactive").length,
+    active: all.filter(b => b.availability !== "inactive").length,
+    inactive: all.filter(b => b.availability === "inactive").length,
     bySource, byCity, byType,
     withCoords, missingCoords, missingImages,
     recentlyImported, duplicateGroups,

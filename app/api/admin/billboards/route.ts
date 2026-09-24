@@ -3,13 +3,13 @@ import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { getAdminBillboardPage, createBillboard } from "@/lib/db/billboards";
-import { BILLBOARD_STATUSES, BILLBOARD_TYPES } from "@/lib/types";
+import { AVAILABILITIES, BILLBOARD_TYPES, MODERATIONS } from "@/lib/types";
 
 const SORTS = ["id_asc", "id_desc", "price_asc", "price_desc", "name_asc", "name_desc", "city_asc", "city_desc"] as const;
 
-// GET /api/admin/billboards — every row, pipeline states included: user
-// submissions land in `pending` / `awaiting_payment`, and the panel is the only
-// place they can be found.
+// GET /api/admin/billboards — every row, whatever its review state: the panel
+// is the one place a submission still in review can be found alongside the
+// published catalogue.
 export const GET = defineRoute(
   {
     name: "admin/billboards",
@@ -19,20 +19,22 @@ export const GET = defineRoute(
       q:      z.string().max(200).default(""),
       city:   z.string().max(100).default(""),
       type:   z.enum(BILLBOARD_TYPES).or(z.literal("")).default(""),
-      status: z.enum(BILLBOARD_STATUSES).or(z.literal("")).default(""),
+      availability: z.enum(AVAILABILITIES).or(z.literal("")).default(""),
+      moderation:   z.enum(MODERATIONS).or(z.literal("")).default(""),
       page:   z.coerce.number().int().min(1).max(10000).default(1),
       limit:  z.coerce.number().int().min(1).max(100).default(20),
       sort:   z.enum(SORTS).default("id_asc"),
     }),
   },
   async ({ query }) => {
-    const { q, city, type, status, page, limit, sort } = query;
+    const { q, city, type, availability, moderation, page, limit, sort } = query;
     const [sortKey, sortDir] = sort.split("_") as ["id" | "price" | "name" | "city", "asc" | "desc"];
     const result = await getAdminBillboardPage({
       q: q || undefined,
       city: city || undefined,
       type: type || undefined,
-      status: status || undefined,
+      availability: availability || undefined,
+      moderation: moderation || undefined,
       sortKey, sortDir, page, limit,
     });
     return NextResponse.json({ ...result, page });

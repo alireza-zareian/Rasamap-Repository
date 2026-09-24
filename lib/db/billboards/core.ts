@@ -1,7 +1,10 @@
 import "server-only";
-import type { Billboard as Row } from "@prisma/client";
+import type { Billboard as Row, Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
-import type { Billboard, CatalogueItem, TrafficData } from "../../types";
+import type { ZodType } from "zod";
+import type { Billboard, CatalogueItem, Moderation } from "../../types";
+import { NO_TRAFFIC, StringListSchema, TrafficSchema } from "@/lib/domain/billboard";
+import { logger } from "@/lib/logger";
 
 /**
  * The vocabulary ./queries.ts and ./mutations.ts both speak: the row mapper,
@@ -20,10 +23,10 @@ import type { Billboard, CatalogueItem, TrafficData } from "../../types";
 export const CATALOGUE_TAG = "billboards";
 
 /**
- * Every caller is a route handler — the request context revalidateTag() needs.
- * Exported for the handful of routes that write to the table through Prisma
- * directly (an image swap, a listing decision, a review's rating rollup)
- * instead of through the mutations below.
+ * Drop every cached catalogue read. Called at the end of each write that
+ * changes what a visitor would see — here, in ../listings.ts and in
+ * ../reviews.ts. Every caller runs inside a request, which is the context
+ * revalidateTag() needs.
  */
 export function revalidateCatalogue(): void {
   // `{ expire: 0 }` rather than the recommended "max" profile: "max" marks the
@@ -35,17 +38,35 @@ export function revalidateCatalogue(): void {
   revalidateTag(CATALOGUE_TAG, { expire: 0 });
 }
 
+/**
+ * Read a JSON column through its schema. A malformed value is logged with the
+ * row and the column, and replaced by the empty value for its shape: one bad
+ * row written by a script must cost that row its list of features, not the
+ * whole catalogue page a 500.
+ */
+function jsonColumn<T>(schema: ZodType<T>, value: unknown, empty: T, id: number, column: string): T {
+  const parsed = schema.safeParse(value);
+  if (parsed.success) return parsed.data;
+  logger.warn("billboard JSON column does not match its shape", { id, column });
+  return empty;
+}
+
+/** A row as read, with the crawler's timestamp when the query asked for it. */
+type RowWithSource = Row & { sourceRecord?: { scrapedAt: string | null } | null };
+
 /** Prisma row → domain record. Internal to this folder; not re-exported by ./index.ts. */
-export function fromRow(row: Row): Billboard {
+export function fromRow(row: RowWithSource): Billboard {
+  const { id } = row;
   return {
-    id: row.id,
+    id,
     name: row.name,
     slug: row.slug,
     location: row.location,
     region: row.region,
     city: row.city,
-    type: row.type as Billboard["type"],
-    status: row.status as Billboard["status"],
+    type: row.type,
+    availability: row.availability,
+    moderation: row.moderation,
     width: row.width,
     height: row.height,
     faces: row.faces,
@@ -54,27 +75,22 @@ export function fromRow(row: Row): Billboard {
     priceWeekly: row.priceWeekly,
     priceQuarterly: row.priceQuarterly,
     priceYearly: row.priceYearly,
-    traffic: row.traffic as unknown as TrafficData,
-    mapX: row.mapX,
-    mapY: row.mapY,
+    traffic: jsonColumn(TrafficSchema, row.traffic, NO_TRAFFIC, id, "traffic"),
     lat: row.lat ?? undefined,
     lng: row.lng ?? undefined,
-    icon: row.icon,
-    images: row.images as unknown as string[],
-    allImages: (row.allImages ?? undefined) as unknown as string[] | undefined,
+    images: jsonColumn(StringListSchema, row.images, [], id, "images"),
+    allImages: row.allImages == null ? undefined : jsonColumn(StringListSchema, row.allImages, [], id, "allImages"),
     agency: row.agency,
     phone: row.phone,
     description: row.description,
-    features: row.features as unknown as string[],
-    nearbyLandmarks: row.nearbyLandmarks as unknown as string[],
+    features: jsonColumn(StringListSchema, row.features, [], id, "features"),
+    nearbyLandmarks: jsonColumn(StringListSchema, row.nearbyLandmarks, [], id, "nearbyLandmarks"),
     rating: row.rating,
     reviewCount: row.reviewCount,
     plan: row.plan,
     featured: row.featured,
-    url: row.url ?? undefined,
     source: row.source ?? undefined,
-    structureCode: row.structureCode ?? undefined,
-    scrapedAt: row.scrapedAt ?? undefined,
+    scrapedAt: row.sourceRecord?.scrapedAt ?? undefined,
   };
 }
 
@@ -108,7 +124,7 @@ export function toCatalogueItem(b: Billboard): CatalogueItem {
   return {
     id: b.id, slug: b.slug, name: b.name,
     city: b.city, region: b.region, location: b.location,
-    type: b.type, status: b.status, featured: b.featured,
+    type: b.type, availability: b.availability, featured: b.featured,
     price: b.price, priceYearly: b.priceYearly,
     width: b.width, height: b.height, faces: b.faces, age: b.age,
     rating: b.rating, reviewCount: b.reviewCount,
@@ -117,17 +133,14 @@ export function toCatalogueItem(b: Billboard): CatalogueItem {
 }
 
 /**
- * Statuses that belong to the submission pipeline, not to a live media item.
- * A row in any of these states has not been approved for publication, so no
- * public read may return it. Exported so the stats, analytics and sitemap
- * queries share one definition instead of each repeating a literal.
+ * "Only rows the public may see", as a Prisma filter. A listing is public once
+ * it has passed review; nothing else about it matters. Every public read —
+ * catalogue, detail, map, stats, analytics, sitemap — spreads this into its
+ * WHERE, so the rule has one spelling.
  */
-export const UNPUBLISHED_STATUSES = ["pending", "awaiting_payment", "rejected", "needs_revision"];
+export const published = { moderation: "approved" } as const satisfies Prisma.BillboardWhereInput;
 
-/** Prisma filter for "only rows the public may see". */
-export const publishedOnly = { notIn: UNPUBLISHED_STATUSES };
-
-/** The same rule as publishedOnly, for a row already in hand. */
-export function isPublished(status: string): boolean {
-  return !UNPUBLISHED_STATUSES.includes(status);
+/** The same rule, for a row already in hand. */
+export function isPublished(moderation: Moderation): boolean {
+  return moderation === "approved";
 }

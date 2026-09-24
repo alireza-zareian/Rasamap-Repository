@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { Lightbox } from "./Lightbox";
-import { C, STATUS_LABEL } from "./constants";
+import { C, MODERATION_COLOR, MODERATION_LABEL } from "./constants";
 import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";
 import { planLabels } from "@/lib/types";
@@ -20,7 +20,7 @@ interface Listing {
   width: number;
   height: number;
   faces: number;
-  status: string;
+  moderation: string;
   plan: string;
   featured: boolean;
   images: string[];
@@ -33,18 +33,12 @@ interface Listing {
 
 type Decision = "approve" | "reject" | "revision";
 
-const STATUS_TONE: Record<string, [string, string]> = {
-  pending:          ["#f59e0b", "rgba(245,158,11,0.12)"],
-  awaiting_payment: ["#8b5cf6", "rgba(139,92,246,0.12)"],
-  needs_revision:   ["#f97316", "rgba(249,115,22,0.12)"],
-};
-
 /**
  * The approval queue for user-submitted media.
  *
  * Everything shown here is live from /api/admin/listings; a decision goes to
- * /api/admin/listings/[id]/decision, which is the only place the status
- * transition is allowed to happen. `canDecide` mirrors the server-side rule
+ * /api/admin/listings/[id]/decision, which is the only place a review state
+ * is allowed to change. `canDecide` mirrors the server-side rule
  * (admin+) so the buttons match what the API will actually accept.
  */
 export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
@@ -60,7 +54,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/listings?status=${filter}&limit=50`);
+      const res = await fetch(`/api/admin/listings?moderation=${filter}&limit=50`);
       const data = await res.json();
       setListings(res.ok ? (data.listings ?? []) : []);
       if (!res.ok) setError(data.error ?? "خطا در دریافت آگهی‌ها");
@@ -109,6 +103,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
           <option value="pending">در انتظار تأیید</option>
           <option value="awaiting_payment">در انتظار پرداخت</option>
           <option value="needs_revision">نیاز به اصلاح</option>
+          <option value="rejected">رد شده</option>
         </select>
       </div>
 
@@ -137,7 +132,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {listings.map(l => {
-            const [tone, toneBg] = STATUS_TONE[l.status] ?? [C.muted, C.surface];
+            const [tone, toneBg] = MODERATION_COLOR[l.moderation] ?? [C.muted, C.surface];
             const busy = busyId === l.id;
             // Disabling only the busy row's own buttons left every other row's
             // decide buttons clickable while a decision was in flight — clicking
@@ -175,7 +170,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                     <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4, flexWrap: "wrap" }}>
                       <TypeIcon type={l.type} size={14} />
                       <span style={{ fontSize: "0.88rem", fontWeight: 700 }}>{l.name}</span>
-                      <Badge text={STATUS_LABEL[l.status] ?? l.status} color={tone} bg={toneBg} />
+                      <Badge text={MODERATION_LABEL[l.moderation] ?? l.moderation} color={tone} bg={toneBg} />
                       {l.plan === "featured" && (
                         <Badge text={`پلن ${planLabels.featured}`} color="#f59e0b" bg="rgba(245,158,11,0.12)" />
                       )}

@@ -5,7 +5,7 @@ import { idParams } from "@/lib/http/params";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { getBillboardById, updateBillboard, deleteBillboard } from "@/lib/db/billboards";
 import { notFound } from "@/lib/domain/errors";
-import { BILLBOARD_STATUSES, BILLBOARD_TYPES } from "@/lib/types";
+import { AVAILABILITIES, BILLBOARD_TYPES } from "@/lib/types";
 
 // GET /api/admin/billboards/[id] — one record for the edit view (any staff).
 export const GET = defineRoute(
@@ -17,7 +17,9 @@ export const GET = defineRoute(
   },
 );
 
-// PUT /api/admin/billboards/[id] — edit (editor+).
+// PUT /api/admin/billboards/[id] — edit (editor+). Review state is not among
+// the fields: it moves only through POST /api/admin/listings/[id]/decision,
+// which is where its transitions are enforced.
 export const PUT = defineRoute(
   {
     name: "admin/billboards/[id]",
@@ -29,7 +31,7 @@ export const PUT = defineRoute(
       location:    z.string().max(500).optional(),
       city:        z.string().min(1).max(100).optional(),
       type:        z.enum(BILLBOARD_TYPES).optional(),
-      status:      z.enum(BILLBOARD_STATUSES).optional(),
+      availability: z.enum(AVAILABILITIES).optional(),
       lat:         z.number().min(24).max(40).nullable().optional(),
       lng:         z.number().min(44).max(64).nullable().optional(),
       price:       z.number().min(0).optional(),

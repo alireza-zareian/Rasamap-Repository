@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { getFilteredBillboards, toPublicBillboard } from "@/lib/db/billboards";
-import { ALLOWED_TYPES, ALLOWED_STATUS, ALLOWED_SORT, MIN_RADIUS_KM, MAX_RADIUS_KM, DEFAULT_RADIUS_KM } from "@/lib/explore-query";
+import { ALLOWED_SORT, MIN_RADIUS_KM, MAX_RADIUS_KM, DEFAULT_RADIUS_KM } from "@/lib/explore-query";
+import { AVAILABILITIES, BILLBOARD_TYPES } from "@/lib/types";
 import { publicApiRateLimit } from "@/lib/rate-limit";
 import { invalid } from "@/lib/domain/errors";
 
@@ -11,8 +12,8 @@ import { invalid } from "@/lib/domain/errors";
 
 const querySchema = z.object({
   search:   z.string().max(100).optional(),
-  type:     z.enum(ALLOWED_TYPES).optional(),
-  status:   z.enum(ALLOWED_STATUS).optional(),
+  type:     z.enum(BILLBOARD_TYPES).optional(),
+  availability: z.enum(AVAILABILITIES).optional(),
   city:     z.string().max(60).optional(),
   cities:   z.string().max(500).optional(), // comma-separated city names for province filter
   maxPrice: z.coerce.number().int().min(0).max(100_000).optional(),

@@ -41,8 +41,8 @@ export const POST = defineRoute(
       severity: "warn",
       details: {
         billboardId: params.id,
-        from: before.status,
-        to: after.status,
+        from: before.moderation,
+        to: after.moderation,
         plan: before.plan,
         featuredGranted: after.featured,
         submittedById: before.submittedById,

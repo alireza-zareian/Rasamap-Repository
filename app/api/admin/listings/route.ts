@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { pageQuery } from "@/lib/http/params";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { listSubmissionQueue } from "@/lib/db/listings";
+import { UNDECIDED } from "@/lib/domain/billboard";
 
 // GET /api/admin/listings — the approval queue. editor+ may look; only admin+
 // may decide (see the decision route).
@@ -13,12 +14,12 @@ export const GET = defineRoute(
     access: { staff: "editor" },
     rateLimit: adminApiRateLimit,
     query: z.object({
-      status: z.enum(["pending", "awaiting_payment", "needs_revision", ""]).default(""),
+      moderation: z.enum(UNDECIDED).or(z.literal("")).default(""),
       ...pageQuery(50),
     }),
   },
   async ({ query }) => {
-    const { status, page, limit } = query;
-    return NextResponse.json(await listSubmissionQueue({ status: status || undefined, page, limit }));
+    const { moderation, page, limit } = query;
+    return NextResponse.json(await listSubmissionQueue({ moderation: moderation || undefined, page, limit }));
   },
 );

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useModalA11y } from "@/lib/useModalA11y";
-import { CatalogueItem, typeLabels } from "@/lib/types";
+import { CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Scale, X, Star } from "lucide-react";
 import { faNum } from "@/lib/format";
@@ -30,7 +30,7 @@ export default function CompareModal({ items, onClose }: Props) {
     ["قیمت سالانه (M ت)", b=>b.priceYearly, false],
     ["سن سازه (سال)", b=>b.age, false],
     ["امتیاز کاربران", b=>b.reviewCount>0 ? b.rating+` (${b.reviewCount} نظر)` : "بدون نظر", true],
-    ["وضعیت", b=>b.status==="available"?"خالی":"مشغول", false],
+    ["وضعیت", b=>availabilityLabels[b.availability] ?? b.availability, false],
   ];
 
   const better = (row: typeof rows[0], val: CatalogueItem) => {

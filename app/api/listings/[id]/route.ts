@@ -23,7 +23,7 @@ export const PATCH = defineRoute(
   async ({ actor, params, body, audit }) => {
     const listing = await resubmitListing(actor, params.id, body);
     await audit("listing_resubmitted", {
-      details: { billboardId: params.id, to: listing.status },
+      details: { billboardId: params.id, to: listing.moderation },
     });
     return NextResponse.json({ listing });
   },

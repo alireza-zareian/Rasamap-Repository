@@ -1,11 +1,16 @@
 import type { Billboard } from "@/lib/types";
 import { Check, AlertTriangle } from "lucide-react";
-import { C, STATUS_LABEL, STATUS_COLOR, TYPE_LABEL } from "./constants";
+import { C, AVAILABILITY_COLOR, AVAILABILITY_LABEL, MODERATION_COLOR, MODERATION_LABEL, TYPE_LABEL } from "./constants";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Badge } from "./Badge";
 
 export function BillboardRow({ b, onEdit, onDelete }: { b: Billboard; onEdit: (b: Billboard) => void; onDelete: (b: Billboard) => void }) {
-  const [sc, sbg] = STATUS_COLOR[b.status as string] ?? [C.muted, C.surface];
+  // A row still in review shows where it is in review — that is what an admin
+  // needs to act on. A published row shows whether the board is free.
+  const inReview = b.moderation !== "approved";
+  const [label, [sc, sbg]] = inReview
+    ? [MODERATION_LABEL[b.moderation], MODERATION_COLOR[b.moderation] ?? [C.muted, C.surface]]
+    : [AVAILABILITY_LABEL[b.availability], AVAILABILITY_COLOR[b.availability] ?? [C.muted, C.surface]];
   return (
     <tr style={{ borderBottom: `1px solid ${C.border}` }}>
       <td style={{ padding: "10px 12px", fontSize: "0.82rem", fontWeight: 600, color: C.text, maxWidth: 240 }}>
@@ -16,7 +21,7 @@ export function BillboardRow({ b, onEdit, onDelete }: { b: Billboard; onEdit: (b
         <div style={{ fontSize: "0.68rem", color: C.muted, marginTop: 2 }}>{b.city} · {b.location?.slice(0, 38)}</div>
       </td>
       <td style={{ padding: "10px 8px", fontSize: "0.78rem", color: C.muted }}>{TYPE_LABEL[b.type] ?? b.type}</td>
-      <td style={{ padding: "10px 8px" }}><Badge text={STATUS_LABEL[b.status as string] ?? b.status} color={sc} bg={sbg} /></td>
+      <td style={{ padding: "10px 8px" }}><Badge text={label} color={sc} bg={sbg} /></td>
       <td style={{ padding: "10px 8px", fontSize: "0.78rem", color: C.text }}>{b.price}M</td>
       <td style={{ padding: "10px 8px", fontSize: "0.75rem" }}>
         {b.lat && b.lng

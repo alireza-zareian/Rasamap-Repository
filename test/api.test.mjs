@@ -71,8 +71,11 @@ test("GET /api/billboards never returns an unpublished listing", async () => {
   assert.ok(!slugs.includes("unpaid-listing"), "an unpaid listing must stay hidden");
 });
 
-test("GET /api/billboards cannot be tricked into revealing pending rows via ?status", async () => {
-  const { json } = await api("/api/billboards?status=pending&limit=48");
+test("GET /api/billboards cannot be tricked into revealing rows in review", async () => {
+  // A review state is not an availability, so asking for one is refused outright…
+  assert.equal((await api("/api/billboards?availability=pending&limit=48")).status, 400);
+  // …and a parameter the route does not know is ignored, never obeyed.
+  const { json } = await api("/api/billboards?moderation=pending&status=pending&limit=48");
   const slugs = (json.items ?? []).map((b) => b.slug);
   assert.ok(!slugs.includes("pending-listing"));
 });
@@ -786,7 +789,7 @@ test("POST /api/listings creates a row that is NOT publicly visible yet", async 
     body: { name: "بیلبورد آزمایشی رایگان", desc: "تست", phone: "09120000000", type: "billboard", city: "تهران", region: "۳", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 50 },
   });
   assert.equal(status, 201, JSON.stringify(json));
-  assert.equal(json.listing.status, "pending");
+  assert.equal(json.listing.moderation, "pending");
 
   const pub = await api(`/api/billboards?search=${encodeURIComponent("بیلبورد آزمایشی رایگان")}`);
   assert.equal(pub.json.total, 0, "a freshly submitted listing must not appear in search");
@@ -815,7 +818,7 @@ test("POST /api/listings with the featured plan lands in awaiting_payment", asyn
     body: { name: "بیلبورد ویژه آزمایشی", phone: "09120000000", type: "digital", city: "تهران", width: 8, height: 3, faces: 1, price: 90, plan: "featured" },
   });
   assert.equal(status, 201, JSON.stringify(json));
-  assert.equal(json.listing.status, "awaiting_payment");
+  assert.equal(json.listing.moderation, "awaiting_payment");
 });
 
 test("POST /api/listings accepts a real PNG upload", async () => {
@@ -1335,7 +1338,7 @@ test("approving a free listing publishes it and writes a durable audit row", asy
     method: "POST", token: adminToken, body: { decision: "approve" },
   });
   assert.equal(decision.status, 200, JSON.stringify(decision.json));
-  assert.equal(decision.json.listing.status, "available");
+  assert.equal(decision.json.listing.moderation, "approved");
   assert.equal(decision.json.listing.featured, false, "a free plan must not be promoted");
 
   const audit = await api("/api/admin/audit", { token: adminToken });
@@ -1355,7 +1358,7 @@ test("approving a featured listing grants the promotion; a free one never does",
     method: "POST", token: adminToken, body: { decision: "approve" },
   });
   assert.equal(decision.status, 200, JSON.stringify(decision.json));
-  assert.equal(decision.json.listing.status, "available");
+  assert.equal(decision.json.listing.moderation, "approved");
   assert.equal(decision.json.listing.featured, true, "confirming payment should grant the featured slot");
 });
 
@@ -1382,9 +1385,9 @@ test("a rejected listing is unreachable, not merely absent from search", async (
     method: "POST", token: adminToken, body: { decision: "reject", note: "تصاویر با مکان اعلام‌شده هم‌خوانی ندارد." },
   });
   assert.equal(decision.status, 200);
-  // "rejected", not "inactive": inactive is a public status describing a real
-  // media item that is idle, and a turned-down submission must not be public.
-  assert.equal(decision.json.listing.status, "rejected");
+  // A rejection is a review state, not an availability: an idle board
+  // ("inactive") is public, and a turned-down submission must not be.
+  assert.equal(decision.json.listing.moderation, "rejected");
 
   const pub = await api(`/api/billboards?search=${encodeURIComponent(name)}`);
   assert.equal(pub.json.total, 0, "must not appear in search");
@@ -1420,7 +1423,7 @@ test("a revision request parks the listing in needs_revision and the submitter c
     body: { decision: "revision", note: "لطفاً ابعاد دقیق سازه را اصلاح کنید." },
   });
   assert.equal(sent.status, 200, JSON.stringify(sent.json));
-  assert.equal(sent.json.listing.status, "needs_revision");
+  assert.equal(sent.json.listing.moderation, "needs_revision");
 
   // Not publicly reachable while it waits on the submitter.
   const admin = await api(`/api/admin/billboards/${id}`, { token: adminToken });
@@ -1431,7 +1434,7 @@ test("a revision request parks the listing in needs_revision and the submitter c
   // own dashboard feed.
   const mine = await api("/api/listings", { token: userToken });
   const row = mine.json.listings.find(l => l.id === id);
-  assert.equal(row.status, "needs_revision");
+  assert.equal(row.moderation, "needs_revision");
   assert.equal(row.reviewNote, "لطفاً ابعاد دقیق سازه را اصلاح کنید.");
 
   // The submitter fixes it and resends — the row re-enters the queue as pending
@@ -1441,11 +1444,11 @@ test("a revision request parks the listing in needs_revision and the submitter c
     body: { name: "بیلبورد نیازمند اصلاح آزمایشی", phone: "09120000000", type: "billboard", city: "تهران", region: "۱", location: "خیابان تست اصلاح‌شده", width: 10, height: 5, faces: 2, price: 60, plan: "free", images: [] },
   });
   assert.equal(resubmit.status, 200, JSON.stringify(resubmit.json));
-  assert.equal(resubmit.json.listing.status, "pending");
+  assert.equal(resubmit.json.listing.moderation, "pending");
   assert.equal(resubmit.json.listing.reviewNote, null);
 
   const back = await api(`/api/admin/billboards/${id}`, { token: adminToken });
-  assert.equal(back.json.billboard.status, "pending");
+  assert.equal(back.json.billboard.moderation, "pending");
   assert.equal(back.json.billboard.location, "خیابان تست اصلاح‌شده");
 
   // A second resubmit is refused — the row is no longer in needs_revision.
@@ -1651,8 +1654,8 @@ test("half a centre is refused rather than quietly re-centred", async () => {
 test("a radial search still obeys the other filters", async () => {
   // The circle narrows the catalogue; it does not replace it. In particular an
   // unpublished row must not become visible by being nearby.
-  const { json } = await api(nearQuery(20, "&status=available"));
-  assert.ok(json.items.every(i => i.status === "available"));
+  const { json } = await api(nearQuery(20, "&availability=available"));
+  assert.ok(json.items.every(i => i.availability === "available"));
   assert.ok(!json.items.some(i => i.slug === "inactive-board"));
 });
 

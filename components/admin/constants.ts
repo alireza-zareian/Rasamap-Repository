@@ -13,22 +13,29 @@ export const C = {
   font:    "Vazirmatn, sans-serif",
 } as const;
 
-// One label map for the whole app — the admin filter, the edit modal's status
-// select and the row badge all read it, so a status cannot be spelled two ways.
-export { statusLabels as STATUS_LABEL } from "@/lib/types";
+// One label map per question for the whole app — the admin filters, the edit
+// modal and the row badges read the same maps as the public cards, so a state
+// cannot be spelled two ways. See Availability / Moderation in lib/types.ts.
+import { typeLabels } from "@/lib/types";
 
-export const STATUS_COLOR: Record<string, [string, string]> = {
+export { availabilityLabels as AVAILABILITY_LABEL, moderationLabels as MODERATION_LABEL } from "@/lib/types";
+
+/** Indexed with plain strings read back from the API, hence the wider type. */
+export const TYPE_LABEL: Record<string, string> = typeLabels;
+
+export const AVAILABILITY_COLOR: Record<string, [string, string]> = {
+  available: [C.green,  "rgba(34,197,94,0.12)"],
+  busy:      ["#f59e0b","rgba(245,158,11,0.12)"],
+  reserved:  ["#8b5cf6","rgba(139,92,246,0.12)"],
+  inactive:  [C.muted,  "rgba(148,163,184,0.12)"],
+};
+
+export const MODERATION_COLOR: Record<string, [string, string]> = {
   pending:          ["#f59e0b","rgba(245,158,11,0.16)"],
   awaiting_payment: ["#8b5cf6","rgba(139,92,246,0.16)"],
-  available:        [C.green,  "rgba(34,197,94,0.12)"],
-  busy:             ["#f59e0b","rgba(245,158,11,0.12)"],
-  reserved:         ["#8b5cf6","rgba(139,92,246,0.12)"],
-  inactive:         [C.muted,  "rgba(148,163,184,0.12)"],
-  rejected:         ["#ef4444","rgba(239,68,68,0.12)"],
   needs_revision:   ["#f97316","rgba(249,115,22,0.12)"],
-};
-export const TYPE_LABEL: Record<string, string> = {
-  billboard: "بیلبورد", digital: "دیجیتال", bridge: "عرشه پل", station: "ایستگاه", vehicle: "وسیله",
+  rejected:         ["#ef4444","rgba(239,68,68,0.12)"],
+  approved:         [C.green,  "rgba(34,197,94,0.12)"],
 };
 export const ROLE_LABEL: Record<string, string> = {
   super_admin: "سوپر ادمین", admin: "ادمین", editor: "ویرایشگر", viewer: "بیننده",
@@ -40,7 +47,7 @@ export const ROLE_COLOR: Record<string, string> = {
 // Plain-Persian gloss for every audit action, so an admin who cannot read the
 // English event name still understands what the line means. `title` is a short
 // label, `desc` is one sentence of context. Keys match AuditAction in
-// lib/auth/audit.ts — keep the two in sync.
+// lib/audit.ts — keep the two in sync.
 export const AUDIT_ACTION: Record<string, { title: string; desc: string }> = {
   login_success:           { title: "ورود موفق",              desc: "یک مدیر با ایمیل و رمز درست وارد پنل شد." },
   login_failure:           { title: "ورود ناموفق",            desc: "تلاش برای ورود با ایمیل یا رمز اشتباه رد شد." },

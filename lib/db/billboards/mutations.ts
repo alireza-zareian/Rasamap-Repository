@@ -1,8 +1,10 @@
 import "server-only";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../client";
-import type { Billboard } from "../../types";
+import type { Availability, Billboard, BillboardType } from "../../types";
 import { fromRow, revalidateCatalogue } from "./core";
 import { derivedPrices } from "@/lib/domain/pricing";
+import { NO_TRAFFIC } from "@/lib/domain/billboard";
 import { conflict, invalid, notFound } from "@/lib/domain/errors";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
@@ -18,7 +20,7 @@ export interface BillboardCreateInput {
   name: string;
   location: string;
   city: string;
-  type: string;
+  type: BillboardType;
   price: number;
   agency: string;
   phone: string;
@@ -65,17 +67,16 @@ export function blankBillboardFields(name: string) {
     age: 0,
     // No traffic survey exists for a hand-entered or user-submitted media item,
     // so the block stays zeroed — and estimatedViews mirrors it.
-    traffic: { daily: 0, peakHour: "08:00", congestionLevel: 5, pedestrian: 0, estimatedViews: 0, viewabilityScore: 0 },
+    traffic: NO_TRAFFIC,
     estimatedViews: 0,
-    mapX: 50,
-    mapY: 50,
-    icon: "🏙️",
     images: [] as string[],
     features: [] as string[],
     nearbyLandmarks: [] as string[],
     rating: 0,
     reviewCount: 0,
-  };
+    // Checked against the table: a spread is exempt from excess-property
+    // checks, so without this a dropped column survives here unnoticed.
+  } satisfies Partial<Prisma.BillboardUncheckedCreateInput>;
 }
 
 export async function createBillboard(data: BillboardCreateInput): Promise<Billboard> {
@@ -88,7 +89,6 @@ export async function createBillboard(data: BillboardCreateInput): Promise<Billb
       region: data.city,
       city: data.city,
       type: data.type,
-      status: "available",
       width: data.width,
       height: data.height,
       area: data.width * data.height,
@@ -109,8 +109,8 @@ export interface BillboardUpdateInput {
   name?: string;
   location?: string;
   city?: string;
-  type?: string;
-  status?: string;
+  type?: BillboardType;
+  availability?: Availability;
   lat?: number | null;
   lng?: number | null;
   price?: number;

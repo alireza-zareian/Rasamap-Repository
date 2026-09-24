@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { fetchJson, errorMessage } from "@/lib/fetch-json";
 import { useModalA11y } from "@/lib/useModalA11y";
 import { copyText } from "@/lib/clipboard";
-import { C } from "./constants";
+import { C, MODERATION_COLOR, MODERATION_LABEL } from "./constants";
 import { Badge } from "./Badge";
 import { User, X, AlertTriangle, KeyRound, Check, Copy } from "lucide-react";
 import { faNum } from "@/lib/format";
@@ -12,7 +12,7 @@ interface UserListing {
   id: number;
   name: string;
   city: string;
-  status: string;
+  moderation: string;
   plan: string;
   featured: boolean;
   price: number;
@@ -27,14 +27,6 @@ interface CustomerDetail {
   _count: { listings: number; reviews: number };
 }
 
-const LISTING_STATUS: Record<string, [string, string]> = {
-  pending:          ["در انتظار تأیید", "#f59e0b"],
-  awaiting_payment: ["در انتظار پرداخت", "#8b5cf6"],
-  available:        ["منتشر شده", C.green],
-  busy:             ["مشغول", "#f59e0b"],
-  reserved:         ["رزرو شده", "#8b5cf6"],
-  inactive:         ["منتشر نشده", C.red],
-};
 const fmt = (d: string) => new Date(d).toLocaleDateString("fa-IR", { year: "numeric", month: "short", day: "numeric" });
 
 export function CustomerModal({ userId, onClose, onSaved }: { userId: number; onClose: () => void; onSaved?: () => void }) {
@@ -159,7 +151,8 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {data.listings.map(l => {
-                  const [label, color] = LISTING_STATUS[l.status] ?? [l.status, C.muted];
+                  const label = MODERATION_LABEL[l.moderation] ?? l.moderation;
+                  const [color] = MODERATION_COLOR[l.moderation] ?? [C.muted];
                   return (
                     <div key={l.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <div style={{ minWidth: 0 }}>

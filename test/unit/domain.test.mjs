@@ -12,8 +12,9 @@ import { derivedPrices } from "../../lib/domain/pricing.ts";
 import { averageRating } from "../../lib/domain/rating.ts";
 import { hasRole, isStaffRole } from "../../lib/domain/roles.ts";
 import { DomainError, isUniqueViolation, notFound } from "../../lib/domain/errors.ts";
+import { NO_TRAFFIC, StringListSchema, TrafficSchema } from "../../lib/domain/billboard.ts";
 import {
-  ListingInputSchema, decisionOutcome, initialListingStatus,
+  ListingInputSchema, decisionOutcome, initialModeration,
 } from "../../lib/domain/listing.ts";
 
 test("the three longer prices follow from the monthly one", () => {
@@ -33,15 +34,15 @@ test("roles form a ladder, and a customer is not on it", () => {
 });
 
 test("a paid plan waits for payment; a free one only for review", () => {
-  assert.equal(initialListingStatus("free"), "pending");
-  assert.equal(initialListingStatus("featured"), "awaiting_payment");
+  assert.equal(initialModeration("free"), "pending");
+  assert.equal(initialModeration("featured"), "awaiting_payment");
 });
 
 test("only approving a listing that asked for promotion grants it", () => {
-  assert.deepEqual(decisionOutcome("approve", "featured"), { status: "available", featured: true });
-  assert.deepEqual(decisionOutcome("approve", "free"), { status: "available", featured: false });
-  assert.deepEqual(decisionOutcome("reject", "featured"), { status: "rejected", featured: false });
-  assert.deepEqual(decisionOutcome("revision", "featured"), { status: "needs_revision", featured: false });
+  assert.deepEqual(decisionOutcome("approve", "featured"), { moderation: "approved", featured: true });
+  assert.deepEqual(decisionOutcome("approve", "free"), { moderation: "approved", featured: false });
+  assert.deepEqual(decisionOutcome("reject", "featured"), { moderation: "rejected", featured: false });
+  assert.deepEqual(decisionOutcome("revision", "featured"), { moderation: "needs_revision", featured: false });
 });
 
 test("a listing's name and city are trimmed, so the duplicate index sees one listing", () => {
@@ -63,4 +64,11 @@ test("a domain error carries its kind and a message for the user", () => {
   assert.equal(err.kind, "not_found");
   assert.ok(isUniqueViolation({ code: "P2002" }));
   assert.ok(!isUniqueViolation(new Error("P2002")));
+});
+
+test("a traffic block and a list of strings are checked, not assumed", () => {
+  assert.ok(TrafficSchema.safeParse(NO_TRAFFIC).success);
+  assert.ok(!TrafficSchema.safeParse({ daily: "many" }).success);
+  assert.ok(StringListSchema.safeParse(["/a.jpg"]).success);
+  assert.ok(!StringListSchema.safeParse("/a.jpg").success);
 });

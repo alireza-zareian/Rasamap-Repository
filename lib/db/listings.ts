@@ -1,12 +1,14 @@
 import "server-only";
 import { prisma } from "./client";
-import { blankBillboardFields, revalidateCatalogue, UNPUBLISHED_STATUSES } from "./billboards";
+import { blankBillboardFields, revalidateCatalogue } from "./billboards";
 import { conflict, invalid, isUniqueViolation, notFound } from "@/lib/domain/errors";
 import { derivedPrices } from "@/lib/domain/pricing";
 import {
-  decisionOutcome, initialListingStatus, MAX_LISTING_IMAGES,
+  decisionOutcome, initialModeration, MAX_LISTING_IMAGES,
   type ListingDecision, type ListingInput,
 } from "@/lib/domain/listing";
+import { UNDECIDED } from "@/lib/domain/billboard";
+import type { Moderation } from "@/lib/types";
 import { discardImages, saveImages } from "@/lib/uploads";
 import { faNum } from "@/lib/format";
 import type { CustomerActor } from "@/lib/auth/actor";
@@ -30,8 +32,8 @@ import type { CustomerActor } from "@/lib/auth/actor";
  */
 const OWN_FIELDS = {
   id: true, slug: true, name: true, city: true, type: true, price: true,
-  status: true, plan: true, featured: true, images: true, createdAt: true,
-  reviewNote: true, description: true, phone: true, region: true,
+  moderation: true, availability: true, plan: true, featured: true, images: true,
+  createdAt: true, reviewNote: true, description: true, phone: true, region: true,
   location: true, width: true, height: true, faces: true,
 } as const;
 
@@ -50,7 +52,7 @@ function submittedFields(input: Omit<ListingInput, "images">) {
     region:      input.region || input.city,
     city:        input.city,
     type:        input.type,
-    status:      initialListingStatus(input.plan),
+    moderation:  initialModeration(input.plan),
     plan:        input.plan,
     featured:    false,
     width:       input.width,
@@ -100,7 +102,7 @@ export async function submitListing(owner: CustomerActor, input: ListingInput) {
         hasImages:     saved.urls.length > 0,
         submittedById: owner.id,
       },
-      select: { id: true, name: true, status: true, plan: true },
+      select: { id: true, name: true, moderation: true, plan: true },
     });
     return row;
   } catch (err) {
@@ -124,12 +126,12 @@ export async function submitListing(owner: CustomerActor, input: ListingInput) {
 export async function resubmitListing(owner: CustomerActor, id: number, input: ListingInput) {
   const current = await prisma.billboard.findUnique({
     where:  { id },
-    select: { submittedById: true, status: true, images: true },
+    select: { submittedById: true, moderation: true, images: true },
   });
   // Someone else's listing is reported as missing, not forbidden: the
   // difference would tell a stranger which ids exist.
   if (!current || current.submittedById !== owner.id) throw notFound("آگهی یافت نشد");
-  if (current.status !== "needs_revision") {
+  if (current.moderation !== "needs_revision") {
     throw conflict("این آگهی در وضعیت «نیاز به اصلاح» نیست و قابل ویرایش نیست");
   }
 
@@ -148,7 +150,7 @@ export async function resubmitListing(owner: CustomerActor, id: number, input: L
   let count: number;
   try {
     ({ count } = await prisma.billboard.updateMany({
-      where: { id, submittedById: owner.id, status: "needs_revision" },
+      where: { id, submittedById: owner.id, moderation: "needs_revision" },
       data: {
         ...submittedFields(fields),
         images:     finalImages,
@@ -173,10 +175,10 @@ export async function resubmitListing(owner: CustomerActor, id: number, input: L
   return toOwnListing(row);
 }
 
-/** The approval queue: submissions still waiting on a decision, newest first. */
-export async function listSubmissionQueue(filter: { status?: string; page: number; limit: number }) {
-  const { status, page, limit } = filter;
-  const where = { status: status ? status : { in: UNPUBLISHED_STATUSES } };
+/** The approval queue: submissions not yet approved, newest first. */
+export async function listSubmissionQueue(filter: { moderation?: Moderation; page: number; limit: number }) {
+  const { moderation, page, limit } = filter;
+  const where = { moderation: moderation ?? { in: [...UNDECIDED] } };
 
   const [rows, total] = await Promise.all([
     prisma.billboard.findMany({
@@ -187,7 +189,7 @@ export async function listSubmissionQueue(filter: { status?: string; page: numbe
       select: {
         id: true, name: true, city: true, region: true, location: true,
         type: true, price: true, width: true, height: true, faces: true,
-        status: true, plan: true, featured: true, images: true,
+        moderation: true, plan: true, featured: true, images: true,
         description: true, phone: true, createdAt: true, reviewNote: true,
         submittedBy: { select: { id: true, name: true, phone: true } },
       },
@@ -204,8 +206,8 @@ export async function listSubmissionQueue(filter: { status?: string; page: numbe
 }
 
 /**
- * Decide on a submission. Only a listing still awaiting a decision is
- * accepted, so a second click cannot re-approve a live listing or silently
+ * Decide on a submission. Only a listing not yet approved is accepted (see
+ * UNDECIDED), so a second click cannot re-approve a live listing or silently
  * re-grant a paid promotion. `note` is the admin's message to the submitter,
  * shown on their dashboard; on an approval without one it clears any earlier
  * feedback.
@@ -213,13 +215,13 @@ export async function listSubmissionQueue(filter: { status?: string; page: numbe
 export async function decideListing(id: number, decision: ListingDecision, note: string | null) {
   const before = await prisma.billboard.findUnique({
     where:  { id },
-    select: { id: true, name: true, status: true, plan: true, submittedById: true },
+    select: { id: true, name: true, moderation: true, plan: true, submittedById: true },
   });
   if (!before) throw notFound("آگهی یافت نشد");
 
   const outcome = decisionOutcome(decision, before.plan);
   const { count } = await prisma.billboard.updateMany({
-    where: { id, status: { in: UNPUBLISHED_STATUSES } },
+    where: { id, moderation: { in: [...UNDECIDED] } },
     data:  { ...outcome, reviewNote: note },
   });
   if (count === 0) throw conflict("این آگهی قبلاً بررسی شده است");
@@ -227,7 +229,7 @@ export async function decideListing(id: number, decision: ListingDecision, note:
   revalidateCatalogue();
   const after = await prisma.billboard.findUniqueOrThrow({
     where:  { id },
-    select: { id: true, name: true, status: true, plan: true, featured: true },
+    select: { id: true, name: true, moderation: true, plan: true, featured: true },
   });
   return { before, after };
 }

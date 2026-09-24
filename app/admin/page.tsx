@@ -7,7 +7,7 @@ import type { Billboard } from "@/lib/types";
 import type { AdminStats } from "@/lib/admin/types";
 import type { StaffRole } from "@/lib/domain/roles";
 import { LayoutDashboard, ClipboardList, ClipboardCheck, Handshake, ShieldCheck, Bot, Users, ScrollText, Plus, Lock, Trash2, AlertTriangle, MapPin, CheckCircle2, ImageOff, Sparkles, Copy, Globe } from "lucide-react";
-import { C, TYPE_LABEL, STATUS_LABEL, ROLE_LABEL, ROLE_COLOR } from "@/components/admin/constants";
+import { C, TYPE_LABEL, AVAILABILITY_LABEL, MODERATION_LABEL, ROLE_LABEL, ROLE_COLOR } from "@/components/admin/constants";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Badge, StatCard, BarRow } from "@/components/admin/Badge";
 import { ImageManager } from "@/components/admin/ImageManager";
@@ -46,7 +46,8 @@ function AdminDashboard() {
   // the row the person was just looking at rather than on page one of 3,536.
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [filterType, setFilterType] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterAvailability, setFilterAvailability] = useState("");
+  const [filterModeration, setFilterModeration] = useState("");
   const [sort, setSort] = useState("id_asc");
   const [loading, setLoading] = useState(false);
   const [editTarget, setEditTarget] = useState<Billboard | null>(null);
@@ -74,7 +75,10 @@ function AdminDashboard() {
   const loadBillboards = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const params = new URLSearchParams({ q: search, type: filterType, status: filterStatus, page: page.toString(), limit: "20", sort });
+    const params = new URLSearchParams({
+      q: search, type: filterType, availability: filterAvailability, moderation: filterModeration,
+      page: page.toString(), limit: "20", sort,
+    });
     try {
       const res = await fetch(`/api/admin/billboards?${params}`);
       const data = await res.json();
@@ -83,7 +87,7 @@ function AdminDashboard() {
       setPages(data.pages ?? 1);
     } catch { setBillboards([]); }
     setLoading(false);
-  }, [user, search, filterType, filterStatus, page, sort]);
+  }, [user, search, filterType, filterAvailability, filterModeration, page, sort]);
 
   // Data-fetch effect: loadBillboards() sets loading/list state, as expected.
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -253,9 +257,13 @@ function AdminDashboard() {
                   <option value="">همه انواع</option>
                   {Object.entries(TYPE_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
-                <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }} style={iS}>
+                <select aria-label="وضعیت رسانه" value={filterAvailability} onChange={e => { setFilterAvailability(e.target.value); setPage(1); }} style={iS}>
                   <option value="">همه وضعیت‌ها</option>
-                  {Object.entries(STATUS_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+                  {Object.entries(AVAILABILITY_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+                <select aria-label="وضعیت بررسی" value={filterModeration} onChange={e => { setFilterModeration(e.target.value); setPage(1); }} style={iS}>
+                  <option value="">همه (بررسی)</option>
+                  {Object.entries(MODERATION_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
                 <select value={sort} onChange={e => setSort(e.target.value)} style={iS}>
                   <option value="id_asc">ID ↑</option>

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck, Crosshair } from "lucide-react";
-import { UNPUBLISHED_STATUSES } from "@/lib/db/billboards";
+import { isPublished } from "@/lib/db/billboards";
 import { getCachedBillboardBySlug, getCachedRelatedBillboards } from "@/lib/db/cached";
 import { getActor } from "@/lib/auth/actor";
 import BillboardGallery from "@/components/BillboardGallery";
@@ -13,13 +13,12 @@ import TrafficMeter from "@/components/TrafficMeter";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import BillboardContact from "@/components/BillboardContact";
-import { typeLabels, statusLabels, type Billboard } from "@/lib/types";
+import { typeLabels, availabilityLabels, moderationLabels, type Billboard } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-url";
 import { faNum } from "@/lib/format";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
-const STATUS_LABEL = statusLabels as Record<string, string>;
-const STATUS_COLOR: Record<string, string> = {
+const AVAILABILITY_COLOR: Record<string, string> = {
   available: "#22c55e", busy: "#ef4444", reserved: "#f59e0b", inactive: "#6b7280",
 };
 
@@ -73,7 +72,7 @@ function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
         unitCode: "MON",
       },
       availability:
-        b.status === "available"
+        b.availability === "available"
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
       areaServed: { "@type": "City", name: b.city },
@@ -134,7 +133,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
   if (!found) notFound();
   const { billboard: b, phoneAvailable } = found;
 
-  const unpublished = UNPUBLISHED_STATUSES.includes(b.status);
+  const unpublished = !isPublished(b.moderation);
 
   // Suggestions for the foot of the page — same neighbourhood or same media
   // type, narrowed to what those cards draw.
@@ -144,7 +143,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
     ...(b.images ?? []),
     ...((b.allImages ?? []).filter(u => !(b.images ?? []).includes(u))),
   ];
-  const statusColor = STATUS_COLOR[b.status] ?? "#6b7280";
+  const statusColor = AVAILABILITY_COLOR[b.availability] ?? "#6b7280";
   const area = b.width * b.height;
 
   return (
@@ -169,7 +168,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               <ShieldCheck size={15} /> پیش‌نمایش همکاران
             </span>
             <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.9 }}>
-              این آگهی هنوز <b style={{ color: "var(--text-main)" }}>{STATUS_LABEL[b.status] ?? b.status}</b> است و برای بازدیدکنندگان دیده نمی‌شود.
+              این آگهی هنوز <b style={{ color: "var(--text-main)" }}>{moderationLabels[b.moderation] ?? b.moderation}</b> است و برای بازدیدکنندگان دیده نمی‌شود.
             </span>
             <Link href="/admin?tab=listings" style={{ marginRight: "auto", fontSize: "0.75rem", color: "#8B7BE0", textDecoration: "none", border: "1px solid rgba(98,71,196,0.4)", borderRadius: 8, padding: "5px 13px", whiteSpace: "nowrap" }}>
               رفتن به صف تأیید ←
@@ -203,7 +202,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, lineHeight: 1.3, textAlign: "right" }}>{b.name}</h1>
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", flexShrink: 0 }}>
                 <span style={{ fontSize: "0.68rem", padding: "2px 9px", borderRadius: 20, background: "rgba(255,77,0,0.1)", color: "var(--accent)", fontWeight: 600, whiteSpace: "nowrap" }}>{TYPE_LABEL[b.type] ?? b.type}</span>
-                <span style={{ fontSize: "0.68rem", padding: "2px 9px", borderRadius: 20, background: `${statusColor}18`, color: statusColor, fontWeight: 600, whiteSpace: "nowrap" }}>{STATUS_LABEL[b.status] ?? b.status}</span>
+                <span style={{ fontSize: "0.68rem", padding: "2px 9px", borderRadius: 20, background: `${statusColor}18`, color: statusColor, fontWeight: 600, whiteSpace: "nowrap" }}>{availabilityLabels[b.availability] ?? b.availability}</span>
                 <ShareButton title={b.name} />
               </div>
             </div>

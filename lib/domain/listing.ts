@@ -15,7 +15,7 @@ export const LISTING_PLANS = ["free", "featured"] as const;
 export type ListingPlan = (typeof LISTING_PLANS)[number];
 
 /**
- * Where a new or resubmitted listing starts.
+ * Where a new or resubmitted listing starts in review.
  *
  * free     → `pending`: an admin only has to check the content before it goes live.
  * featured → `awaiting_payment`: the same review plus a payment an admin confirms
@@ -24,27 +24,37 @@ export type ListingPlan = (typeof LISTING_PLANS)[number];
  * `featured` itself stays false until that confirmation, so asking for a paid
  * plan can never promote a listing on its own.
  */
-export function initialListingStatus(plan: ListingPlan): "pending" | "awaiting_payment" {
+export function initialModeration(plan: ListingPlan): "pending" | "awaiting_payment" {
   return plan === "featured" ? "awaiting_payment" : "pending";
 }
 
 export const LISTING_DECISIONS = ["approve", "reject", "revision"] as const;
 export type ListingDecision = (typeof LISTING_DECISIONS)[number];
 
+const MODERATION_BY_DECISION = {
+  approve:  "approved",
+  reject:   "rejected",
+  revision: "needs_revision",
+} as const;
+
 /**
  * What a decision does to a listing still awaiting one:
  *
- *   pending          --approve--> available
- *   awaiting_payment --approve--> available + featured
+ *   pending          --approve--> approved
+ *   awaiting_payment --approve--> approved + featured
  *   either           --reject----> rejected        (never publicly reachable)
  *   either           --revision--> needs_revision  (submitter edits & resends)
  *
- * A featured slot is granted only here, on the approval of a listing that asked
- * for one — never from the submitted plan alone.
+ * A decision moves the listing's review state and nothing else — whether the
+ * board is free is a separate question (its availability) that review does not
+ * answer. A featured slot is granted only here, on the approval of a listing
+ * that asked for one — never from the submitted plan alone.
  */
-export function decisionOutcome(decision: ListingDecision, plan: string) {
-  const status = { approve: "available", reject: "rejected", revision: "needs_revision" }[decision];
-  return { status, featured: decision === "approve" && plan === "featured" };
+export function decisionOutcome(decision: ListingDecision, plan: ListingPlan) {
+  return {
+    moderation: MODERATION_BY_DECISION[decision],
+    featured:   decision === "approve" && plan === "featured",
+  };
 }
 
 /**

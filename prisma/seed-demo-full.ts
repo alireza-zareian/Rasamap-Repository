@@ -15,6 +15,7 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import bcrypt from "bcryptjs";
+import type { BillboardType, ListingPlan, Moderation } from "@prisma/client";
 
 const url = process.env.DATABASE_URL ?? "";
 if (!url || url.includes("test.db")) {
@@ -73,17 +74,14 @@ async function main() {
   }
   console.log(`admins: ${ADMINS.length} upserted (roles: viewer / editor / admin / super_admin)`);
 
-  // ── Owners ──────────────────────────────────────────────────────────
+  // ── Who owns the media ──────────────────────────────────────────────
+  // Written onto each listing as its agency and phone, which is what every
+  // page reads — there is no separate owners table.
   const ownerSpecs = [
     { name: `${TAG} آژانس تبلیغاتی البرز`, phone: "02100000001", company: "Alborz Media" },
     { name: `${TAG} شرکت رسانه پارس`,      phone: "02100000002", company: "Pars Media" },
     { name: `${TAG} بابک تهرانی (شخصی)`,   phone: "09120000108", company: "" },
   ];
-  const ownerRows = [];
-  for (const o of ownerSpecs) {
-    const existing = await prisma.owner.findFirst({ where: { name: o.name } });
-    ownerRows.push(existing ?? (await prisma.owner.create({ data: o })));
-  }
 
   // ── Listings — one per state of the submission pipeline ─────────────
   // Wipe previous demo listings, then recreate (idempotent).
@@ -117,20 +115,20 @@ async function main() {
    * separately from the model the thesis documents.
    */
   type L = {
-    user: string; owner: number; name: string; city: string; type: string;
-    price: number; status: string; plan: string; featured: boolean;
+    user: string; owner: number; name: string; city: string; type: BillboardType;
+    price: number; moderation: Moderation; plan: ListingPlan; featured: boolean;
     daily: number; pedestrian: number; views: number; score: number;
     peak: string; congestion: number;
   };
   const listingSpecs: L[] = [
-    { user: "publisher", owner: 0, name: `${TAG} بیلبورد بزرگراه چمران`, city: "تهران",  type: "billboard", price: 90,  status: "available",        plan: "free",     featured: false, daily: 233150, pedestrian:  2331, views: 123662, score: 34, peak: "17:00-19:00", congestion: 8 },
-    { user: "publisher", owner: 0, name: `${TAG} عرشه پل پارک‌وی`,        city: "تهران",  type: "bridge",    price: 70,  status: "available",        plan: "free",     featured: false, daily:  14573, pedestrian:  2040, views:  11328, score: 46, peak: "18:00-20:00", congestion: 3 },
-    { user: "waiting",   owner: 1, name: `${TAG} بیلبورد میدان نقش جهان`, city: "اصفهان", type: "billboard", price: 55,  status: "pending",          plan: "free",     featured: false, daily:  45745, pedestrian: 10063, views:  44531, score: 55, peak: "17:30-19:30", congestion: 9 },
-    { user: "paying",    owner: 2, name: `${TAG} تابلوی دیجیتال ولنجک`,   city: "تهران",  type: "digital",   price: 120, status: "awaiting_payment", plan: "featured", featured: false, daily:  40239, pedestrian:  7243, views:  41628, score: 60, peak: "18:00-20:00", congestion: 5 },
-    { user: "featured",  owner: 1, name: `${TAG} بیلبورد بلوار فردوسی`,   city: "مشهد",   type: "billboard", price: 65,  status: "available",        plan: "featured", featured: true,  daily:  82803, pedestrian:  7452, views:  57034, score: 42, peak: "07:30-09:00", congestion: 7 },
-    { user: "rejected",  owner: 2, name: `${TAG} ایستگاه اتوبوس ونک`,     city: "تهران",  type: "station",   price: 25,  status: "rejected",         plan: "free",     featured: false, daily:  13022, pedestrian: 31252, views:  26669, score: 52, peak: "07:00-08:30", congestion: 4 },
-    { user: "agency",    owner: 0, name: `${TAG} بیلبورد اتوبان کرج`,     city: "کرج",    type: "billboard", price: 45,  status: "pending",          plan: "free",     featured: false, daily: 137889, pedestrian:  1378, views:  73135, score: 34, peak: "17:00-19:00", congestion: 8 },
-    { user: "agency",    owner: 0, name: `${TAG} عرشه پل شهید همت`,       city: "تهران",  type: "bridge",    price: 80,  status: "available",        plan: "free",     featured: false, daily: 272318, pedestrian:  2723, views: 166102, score: 39, peak: "17:00-19:00", congestion: 8 },
+    { user: "publisher", owner: 0, name: `${TAG} بیلبورد بزرگراه چمران`, city: "تهران",  type: "billboard", price: 90,  moderation: "approved",         plan: "free",     featured: false, daily: 233150, pedestrian:  2331, views: 123662, score: 34, peak: "17:00-19:00", congestion: 8 },
+    { user: "publisher", owner: 0, name: `${TAG} عرشه پل پارک‌وی`,        city: "تهران",  type: "bridge",    price: 70,  moderation: "approved",         plan: "free",     featured: false, daily:  14573, pedestrian:  2040, views:  11328, score: 46, peak: "18:00-20:00", congestion: 3 },
+    { user: "waiting",   owner: 1, name: `${TAG} بیلبورد میدان نقش جهان`, city: "اصفهان", type: "billboard", price: 55,  moderation: "pending",          plan: "free",     featured: false, daily:  45745, pedestrian: 10063, views:  44531, score: 55, peak: "17:30-19:30", congestion: 9 },
+    { user: "paying",    owner: 2, name: `${TAG} تابلوی دیجیتال ولنجک`,   city: "تهران",  type: "digital",   price: 120, moderation: "awaiting_payment", plan: "featured", featured: false, daily:  40239, pedestrian:  7243, views:  41628, score: 60, peak: "18:00-20:00", congestion: 5 },
+    { user: "featured",  owner: 1, name: `${TAG} بیلبورد بلوار فردوسی`,   city: "مشهد",   type: "billboard", price: 65,  moderation: "approved",         plan: "featured", featured: true,  daily:  82803, pedestrian:  7452, views:  57034, score: 42, peak: "07:30-09:00", congestion: 7 },
+    { user: "rejected",  owner: 2, name: `${TAG} ایستگاه اتوبوس ونک`,     city: "تهران",  type: "station",   price: 25,  moderation: "rejected",         plan: "free",     featured: false, daily:  13022, pedestrian: 31252, views:  26669, score: 52, peak: "07:00-08:30", congestion: 4 },
+    { user: "agency",    owner: 0, name: `${TAG} بیلبورد اتوبان کرج`,     city: "کرج",    type: "billboard", price: 45,  moderation: "pending",          plan: "free",     featured: false, daily: 137889, pedestrian:  1378, views:  73135, score: 34, peak: "17:00-19:00", congestion: 8 },
+    { user: "agency",    owner: 0, name: `${TAG} عرشه پل شهید همت`,       city: "تهران",  type: "bridge",    price: 80,  moderation: "approved",         plan: "free",     featured: false, daily: 272318, pedestrian:  2723, views: 166102, score: 39, peak: "17:00-19:00", congestion: 8 },
   ];
 
   const listingIds: Record<string, number> = {};
@@ -139,29 +137,28 @@ async function main() {
       data: {
         name: l.name, slug: `demo-listing-${i + 1}`, location: `${TAG} موقعیت نمونه`,
         region: "منطقه نمونه", city: l.city, type: l.type,
-        status: l.status, plan: l.plan, featured: l.featured,
+        moderation: l.moderation, plan: l.plan, featured: l.featured,
         width: 12, height: 4, area: 48, faces: 2, age: 1,
         price: l.price, priceWeekly: Math.round(l.price / 4),
         priceQuarterly: Math.round(l.price * 3 * 0.9), priceYearly: l.price * 12,
         traffic: { daily: l.daily, peakHour: l.peak, congestionLevel: l.congestion, pedestrian: l.pedestrian, estimatedViews: l.views, viewabilityScore: l.score },
         estimatedViews: l.views,
-        mapX: 50, mapY: 50, icon: "location", images: [], hasImages: false,
+        images: [], hasImages: false,
         agency: ownerSpecs[l.owner].company || ownerSpecs[l.owner].name,
         phone: ownerSpecs[l.owner].phone,
         description: `${TAG} رسانه ثبت‌شده توسط مالک از طریق فرم «ثبت رسانه»`,
         features: [], nearbyLandmarks: [], rating: 0, reviewCount: 0,
         source: "listing",
-        ownerId: ownerRows[l.owner].id,
         submittedById: users[l.user].id,
       },
     });
     listingIds[l.name] = row.id;
   }
-  console.log(`owners: ${ownerRows.length} · listings: ${listingSpecs.length} (published / pending / awaiting payment / rejected)`);
+  console.log(`listings: ${listingSpecs.length} (published / pending / awaiting payment / rejected)`);
 
   // ── Reviews — any signed-in account may review a published media item ─
   const publishedIds = listingSpecs
-    .filter(l => l.status === "available")
+    .filter(l => l.moderation === "approved")
     .map(l => listingIds[l.name]);
 
   // publishedIds[2] is the one listing with `featured: true`, which the

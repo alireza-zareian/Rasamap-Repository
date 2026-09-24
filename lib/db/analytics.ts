@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "./client";
-import { publishedOnly } from "./billboards";
+import { published } from "./billboards";
 
 /**
  * The public /analytics page's figures, optionally for one city: counts by
@@ -10,26 +10,26 @@ import { publishedOnly } from "./billboards";
  */
 export async function getCatalogueAnalytics(city?: string) {
   const baseWhere = {
-    status: publishedOnly,
+    ...published,
     ...(city ? { city } : {}),
   };
 
   const [
-    total, byType, byStatus, topCities, allCitiesRaw,
+    total, byType, byAvailability, topCities, allCitiesRaw,
     priceStats,
     bracketUnder50, bracket50to150, bracket150to300, bracketOver300,
     withImage, geocoded,
   ] = await Promise.all([
     prisma.billboard.count({ where: baseWhere }),
     prisma.billboard.groupBy({ by: ["type"],   where: baseWhere, _count: { id: true } }),
-    prisma.billboard.groupBy({ by: ["status"], where: baseWhere, _count: { id: true } }),
+    prisma.billboard.groupBy({ by: ["availability"], where: baseWhere, _count: { id: true } }),
     prisma.billboard.groupBy({
       by: ["city"], where: baseWhere, _count: { id: true },
       orderBy: { _count: { id: "desc" } }, take: 10,
     }),
     prisma.billboard.groupBy({
       by: ["city"], _count: { id: true },
-      where: { status: publishedOnly },
+      where: published,
       orderBy: { _count: { id: "desc" } }, take: 60,
     }),
     prisma.billboard.aggregate({
@@ -50,7 +50,7 @@ export async function getCatalogueAnalytics(city?: string) {
   return {
     total,
     byType:    Object.fromEntries(byType.map(r    => [r.type,   r._count.id])),
-    byStatus:  Object.fromEntries(byStatus.map(r  => [r.status, r._count.id])),
+    byAvailability: Object.fromEntries(byAvailability.map(r => [r.availability, r._count.id])),
     topCities: topCities.map(r => ({ city: r.city, count: r._count.id })),
     allCities: allCitiesRaw.map(r => r.city).filter(Boolean),
     price: {

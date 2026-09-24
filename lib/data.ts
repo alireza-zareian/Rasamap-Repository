@@ -7,21 +7,28 @@
 // below never reaches the browser bundle.
 // ============================================================
 
-import type { Billboard, TrafficData } from "./types";
-
-// Re-exported for backward compatibility with existing `@/lib/data` imports.
-export type { Billboard, BillboardType, BillboardStatus, SortOption, TrafficData } from "./types";
-export { typeLabels } from "./types";
+import type { Availability, Billboard, TrafficData } from "./types";
 
 /**
- * The shape of a row in this file.
+ * A row as this file and the crawler's JSON spell it — the *source* format,
+ * which is not the domain type.
  *
- * `plan` and `featured` exist on every Billboard the app serves, but they are
- * monetisation state owned by the database: a listing gets them when it is
- * submitted and approved, not from the seed data. The columns carry their
- * defaults ("free" / false), so the static source deliberately omits them.
+ * Sources describe the board, so they carry one `status` that is always an
+ * availability; review state belongs to the database. They also still carry
+ * the crawler's bookkeeping (`url`, `structureCode`, `scrapedAt`, which the
+ * seed moves into billboard_sources) and the retired `icon` / `mapX` / `mapY`,
+ * which nothing reads any more. `plan` and `featured` are monetisation state
+ * the database owns, so the sources omit them.
  */
-type SeedBillboard = Omit<Billboard, "plan" | "featured">;
+export interface SeedBillboard
+  extends Omit<Billboard, "plan" | "featured" | "availability" | "moderation"> {
+  status: Availability;
+  icon?: string;
+  mapX?: number;
+  mapY?: number;
+  url?: string;
+  structureCode?: string;
+}
 
 // Traffic calculation helper
 function calcTraffic(dailyVehicles: number, congestion: number, pedestrian: number): TrafficData {

@@ -1,4 +1,4 @@
-import type { BillboardType } from "./types";
+import { AVAILABILITIES, BILLBOARD_TYPES, type Availability, type BillboardType } from "./types";
 import { provinces, getProvince } from "./iranLocations";
 import type { BillboardFilterParams } from "./db/billboards";
 
@@ -16,12 +16,9 @@ import type { BillboardFilterParams } from "./db/billboards";
  * accepted values whether it is being read or written.
  */
 
-export const ALLOWED_TYPES  = ["billboard", "digital", "bridge", "station", "vehicle"] as const;
-export const ALLOWED_STATUS = ["available", "busy", "reserved", "inactive"] as const;
 export const ALLOWED_SORT   = ["price_asc", "price_desc", "traffic_desc", "area_desc"] as const;
 
 export type SortKey = (typeof ALLOWED_SORT)[number];
-type StatusKey = (typeof ALLOWED_STATUS)[number];
 
 /**
  * How far a radial search may reach.
@@ -46,7 +43,7 @@ const MAX_PAGE = 200;
 export interface ExploreFilters {
   search:   string;
   type:     BillboardType | "all";
-  status:   StatusKey | "";
+  availability: Availability | "";
   maxPrice: number;
   sortBy:   SortKey;
   province: string;
@@ -58,7 +55,7 @@ export interface ExploreFilters {
 }
 
 const DEFAULT_FILTERS: ExploreFilters = {
-  search: "", type: "all", status: "", maxPrice: MAX_PRICE,
+  search: "", type: "all", availability: "", maxPrice: MAX_PRICE,
   sortBy: "price_asc", province: "", city: "", view: "grid", page: 1, near: null,
 };
 
@@ -126,8 +123,8 @@ export function parseExploreParams(
 
   return {
     search:   one(sp.search).trim().slice(0, 100),
-    type:     pick(one(sp.type), ALLOWED_TYPES, "") || "all",
-    status:   pick(one(sp.status), ALLOWED_STATUS, ""),
+    type:     pick(one(sp.type), BILLBOARD_TYPES, "") || "all",
+    availability: pick(one(sp.availability), AVAILABILITIES, ""),
     maxPrice: intInRange(one(sp.maxPrice), MIN_PRICE, MAX_PRICE, MAX_PRICE),
     sortBy:   pick(one(sp.sortBy), ALLOWED_SORT, "") || DEFAULT_FILTERS.sortBy,
     province: resolvedProvince,
@@ -148,7 +145,7 @@ export function toFilterParams(f: ExploreFilters): BillboardFilterParams {
   return {
     search:   f.search || undefined,
     type:     f.type !== "all" ? f.type : undefined,
-    status:   f.status || undefined,
+    availability: f.availability || undefined,
     city:     f.city || undefined,
     cityIn:   !f.city && f.province ? getProvince(f.province)?.cities.map(c => c.name) : undefined,
     maxPrice: f.maxPrice < MAX_PRICE ? f.maxPrice : undefined,
@@ -170,7 +167,7 @@ export function exploreHref(f: ExploreFilters, base = "/explore"): string {
   const p = new URLSearchParams();
   if (f.search)                p.set("search",   f.search);
   if (f.type !== "all")        p.set("type",     f.type);
-  if (f.status)                p.set("status",   f.status);
+  if (f.availability)          p.set("availability", f.availability);
   if (f.province)              p.set("province", f.province);
   if (f.city)                  p.set("city",     f.city);
   if (f.maxPrice < MAX_PRICE)  p.set("maxPrice", String(f.maxPrice));
@@ -194,7 +191,7 @@ export function exploreHref(f: ExploreFilters, base = "/explore"): string {
 /** True when the catalogue is showing anything other than everything. */
 export function hasActiveFilters(f: ExploreFilters): boolean {
   return Boolean(
-    f.search || f.type !== "all" || f.status ||
+    f.search || f.type !== "all" || f.availability ||
     f.province || f.city || f.maxPrice < MAX_PRICE || f.near,
   );
 }
