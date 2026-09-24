@@ -1,10 +1,11 @@
-"use client";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import AnalyticsTab from "@/components/AnalyticsTab";
 import { BarChart2 } from "lucide-react";
+import { getCachedCatalogueAnalytics } from "@/lib/db/cached";
 
-export default function AnalyticsPage() {
+export default async function AnalyticsPage() {
+  const initial = await getCachedCatalogueAnalytics();
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
       <Topbar />
@@ -18,7 +19,7 @@ export default function AnalyticsPage() {
           نمای کلی از وضعیت رسانه‌های تبلیغاتی فضای باز در ایران
         </div>
 
-        <AnalyticsTab />
+        <AnalyticsTab initial={initial} />
       </main>
 
       <Footer />

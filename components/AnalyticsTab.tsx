@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PieChart, LayoutGrid, Building2, Wallet, Database, X } from "lucide-react";
 import { typeLabels, availabilityLabels } from "@/lib/types";
 import { faNum } from "@/lib/format";
+import { fetchJson } from "@/lib/client/fetch-json";
 
 interface AnalyticsData {
   total: number;
@@ -42,21 +43,29 @@ function Bar({ label, value, max, color = "var(--accent)", suffix = "" }: {
   );
 }
 
-export default function AnalyticsTab() {
+export type { AnalyticsData };
+
+/**
+ * The market figures, for the whole country or one city. The page renders the
+ * country-wide view on the server and hands it in as `initial`; only choosing a
+ * city asks the API again.
+ */
+export default function AnalyticsTab({ initial }: { initial: AnalyticsData }) {
   const [city, setCity] = useState("");
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<AnalyticsData | null>(initial);
+  const [loading, setLoading] = useState(false);
+  const firstRender = useRef(true);
 
   useEffect(() => {
-    // No synchronous setLoading(true) here: `loading` starts true for the first
-    // fetch, and on a city change the previous data stays visible until the new
-    // response arrives (no flash to a spinner).
+    // The first render already has the country-wide figures from the server.
+    if (firstRender.current) { firstRender.current = false; return; }
+    // No synchronous setLoading(true) here: on a city change the previous data
+    // stays visible until the new response arrives (no flash to a spinner).
     let active = true;
     const url = city ? `/api/analytics?city=${encodeURIComponent(city)}` : "/api/analytics";
-    fetch(url)
-      .then(r => r.json())
+    fetchJson<AnalyticsData>(url)
       .then(d => { if (active) { setData(d); setLoading(false); } })
-      .catch(() => { if (active) setLoading(false); });
+      .catch(() => { if (active) { setData(null); setLoading(false); } });
     return () => { active = false; };
   }, [city]);
 

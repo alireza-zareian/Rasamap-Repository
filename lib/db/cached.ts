@@ -12,6 +12,7 @@ import {
   getMapPins,
 } from "./billboards";
 import { getSiteStats } from "./stats";
+import { getCatalogueAnalytics } from "./analytics";
 import type { Billboard, CatalogueItem } from "../types";
 
 /**
@@ -87,6 +88,9 @@ export const getCachedMapPins = unstable_cache(
 );
 
 export const getCachedSiteStats = unstable_cache(getSiteStats, ["site-stats"], cacheOptions);
+
+/** The country-wide market figures on /analytics. */
+export const getCachedCatalogueAnalytics = unstable_cache(() => getCatalogueAnalytics(), ["catalogue-analytics"], cacheOptions);
 
 /**
  * One media item by slug, for its own page.
