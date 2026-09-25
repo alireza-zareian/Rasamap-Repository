@@ -99,6 +99,14 @@ function assertSortedBy(items, metric) {
   }
 }
 
+test("search folds Arabic letters and matches every word, wherever it is", async () => {
+  // photo-board is "Photo Board" in شیراز (test/seed.mjs).
+  const find = async (q) => (await api(`/api/billboards?search=${encodeURIComponent(q)}`)).json.items.map(b => b.slug);
+  assert.ok((await find("شيراز")).includes("photo-board"), "an Arabic ي must find a Persian ی");
+  assert.ok((await find("photo شیراز")).includes("photo-board"), "the words need not sit side by side");
+  assert.ok(!(await find("photo تهران")).includes("photo-board"), "every word must match");
+});
+
 test("sortBy=traffic_desc orders by estimated views, not by rating", async () => {
   const { status, json } = await api("/api/billboards?sortBy=traffic_desc&limit=48");
   assert.equal(status, 200);

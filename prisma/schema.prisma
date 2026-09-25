@@ -176,6 +176,13 @@ model Billboard {
   lat Float?
   lng Float?
 
+  // Folded copy of name, city, location and agency that catalogue search reads
+  // (lib/domain/search.ts). SQLite triggers keep it current on every insert and
+  // on every change to those four columns — migration
+  // 20260925160000_add_search_text; Prisma cannot declare a trigger. No code
+  // writes it.
+  searchText String?
+
   hasImages       Boolean @default(false)
   images          Json // string[]
   allImages       Json? // string[] | null

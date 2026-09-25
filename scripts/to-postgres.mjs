@@ -75,6 +75,7 @@ const TABLES = [
   "otpCode",
   "auditLog",
   "idempotencyKey",
+  "revokedSession",
 ];
 
 /** Prisma's @@map names — what the tables are actually called in PostgreSQL. */
@@ -90,6 +91,7 @@ const TABLE_NAMES = {
   otpCode: "otp_codes",
   auditLog: "audit_logs",
   idempotencyKey: "idempotency_keys",
+  revokedSession: "revoked_sessions",
 };
 
 /** Rows per insert — quick, and well under PostgreSQL's parameter ceiling. */
@@ -112,6 +114,18 @@ const EXTRA_INDEXES = [
   `CREATE UNIQUE INDEX IF NOT EXISTS "listings_submitter_name_city_key"
      ON "billboards" ("submittedById", "name", "city")
      WHERE "source" = 'listing' AND "submittedById" IS NOT NULL`,
+  // billboards.searchText is filled by SQLite triggers (migration
+  // 20260925160000_add_search_text); db push makes it a plain column that
+  // nothing would ever fill. PostgreSQL can generate it instead, which is
+  // simpler than porting the triggers. This is the same fold as SEARCH_FOLD in
+  // lib/domain/search.ts, in PostgreSQL's translate(): each character of the
+  // first string becomes the one at its position in the second, and the
+  // trailing tatweel, with no counterpart, is deleted. Change both together.
+  `ALTER TABLE "billboards" DROP COLUMN IF EXISTS "searchText"`,
+  `ALTER TABLE "billboards" ADD COLUMN "searchText" text GENERATED ALWAYS AS (lower(translate(
+     "name" || ' ' || "city" || ' ' || "location" || ' ' || "agency",
+     'يىكةۀ\u200c۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩ـ',
+     'ییکهه 01234567890123456789'))) STORED`,
 ];
 
 const args = process.argv.slice(2);
@@ -153,7 +167,8 @@ if (args[0] === "--write-phase") {
 
   console.log("\n▸ copying");
   for (const table of TABLES) {
-    const rows = dump[table];
+    // PostgreSQL generates searchText itself, and writing a generated column is an error.
+    const rows = table === "billboard" ? dump[table].map(({ searchText: _generated, ...row }) => row) : dump[table];
     if (!rows.length) { console.log(`  ${table.padEnd(16)} empty`); continue; }
     for (let i = 0; i < rows.length; i += BATCH) {
       await pg[table].createMany({ data: rows.slice(i, i + BATCH), skipDuplicates: true });

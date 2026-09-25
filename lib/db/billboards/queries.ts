@@ -1,9 +1,9 @@
 import "server-only";
 import type { Billboard as Row, Prisma } from "@prisma/client";
 import { prisma } from "../client";
-import { isPostgres } from "../engine";
 import type { Availability, Billboard, BillboardType, Moderation } from "../../types";
 import { distanceKm } from "@/lib/geo/distance";
+import { searchTokens } from "@/lib/domain/search";
 import { fromRow, published } from "./core";
 
 /** Every read of the billboards table. Nothing here writes or invalidates. */
@@ -94,18 +94,14 @@ const SORT_MAP: Record<string, Prisma.BillboardOrderByWithRelationInput[]> = {
 };
 
 /**
- * The one place the two engines disagree about behaviour rather than syntax.
- *
- * SQLite's LIKE ignores case for ASCII, so `contains: "billboardiha"` finds
- * "Billboardiha" today. PostgreSQL's does not, and would quietly return fewer
- * results for the same search after a migration — the kind of difference that
- * shows up as "search got worse" rather than as an error. Asking Postgres for
- * the behaviour SQLite already has keeps the two the same.
- *
- * Persian has no case, so this changes nothing for most searches; it matters
- * for the agency names, which are Latin.
+ * Each word of a search must appear in the row's folded `searchText` (name,
+ * city, location, agency — see lib/domain/search.ts for what folding does and
+ * why). Both sides are folded and lower-cased, so the comparison is the same
+ * on SQLite and PostgreSQL without asking either for case-insensitive LIKE.
  */
-const caseInsensitive = isPostgres() ? { mode: "insensitive" as const } : {};
+function searchWhere(query: string): Prisma.BillboardWhereInput[] {
+  return searchTokens(query).map(token => ({ searchText: { contains: token } }));
+}
 
 function buildWhere(p: BillboardFilterParams): Prisma.BillboardWhereInput {
   // Published first and unconditionally: no filter a caller passes can widen
@@ -122,13 +118,8 @@ function buildWhere(p: BillboardFilterParams): Prisma.BillboardWhereInput {
     where.lng = box.lng;
   }
   if (p.search) {
-    const s = p.search.trim();
-    where.OR = [
-      { name:     { contains: s, ...caseInsensitive } },
-      { city:     { contains: s, ...caseInsensitive } },
-      { location: { contains: s, ...caseInsensitive } },
-      { agency:   { contains: s, ...caseInsensitive } },
-    ];
+    const words = searchWhere(p.search);
+    if (words.length) where.AND = words;
   }
   return where;
 }
@@ -275,12 +266,12 @@ export async function getAdminBillboardPage(
   if (p.availability) where.availability = p.availability;
   if (p.moderation)   where.moderation   = p.moderation;
   if (p.q) {
+    const words = searchWhere(p.q);
     where.OR = [
-      { name:     { contains: p.q, ...caseInsensitive } },
-      { location: { contains: p.q, ...caseInsensitive } },
+      ...(words.length ? [{ AND: words }] : []),
       // A slug, so pasting the tail of a public URL finds the row — which is
       // what "edit this listing" on the staff bar does.
-      { slug:     { contains: p.q, ...caseInsensitive } },
+      { slug: { contains: p.q.trim().toLowerCase() } },
     ];
   }
 
