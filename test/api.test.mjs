@@ -1555,6 +1555,29 @@ test("a bad photo in an admin batch writes none of it, and a good batch is audit
   assert.ok(audit.json.persisted.some(r => r.action === "billboard_images_update"));
 });
 
+test("photos a resubmission drops, and those of a deleted listing, leave the disk", async () => {
+  const owner = await mintSession({ userId: "2", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+  const onDisk = (url) => { try { readFileSync(join(process.cwd(), "public", url)); return true; } catch { return false; } };
+  const base = { phone: "09120000000", type: "billboard", city: "کرج", region: "۱", location: "خیابان تست", width: 8, height: 3, faces: 1, price: 30, plan: "free" };
+
+  const sent = await api("/api/listings", { method: "POST", token: owner, body: { ...base, name: "بیلبورد پاک‌سازی عکس", images: [pngDataUrl(), pngDataUrl()] } });
+  assert.equal(sent.status, 201, JSON.stringify(sent.json));
+  const id = sent.json.listing.id;
+  const own = async () => (await api("/api/listings", { token: owner })).json.listings.find(l => l.id === id);
+  const [keep, drop] = (await own()).images;
+  assert.ok(onDisk(keep) && onDisk(drop));
+
+  await decide(adminToken, id, { decision: "revision", note: "یک عکس کافی است." });
+  const resent = await api(`/api/listings/${id}`, { method: "PATCH", token: owner, body: { ...base, name: "بیلبورد پاک‌سازی عکس", images: [keep] } });
+  assert.equal(resent.status, 200, JSON.stringify(resent.json));
+  assert.ok(onDisk(keep), "a kept photo must stay");
+  assert.ok(!onDisk(drop), "a dropped photo must be removed");
+
+  assert.equal((await api(`/api/admin/billboards/${id}`, { method: "DELETE", token: adminToken })).status, 200);
+  assert.ok(!onDisk(keep), "a deleted listing's photos must be removed");
+});
+
 test("DELETE /api/admin/billboards/[id] with role 'editor' is 403 (needs admin+)", async () => {
   const token = await mintSession({ role: "editor" });
   const { status } = await api("/api/admin/billboards/2", { method: "DELETE", token });

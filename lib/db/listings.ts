@@ -9,7 +9,7 @@ import {
 } from "@/lib/domain/listing";
 import { UNDECIDED } from "@/lib/domain/billboard";
 import type { Moderation } from "@/lib/types";
-import { discardImages, saveImages } from "@/lib/uploads";
+import { discardImages, discardUploads, saveImages } from "@/lib/uploads";
 import { faNum } from "@/lib/format";
 import type { CustomerActor } from "@/lib/auth/actor";
 
@@ -169,6 +169,9 @@ export async function resubmitListing(owner: CustomerActor, id: number, input: L
     await discardImages(saved.dir);
     throw conflict("این آگهی قابل ویرایش نیست");
   }
+
+  // Photos the submitter took out of the listing are no longer anyone's.
+  await discardUploads(currentUrls.filter(u => !finalImages.includes(u)));
 
   revalidateCatalogue();
   const row = await prisma.billboard.findUniqueOrThrow({ where: { id }, select: OWN_FIELDS });

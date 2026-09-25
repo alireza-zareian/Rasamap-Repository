@@ -23,8 +23,8 @@
 // ============================================================
 
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile, rm, readFile } from "node:fs/promises";
-import { join, resolve, sep } from "node:path";
+import { mkdir, writeFile, rm, readFile, readdir, rmdir } from "node:fs/promises";
+import { dirname, join, resolve, sep } from "node:path";
 import { faNum } from "@/lib/format";
 import { MAX_IMAGE_BYTES, MAX_LISTING_IMAGES } from "@/lib/domain/listing";
 
@@ -184,5 +184,32 @@ export async function readUpload(segments: string[]): Promise<{ body: Buffer; co
     return { body: await readFile(full), contentType };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Delete uploaded photos no record points to any more — the ones a
+ * resubmission, a photo replacement or a deletion just dropped. They used to
+ * stay on disk for ever, and stayed reachable by URL.
+ *
+ * Only paths under /uploads/ are touched; the crawled catalogue under /images/
+ * is never an upload. Every upload lives in a folder of its own batch
+ * (saveImages names it with a fresh UUID), so no other record can share the
+ * file; the folder goes too once it is empty. Best effort, like discardImages:
+ * a file left behind costs disk space, a thrown error here would cost the
+ * write that already succeeded.
+ */
+export async function discardUploads(urls: string[]): Promise<void> {
+  for (const url of urls) {
+    if (!url.startsWith("/uploads/")) continue;
+    const full = resolve(UPLOAD_ROOT, ...url.slice("/uploads/".length).split("/"));
+    if (!full.startsWith(UPLOAD_ROOT + sep)) continue;
+    try {
+      await rm(full, { force: true });
+      const folder = dirname(full);
+      if (folder !== UPLOAD_ROOT && (await readdir(folder)).length === 0) await rmdir(folder);
+    } catch {
+      /* best effort — see above */
+    }
   }
 }

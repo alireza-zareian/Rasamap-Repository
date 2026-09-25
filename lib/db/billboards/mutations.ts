@@ -6,7 +6,7 @@ import { fromRow, revalidateCatalogue } from "./core";
 import { derivedPrices } from "@/lib/domain/pricing";
 import { NO_TRAFFIC } from "@/lib/domain/billboard";
 import { conflict, invalid, notFound } from "@/lib/domain/errors";
-import { discardImages, saveImages } from "@/lib/uploads";
+import { discardImages, discardUploads, saveImages } from "@/lib/uploads";
 
 /**
  * Every write to the billboards table. Each one that changes what a visitor
@@ -173,7 +173,10 @@ export async function updateBillboard(id: number, data: BillboardUpdateInput): P
 export async function deleteBillboard(id: number): Promise<{ slug: string; name: string; deletedLeads: number }> {
   const row = await prisma.billboard.findUnique({
     where: { id },
-    select: { slug: true, name: true, source: true, _count: { select: { reviews: true, contactRequests: true } } },
+    select: {
+      slug: true, name: true, source: true, images: true, allImages: true,
+      _count: { select: { reviews: true, contactRequests: true } },
+    },
   });
   if (!row) throw notFound("بیلبورد یافت نشد");
   if (row._count.reviews > 0) throw conflict("نمی‌توان رسانه‌ای را که نظر ثبت‌شده دارد حذف کرد");
@@ -189,6 +192,7 @@ export async function deleteBillboard(id: number): Promise<{ slug: string; name:
       });
     }
   });
+  await discardUploads([...((row.images as string[] | null) ?? []), ...((row.allImages as string[] | null) ?? [])]);
   revalidateCatalogue();
   return { slug: row.slug, name: row.name, deletedLeads: row._count.contactRequests };
 }
@@ -236,6 +240,9 @@ export async function replaceBillboardImages(id: number, entries: string[], max:
     await discardImages(saved.dir);
     throw err;
   }
+  // Photos taken off the record, unless the crawled gallery still lists them.
+  const gallery = new Set((existing.allImages as string[] | null) ?? []);
+  await discardUploads(((existing.images as string[] | null) ?? []).filter(u => !images.includes(u) && !gallery.has(u)));
   revalidateCatalogue();
   return images;
 }
