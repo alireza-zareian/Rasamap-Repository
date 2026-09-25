@@ -331,7 +331,8 @@ Run through this every time before deploying or before a live demo. Tick each li
 - [ ] `RUNBOOK.md` rollback steps are current and you know the last-good commit/tag.
 
 ### 7. Final smoke test (do this last, on the real target)
-- [ ] Register a new user → login → reserve a date range → see it in the dashboard.
+- [ ] Sign in as a customer → submit a media item → see it pending in the dashboard →
+      approve it in the admin panel → it appears on /explore.
 - [ ] Admin login → edit a billboard → change reflected on the public page.
 - [ ] Explore: filter by city + type + price, paginate, open a detail page, open the map.
 - [ ] Open the site on a phone (or 390px devtools) — no horizontal scroll, buttons
