@@ -259,7 +259,7 @@ body {
           <div class="step-num">4</div>
           <div class="step-content">
             <div class="step-title">ثبت‌نام کاربر</div>
-            <div class="step-sub">نام · موبایل ۰۹xxx · پسورد. bcrypt cost=12. JWT در HttpOnly cookie</div>
+            <div class="step-sub">موبایل ۰۹xxx ← «ارسال کد» ← کدِ ۶ رقمی روی خودِ صفحه نوشته می‌شود («کد تست: …»)، چون خطِ پیامک وصل نیست ← نام و رمز. bcrypt cost=12. JWT در HttpOnly cookie</div>
             <div class="step-badge"><span class="chip chip-blue">/login ← تب ثبت‌نام</span><span class="chip chip-yellow">یا کاربر دمو آماده ↓</span></div>
           </div>
         </div>
@@ -342,7 +342,7 @@ body {
 
           <div class="q-item sec">
             <div class="q-text">امنیت چطوره؟ XSS؟ CSRF؟</div>
-            <div class="a-text"><strong>JWT در HttpOnly cookie</strong> — JS دسترسی نداره. <strong>SameSite=Strict</strong> جلوی CSRF رو می‌گیره. Zod روی همه ورودی‌ها. Rate-limit sliding-window. Generic error message در auth — no user enumeration.</div>
+            <div class="a-text"><strong>JWT در HttpOnly cookie</strong> — JS دسترسی نداره. <strong>SameSite=Lax</strong> جلوی CSRF رو می‌گیره، و هر درخواست توکن رو با حساب می‌سنجه: تغییر رمز نشست‌های قبلی رو می‌بنده و خروج همون توکن رو باطل می‌کنه. Zod روی همه ورودی‌ها. Rate-limit sliding-window. Generic error message در auth — no user enumeration.</div>
           </div>
 
           <div class="q-item tech">
@@ -458,7 +458,7 @@ body {
             <tr>
               <td class="layer">Auth</td>
               <td class="tech-name">JWT · jose · bcrypt cost=12</td>
-              <td class="why">Stateless sessions. HttpOnly+SameSite=Strict ← XSS/CSRF safe. RBAC چهارسطحی. Timing-safe dummy hash.</td>
+              <td class="why">Signed sessions checked against the account on every request (revocable). HttpOnly+SameSite=Lax ← XSS/CSRF safe. RBAC چهارسطحی. Timing-safe dummy hash.</td>
             </tr>
             <tr>
               <td class="layer">Maps</td>

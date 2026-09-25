@@ -389,7 +389,7 @@ npm run demo             # ساخت + اجرا روی localhost:3000 — برا�
 npm run dev              # فقط هنگام کدنویسی (۹۷ برابر CPU بیشتر — §۲۲)
 npm run build            # باید بدون خطا پاس شود
 npm run lint
-npm test                 # ۱۴۲ آزمون روی یک ساخت تولیدی
+npm test                 # ۱۷۹ آزمون روی یک ساخت تولیدی
 npm run bench            # بنچمارک بار (سرور dev باید بالا باشد)
 npm run db:migrate
 npm run db:seed          # 3545 رکورد
@@ -399,7 +399,7 @@ npm run db:studio        # Prisma Studio
 ```
 
 **Env لازم:** `DATABASE_URL` · `AUTH_SECRET` · `ADMIN_EMAIL` · `ADMIN_PASSWORD_HASH` · `ADMIN_NAME` · `NESHAN_API_KEY`
-**Env اختیاری:** `LOG_DIR` / `LOG_LEVEL` (لاگ به فایل) · `KAVENEGAR_API_KEY` + `KAVENEGAR_SENDER` / `KAVENEGAR_OTP_TEMPLATE` (SMS — تا وقتی خالی باشد کل لایه SMS خاموش است) · `OTP_DEV_ECHO` (فقط لوکال)
+**Env اختیاری:** `LOG_DIR` / `LOG_LEVEL` (لاگ به فایل) · `KAVENEGAR_API_KEY` + `KAVENEGAR_SENDER` / `KAVENEGAR_OTP_TEMPLATE` (SMS — تا وقتی خالی باشد کل لایه SMS خاموش است) · `OTP_DEV_ECHO` (کدِ پیامک روی صفحه؛ فقط وقتی خطِ پیامک نیست و فقط برای بازدیدِ شبکهٔ محلی)
 
 ---
 
@@ -506,7 +506,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 | F4 | `project-ai.zip` (265 KB) tracked at repo root; `.DS_Store` scattered. → **fixed** — `.gitignore` updated and neither is tracked. | Low |
 | F5 | No `PRE_DEPLOY_CHECKLIST.md` / `RUNBOOK.md`. → **fixed** | Med |
 | F6 | No `LICENSE`. → **fixed** — MIT. | Low |
-| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 142 tests (`npm test`, on a production build) plus 9 browser flows (`npm run test:e2e`). | Med |
+| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 179 tests (`npm test`, on a production build) plus 10 browser flows (`npm run test:e2e`). | Med |
 | F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. → **fixed** — every live count now reads the same (3,536 rows, 3,532 published, 101 cities, 3,020 geocoded, verified against `dev.db`); older figures survive only in dated history entries. The module split is stated in `AGENTS.md` rule 1 and F15: `lib/types.ts` is data-free, `lib/data.ts` holds the dataset and is imported only by `prisma/seed.ts`. | Low |
 | F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |
@@ -775,7 +775,7 @@ migration or touches product behaviour.
 | 1 | Front-end foundations | Next 16 App Router, React 19, RTL Persian, inline-CSS design system, `error.tsx` + `not-found.tsx`, loading states on some routes | Consistent empty/error/retry states on every list; mobile passes; some UX-breaking stubs (contact form, list-media file input) | **Required** (bug fixes + unhappy-path), **Worth it** (mobile) | It is the whole demo surface. Fix what visibly breaks; full redesign is out of scope. |
 | 2 | APIs & backend logic | ~20 route handlers, Zod `.safeParse()` everywhere, allowlists for sort/filter, consistent Persian error payloads, rate-limit + auth ordering enforced | Structured request logging; a couple of stub endpoints | **Required** (keep the discipline), **Worth it** (logging) | Already strong. Logging is the main gap professors probe. |
 | 3 | Database & storage | Prisma 7 schema, FKs, unique constraints (`slug`, `phone`, `review`), composite indexes matching query patterns, WAL mode, seed vs demo seed separated | Automated backup + tested restore; denormalised sort keys (`area`, `estimatedViews`) indexed | **Required** (backup + restore doc), **Worth it** (sort correctness) | "Do you have backups?" is a guaranteed question. SQLite `.backup` is one command. |
-| 4 | Auth & permissions | JWT HttpOnly + SameSite=Strict cookies, bcrypt cost 12, timing-safe dummy hash, no user enumeration, `proxy.ts` guard, RBAC `viewer<editor<admin<super_admin` | Object-level authz spot-check; password reset flow (none exists) | **Required** (authz check), **Worth it** (reset), **Overkill** (email verification) | Being logged in ≠ authorised for a given row — must verify. No email service in Iran → reset is a stretch. |
+| 4 | Auth & permissions | JWT HttpOnly + SameSite=Lax cookies, revocable sessions, bcrypt cost 12, timing-safe dummy hash, no user enumeration, `proxy.ts` guard, RBAC `viewer<editor<admin<super_admin` | Object-level authz spot-check; password reset flow (none exists) | **Required** (authz check), **Worth it** (reset), **Overkill** (email verification) | Being logged in ≠ authorised for a given row — must verify. No email service in Iran → reset is a stretch. |
 | 5 | Hosting & deployment | Runs with `npm run build && npm start`; security headers + HSTS in `next.config.ts` | Deterministic documented deploy steps; env separation doc | **Required** | `PRE_DEPLOY_CHECKLIST.md` + `RUNBOOK.md` cover this. Cheap, expected. |
 | 6 | Cloud & compute | Single Node process, single SQLite file | Nothing | **Overkill** | Capstone demo. No cloud compute needed; say so. |
 | 7 | CI/CD & version control | Git repo, 150+ commits on `main`, one behaviour change per commit; `.github/workflows/scrape.yml` runs the crawler | A tag for the presentation; a CI job that runs `npm test` | **Required = already met** (git), **Worth it** (tag), **Overkill** (full CI) | History and rollback exist. There is a suite to run now, but wiring CI for a single-author capstone buys little over running `npm test` before a commit. |

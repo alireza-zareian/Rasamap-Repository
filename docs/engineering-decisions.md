@@ -1872,6 +1872,14 @@ These are the numbers the thesis, `docs/codemap.html` and
 `docs/thesis/shots/import-graph.svg` all render, and they come from one script
 reading the repository — not from an estimate.
 
+*Recounted 2026-09-26:* 202 files, 520 edges, 173 connected, still zero cycles
+and zero upward edges — but only after a fix. Resolving customer sessions had
+made `lib/auth/actor.ts` and `lib/db/{customers,staff}.ts` import each other
+(type-only, so nothing failed at runtime), and nothing noticed until the numbers
+were counted for the thesis. The `Actor` types moved to `lib/domain/actor.ts`,
+and both properties are now a guard test in `test/api.test.mjs` rather than a
+measurement someone has to remember to repeat.
+
 ### The check that catches a mechanical split
 
 Moving line ranges between files is the kind of edit that looks finished and is
