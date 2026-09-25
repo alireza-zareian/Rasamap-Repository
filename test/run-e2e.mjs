@@ -50,6 +50,8 @@ const env = {
   // `npm run demo` is serving or the .next-test the API suite builds.
   NEXT_DIST_DIR: ".next-e2e",
   TEST_BASE_URL: BASE,
+  // Off, as in test/run.mjs: the sign-up flow is proven without the demo echo.
+  OTP_DEV_ECHO: "0",
 };
 
 function step(msg) {

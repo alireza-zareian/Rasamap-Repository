@@ -7,9 +7,17 @@ import { isPhoneRegistered } from "@/lib/db/customers";
 import { sendOtp, smsEnabled } from "@/lib/sms";
 import { auditLog } from "@/lib/audit";
 
-// Local-only affordance: echo the code back so the flow is testable without a
-// live SMS line. Guarded by an explicit env flag and never on in production.
-const DEV_ECHO = process.env.OTP_DEV_ECHO === "1" && process.env.NODE_ENV !== "production";
+// Echo the code back on screen, for a machine with no SMS line — the demo
+// laptop. It used to be refused whenever NODE_ENV was "production", which
+// `next start` always sets, so on `npm run demo` sign-up and password reset
+// could not be completed at all: the code reached no phone and no screen.
+//
+// It is keyed on the fact that matters instead: there is no SMS line to send
+// through. It needs the explicit flag too, and it switches itself off the
+// moment KAVENEGAR_API_KEY is set. Left on in a real deployment without SMS,
+// anyone could reset any customer's password, which is why lib/env.ts warns
+// loudly at boot whenever it is armed.
+const DEV_ECHO = process.env.OTP_DEV_ECHO === "1" && !smsEnabled;
 
 // POST /api/auth/otp/send — start a phone-verified flow: reset or sign-up (public)
 export const POST = defineRoute(

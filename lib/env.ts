@@ -29,9 +29,8 @@ const optional = z.object({
   KAVENEGAR_API_KEY: z.string().optional(),
   KAVENEGAR_SENDER: z.string().optional(),
   KAVENEGAR_OTP_TEMPLATE: z.string().optional(),
-  // Echoes the OTP code in the API response for local testing — read directly
-  // against NODE_ENV in app/api/auth/otp/send/route.ts, so "1" is a no-op in
-  // production regardless of this value.
+  // Shows the OTP code on screen while no SMS line is configured — the demo
+  // laptop (app/api/auth/otp/send/route.ts). Warned about below when armed.
   OTP_DEV_ECHO: z.enum(["0", "1"]).optional(),
   // Absolute site URL for sitemap/OG/canonical links (lib/site-url.ts);
   // defaults to https://rasamap.ir.
@@ -60,6 +59,14 @@ export function validateEnv(): void {
   if (!opt.success) {
     const lines = opt.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`);
     throw new Error("Invalid optional environment variable:\n" + lines.join("\n"));
+  }
+
+  if (process.env.OTP_DEV_ECHO === "1" && !process.env.KAVENEGAR_API_KEY?.trim()) {
+    // console, not the logger: this must show in the terminal whatever LOG_LEVEL says.
+    console.warn(
+      "\n  ⚠ OTP_DEV_ECHO=1 with no SMS line: sign-up and reset codes are shown on screen.\n" +
+      "    Fine for the demo laptop. On a public server anyone could reset any customer's password.\n",
+    );
   }
 
   done = true;

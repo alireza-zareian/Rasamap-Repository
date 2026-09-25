@@ -158,8 +158,8 @@ test("signing up takes two steps, and the code is one of them", async () => {
     await b.waitForSelector("input[inputmode='numeric']");
 
     // Read the code the way the API suite does, from the store. The page can
-    // echo it, but only with OTP_DEV_ECHO=1, and that flag cannot arm on a
-    // production build — which is what this suite runs against (§22b).
+    // echo it with OTP_DEV_ECHO=1, which the demo laptop turns on and
+    // test/run-e2e.mjs forces off, so the flow is proven without it.
     const code = await recoverOtpCode(phone, "register");
     assert.match(String(code ?? ""), /^\d{6}$/, "no sign-up code was issued");
 

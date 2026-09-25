@@ -39,10 +39,11 @@ const env = {
   // Build into a separate directory so a test run never replaces the .next
   // that `npm run demo` is serving (read by next.config.ts).
   NEXT_DIST_DIR: ".next-test",
-  // SMS stays dormant here (no KAVENEGAR_API_KEY). The reset test does not
-  // need OTP_DEV_ECHO: that echo is gated on NODE_ENV and so cannot arm
-  // against this production build, and helpers.recoverOtpCode() reads the
-  // issued code from the store instead.
+  // SMS stays dormant here (no KAVENEGAR_API_KEY), and the on-screen code echo
+  // the demo laptop turns on in .env is forced off, so the suite proves the
+  // flows with only what a real client receives: helpers.recoverOtpCode()
+  // reads the issued code from the store instead.
+  OTP_DEV_ECHO: "0",
 };
 
 function step(msg) {
