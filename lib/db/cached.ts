@@ -50,14 +50,27 @@ const cacheOptions = { revalidate: CATALOGUE_TTL, tags: [CATALOGUE_TAG] };
  * is then exactly what may be sent to a browser, so no caller can forget — and
  * the cache holds the smaller object rather than the record it came from.
  */
-export const getCachedFilteredBillboards = unstable_cache(
-  async (p: BillboardFilterParams): Promise<{ items: CatalogueItem[]; total: number }> => {
-    const { items, total } = await getFilteredBillboards(p);
-    return { items: items.map(toCatalogueItem), total };
-  },
-  ["catalogue-page"],
-  cacheOptions,
-);
+async function filteredCataloguePage(p: BillboardFilterParams): Promise<{ items: CatalogueItem[]; total: number }> {
+  const { items, total } = await getFilteredBillboards(p);
+  return { items: items.map(toCatalogueItem), total };
+}
+
+const cachedCataloguePage = unstable_cache(filteredCataloguePage, ["catalogue-page"], cacheOptions);
+
+/**
+ * Whether a filter can be one of an unbounded number of values. Free search
+ * text and a map centre can be; every other filter is an allowlisted value or a
+ * bounded number. The cache is a directory of files with one entry per distinct
+ * argument, so caching the open-ended ones let a loop over `?search=` fill the
+ * disk — and a query nobody else will ever repeat gains nothing from it anyway.
+ */
+function isOpenEnded(p: BillboardFilterParams): boolean {
+  return !!p.search || !!p.near;
+}
+
+export function getCachedFilteredBillboards(p: BillboardFilterParams) {
+  return isOpenEnded(p) ? filteredCataloguePage(p) : cachedCataloguePage(p);
+}
 
 /**
  * The photographed, busiest media items behind the carousels.
@@ -81,11 +94,11 @@ export const getCachedShowcaseBillboards = unstable_cache(
  * two answer different questions about one filter — the catalogue wants 24 rows
  * with photographs, the map wants every coordinate and no photograph at all.
  */
-export const getCachedMapPins = unstable_cache(
-  getMapPins,
-  ["map-pins"],
-  cacheOptions,
-);
+const cachedMapPins = unstable_cache(getMapPins, ["map-pins"], cacheOptions);
+
+export function getCachedMapPins(p: BillboardFilterParams) {
+  return isOpenEnded(p) ? getMapPins(p) : cachedMapPins(p);
+}
 
 export const getCachedSiteStats = unstable_cache(getSiteStats, ["site-stats"], cacheOptions);
 

@@ -26,20 +26,24 @@ const REPLY_FIELDS = { id: true, reviewId: true, userId: true, authorName: true,
  * write to a billboard's reviews recomputes them inside the same transaction.
  * Recomputing from an aggregate rather than incrementing keeps them right when
  * an upsert replaces a rating or a delete removes one.
+ *
+ * Returns whether the summary moved. Only then does anything a card shows
+ * change, and only then is the catalogue cache dropped: dropping it on every
+ * review write let one account editing its own comment in a loop keep the
+ * whole site uncached.
  */
-async function refreshRatingSummary(tx: Prisma.TransactionClient, billboardId: number): Promise<void> {
+async function refreshRatingSummary(tx: Prisma.TransactionClient, billboardId: number): Promise<boolean> {
   const agg = await tx.review.aggregate({
     where:  { billboardId },
     _avg:   { rating: true },
     _count: { _all: true },
   });
-  await tx.billboard.update({
-    where: { id: billboardId },
-    data: {
-      rating:      averageRating(agg._avg.rating),
-      reviewCount: agg._count._all,
-    },
+  const summary = { rating: averageRating(agg._avg.rating), reviewCount: agg._count._all };
+  const { count } = await tx.billboard.updateMany({
+    where: { id: billboardId, NOT: summary },
+    data:  summary,
   });
+  return count > 0;
 }
 
 /**
@@ -83,17 +87,16 @@ export async function saveReview(
   // means nothing. It may still answer reviews in the thread.
   if (billboard.submittedById === author.id) throw forbidden("امکان ثبت امتیاز برای رسانه‌ای که خودتان ثبت کرده‌اید وجود ندارد");
 
-  const review = await prisma.$transaction(async tx => {
+  const { review, changed } = await prisma.$transaction(async tx => {
     const saved = await tx.review.upsert({
       where:   { billboardId_userId: { billboardId, userId: author.id } },
       update:  { rating, comment },
       create:  { billboardId, userId: author.id, rating, comment },
       include: { user: { select: { name: true } } },
     });
-    await refreshRatingSummary(tx, billboardId);
-    return saved;
+    return { review: saved, changed: await refreshRatingSummary(tx, billboardId) };
   });
-  revalidateCatalogue();
+  if (changed) revalidateCatalogue();
   return review;
 }
 
@@ -105,11 +108,11 @@ export async function deleteReview(author: CustomerActor, id: number): Promise<v
   const review = await prisma.review.findUnique({ where: { id }, select: { userId: true, billboardId: true } });
   if (!review || review.userId !== author.id) throw notFound("نظر یافت نشد");
 
-  await prisma.$transaction(async tx => {
+  const changed = await prisma.$transaction(async tx => {
     await tx.review.delete({ where: { id } });
-    await refreshRatingSummary(tx, review.billboardId);
+    return refreshRatingSummary(tx, review.billboardId);
   });
-  revalidateCatalogue();
+  if (changed) revalidateCatalogue();
 }
 
 /**
