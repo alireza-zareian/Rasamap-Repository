@@ -34,7 +34,12 @@ server {
     # so Node never wakes up for a picture. Paths are relative to the checkout.
     root /srv/rasamap/public;
 
-    client_max_body_size 12M;   # listing photo uploads
+    # Above the largest body the app itself accepts: an admin's ten-photo batch
+    # (maxUploadBodyBytes(10) in lib/uploads.ts, about 28 MB); a listing's five
+    # photos are about 14 MB. At 12M nginx answered a legitimate five-photo
+    # listing with its own HTML 413, which the form cannot read. The app still
+    # enforces its own, per-route limits.
+    client_max_body_size 30M;
 
     # Next's build output is content-hashed, so it can be cached forever.
     location /_next/static/ {

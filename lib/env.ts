@@ -23,6 +23,8 @@ const optional = z.object({
   // Logging (see lib/logger.ts)
   LOG_DIR: z.string().optional(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
+  // The interface server.mjs listens on; unset means every interface (the demo).
+  BIND_ADDRESS: z.string().optional(),
   // Reverse proxies in front of the app (see lib/auth/client-ip.ts)
   TRUSTED_PROXY_COUNT: z.string().regex(/^\d+$/, "must be a non-negative integer").optional(),
   // SMS (lib/sms.ts) — the whole layer is a no-op until KAVENEGAR_API_KEY is set.

@@ -4,7 +4,7 @@
 #   sudo systemctl daemon-reload && sudo systemctl enable --now rasamap
 #   systemctl status rasamap · journalctl -u rasamap -f
 #
-# `next start`, never `next dev`: §22 measured dev mode at ~97x the CPU for the
+# `npm run start` (server.mjs, i.e. `next start`), never `next dev`: §22 measured dev mode at ~97x the CPU for the
 # same ten routes. On a small VPS that is the difference between idle and hot.
 
 [Unit]
@@ -22,6 +22,8 @@ WorkingDirectory=/srv/rasamap
 EnvironmentFile=/etc/rasamap/env
 Environment=NODE_ENV=production
 Environment=PORT=3000
+# Loopback only: nginx is the one way in (see server.mjs).
+Environment=BIND_ADDRESS=127.0.0.1
 
 ExecStart=/usr/bin/npm run start
 
