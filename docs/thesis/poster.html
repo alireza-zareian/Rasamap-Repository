@@ -202,21 +202,22 @@ flowchart LR
     U["کاربر"]
     PX["Proxy<br>پیش از هر درخواست"]
     RSC["Server Component<br>صفحه روی سرور"]
-    API["API — ۴۲ نقطهٔ پایانی"]
+    API["API — ۴۳ نقطهٔ پایانی"]
+    PL["خط لولهٔ واحد<br>برای هر ۳۵ مسیر"]
     DAL["Data Access Layer<br>تنها راه به دیتابیس"]
     DB[("پایگاه داده")]
     U --> PX
     PX -->|"درخواستِ صفحه"| RSC
     PX -->|"تعاملِ کاربر"| API
     RSC --> DAL
-    API --> DAL
+    API --> PL --> DAL
     DAL --> DB
     RSC -->|"HTML آماده"| U
     API -->|"JSON"| U
     classDef s fill:#EDF3FF,stroke:#2F6BE0,color:#101725,font-size:19px
     classDef d fill:#EAF7F1,stroke:#0E8F5D,color:#101725,font-size:19px
     classDef u fill:#FFF8E8,stroke:#B57209,color:#101725,font-size:19px
-    class PX,RSC,API,DAL s
+    class PX,RSC,API,PL,DAL s
     class DB d
     class U u
     </div>
@@ -225,8 +226,8 @@ flowchart LR
   <div class="row r3">
     <div class="card">
       <h2>صحت</h2>
-      <p>هر مسیر یک پایپلاین ثابت دارد: نشست ← سقف نرخ ← دسترسی ← اعتبارسنجی ← رد ممیزی.</p>
-      <p><b>ترتیبش قابل جابه‌جایی نیست.</b></p>
+      <p>هر مسیر از یک خط لوله می‌گذرد: نشست ← سقف نرخ ← دسترسی ← اعتبارسنجی ← رد ممیزی.</p>
+      <p><b>یک بار نوشته شده؛ کامپایلر و ESLint نگهش می‌دارند.</b></p>
     </div>
     <div class="card">
       <h2>همروندی</h2>
