@@ -33,3 +33,17 @@ export const NO_TRAFFIC: z.infer<typeof TrafficSchema> = {
  * no longer be re-decided (a second click must not re-grant a paid promotion).
  */
 export const UNDECIDED = ["pending", "awaiting_payment", "needs_revision", "rejected"] as const;
+
+/**
+ * What an admin may type for a board's size, faces and price.
+ *
+ * The columns are integers. The edit form used to accept any non-negative
+ * number — 10.5 metres, a price of 12.5, a width of 0 — which Prisma then
+ * refused to write, and the admin saw a bare server error instead of a
+ * sentence about the field. The create form had its own, different bounds.
+ * One set now serves both, with the same 200 m ceiling a listing and the
+ * nightly import use.
+ */
+export const SizeMetres = z.number().int("ابعاد باید عدد صحیح (متر) باشد").min(1).max(200);
+export const FaceCount  = z.number().int().min(1).max(12);
+export const MonthlyPrice = z.number().int("قیمت باید عدد صحیح باشد").min(0).max(100_000);

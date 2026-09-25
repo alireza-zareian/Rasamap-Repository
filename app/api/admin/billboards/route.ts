@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { getAdminBillboardPage, createBillboard } from "@/lib/db/billboards";
 import { AVAILABILITIES, BILLBOARD_TYPES, MODERATIONS } from "@/lib/types";
+import { FaceCount, MonthlyPrice, SizeMetres } from "@/lib/domain/billboard";
 
 const SORTS = ["id_asc", "id_desc", "price_asc", "price_desc", "name_asc", "name_desc", "city_asc", "city_desc"] as const;
 
@@ -52,13 +53,13 @@ export const POST = defineRoute(
       location:    z.string().min(3).max(300),
       city:        z.string().min(1).max(100),
       type:        z.enum(BILLBOARD_TYPES),
-      price:       z.number().int().min(0),
+      price:       MonthlyPrice,
       agency:      z.string().max(200).default(""),
       phone:       z.string().max(20).default(""),
       description: z.string().max(2000).default(""),
-      width:       z.number().int().min(1).max(100).default(12),
-      height:      z.number().int().min(1).max(100).default(4),
-      faces:       z.number().int().min(1).max(10).default(1),
+      width:       SizeMetres.default(12),
+      height:      SizeMetres.default(4),
+      faces:       FaceCount.default(1),
       lat:         z.number().min(24).max(40).nullish(),
       lng:         z.number().min(44).max(64).nullish(),
     }),

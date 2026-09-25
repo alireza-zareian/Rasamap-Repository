@@ -5,6 +5,7 @@ import { idParams } from "@/lib/http/params";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { getBillboardById, updateBillboard, deleteBillboard } from "@/lib/db/billboards";
 import { notFound } from "@/lib/domain/errors";
+import { FaceCount, MonthlyPrice, SizeMetres } from "@/lib/domain/billboard";
 import { AVAILABILITIES, BILLBOARD_TYPES } from "@/lib/types";
 
 // GET /api/admin/billboards/[id] — one record for the edit view (any staff).
@@ -34,13 +35,13 @@ export const PUT = defineRoute(
       availability: z.enum(AVAILABILITIES).optional(),
       lat:         z.number().min(24).max(40).nullable().optional(),
       lng:         z.number().min(44).max(64).nullable().optional(),
-      price:       z.number().min(0).optional(),
+      price:       MonthlyPrice.optional(),
       description: z.string().max(2000).optional(),
       agency:      z.string().max(200).optional(),
       phone:       z.string().max(50).optional(),
-      width:       z.number().min(0).optional(),
-      height:      z.number().min(0).optional(),
-      faces:       z.number().int().min(1).optional(),
+      width:       SizeMetres.optional(),
+      height:      SizeMetres.optional(),
+      faces:       FaceCount.optional(),
     }),
   },
   async ({ params, body, audit }) => {

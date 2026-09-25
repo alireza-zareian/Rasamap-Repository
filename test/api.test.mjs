@@ -1537,6 +1537,16 @@ test("PUT /api/admin/billboards/[id] with role 'admin' updates the row", async (
   assert.equal(json.billboard?.price, 13500);
 });
 
+test("an admin edit with a fractional size is refused in words, not with a server error", async () => {
+  // The columns are integers; the schema used to accept 10.5 and Prisma threw.
+  const editor = await mintSession({ role: "editor" });
+  const bad = await api("/api/admin/billboards/6", { method: "PUT", token: editor, body: { width: 10.5 } });
+  assert.equal(bad.status, 400, JSON.stringify(bad.json));
+  assert.match(bad.json.error, /عدد صحیح/);
+  const good = await api("/api/admin/billboards/6", { method: "PUT", token: editor, body: { width: 10 } });
+  assert.equal(good.status, 200, JSON.stringify(good.json));
+});
+
 test("the photo list keeps only photos the record already has", async () => {
   const editor = await mintSession({ role: "editor" });
   // id 6 (photo-board) carries /uploads/test/1.jpg in the fixtures.
