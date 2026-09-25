@@ -6,7 +6,7 @@ import { issueOtp } from "@/lib/db/otp-codes";
 import { isPhoneRegistered } from "@/lib/db/customers";
 import { sendOtp, smsEnabled } from "@/lib/sms";
 import { auditLog } from "@/lib/audit";
-import { isLocalNetworkRequest } from "@/lib/auth/client-ip";
+import { isLocalNetworkRequest, isLoopbackAddress } from "@/lib/auth/client-ip";
 
 // Echo the code back on screen, for a machine with no SMS line — the demo
 // laptop. It used to be refused whenever NODE_ENV was "production", which
@@ -66,7 +66,12 @@ export const POST = defineRoute(
       const code = await issueOtp(phone, purpose);
       const r = await sendOtp(phone, code);
       auditLog("otp_sent", "info", { ip, details: { purpose, delivered: r.sent, smsEnabled } });
-      if (DEV_ECHO && isLocalNetworkRequest(req, ip)) devCode = code;
+      // A sign-up code is shown to the whole local network, so a reviewer's
+      // phone on the demo Wi-Fi can open an account. A reset code is shown only
+      // on the machine itself: echoed to the room, anyone there could reset the
+      // demo account's password in the middle of the presentation.
+      const echoHere = purpose === "register" ? isLocalNetworkRequest(req, ip) : isLoopbackAddress(ip);
+      if (DEV_ECHO && echoHere) devCode = code;
     }
 
     const message = purpose === "register"

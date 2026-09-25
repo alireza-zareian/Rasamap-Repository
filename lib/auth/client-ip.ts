@@ -85,3 +85,9 @@ export function isLocalNetworkRequest(req: NextRequest, ip: string): boolean {
   const hostname = host.startsWith("[") ? host.slice(1, host.indexOf("]")) : host.replace(/:\d+$/, "");
   return isPrivateAddress(hostname) && isPrivateAddress(ip);
 }
+
+/** The machine itself: 127.0.0.0/8 or ::1, as the peer address reports it. */
+export function isLoopbackAddress(addr: string): boolean {
+  const a = addr.trim().toLowerCase().replace(/^::ffff:/, "");
+  return a === "::1" || /^127\./.test(a);
+}
