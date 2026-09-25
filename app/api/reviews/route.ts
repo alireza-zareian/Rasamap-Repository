@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { positiveId } from "@/lib/http/params";
-import { userApiRateLimit } from "@/lib/rate-limit";
+import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { listReviews, saveReview } from "@/lib/db/reviews";
 
 // GET /api/reviews?billboardId=X — public
@@ -37,7 +37,9 @@ export const POST = defineRoute(
     }),
     messages: { signedOut: "برای ثبت نظر باید وارد حساب کاربری شوید" },
   },
-  async ({ actor, body }) => {
+  async ({ actor, body, tooMany }) => {
+    const perAccount = await accountWriteRateLimit("review", String(actor.id));
+    if (!perAccount.allowed) return tooMany(perAccount);
     const review = await saveReview(actor, body);
     return NextResponse.json({ review }, { status: 201 });
   },

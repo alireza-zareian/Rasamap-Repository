@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/http/route";
 import { idParams } from "@/lib/http/params";
-import { userApiRateLimit } from "@/lib/rate-limit";
+import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { resubmitListing } from "@/lib/db/listings";
 import { ListingInputSchema, MAX_LISTING_IMAGES } from "@/lib/domain/listing";
 import { maxUploadBodyBytes } from "@/lib/uploads";
@@ -20,7 +20,11 @@ export const PATCH = defineRoute(
     body: ListingInputSchema,
     maxBodyBytes: maxUploadBodyBytes(MAX_LISTING_IMAGES),
   },
-  async ({ actor, params, body, audit }) => {
+  async ({ actor, params, body, audit, tooMany }) => {
+    // A resubmission carries photos too, so it shares the submission budget.
+    const perAccount = await accountWriteRateLimit("listing", String(actor.id));
+    if (!perAccount.allowed) return tooMany(perAccount);
+
     const listing = await resubmitListing(actor, params.id, body);
     await audit("listing_resubmitted", {
       details: { billboardId: params.id, to: listing.moderation },

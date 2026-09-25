@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/http/route";
-import { userApiRateLimit } from "@/lib/rate-limit";
+import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { idempotency } from "@/lib/db/idempotency";
 import { listOwnListings, submitListing } from "@/lib/db/listings";
 import { ListingInputSchema, MAX_LISTING_IMAGES } from "@/lib/domain/listing";
@@ -16,7 +16,10 @@ export const POST = defineRoute(
     maxBodyBytes: maxUploadBodyBytes(MAX_LISTING_IMAGES),
     messages: { signedOut: "برای ثبت رسانه باید وارد حساب کاربری خود شوید" },
   },
-  async ({ req, actor, body }) => {
+  async ({ req, actor, body, tooMany }) => {
+    const perAccount = await accountWriteRateLimit("listing", String(actor.id));
+    if (!perAccount.allowed) return tooMany(perAccount);
+
     const idem = await idempotency(req.headers.get("idempotency-key"), actor.id, "listings");
     if ("error" in idem) return NextResponse.json({ error: idem.error }, { status: idem.status });
     if ("replay" in idem) return NextResponse.json(idem.replay.body, { status: idem.replay.status });

@@ -174,6 +174,33 @@ export async function registerUser({ name = "Test User", phone, password = "secr
   return api("/api/auth/register", { method: "POST", ip, headers, body: { name, phone, password, code } });
 }
 
+/**
+ * A customer account of its own, straight into the store, with a session for it.
+ *
+ * Listing submissions are limited per account (lib/rate-limit, ten an hour),
+ * so the tests that submit do it from fresh accounts rather than all spending
+ * the budget of seeded users 1 and 2 — the limit is not what they are testing.
+ * Written to the database directly because going through sign-up would cost
+ * each of them a bcrypt round and an OTP hash search.
+ */
+export async function freshCustomer() {
+  const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
+  const prisma = new PrismaClient({ adapter });
+  try {
+    for (;;) {
+      const phone = randomPhone();
+      try {
+        const user = await prisma.user.create({ data: { name: "Fresh Customer", phone, passwordHash: "x" } });
+        return mintSession({ userId: String(user.id), role: "user", email: phone });
+      } catch (err) {
+        if (err?.code !== "P2002") throw err; // a phone collision: draw another
+      }
+    }
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 export async function countOtpRows(phone, purpose = "password_reset") {
   const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
   const prisma = new PrismaClient({ adapter });

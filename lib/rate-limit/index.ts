@@ -238,6 +238,28 @@ export function contactRevealRateLimit(accountKey: string): Promise<RateLimitRes
 }
 
 /**
+ * Writes one account may make, per account.
+ *
+ * The write routes were limited per address only, 300 a minute. That is a
+ * ceiling for a shared office, not for one account: a single sign-up could post
+ * replies without end, and — the one that costs real resources — submit
+ * listings at 300 a minute with up to ten megabytes of photos each, filling
+ * the disk the database lives on. These bound what one account can do however
+ * many addresses it uses. No lockout: the window refilling is enough.
+ */
+const ACCOUNT_WRITES = {
+  // A person lists a handful of boards in a sitting, not dozens.
+  listing: { windowMs: 60 * 60 * 1000, maxRequests: 10, lockoutMs: 0 },
+  // Replies and reviews are conversation; thirty in ten minutes is a lot of it.
+  reply:   { windowMs: 10 * 60 * 1000, maxRequests: 30, lockoutMs: 0 },
+  review:  { windowMs: 10 * 60 * 1000, maxRequests: 30, lockoutMs: 0 },
+} satisfies Record<string, RateLimitOptions>;
+
+export function accountWriteRateLimit(kind: keyof typeof ACCOUNT_WRITES, accountKey: string): Promise<RateLimitResult> {
+  return checkRateLimit(`write_${kind}:${accountKey}`, ACCOUNT_WRITES[kind]);
+}
+
+/**
  * Public API rate limit — applied to /api/billboards to slow automated
  * crawling. Normal browser usage never comes close to this ceiling.
  */

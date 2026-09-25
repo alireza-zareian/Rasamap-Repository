@@ -36,7 +36,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { BASE, api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows, registerUser } from "./helpers.mjs";
+import { BASE, api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows, registerUser, freshCustomer } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
 
@@ -907,7 +907,7 @@ test("POST /api/listings without a session is 401", async () => {
 });
 
 test("POST /api/listings creates a row that is NOT publicly visible yet", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
+  const token = await freshCustomer();
   const { status, json } = await api("/api/listings", {
     method: "POST",
     token,
@@ -923,7 +923,7 @@ test("POST /api/listings creates a row that is NOT publicly visible yet", async 
 test("a listing submitted under a Persian name still gets a URL-safe slug", async () => {
   // The public slug route validates `^[a-z0-9-]+$`; a slug carrying Persian
   // characters would publish a row the API then answers 400 for.
-  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const userToken  = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(userToken, "بیلبورد نام کاملاً فارسی");
@@ -936,7 +936,7 @@ test("a listing submitted under a Persian name still gets a URL-safe slug", asyn
 });
 
 test("POST /api/listings with the featured plan lands in awaiting_payment", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
+  const token = await freshCustomer();
   const { status, json } = await api("/api/listings", {
     method: "POST",
     token,
@@ -947,7 +947,7 @@ test("POST /api/listings with the featured plan lands in awaiting_payment", asyn
 });
 
 test("POST /api/listings accepts a real PNG upload", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
+  const token = await freshCustomer();
   const { status, json } = await api("/api/listings", {
     method: "POST",
     token,
@@ -958,7 +958,7 @@ test("POST /api/listings accepts a real PNG upload", async () => {
 
 test("a photo uploaded while the server is running is served, and nothing outside uploads is", async () => {
   // next start lists public/ once at boot; this photo is written long after.
-  const token = await mintSession({ userId: "2", role: "user" });
+  const token = await freshCustomer();
   const sent = await api("/api/listings", {
     method: "POST", token,
     body: { name: "بیلبورد عکس تازه", phone: "09120000000", type: "billboard", city: "شیراز", width: 10, height: 3, faces: 1, price: 40, images: [pngDataUrl()] },
@@ -978,7 +978,7 @@ test("a photo uploaded while the server is running is served, and nothing outsid
 });
 
 test("POST /api/listings rejects a non-image disguised as a PNG (magic-byte check)", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
+  const token = await freshCustomer();
   const { status, json } = await api("/api/listings", {
     method: "POST",
     token,
@@ -989,7 +989,7 @@ test("POST /api/listings rejects a non-image disguised as a PNG (magic-byte chec
 });
 
 test("POST /api/listings rejects more than five images", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
+  const token = await freshCustomer();
   const { status } = await api("/api/listings", {
     method: "POST",
     token,
@@ -1003,7 +1003,7 @@ test("10 identical listing submissions fired together create exactly one row (ra
   // does too. Idempotency-Key is opt-in; these requests deliberately send none,
   // so the only thing standing between a double-click and a duplicate row is
   // the partial unique index on (submittedById, name, city).
-  const token = await mintSession({ userId: "2", role: "user" });
+  const token = await freshCustomer();
   const payload = {
     name: "بیلبورد مسابقه همزمانی", phone: "09120000000", type: "billboard",
     city: "تهران", region: "۱", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 55,
@@ -1023,7 +1023,7 @@ test("10 identical listing submissions fired together create exactly one row (ra
 });
 
 test("a duplicate listing submitted later is refused with a clear 409", async () => {
-  const token = await mintSession({ userId: "2", role: "user" });
+  const token = await freshCustomer();
   const payload = {
     name: "بیلبورد تکراری دیرهنگام", phone: "09120000000", type: "billboard",
     city: "اصفهان", width: 10, height: 3, faces: 1, price: 40,
@@ -1036,7 +1036,7 @@ test("a duplicate listing submitted later is refused with a clear 409", async ()
 });
 
 test("a different user may submit a media with the same name (the constraint is per submitter)", async () => {
-  const other = await mintSession({ userId: "1", role: "user" });
+  const other = await freshCustomer();
   const { status } = await api("/api/listings", {
     method: "POST", token: other,
     body: { name: "بیلبورد تکراری دیرهنگام", phone: "09120000000", type: "billboard", city: "اصفهان", width: 10, height: 3, faces: 1, price: 40 },
@@ -1045,7 +1045,7 @@ test("a different user may submit a media with the same name (the constraint is 
 });
 
 test("listings: a repeated Idempotency-Key replays the first response (no second row)", async () => {
-  const token = await mintSession({ userId: "1", role: "user" });
+  const token = await freshCustomer();
   const key = "idem-" + Math.random().toString(36).slice(2);
   const payload = { name: "بیلبورد تکراری", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 60 };
 
@@ -1060,7 +1060,7 @@ test("listings: a repeated Idempotency-Key replays the first response (no second
 test("listings: concurrent requests with one Idempotency-Key run the work once", async () => {
   // Different names, so the partial unique index cannot be what stops them —
   // only the key can. A lookup-then-save let several of these all run.
-  const token = await mintSession({ userId: "2", role: "user" });
+  const token = await freshCustomer();
   const key = `race-${Date.now()}`;
   const results = await Promise.all(Array.from({ length: 8 }, (_, i) => api("/api/listings", {
     method: "POST", token, headers: { "idempotency-key": key },
@@ -1076,7 +1076,7 @@ test("listings: concurrent requests with one Idempotency-Key run the work once",
 });
 
 test("listings: a refused submission leaves its Idempotency-Key free for the retry", async () => {
-  const token = await mintSession({ userId: "2", role: "user" });
+  const token = await freshCustomer();
   const key = `retry-${Date.now()}`;
   const body = { name: "بیلبورد تلاش دوباره", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 55 };
   const bad = await api("/api/listings", { method: "POST", token, headers: { "idempotency-key": key }, body: { ...body, images: [fakeImageDataUrl()] } });
@@ -1086,8 +1086,8 @@ test("listings: a refused submission leaves its Idempotency-Key free for the ret
 });
 
 test("listings: an Idempotency-Key reused by a different user is rejected with 409", async () => {
-  const tokenA = await mintSession({ userId: "1", role: "user" });
-  const tokenB = await mintSession({ userId: "2", role: "user" });
+  const tokenA = await freshCustomer();
+  const tokenB = await freshCustomer();
   const key = "idem-cross-" + Math.random().toString(36).slice(2);
   const payload = { name: "بیلبورد مشترک", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 60 };
 
@@ -1098,6 +1098,18 @@ test("listings: an Idempotency-Key reused by a different user is rejected with 4
 });
 
 // ── Object-level authorisation ───────────────────────────────────────
+
+test("one account cannot submit listings without end, whatever address it uses", async () => {
+  // Each submission may carry ten megabytes of photos; a per-address limit let
+  // one account fill the disk from a single sign-up.
+  const token = await freshCustomer();
+  const body = (i) => ({ name: `بیلبورد سقف حساب ${i}`, phone: "09120000000", type: "billboard", city: "تهران", width: 5, height: 2, faces: 1, price: 10 });
+  let last;
+  for (let i = 0; i < 11; i++) {
+    last = await api("/api/listings", { method: "POST", token, ip: uniqueIp(), body: body(i) });
+  }
+  assert.equal(last.status, 429);
+});
 
 test("a user cannot see another user's listings via GET /api/listings", async () => {
   const tokenA = await mintSession({ userId: "1", role: "user" });
@@ -1564,7 +1576,7 @@ test("a bad photo in an admin batch writes none of it, and a good batch is audit
 });
 
 test("photos a resubmission drops, and those of a deleted listing, leave the disk", async () => {
-  const owner = await mintSession({ userId: "2", role: "user" });
+  const owner = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
   const onDisk = (url) => { try { readFileSync(join(process.cwd(), "public", url)); return true; } catch { return false; } };
   const base = { phone: "09120000000", type: "billboard", city: "کرج", region: "۱", location: "خیابان تست", width: 8, height: 3, faces: 1, price: 30, plan: "free" };
@@ -1619,7 +1631,7 @@ async function decide(adminToken, id, body) {
 }
 
 test("approving a free listing publishes it and writes a durable audit row", async () => {
-  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const userToken  = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(userToken, "بیلبورد در انتظار تأیید");
@@ -1637,7 +1649,7 @@ test("approving a free listing publishes it and writes a durable audit row", asy
 });
 
 test("approving a featured listing grants the promotion; a free one never does", async () => {
-  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const userToken  = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(userToken, "بیلبورد ویژه در انتظار پرداخت", "featured");
@@ -1649,8 +1661,8 @@ test("approving a featured listing grants the promotion; a free one never does",
 });
 
 test("the account that listed a media item cannot rate it", async () => {
-  const owner      = await mintSession({ userId: "1", role: "user" });
-  const other      = await mintSession({ userId: "2", role: "user" });
+  const owner      = await freshCustomer();
+  const other      = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
   const id = await submitListing(owner, "بیلبورد بدون امتیاز مالک");
   assert.equal((await decide(adminToken, id, { decision: "approve" })).status, 200);
@@ -1661,7 +1673,7 @@ test("the account that listed a media item cannot rate it", async () => {
 });
 
 test("a decided listing cannot be decided again (409)", async () => {
-  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const userToken  = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(userToken, "بیلبورد یک‌بار تصمیم");
@@ -1673,7 +1685,7 @@ test("a decided listing cannot be decided again (409)", async () => {
 });
 
 test("a rejected listing is unreachable, not merely absent from search", async () => {
-  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const userToken  = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
 
   const name = "بیلبورد رد شده آزمایشی";
@@ -1694,7 +1706,7 @@ test("a rejected listing is unreachable, not merely absent from search", async (
 });
 
 test("rejecting or sending a listing back for revision requires a note for the submitter", async () => {
-  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const userToken  = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(userToken, "بیلبورد بدون توضیح آزمایشی");
@@ -1706,7 +1718,7 @@ test("rejecting or sending a listing back for revision requires a note for the s
 });
 
 test("a revision request parks the listing in needs_revision and the submitter can edit and resend it", async () => {
-  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const userToken  = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(userToken, "بیلبورد نیازمند اصلاح آزمایشی");
@@ -1753,7 +1765,7 @@ test("an approval applies only to the version the admin reviewed", async () => {
   // The admin opens a listing sent back for revision; before they click, the
   // submitter resends it with new content. Approving must not publish what
   // nobody looked at.
-  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const userToken  = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
   const name = "بیلبورد نسخه بررسی‌شده";
   const id = await submitListing(userToken, name);
@@ -1774,8 +1786,8 @@ test("an approval applies only to the version the admin reviewed", async () => {
 });
 
 test("only the account that submitted a listing may resubmit it", async () => {
-  const owner    = await mintSession({ userId: "1", role: "user" });
-  const stranger = await mintSession({ userId: "2", role: "user" });
+  const owner    = await freshCustomer();
+  const stranger = await freshCustomer();
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(owner, "بیلبورد مالکیت آزمایشی");
