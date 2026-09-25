@@ -75,12 +75,10 @@ function AdminAccounts() {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const res = await fetch("/api/admin/users");
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در بارگذاری"); return; }
-      setRows(data.admins ?? []);
-      setCurrentId(data.currentId ?? null);
-    } catch { setError("خطای شبکه"); }
+      const data = await fetchJson<{ admins: AdminRow[]; currentId: number }>("/api/admin/users");
+      setRows(data.admins);
+      setCurrentId(data.currentId);
+    } catch (err) { setError(errorMessage(err)); }
     finally { setLoading(false); }
   }, []);
 
@@ -220,13 +218,11 @@ function CustomersSection({ canManageAccess }: { canManageAccess: boolean }) {
     try {
       const params = new URLSearchParams({ page: String(page), limit: "20", sort });
       if (query) params.set("q", query);
-      const res = await fetch(`/api/admin/customers?${params}`);
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در بارگذاری کاربران"); return; }
-      setRows(data.users ?? []);
-      setTotal(data.total ?? 0);
-      setPages(data.pages ?? 1);
-    } catch { setError("خطای شبکه"); }
+      const data = await fetchJson<{ users: CustomerRow[]; total: number; pages: number }>(`/api/admin/customers?${params}`);
+      setRows(data.users);
+      setTotal(data.total);
+      setPages(data.pages);
+    } catch (err) { setError(errorMessage(err)); }
     finally { setLoading(false); }
   }, [page, sort, query]);
 

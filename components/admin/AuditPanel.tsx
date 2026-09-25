@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { C, AUDIT_ACTION } from "./constants";
 import { Badge } from "./Badge";
 import { ScrollText } from "lucide-react";
@@ -20,12 +21,16 @@ export function AuditPanel() {
   const [persisted, setPersisted] = useState<Row[]>([]);
   const [view, setView] = useState<"persisted" | "live">("persisted");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  // A failure is said out loud: an empty catch here used to show "no records
+  // yet" for a log that could not be read — the one screen where "nothing
+  // happened" and "we cannot tell you what happened" must not look alike.
   useEffect(() => {
-    fetch("/api/admin/audit")
-      .then(r => r.json())
-      .then(d => { setLogs(d.logs ?? []); setPersisted(d.persisted ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
+    fetchJson<{ logs: Row[]; persisted: Row[] }>("/api/admin/audit")
+      .then(d => { setLogs(d.logs); setPersisted(d.persisted); })
+      .catch(err => setError(errorMessage(err)))
+      .finally(() => setLoading(false));
   }, []);
 
   const sevC: Record<string, string> = { info: C.muted, warn: "#f59e0b", critical: "#ef4444" };
@@ -63,6 +68,8 @@ export function AuditPanel() {
 
       {loading ? (
         <div style={{ textAlign: "center", color: C.muted, padding: 40 }}>در حال بارگذاری...</div>
+      ) : error ? (
+        <div role="alert" style={{ textAlign: "center", color: "#ef4444", padding: 40 }}>لاگ خوانده نشد. {error}</div>
       ) : rows.length === 0 ? (
         <div style={{ textAlign: "center", color: C.muted, padding: 40 }}>هنوز رکوردی ثبت نشده</div>
       ) : (

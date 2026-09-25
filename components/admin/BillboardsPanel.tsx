@@ -36,6 +36,8 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
   const [deleteTarget, setDeleteTarget] = useState<Billboard | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  // Shown in place of "nothing found", which a failed load used to claim.
+  const [loadError, setLoadError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const { notice, deny } = usePermissionNotice();
 
@@ -50,8 +52,10 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
       setBillboards(data.items);
       setTotal(data.total);
       setPages(data.pages);
-    } catch {
+      setLoadError("");
+    } catch (err) {
       setBillboards([]);
+      setLoadError(errorMessage(err));
     }
     setLoading(false);
   }, [search, filterType, filterAvailability, filterModeration, page, sort]);
@@ -124,6 +128,8 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
             <tbody>
               {loading
                 ? <tr><td colSpan={8} style={{ padding: 30, textAlign: "center", color: C.muted }}>در حال بارگذاری...</td></tr>
+                : loadError
+                  ? <tr><td colSpan={8} role="alert" style={{ padding: 30, textAlign: "center", color: "#ef4444" }}>فهرست خوانده نشد. {loadError}</td></tr>
                 : billboards.length === 0
                   ? <tr><td colSpan={8} style={{ padding: 30, textAlign: "center", color: C.muted }}>موردی یافت نشد</td></tr>
                   : billboards.map(b => (

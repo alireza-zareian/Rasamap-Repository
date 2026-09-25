@@ -53,13 +53,11 @@ export function CustomerModal({ userId, canManageAccess, onClose, onSaved }: {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const res = await fetch(`/api/admin/customers/${userId}`);
-      const j = await res.json();
-      if (!res.ok) { setError(j.error ?? "خطا در بارگذاری کاربر"); return; }
+      const j = await fetchJson<{ user: CustomerDetail }>(`/api/admin/customers/${userId}`);
       setData(j.user);
       setName(j.user.name);
       setPhone(j.user.phone);
-    } catch { setError("خطای شبکه"); }
+    } catch (err) { setError(errorMessage(err)); }
     finally { setLoading(false); }
   }, [userId]);
 

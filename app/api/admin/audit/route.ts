@@ -3,7 +3,6 @@ import { defineRoute } from "@/lib/http/route";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { getRecentAuditLogs } from "@/lib/audit";
 import { listAuditRows } from "@/lib/db/audit-log";
-import { logger } from "@/lib/logger";
 
 // GET /api/admin/audit — the live ring buffer and the durable rows (admin+).
 export const GET = defineRoute(
@@ -13,12 +12,10 @@ export const GET = defineRoute(
 
     // The durable rows survive a restart, unlike the buffer. If the table
     // cannot be read, the live view is still worth showing rather than a 500.
-    let persisted: unknown[] = [];
-    try {
-      persisted = await listAuditRows(200);
-    } catch (err) {
-      logger.error("admin/audit: durable rows unreadable", { error: String(err) });
-    }
+    // Not caught: an unreadable audit table used to come back as an empty list,
+    // which the panel showed as "no records yet". It is a 500 with a reference
+    // id now, and the panel says it could not read the log.
+    const persisted = await listAuditRows(200);
     return NextResponse.json({ logs, persisted });
   },
 );

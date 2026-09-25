@@ -49,12 +49,11 @@ const Ctx = createContext<CurrentUserValue>({
  *  imperative refresh below cannot drift apart. */
 async function fetchCurrentUser(): Promise<CurrentUser | null> {
   try {
-    const res = await fetch("/api/auth/me");
-    const data = res.ok ? await res.json() : null;
-    return data?.user ?? null;
+    return (await fetchJson<{ user: CurrentUser }>("/api/auth/me")).user;
   } catch {
-    // Offline or aborted: answer "signed out" rather than leaving every
-    // consumer stuck on the loading state forever.
+    // Signed out (401), offline, or no answer within fetchJson's timeout: answer
+    // "signed out" rather than leaving every consumer stuck on the loading
+    // state. A bare fetch had no timeout, so a stalled request did exactly that.
     return null;
   }
 }
