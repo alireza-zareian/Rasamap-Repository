@@ -8,6 +8,8 @@ import { leadStatusLabels, LEAD_STATUSES } from "@/lib/types";
 import { Handshake, Inbox, Repeat, Save } from "lucide-react";
 import { faNum } from "@/lib/format";
 
+const PAGE_SIZE = 50;
+
 interface Lead {
   id: number;
   status: string;
@@ -41,25 +43,46 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
+  // Paged, like the approval queue: the header counted every lead while the
+  // list stopped at the first 50, with no way to reach the rest.
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [notes, setNotes] = useState<Record<number, string>>({});
 
+  type LeadsPage = { leads: Lead[]; counts: Record<string, number>; total: number; pages: number };
+  const fetchPage = useCallback(
+    (n: number, limit = PAGE_SIZE) => fetchJson<LeadsPage>(`/api/admin/leads?status=${filter}&limit=${limit}&page=${n}`),
+    [filter],
+  );
+
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const res = await fetch(`/api/admin/leads?status=${filter}&limit=50`);
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "خطا در دریافت سرنخ‌ها"); setLeads([]); return; }
-      setLeads(data.leads ?? []);
-      setCounts(data.counts ?? {});
-      setTotal(data.total ?? 0);
-    } catch {
-      setError("خطای شبکه");
+      const data = await fetchPage(1);
+      setLeads(data.leads); setCounts(data.counts); setTotal(data.total); setPage(1); setPages(data.pages);
+    } catch (err) {
+      setLeads([]); setError(errorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [fetchPage]);
+
+  const loadMore = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true); setError("");
+    try {
+      const data = await fetchPage(page + 1);
+      setLeads(prev => [...prev, ...data.leads.filter(l => !prev.some(p => p.id === l.id))]);
+      setCounts(data.counts); setTotal(data.total); setPage(page + 1); setPages(data.pages);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
@@ -82,8 +105,9 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
       setNotes(prev => { const n = { ...prev }; delete n[id]; return n; });
 
       // The per-status counts changed; re-read them rather than guessing.
-      const fresh = await fetch(`/api/admin/leads?status=${filter}&limit=1`).then(r => r.ok ? r.json() : null).catch(() => null);
-      if (fresh) { setCounts(fresh.counts ?? {}); setTotal(fresh.total ?? 0); }
+      // A failure here leaves the old counts on screen; the save itself succeeded.
+      const fresh = await fetchPage(1, 1).catch(() => null);
+      if (fresh) { setCounts(fresh.counts); setTotal(fresh.total); }
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -121,6 +145,10 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "0.85rem" }}>در حال بارگذاری...</div>
+      ) : error && leads.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "24px 0" }}>
+          <button onClick={load} style={{ background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 18px", borderRadius: 8, cursor: "pointer" }}>تلاش دوباره</button>
+        </div>
       ) : leads.length === 0 ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "48px 0", color: C.muted, fontSize: "0.85rem" }}>
           <Inbox size={16} /> هنوز درخواست تماسی ثبت نشده است
@@ -190,6 +218,11 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
               </div>
             );
           })}
+          {page < pages && (
+            <button onClick={loadMore} disabled={loadingMore} style={{ alignSelf: "center", background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "9px 22px", borderRadius: 8, cursor: loadingMore ? "default" : "pointer" }}>
+              {loadingMore ? "در حال بارگذاری..." : `نمایش بیشتر (${faNum(Math.max(0, total - leads.length))} مورد دیگر)`}
+            </button>
+          )}
         </div>
       )}
     </div>

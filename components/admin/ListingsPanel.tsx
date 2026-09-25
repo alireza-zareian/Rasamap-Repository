@@ -35,6 +35,8 @@ interface Listing {
 
 type Decision = "approve" | "reject" | "revision";
 
+const PAGE_SIZE = 50;
+
 /**
  * The approval queue for user-submitted media.
  *
@@ -47,25 +49,52 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
+  // The queue is paged. It used to fetch the first 50 and stop, and since it is
+  // newest first, the oldest submissions — the ones waiting longest — were the
+  // ones no reviewer could reach.
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [lightbox, setLightbox] = useState<string | null>(null);
   // Per-listing message to the submitter. Required for "reject" and "revision".
   const [notes, setNotes] = useState<Record<number, string>>({});
 
+  type QueuePage = { listings: Listing[]; total: number; page: number; pages: number };
+  const fetchPage = useCallback(
+    (n: number) => fetchJson<QueuePage>(`/api/admin/listings?moderation=${filter}&limit=${PAGE_SIZE}&page=${n}`),
+    [filter],
+  );
+
   const load = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setError("");
     try {
-      const res = await fetch(`/api/admin/listings?moderation=${filter}&limit=50`);
-      const data = await res.json();
-      setListings(res.ok ? (data.listings ?? []) : []);
-      if (!res.ok) setError(data.error ?? "خطا در دریافت آگهی‌ها");
-    } catch {
-      setError("خطای شبکه");
+      const data = await fetchPage(1);
+      setListings(data.listings); setTotal(data.total); setPage(1); setPages(data.pages);
+    } catch (err) {
+      setListings([]); setError(errorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [fetchPage]);
+
+  const loadMore = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true); setError("");
+    try {
+      const data = await fetchPage(page + 1);
+      // A decision since the last page shifted the offsets, so an id already
+      // on screen can come round again; it is shown once.
+      setListings(prev => [...prev, ...data.listings.filter(l => !prev.some(p => p.id === l.id))]);
+      setTotal(data.total); setPage(page + 1); setPages(data.pages);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
@@ -86,6 +115,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
       });
       // The row has left the queue — drop it rather than refetching everything.
       setListings(prev => prev.filter(l => l.id !== id));
+      setTotal(t => Math.max(0, t - 1));
       setNotes(prev => { const next = { ...prev }; delete next[id]; return next; });
     } catch (err) {
       setError(errorMessage(err));
@@ -100,7 +130,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}>
-          <ClipboardCheck size={16} /> تأیید آگهی‌ها
+          <ClipboardCheck size={16} /> تأیید آگهی‌ها ({faNum(total)})
         </div>
         <select value={filter} onChange={e => setFilter(e.target.value)} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "7px 10px", borderRadius: 8, outline: "none" }}>
           <option value="">همه در انتظار</option>
@@ -129,6 +159,10 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "0.85rem" }}>در حال بارگذاری...</div>
+      ) : error && listings.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "24px 0" }}>
+          <button onClick={load} style={{ background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 18px", borderRadius: 8, cursor: "pointer" }}>تلاش دوباره</button>
+        </div>
       ) : listings.length === 0 ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "48px 0", color: C.muted, fontSize: "0.85rem" }}>
           <Check size={16} /> آگهی در انتظار بررسی وجود ندارد
@@ -234,6 +268,11 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
               </div>
             );
           })}
+          {page < pages && (
+            <button onClick={loadMore} disabled={loadingMore} style={{ alignSelf: "center", background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "9px 22px", borderRadius: 8, cursor: loadingMore ? "default" : "pointer" }}>
+              {loadingMore ? "در حال بارگذاری..." : `نمایش بیشتر (${faNum(total - listings.length)} مورد دیگر)`}
+            </button>
+          )}
         </div>
       )}
 
