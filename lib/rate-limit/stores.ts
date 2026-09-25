@@ -53,22 +53,37 @@ interface Window {
   lockedUntil?: number;
 }
 
-// Hard cap on tracked keys. A distributed flood (one key per source IP) must not
-// let this Map grow without bound. When the cap is hit, drop the oldest-inserted
-// entries first (Map preserves insertion order) — a key that is still being
-// hammered gets re-added on its next request, so active limiters survive.
+// Hard cap on tracked keys, so a flood of distinct keys cannot grow this Map
+// without bound.
+//
+// What gets dropped at the cap matters. Dropping plainly by age let the flood
+// itself erase a lockout: every sign-in attempt with a made-up identifier
+// inserts an account key, so ~50 000 cheap requests pushed the key of the
+// account under attack out of the Map, and with it the lock — five fresh
+// guesses. So expired windows go first, then the oldest *unlocked* ones, and a
+// live lockout is dropped only if nothing else is left.
 const MAX_KEYS = 50_000;
+const TRIM = 1000; // trim a slab at once, not one key per insert
 
 export function createMemoryStore(): RateLimitStore {
   const windows = new Map<string, Window>();
 
   const evictIfNeeded = () => {
     if (windows.size <= MAX_KEYS) return;
-    const drop = windows.size - MAX_KEYS + 1000; // trim a slug at once, not one-by-one
-    let n = 0;
+    const now = Date.now();
+    const target = MAX_KEYS - TRIM;
+    const locked = (w: Window) => w.lockedUntil !== undefined && w.lockedUntil > now;
+
+    for (const [key, w] of windows) {
+      if (w.resetAt <= now && !locked(w)) windows.delete(key);
+    }
+    for (const [key, w] of windows) {
+      if (windows.size <= target) return;
+      if (!locked(w)) windows.delete(key);
+    }
     for (const key of windows.keys()) {
+      if (windows.size <= target) return;
       windows.delete(key);
-      if (++n >= drop) break;
     }
   };
 
