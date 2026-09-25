@@ -182,7 +182,14 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                     <div style={{ fontSize: "0.75rem", color: C.muted, lineHeight: 1.9 }}>
                       {l.city}{l.region ? ` · ${l.region}` : ""} · {l.location}<br />
                       {l.width}×{l.height} متر · {l.faces} وجه · {faNum(l.price)}M تومان/ماه<br />
-                      فرستنده: {l.submittedBy ? `${l.submittedBy.name} (${l.submittedBy.phone})` : "نامشخص"} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}
+                      فرستنده: {l.submittedBy ? `${l.submittedBy.name} (${l.submittedBy.phone})` : "نامشخص"} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}<br />
+                      {/* The number buyers will be handed. Nobody verified it unless it
+                          is the submitter's own, which their sign-up code proved — any
+                          other one could be a stranger's, so the reviewer is told. */}
+                      شماره تماس آگهی: <span style={{ direction: "ltr", display: "inline-block" }}>{l.phone}</span>{" "}
+                      {l.submittedBy?.phone === l.phone
+                        ? <Badge text="شمارهٔ تأییدشدهٔ فرستنده" color="#22c55e" bg="rgba(34,197,94,0.12)" />
+                        : <Badge text="تأییدنشده — پیش از تأیید تماس بگیرید" color="#f59e0b" bg="rgba(245,158,11,0.12)" />}
                     </div>
                     {l.description && (
                       <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 8, lineHeight: 1.8, background: C.surface, borderRadius: 8, padding: "8px 10px" }}>
