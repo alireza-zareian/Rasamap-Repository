@@ -91,7 +91,9 @@ export const POST = defineRoute(
     if (!customer) return NextResponse.json({ error: DENIED }, { status: 401 });
 
     await resetAccountAttempts("user_login", identifier);
-    const res = NextResponse.json({ ok: true, user: { ...customer, isStaff: false } });
+    const res = NextResponse.json({
+      ok: true, user: { id: customer.id, name: customer.name, phone: customer.phone, isStaff: false },
+    });
     return startSession(res, { kind: "customer", ...customer }, req);
   },
 );

@@ -674,7 +674,13 @@ test("otp/send for an unknown phone is 200 and reveals nothing", async () => {
 // rather than from a message. The ~1.9 s is bcrypt plus the hash search in
 // recoverOtpCode() — both local and both bounded.
 test("otp/send + otp/verify resets the password; the new one then logs in", async () => {
-  const phone = "09120000000"; // seeded user 1
+  // Its own account: the reset signs out every session, so doing this to a
+  // seeded user would invalidate the tokens every later test mints for it.
+  const phone = randomPhone();
+  const registered = await registerUser({ phone, ip: uniqueIp() });
+  assert.equal(registered.status, 200, JSON.stringify(registered.json));
+  const oldSession = tokenFromSetCookie(registered);
+
   const send = await api("/api/auth/otp/send", {
     method: "POST", ip: uniqueIp(),
     body: { phone, purpose: "password_reset" },
@@ -695,12 +701,45 @@ test("otp/send + otp/verify resets the password; the new one then logs in", asyn
   });
   assert.equal(ok.status, 200, JSON.stringify(ok.json));
 
+  assert.equal((await api("/api/auth/me", { token: oldSession })).status, 401,
+    "a session from before the reset must stop working — a reset is how a victim takes an account back");
+
   const login = await api("/api/auth/login", {
     method: "POST", ip: uniqueIp(),
     body: { phone, password: "brandnew1" },
   });
   assert.equal(login.status, 200);
   assert.ok(tokenFromSetCookie(login));
+});
+
+test("changing one's own password keeps this session and ends the others", async () => {
+  const phone = randomPhone();
+  const registered = await registerUser({ phone, ip: uniqueIp() });
+  const other = tokenFromSetCookie(registered);
+  const login = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { phone, password: "secret123" } });
+  const self = tokenFromSetCookie(login);
+
+  const changed = await api("/api/auth/me", {
+    method: "PATCH", token: self,
+    body: { currentPassword: "secret123", newPassword: "brandnew2" },
+  });
+  assert.equal(changed.status, 200, JSON.stringify(changed.json));
+  const renewed = tokenFromSetCookie(changed);
+
+  assert.equal((await api("/api/auth/me", { token: renewed })).status, 200);
+  assert.equal((await api("/api/auth/me", { token: other })).status, 401);
+});
+
+test("the sliding refresh stops once a sign-in is a week old", async () => {
+  const eightDaysAgo = Math.floor(Date.now() / 1000) - 8 * 24 * 60 * 60;
+  const token = await mintSession({ userId: "2", role: "user", authTime: eightDaysAgo });
+  // mintSession's token expires within the hour, which is inside the refresh window.
+  const res = await api("/api/auth/me", { token });
+  assert.equal(res.status, 200);
+  assert.equal(tokenFromSetCookie(res), null, "an old sign-in must not be renewed");
+
+  const fresh = await api("/api/auth/me", { token: await mintSession({ userId: "2", role: "user" }) });
+  assert.ok(tokenFromSetCookie(fresh), "a recent sign-in is still renewed");
 });
 
 // ── Sign-up behind a phone code (card B7) ─────────────────────────
@@ -1175,15 +1214,31 @@ test("PATCH /api/admin/customers/[id] edits the name and audits it", async () =>
   assert.ok(audit.json.persisted.some((r) => r.action === "customer_update"));
 });
 
-test("POST /api/admin/customers/[id]/reset-password returns a fresh password (never the old one)", async () => {
-  const token = await mintSession({ role: "admin" });
-  const res = await api("/api/admin/customers/1/reset-password", { method: "POST", token });
+test("POST /api/admin/customers/[id]/reset-password returns a fresh password and ends old sessions", async () => {
+  const phone = randomPhone();
+  const registered = await registerUser({ phone, ip: uniqueIp() });
+  const oldSession = tokenFromSetCookie(registered);
+  const id = registered.json.user.id;
+
+  const token = await mintSession({ role: "super_admin" });
+  const res = await api(`/api/admin/customers/${id}/reset-password`, { method: "POST", token });
   assert.equal(res.status, 200, JSON.stringify(res.json));
   assert.equal(typeof res.json.password, "string");
   assert.ok(res.json.password.length >= 8);
+  assert.equal((await api("/api/auth/me", { token: oldSession })).status, 401);
 
   const audit = await api("/api/admin/audit", { token });
   assert.ok(audit.json.persisted.some((r) => r.action === "customer_password_reset"));
+});
+
+test("an admin below super_admin cannot take over a customer account", async () => {
+  // Setting a password it then reads back, or moving the number to one it
+  // controls and resetting through it, both hand the account to the admin.
+  const token = await mintSession({ role: "admin" });
+  const reset = await api("/api/admin/customers/2/reset-password", { method: "POST", token });
+  const phone = await api("/api/admin/customers/2", { method: "PATCH", token, body: { phone: randomPhone() } });
+  assert.equal(reset.status, 403);
+  assert.equal(phone.status, 403);
 });
 
 test("customer routes are 403 for role 'viewer'", async () => {
@@ -1895,7 +1950,7 @@ test("a login over plain HTTP does not mark the session cookie Secure", async ()
   assert.match(cookie, /rasamap_session=/);
   assert.ok(!/;\s*Secure/i.test(cookie), `cookie was marked Secure over http and the browser would drop it: ${cookie}`);
   assert.match(cookie, /HttpOnly/i);
-  assert.match(cookie, /SameSite=Strict/i);
+  assert.match(cookie, /SameSite=Lax/i);
 });
 
 test("a login behind an HTTPS proxy does mark the session cookie Secure", async () => {

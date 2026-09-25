@@ -29,7 +29,13 @@ interface CustomerDetail {
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("fa-IR", { year: "numeric", month: "short", day: "numeric" });
 
-export function CustomerModal({ userId, onClose, onSaved }: { userId: number; onClose: () => void; onSaved?: () => void }) {
+export function CustomerModal({ userId, canManageAccess, onClose, onSaved }: {
+  userId: number;
+  /** Number and password: super admin only, enforced by the API as well. */
+  canManageAccess: boolean;
+  onClose: () => void;
+  onSaved?: () => void;
+}) {
   const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [data, setData] = useState<CustomerDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,7 +116,7 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
           <>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
               <div><label htmlFor="cust-name" style={lS}>نام</label><input id="cust-name" style={iS} value={name} onChange={e => { setName(e.target.value); setSavedOk(false); }} /></div>
-              <div><label htmlFor="cust-phone" style={lS}>شماره موبایل</label><input id="cust-phone" style={{ ...iS, direction: "ltr", textAlign: "left" }} value={phone} onChange={e => { setPhone(e.target.value); setSavedOk(false); }} placeholder="09xxxxxxxxx" /></div>
+              <div><label htmlFor="cust-phone" style={lS}>شماره موبایل</label><input id="cust-phone" style={{ ...iS, direction: "ltr", textAlign: "left", opacity: canManageAccess ? 1 : 0.6 }} value={phone} readOnly={!canManageAccess} title={canManageAccess ? undefined : "فقط سوپر ادمین می‌تواند شماره را تغییر دهد"} onChange={e => { setPhone(e.target.value); setSavedOk(false); }} placeholder="09xxxxxxxxx" /></div>
             </div>
             <div style={{ display: "flex", gap: 16, fontSize: "0.75rem", color: C.muted, marginBottom: 16, flexWrap: "wrap" }}>
               <span>ثبت‌نام: {fmt(data.createdAt)}</span>
@@ -122,9 +128,11 @@ export function CustomerModal({ userId, onClose, onSaved }: { userId: number; on
               <button onClick={save} disabled={!dirty || saving} style={{ flex: "1 1 140px", background: dirty ? C.accent : C.border, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.82rem", fontWeight: 700, padding: 10, borderRadius: 9, cursor: dirty && !saving ? "pointer" : "default", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                 {savedOk && !dirty ? <><Check size={14} /> ذخیره شد</> : saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
               </button>
-              <button onClick={resetPassword} disabled={resetting} style={{ flex: "1 1 140px", background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.82rem", fontWeight: 700, padding: 10, borderRadius: 9, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                <KeyRound size={14} /> {resetting ? "..." : "بازنشانی رمز"}
-              </button>
+              {canManageAccess && (
+                <button onClick={resetPassword} disabled={resetting} style={{ flex: "1 1 140px", background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.82rem", fontWeight: 700, padding: 10, borderRadius: 9, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <KeyRound size={14} /> {resetting ? "..." : "بازنشانی رمز"}
+                </button>
+              )}
             </div>
 
             {newPassword && (

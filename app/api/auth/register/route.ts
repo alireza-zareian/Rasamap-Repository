@@ -37,6 +37,7 @@ export const POST = defineRoute(
     // and never allowed to fail the registration.
     void sendSms(customer.phone, "به رسامپ خوش آمدید. حساب کاربری شما با موفقیت ساخته شد.");
 
-    return startSession(NextResponse.json({ ok: true, user: customer }), { kind: "customer", ...customer }, req);
+    const user = { id: customer.id, name: customer.name, phone: customer.phone };
+    return startSession(NextResponse.json({ ok: true, user }), { kind: "customer", ...customer }, req);
   },
 );

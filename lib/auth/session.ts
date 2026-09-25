@@ -1,6 +1,6 @@
 /**
  * RASAMAP — Session Management
- * Uses signed JWT stored in an HttpOnly, SameSite=Strict cookie (Secure over
+ * Uses signed JWT stored in an HttpOnly, SameSite=Lax cookie (Secure over
  * HTTPS — see isSecureRequest). Never expose raw tokens to client JS.
  */
 import { SignJWT, jwtVerify } from "jose";
@@ -11,6 +11,14 @@ import { STAFF_ROLES } from "@/lib/domain/roles";
 
 const SESSION_COOKIE = "rasamap_session";
 const MAX_AGE_SECS  = 60 * 60 * 8; // 8 hours
+
+/**
+ * How long one sign-in can be kept alive by the sliding refresh in
+ * GET /api/auth/me. Without a ceiling a token refreshed every few hours never
+ * ended, so a copied cookie was a permanent account. Past this the token is
+ * left to expire and the person signs in again.
+ */
+export const MAX_SESSION_LIFETIME_SECS = 60 * 60 * 24 * 7; // 7 days
 
 /**
  * What a session token asserts, as two kinds of account rather than one.
@@ -25,17 +33,26 @@ const MAX_AGE_SECS  = 60 * 60 * 8; // 8 hours
  * part of the identity, and the type system makes every caller say which one
  * it wants.
  */
+// `ver` is the account's sessionVersion when the token was issued; a token
+// whose `ver` no longer matches the row is signed out (see resolveActor).
+// `auth_time` is when the person actually signed in, carried unchanged through
+// every refresh so MAX_SESSION_LIFETIME_SECS can be measured from it.
+const Common = {
+  sub:       z.string().regex(/^\d+$/),
+  name:      z.string(),
+  ver:       z.number().int().nonnegative(),
+  auth_time: z.number().int().positive(),
+};
+
 const ClaimsSchema = z.discriminatedUnion("kind", [
   z.object({
     kind:  z.literal("customer"),
-    sub:   z.string().regex(/^\d+$/),
-    name:  z.string(),
+    ...Common,
     phone: z.string(),
   }),
   z.object({
     kind:  z.literal("staff"),
-    sub:   z.string().regex(/^\d+$/),
-    name:  z.string(),
+    ...Common,
     email: z.string(),
     role:  z.enum(STAFF_ROLES),
   }),
@@ -124,7 +141,12 @@ function cookieFlags(value: string, maxAge: number, req?: NextRequest): string {
     `Max-Age=${maxAge}`,
     "Path=/",
     "HttpOnly",
-    "SameSite=Strict",
+    // Lax, not Strict: Strict withholds the cookie from any navigation that
+    // starts on another site, so a signed-in person who opened their dashboard
+    // from a messaging app was sent to the sign-in form. Lax still withholds it
+    // from every cross-site POST, PATCH and DELETE, and no GET here changes
+    // anything.
+    "SameSite=Lax",
     ...(isSecureRequest(req) ? ["Secure"] : []),
   ].join("; ");
 }

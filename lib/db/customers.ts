@@ -2,9 +2,10 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { prisma } from "./client";
 import { hashPassword, passwordMatches } from "@/lib/auth/passwords";
-import { conflict, invalid, isUniqueViolation, notFound } from "@/lib/domain/errors";
+import { conflict, forbidden, invalid, isUniqueViolation, notFound } from "@/lib/domain/errors";
+import { hasRole } from "@/lib/domain/roles";
 import { otpErrorMessage, verifyOtp } from "./otp-codes";
-import type { CustomerActor } from "@/lib/auth/actor";
+import type { CustomerActor, StaffActor } from "@/lib/auth/actor";
 
 /**
  * Customer accounts — the `users` table. Staff are in ./staff.ts.
@@ -17,7 +18,21 @@ import type { CustomerActor } from "@/lib/auth/actor";
 
 const PHONE_TAKEN = "این شماره قبلاً ثبت شده است";
 
-export interface CustomerAccount { id: number; name: string; phone: string }
+/** A customer as a session sees them. The hash is never selected. */
+export interface CustomerAccount { id: number; name: string; phone: string; sessionVersion: number }
+
+const ACCOUNT_FIELDS = { id: true, name: true, phone: true, sessionVersion: true } as const;
+
+/** One customer, for resolving a session — see resolveActor. */
+export async function findCustomer(id: number): Promise<CustomerAccount | null> {
+  return prisma.user.findUnique({ where: { id }, select: ACCOUNT_FIELDS });
+}
+
+/**
+ * Every session this customer holds is signed out by raising their
+ * sessionVersion; this is the write that goes with a new password.
+ */
+const SIGN_OUT_EVERYWHERE = { sessionVersion: { increment: 1 } } as const;
 
 export async function isPhoneRegistered(phone: string): Promise<boolean> {
   return (await prisma.user.count({ where: { phone } })) > 0;
@@ -31,7 +46,7 @@ export async function isPhoneRegistered(phone: string): Promise<boolean> {
 export async function verifyCustomerCredentials(phone: string, password: string): Promise<CustomerAccount | null> {
   const user = await prisma.user.findUnique({ where: { phone } });
   if (!(await passwordMatches(password, user?.passwordHash))) return null;
-  return { id: user!.id, name: user!.name, phone: user!.phone };
+  return { id: user!.id, name: user!.name, phone: user!.phone, sessionVersion: user!.sessionVersion };
 }
 
 /**
@@ -52,7 +67,7 @@ export async function registerCustomer(input: {
   try {
     return await prisma.user.create({
       data: { name: input.name, phone: input.phone, passwordHash: await hashPassword(input.password) },
-      select: { id: true, name: true, phone: true },
+      select: ACCOUNT_FIELDS,
     });
   } catch (err) {
     if (isUniqueViolation(err)) throw conflict(PHONE_TAKEN);
@@ -60,7 +75,10 @@ export async function registerCustomer(input: {
   }
 }
 
-/** A customer changes their own name and/or password. */
+/**
+ * A customer changes their own name and/or password. A new password signs out
+ * every other session; the caller re-issues this one from the returned account.
+ */
 export async function updateOwnProfile(
   self: CustomerActor,
   patch: { name?: string; currentPassword?: string; newPassword?: string },
@@ -76,16 +94,17 @@ export async function updateOwnProfile(
     where: { id: self.id },
     data: {
       ...(patch.name ? { name: patch.name } : {}),
-      ...(patch.newPassword ? { passwordHash: await hashPassword(patch.newPassword) } : {}),
+      ...(patch.newPassword ? { passwordHash: await hashPassword(patch.newPassword), ...SIGN_OUT_EVERYWHERE } : {}),
     },
-    select: { id: true, name: true, phone: true },
+    select: ACCOUNT_FIELDS,
   });
 }
 
 /**
- * Finish a phone-verified password reset: spend the code, set the password.
- * One step, with no intermediate token to track. Returns the account id for
- * the audit record.
+ * Finish a phone-verified password reset: spend the code, set the password,
+ * and sign out every existing session — a reset is often the answer to "someone
+ * else is in my account". One step, with no intermediate token to track.
+ * Returns the account id for the audit record.
  */
 export async function resetPasswordWithCode(phone: string, code: string, newPassword: string): Promise<number> {
   const check = await verifyOtp(phone, "password_reset", code);
@@ -96,7 +115,10 @@ export async function resetPasswordWithCode(phone: string, code: string, newPass
   // since vanished gets the same generic refusal as any other failure.
   if (!user) throw invalid("امکان تغییر رمز نیست");
 
-  await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await hashPassword(newPassword) } });
+  await prisma.user.update({
+    where: { id: user.id },
+    data:  { passwordHash: await hashPassword(newPassword), ...SIGN_OUT_EVERYWHERE },
+  });
   return user.id;
 }
 
@@ -167,10 +189,18 @@ export async function getCustomer(id: number) {
  * Staff correct a customer's name or number. The unique index on `phone`
  * decides a clash — a read beforehand would let two edits slip between it and
  * the write — and a clash becomes a plain "already registered".
+ *
+ * Moving the number is super admin only. The number is where a reset code
+ * goes, so whoever sets it to a phone they hold can then reset the password
+ * and own the account. The form sends the number with every save, so only an
+ * actual change is refused.
  */
-export async function updateCustomer(id: number, patch: { name?: string; phone?: string }) {
+export async function updateCustomer(actor: StaffActor, id: number, patch: { name?: string; phone?: string }) {
   const before = await prisma.user.findUnique({ where: { id }, select: { id: true, name: true, phone: true } });
   if (!before) throw notFound("کاربر یافت نشد");
+  if (patch.phone !== undefined && patch.phone !== before.phone && !hasRole(actor.role, "super_admin")) {
+    throw forbidden("فقط سوپر ادمین می‌تواند شماره مشتری را تغییر دهد");
+  }
 
   try {
     const after = await prisma.user.update({
@@ -196,7 +226,7 @@ function readablePassword(): string {
 
 /**
  * Staff set a new password for a customer — the one given, or a readable
- * random one — and get it back once to pass on. An existing password can never
+ * random one — and get it back once to pass on. Existing sessions end. An existing password can never
  * be shown: it is only stored as a bcrypt hash.
  */
 export async function setCustomerPassword(id: number, password?: string): Promise<string> {
@@ -204,6 +234,6 @@ export async function setCustomerPassword(id: number, password?: string): Promis
   if (!exists) throw notFound("کاربر یافت نشد");
 
   const next = password ?? readablePassword();
-  await prisma.user.update({ where: { id }, data: { passwordHash: await hashPassword(next) } });
+  await prisma.user.update({ where: { id }, data: { passwordHash: await hashPassword(next), ...SIGN_OUT_EVERYWHERE } });
   return next;
 }

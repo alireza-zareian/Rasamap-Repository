@@ -11,7 +11,8 @@ export const GET = defineRoute(
   async ({ params }) => NextResponse.json({ user: await getCustomer(params.id) }),
 );
 
-// PATCH /api/admin/customers/[id] — correct a name or number (admin+).
+// PATCH /api/admin/customers/[id] — correct a name (admin+) or a number
+// (super_admin; see updateCustomer).
 export const PATCH = defineRoute(
   {
     name: "admin/customers/[id]",
@@ -25,8 +26,8 @@ export const PATCH = defineRoute(
       })
       .refine(d => d.name !== undefined || d.phone !== undefined, { message: "تغییری ارسال نشده" }),
   },
-  async ({ params, body, audit }) => {
-    const { before, after } = await updateCustomer(params.id, body);
+  async ({ actor, params, body, audit }) => {
+    const { before, after } = await updateCustomer(actor, params.id, body);
     await audit("customer_update", {
       severity: "warn",
       details: {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { startSession } from "@/lib/auth/actor";
-import { getSession } from "@/lib/auth/session";
+import { getSession, MAX_SESSION_LIFETIME_SECS } from "@/lib/auth/session";
 import { userApiRateLimit, publicApiRateLimit } from "@/lib/rate-limit";
 import { updateOwnProfile } from "@/lib/db/customers";
 
@@ -19,7 +19,8 @@ const TWO_HOURS = 2 * 60 * 60; // seconds
  * The refreshed token is minted from the actor, not copied from the old token,
  * so a staff member's current role and name — read from their row — are what
  * the new eight hours carry, and a deactivated account (no actor) cannot keep
- * itself alive by loading a page every few hours.
+ * itself alive by loading a page every few hours. The refresh keeps the
+ * original sign-in time and stops once MAX_SESSION_LIFETIME_SECS has passed.
  */
 export const GET = defineRoute(
   { name: "auth/me", access: "signed-in", rateLimit: publicApiRateLimit },
@@ -37,8 +38,9 @@ export const GET = defineRoute(
     });
 
     const session = await getSession();
-    if (session && session.exp - Math.floor(Date.now() / 1000) < TWO_HOURS) {
-      await startSession(res, actor, req);
+    const now = Math.floor(Date.now() / 1000);
+    if (session && session.exp - now < TWO_HOURS && now - session.auth_time < MAX_SESSION_LIFETIME_SECS) {
+      await startSession(res, actor, req, session.auth_time);
     }
     return res;
   },
@@ -59,9 +61,14 @@ export const PATCH = defineRoute(
       .refine(d => d.name || d.newPassword, { message: "هیچ تغییری ارائه نشده است" }),
   },
   async ({ req, actor, body }) => {
-    const user = await updateOwnProfile(actor, body);
-    const res = NextResponse.json({ user });
-    // The name travels in the token, so a rename needs a fresh one.
-    return startSession(res, { kind: "customer", ...user }, req);
+    const account = await updateOwnProfile(actor, body);
+    const res = NextResponse.json({ user: { id: account.id, name: account.name, phone: account.phone } });
+    // A new password raised the account's sessionVersion, which signed out every
+    // session including this one, so this device gets a token at the new version
+    // (and, having just proved the password, a fresh sign-in time). A rename
+    // re-issues too, since the name travels in the token, but keeps the old time.
+    const session = await getSession();
+    const authTime = body.newPassword ? undefined : session?.auth_time;
+    return startSession(res, { kind: "customer", ...account }, req, authTime);
   },
 );

@@ -56,7 +56,7 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
       {isSA && <AdminAccounts />}
-      <CustomersSection />
+      <CustomersSection canManageAccess={isSA} />
     </div>
   );
 }
@@ -199,7 +199,11 @@ const CUSTOMER_SORTS: { value: string; label: string }[] = [
   { value: "name_asc", label: "نام (الفبا)" },
 ];
 
-function CustomersSection() {
+/**
+ * `canManageAccess` — super admin only: resetting a customer's password and
+ * moving their number both hand over the account (see updateCustomer).
+ */
+function CustomersSection({ canManageAccess }: { canManageAccess: boolean }) {
   const [rows, setRows] = useState<CustomerRow[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -303,7 +307,7 @@ function CustomersSection() {
       )}
 
       {openId != null && (
-        <CustomerModal userId={openId} onClose={() => setOpenId(null)} onSaved={load} />
+        <CustomerModal userId={openId} canManageAccess={canManageAccess} onClose={() => setOpenId(null)} onSaved={load} />
       )}
     </div>
   );

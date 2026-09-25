@@ -44,11 +44,14 @@ const STAFF_IDS = { viewer: "9001", editor: "9002", admin: "9003", super_admin: 
  * the claims format of lib/auth/session.ts. `role: "user"` means a customer
  * (whose `email` argument is their phone); any other role is a staff member.
  */
-export async function mintSession({ userId, email = "tester", name = "Tester", role = "user" } = {}) {
+export async function mintSession({ userId, email = "tester", name = "Tester", role = "user", ver = 0, authTime } = {}) {
   userId ??= STAFF_IDS[role] ?? "1";
+  // `ver` must match the account's sessionVersion (0 for a seeded row) and
+  // `auth_time` is when the sign-in happened — see ClaimsSchema.
+  const common = { sub: String(userId), name, ver, auth_time: authTime ?? Math.floor(Date.now() / 1000) };
   const claims = role === "user"
-    ? { kind: "customer", sub: String(userId), name, phone: email }
-    : { kind: "staff", sub: String(userId), name, email, role };
+    ? { kind: "customer", ...common, phone: email }
+    : { kind: "staff", ...common, email, role };
   return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

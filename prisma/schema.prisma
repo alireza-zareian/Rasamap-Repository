@@ -90,11 +90,15 @@ enum TombstoneReason {
 // directly with the media owner. Staff are a separate kind of account
 // (`Admin`) — see lib/db/staff.ts for why.
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String
-  phone        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  name           String
+  phone          String   @unique
+  passwordHash   String
+  // Carried in every session token and compared on each request; raising it
+  // signs every existing session out (a password change, a reset, a number
+  // corrected by staff). See resolveActor in lib/auth/actor.ts.
+  sessionVersion Int      @default(0)
+  createdAt      DateTime @default(now())
 
   listings        Billboard[]
   reviews         Review[]
@@ -109,13 +113,15 @@ model User {
 // A staff account. `ADMIN_EMAIL` is upserted here by the seed as the first
 // super_admin, so every staff session names a real row.
 model Admin {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  passwordHash String
-  name         String
-  role         StaffRole @default(viewer)
-  active       Boolean   @default(true)
-  createdAt    DateTime  @default(now())
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  passwordHash   String
+  name           String
+  role           StaffRole @default(viewer)
+  active         Boolean   @default(true)
+  // As on User: raising it signs every existing session out.
+  sessionVersion Int       @default(0)
+  createdAt      DateTime  @default(now())
 
   auditLogs     AuditLog[]
   reviewReplies ReviewReply[]

@@ -103,7 +103,8 @@ unknown `type`, 401-before-anything on admin routes, RBAC 403.
 
 ## 3. Authentication & authorisation
 
-**Decision.** JWT (jose, HS256) in an HttpOnly `SameSite=Strict` cookie;
+**Decision.** JWT (jose, HS256) in an HttpOnly `SameSite=Lax` cookie
+(Strict until 2026-09-25 — see the revision at the end of this section);
 role hierarchy `viewer < editor < admin < super_admin` plus `user`; the
 endpoint — not the UI — is the security boundary.
 
@@ -133,6 +134,25 @@ out, every change is audit-logged.
 `PATCH /api/listings/[id]`, whose ownership guard sits in the `where` of the
 write itself.
 
+
+**Revised 2026-09-25 (adversarial review).** Three assumptions here did not hold:
+
+- *"A customer session carries no authority worth revoking."* It carries the
+  account. With no lookup, a copied cookie survived the victim's password change,
+  and the sliding refresh renewed it indefinitely. Every session is now checked
+  against its row: `users.sessionVersion` / `admins.sessionVersion` travel in the
+  token as `ver`, a password change, a reset or a deactivation raises it, and a
+  token behind it is signed out. `auth_time` survives refreshes, and the refresh
+  stops seven days after the sign-in. Cost: one primary-key read per request that
+  carries a session. Not covered: signing out does not revoke the token (it only
+  clears this browser's cookie).
+- *Strict as the default.* Strict withholds the cookie from every navigation that
+  starts on another site, so a signed-in person opening their dashboard from a
+  messaging app was sent to the sign-in form. Lax still withholds it from
+  cross-site POST/PATCH/DELETE, and no GET here changes state.
+- *Admin could reset a customer's password and read it back, or move their number
+  and reset through it* — an account takeover visible only in the audit log. Both
+  are super admin only now.
 ---
 
 ## 4. Rate limiting with a non-spoofable client identity

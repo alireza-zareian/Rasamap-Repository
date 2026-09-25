@@ -29,7 +29,10 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 
 **Conventions**
 
-- Session is a signed JWT (jose, HS256) in an HttpOnly `SameSite=Strict` cookie.
+- Session is a signed JWT (jose, HS256) in an HttpOnly `SameSite=Lax` cookie. Every
+  request that carries one checks it against its account row (`sessionVersion`), so a
+  password change or reset signs every other session out; one sign-in lasts at most
+  seven days however often it is refreshed.
 - Every route is declared with `defineRoute()` (`lib/http/route.ts`), which fixes the
   order **session → rate limit → role → Zod → business logic** — see the pattern at the end.
 - Rate limits are named policies in `lib/rate-limit/`, fixed window with an optional

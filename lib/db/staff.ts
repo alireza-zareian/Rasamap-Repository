@@ -26,6 +26,10 @@ export interface StaffAccount {
 
 const PUBLIC_FIELDS = { id: true, email: true, name: true, role: true, active: true, createdAt: true } as const;
 
+/** A staff account as a session needs it: the public fields and the session counter. */
+export type StaffSessionAccount = StaffAccount & { sessionVersion: number };
+const SESSION_FIELDS = { ...PUBLIC_FIELDS, sessionVersion: true } as const;
+
 /** Field by field, so nothing else the row was read with — a hash — rides along. */
 function toAccount(row: { id: number; email: string; name: string; role: string; active: boolean; createdAt: Date }): StaffAccount {
   return {
@@ -42,19 +46,19 @@ function toAccount(row: { id: number; email: string; name: string; role: string;
 }
 
 /** An active staff account, or null if it is gone or deactivated. */
-export async function findActiveStaff(id: number): Promise<StaffAccount | null> {
-  const row = await prisma.admin.findUnique({ where: { id }, select: PUBLIC_FIELDS });
-  return row && row.active ? toAccount(row) : null;
+export async function findActiveStaff(id: number): Promise<StaffSessionAccount | null> {
+  const row = await prisma.admin.findUnique({ where: { id }, select: SESSION_FIELDS });
+  return row && row.active ? { ...toAccount(row), sessionVersion: row.sessionVersion } : null;
 }
 
 /**
  * The staff account these credentials open, or null. Costs the same bcrypt
  * comparison whether or not the email exists (see passwordMatches).
  */
-export async function verifyStaffCredentials(email: string, password: string): Promise<StaffAccount | null> {
+export async function verifyStaffCredentials(email: string, password: string): Promise<StaffSessionAccount | null> {
   const row = await prisma.admin.findUnique({
     where: { email: email.toLowerCase().trim() },
-    select: { ...PUBLIC_FIELDS, passwordHash: true },
+    select: { ...SESSION_FIELDS, passwordHash: true },
   });
   const usable = row?.active ? row : null;
   if (!usable || !(await passwordMatches(password, usable.passwordHash))) {
@@ -63,7 +67,7 @@ export async function verifyStaffCredentials(email: string, password: string): P
     if (!usable) await passwordMatches(password, null);
     return null;
   }
-  return toAccount(usable);
+  return { ...toAccount(usable), sessionVersion: usable.sessionVersion };
 }
 
 export async function listStaff(): Promise<StaffAccount[]> {
@@ -94,6 +98,8 @@ export async function createStaff(input: {
  *
  * Refused on the caller's own account: a super admin who demotes or
  * deactivates themselves can leave the panel with nobody able to undo it.
+ * Deactivating also ends the account's sessions, so reactivating it later does
+ * not bring a token issued before the deactivation back to life.
  * Returns the account as it was and as it is, for the audit record.
  */
 export async function updateStaff(
@@ -106,6 +112,10 @@ export async function updateStaff(
   const existing = await prisma.admin.findUnique({ where: { id }, select: PUBLIC_FIELDS });
   if (!existing) throw notFound("کاربر یافت نشد");
 
-  const updated = await prisma.admin.update({ where: { id }, data: patch, select: PUBLIC_FIELDS });
+  const updated = await prisma.admin.update({
+    where: { id },
+    data: { ...patch, ...(patch.active === false ? { sessionVersion: { increment: 1 } } : {}) },
+    select: PUBLIC_FIELDS,
+  });
   return { before: toAccount(existing), after: toAccount(updated) };
 }
