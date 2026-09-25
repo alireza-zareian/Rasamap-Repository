@@ -168,7 +168,7 @@ if (args[0] === "--write-phase") {
   console.log("\n▸ copying");
   for (const table of TABLES) {
     // PostgreSQL generates searchText itself, and writing a generated column is an error.
-    const rows = table === "billboard" ? dump[table].map(({ searchText: _generated, ...row }) => row) : dump[table];
+    const rows = table === "billboard" ? dump[table].map(row => { const copy = { ...row }; delete copy.searchText; return copy; }) : dump[table];
     if (!rows.length) { console.log(`  ${table.padEnd(16)} empty`); continue; }
     for (let i = 0; i < rows.length; i += BATCH) {
       await pg[table].createMany({ data: rows.slice(i, i + BATCH), skipDuplicates: true });
