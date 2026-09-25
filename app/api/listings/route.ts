@@ -18,12 +18,19 @@ export const POST = defineRoute(
   },
   async ({ req, actor, body }) => {
     const idem = await idempotency(req.headers.get("idempotency-key"), actor.id, "listings");
-    if ("error" in idem) return NextResponse.json({ error: idem.error }, { status: 409 });
-    if (idem.replay) return NextResponse.json(idem.replay.body, { status: idem.replay.status });
+    if ("error" in idem) return NextResponse.json({ error: idem.error }, { status: idem.status });
+    if ("replay" in idem) return NextResponse.json(idem.replay.body, { status: idem.replay.status });
 
-    const listing = await submitListing(actor, body);
+    let listing;
+    try {
+      listing = await submitListing(actor, body);
+    } catch (err) {
+      // A refused submission leaves the key free, so the same form can retry.
+      await idem.claim?.release();
+      throw err;
+    }
     const responseBody = { listing };
-    await idem.save?.(201, responseBody);
+    await idem.claim?.save(201, responseBody);
     return NextResponse.json(responseBody, { status: 201 });
   },
 );

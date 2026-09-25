@@ -1049,6 +1049,34 @@ test("listings: a repeated Idempotency-Key replays the first response (no second
   assert.equal(replay.json.listing.id, first.json.listing.id, "the same row must come back, not a new one");
 });
 
+test("listings: concurrent requests with one Idempotency-Key run the work once", async () => {
+  // Different names, so the partial unique index cannot be what stops them —
+  // only the key can. A lookup-then-save let several of these all run.
+  const token = await mintSession({ userId: "2", role: "user" });
+  const key = `race-${Date.now()}`;
+  const results = await Promise.all(Array.from({ length: 8 }, (_, i) => api("/api/listings", {
+    method: "POST", token, headers: { "idempotency-key": key },
+    body: { name: `بیلبورد کلید همزمان ${i}`, phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 55 },
+  })));
+  const ids = new Set(results.filter(r => r.status === 201).map(r => r.json.listing.id));
+  assert.equal(ids.size, 1, `the key let ${ids.size} submissions through: ${results.map(r => r.status).join(",")}`);
+  assert.ok(results.every(r => r.status === 201 || r.status === 409), results.map(r => r.status).join(","));
+
+  const mine = await api("/api/listings", { token });
+  const made = mine.json.listings.filter(l => l.name.startsWith("بیلبورد کلید همزمان"));
+  assert.equal(made.length, 1);
+});
+
+test("listings: a refused submission leaves its Idempotency-Key free for the retry", async () => {
+  const token = await mintSession({ userId: "2", role: "user" });
+  const key = `retry-${Date.now()}`;
+  const body = { name: "بیلبورد تلاش دوباره", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 55 };
+  const bad = await api("/api/listings", { method: "POST", token, headers: { "idempotency-key": key }, body: { ...body, images: [fakeImageDataUrl()] } });
+  assert.equal(bad.status, 400);
+  const good = await api("/api/listings", { method: "POST", token, headers: { "idempotency-key": key }, body });
+  assert.equal(good.status, 201, JSON.stringify(good.json));
+});
+
 test("listings: an Idempotency-Key reused by a different user is rejected with 409", async () => {
   const tokenA = await mintSession({ userId: "1", role: "user" });
   const tokenB = await mintSession({ userId: "2", role: "user" });
