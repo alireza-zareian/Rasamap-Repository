@@ -180,3 +180,31 @@ test("a crawler row an admin deleted does not come back on the next run", async 
     assert.equal(await db.billboard.findUnique({ where: { slug: B } }), null, "the deleted row was re-created");
   } finally { await db.$disconnect(); }
 });
+
+test("an unreadable feed row is skipped, reported, and never makes a row look missing", async () => {
+  const report = sync([
+    feedRow(A, { id: 900001 }),
+    feedRow(B, { id: 900002, price: 2000 }),
+    // The real export carries both of these.
+    feedRow("scraped-sync-frac", { id: 900010, width: 10.8, height: 2.6 }),
+    feedRow("scraped-sync-bad", { id: 900011, width: 2040, images: ["https://tracker.example/p.png"] }),
+  ]);
+  assert.equal(counted(report, "skipped, unreadable"), 1, report);
+  assert.match(report, /scraped-sync-bad: width, images/);
+
+  const db = prisma();
+  try {
+    const frac = await db.billboard.findUnique({ where: { slug: "scraped-sync-frac" } });
+    assert.equal(frac?.width, 11, "a fractional size is rounded to the metre the column holds");
+    assert.equal(frac?.height, 3);
+    assert.equal(await db.billboard.count({ where: { slug: "scraped-sync-bad" } }), 0);
+  } finally { await db.$disconnect(); }
+
+  // A later feed whose copy of A is unreadable must not mark A missing.
+  const again = sync([
+    feedRow(A, { id: 900001, price: "not a number" }),
+    feedRow(B, { id: 900002, price: 2000 }),
+    feedRow("scraped-sync-frac", { id: 900010, width: 10.8, height: 2.6 }),
+  ]);
+  assert.equal(counted(again, "marked missing"), 0, again);
+});

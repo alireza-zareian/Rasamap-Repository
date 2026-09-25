@@ -56,6 +56,8 @@ import {
   type Billboard, type BillboardSource,
 } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { z } from "zod";
+import { StringListSchema, TrafficSchema } from "../lib/domain/billboard";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -110,15 +112,60 @@ type SyncedField = (typeof SYNCED_FIELDS)[number];
 
 type Row = Billboard & { sourceRecord: BillboardSource | null };
 
-/** A row of the feed, in the shape prisma/seed.ts already maps. */
-interface FeedRow {
-  id: number;
-  slug: string;
-  source?: string;
-  scrapedAt?: string;
-  status?: string;
-  [field: string]: unknown;
-}
+/**
+ * What a feed row must look like before any of it is written.
+ *
+ * The feed is another program's output, and it was read with a bare cast: a
+ * value of the wrong type reached Prisma, which threw, and a run with no
+ * transaction stopped half-way. It already happens in the real export — ten
+ * rows carry a fractional width or height (10.8 × 2.6) for an integer column,
+ * one claims 2 040 × 310 metres. Now each row is checked: sizes are rounded to
+ * the metre the column holds and bounded like a listing's, coordinates must
+ * fall inside Iran, and a photo must be one of the site's own files under
+ * /images/ — the admin and listing paths refuse outside addresses, and so does
+ * this one. A row that fails is skipped, reported, and still counts as present,
+ * so a crawler bug cannot make the importer mark real rows missing.
+ */
+const Size = z.number().positive().max(200).transform(Math.round).pipe(z.number().int().min(1));
+const Money = z.number().int().nonnegative();
+const Text = (max: number) => z.string().max(max);
+
+const FeedRowSchema = z.object({
+  id:             z.number().int().positive(),
+  slug:           z.string().regex(/^[a-z0-9-]+$/).max(120),
+  source:         z.string().min(1).optional(),
+  scrapedAt:      z.string().optional(),
+  status:         z.string().optional(),
+  name:           z.string().min(1).max(200),
+  location:       Text(500),
+  region:         Text(300),
+  city:           z.string().min(1).max(100),
+  type:           z.string(),
+  width:          Size,
+  height:         Size,
+  faces:          z.number().int().min(1).max(12),
+  age:            z.number().int().min(0).max(100),
+  price:          Money,
+  priceWeekly:    Money,
+  priceQuarterly: Money,
+  priceYearly:    Money,
+  traffic:        TrafficSchema,
+  lat:            z.number().min(24).max(40).nullish(),
+  lng:            z.number().min(44).max(64).nullish(),
+  images:         z.array(z.string().regex(/^\/images\/[A-Za-z0-9._/-]+$/)).max(20),
+  agency:         Text(200),
+  phone:          Text(50),
+  description:    Text(5000),
+  features:       StringListSchema,
+  nearbyLandmarks: StringListSchema,
+  rating:         z.number().min(0).max(5).optional(),
+  reviewCount:    z.number().int().nonnegative().optional(),
+  url:            z.string().nullish(),
+  structureCode:  z.string().nullish(),
+}).passthrough();
+
+/** A row of the feed, once it has passed FeedRowSchema. */
+type FeedRow = z.infer<typeof FeedRowSchema> & { [field: string]: unknown };
 
 /**
  * Availability is the one field where "the admin edited it" is not the only
@@ -225,14 +272,27 @@ function snapshotOf(feed: FeedRow): Record<string, unknown> {
 }
 
 async function main() {
-  const feedRows = JSON.parse(readFileSync(FEED, "utf8")) as FeedRow[];
-  if (feedRows.length === 0) {
-    throw new Error("the feed is empty — refusing to run, since that would mark every row missing");
+  const raw: unknown = JSON.parse(readFileSync(FEED, "utf8"));
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw new Error("the feed is empty or not a list — refusing to run, since that would mark every row missing");
+  }
+
+  // Every slug the feed mentions, readable or not: presence decides what is
+  // marked missing, and an unreadable row is still a row the source has.
+  const presentSlugs = new Set<string>();
+  const feedRows: FeedRow[] = [];
+  const invalid: { slug: string; issue: string }[] = [];
+  for (const item of raw) {
+    const slug = typeof item?.slug === "string" ? item.slug : null;
+    if (slug) presentSlugs.add(slug);
+    const parsed = FeedRowSchema.safeParse(item);
+    if (parsed.success) feedRows.push(parsed.data as FeedRow);
+    else invalid.push({ slug: slug ?? "(no slug)", issue: parsed.error.issues.map(i => i.path.join(".")).join(", ") });
+  }
+  if (presentSlugs.size !== raw.length) {
+    throw new Error(`the feed repeats or omits a slug: ${raw.length} rows, ${presentSlugs.size} distinct slugs`);
   }
   const bySlug = new Map(feedRows.map(r => [r.slug, r]));
-  if (bySlug.size !== feedRows.length) {
-    throw new Error(`the feed repeats a slug: ${feedRows.length} rows, ${bySlug.size} distinct`);
-  }
 
   // Which rows this run is allowed to touch: the ones whose source appears in
   // the feed itself.
@@ -266,7 +326,7 @@ async function main() {
   // and takes the whole feed.
   const firstSync = existing.length > 0 && existing.every(r => r.sourceRecord?.snapshot == null);
 
-  const counts = { adopted: 0, updated: 0, unchanged: 0, inserted: 0, marked: 0, returned: 0, refused: 0, entombed: 0 };
+  const counts = { adopted: 0, updated: 0, unchanged: 0, inserted: 0, marked: 0, returned: 0, refused: 0, entombed: 0, raced: 0 };
   const newTombstones: string[] = [];
   const protectedByField = new Map<string, number>();
   const changedByField = new Map<string, number>();
@@ -326,19 +386,29 @@ async function main() {
       continue;
     }
 
-    counts.updated += 1;
-    if (APPLY) {
-      const split = splitWrites(writes);
-      const record = {
-        ...split.source,
-        scrapedAt: feed.scrapedAt ?? row.sourceRecord?.scrapedAt ?? null,
-        missingSince: null,
-        snapshot: snapshotOf(feed) as Prisma.InputJsonValue,
-      };
-      await prisma.billboard.update({
-        where: { id: row.id },
+    if (!APPLY) { counts.updated += 1; continue; }
+
+    const split = splitWrites(writes);
+    const record = {
+      ...split.source,
+      scrapedAt: feed.scrapedAt ?? row.sourceRecord?.scrapedAt ?? null,
+      missingSince: null,
+      snapshot: snapshotOf(feed) as Prisma.InputJsonValue,
+    };
+    // The merge above decided from the row as it was read at the start of the
+    // run. An admin who saves the same row a moment later must not be
+    // overwritten by that stale decision, so the write carries the row's
+    // updatedAt as a condition and lands only if nobody wrote in between; a
+    // row that lost the race is left for the next run to decide again.
+    const landed = await prisma.$transaction(async tx => {
+      const { count } = await tx.billboard.updateMany({
+        where: { id: row.id, updatedAt: row.updatedAt },
         data: {
-          ...(split.billboard as Prisma.BillboardUpdateInput),
+          // Explicit, because a run that only touches the source record (a row
+          // back in the feed) has no billboard field to write, and an empty
+          // update reports no row — which would read as a lost race.
+          updatedAt: new Date(),
+          ...(split.billboard as Prisma.BillboardUpdateManyMutationInput),
           ...(nextAvailability ? { availability: nextAvailability } : {}),
           // Denormalised sort keys, recomputed only when their inputs moved —
           // the same rule updateBillboard() follows.
@@ -351,10 +421,18 @@ async function main() {
           ...(writes.images !== undefined
             ? { hasImages: Array.isArray(writes.images) && writes.images.length > 0 }
             : {}),
-          sourceRecord: { upsert: { create: record, update: record } },
         },
       });
-    }
+      if (count === 0) return false;
+      await tx.billboardSource.upsert({
+        where:  { billboardId: row.id },
+        create: { billboardId: row.id, ...record },
+        update: record,
+      });
+      return true;
+    });
+    if (landed) counts.updated += 1;
+    else counts.raced += 1;
   }
 
   if (APPLY && newTombstones.length > 0) {
@@ -364,7 +442,7 @@ async function main() {
   }
 
   // Gone from the feed. Marked once, on the run that first misses it.
-  const vanished = existing.filter(r => !bySlug.has(r.slug) && r.sourceRecord?.missingSince == null);
+  const vanished = existing.filter(r => !presentSlugs.has(r.slug) && r.sourceRecord?.missingSince == null);
   counts.marked = vanished.length;
   if (APPLY && vanished.length > 0) {
     const now = new Date();
@@ -381,7 +459,7 @@ async function main() {
     }
   }
 
-  report(counts, changedByField, protectedByField, feedRows.length, existing.length);
+  report(counts, changedByField, protectedByField, raw.length, existing.length, invalid);
 }
 
 /** A row the feed has but the database does not. */
@@ -446,6 +524,7 @@ function report(
   protectedFields: Map<string, number>,
   feedSize: number,
   dbSize: number,
+  invalid: { slug: string; issue: string }[],
 ) {
   const byCount = (m: Map<string, number>) =>
     [...m.entries()].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}×${n}`).join(", ") || "none";
@@ -461,6 +540,9 @@ function report(
   console.log(`  back after being missing              : ${counts.returned}`);
   console.log(`  fields written    : ${byCount(changed)}`);
   console.log(`  fields an admin owns, left alone : ${byCount(protectedFields)}`);
+  console.log(`  skipped, unreadable feed rows     : ${invalid.length}`);
+  for (const { slug, issue } of invalid.slice(0, 10)) console.log(`    ${slug}: ${issue}`);
+  console.log(`  skipped, edited while this ran    : ${counts.raced}`);
   if (counts.entombed > 0) {
     console.log(
       `\n  ${counts.entombed} row(s) the feed has and this database does not were recorded as\n` +
