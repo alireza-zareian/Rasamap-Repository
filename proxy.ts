@@ -35,11 +35,16 @@ const BLOCK_UA = /python-requests|scrapy|wget\/|curl\/\d|go-http-client|java\/|h
 // everyone else, it just isn't rejected on sight.
 const SEARCH_BOT = /googlebot|bingbot|duckduckbot|yandexbot|applebot|slurp/i;
 
-function addSecurityHeaders(res: NextResponse, isAdmin = false): NextResponse {
-  res.headers.set("X-Content-Type-Options", "nosniff");
+/**
+ * What the panel adds to the headers every response already gets from
+ * next.config.ts (nosniff, Referrer-Policy, CSP, X-Frame-Options: SAMEORIGIN).
+ * The panel is never framed, not even by this site, and never indexed. The
+ * other headers used to be repeated here too — the same values in two places,
+ * one of which would drift.
+ */
+function adminHeaders(res: NextResponse): NextResponse {
   res.headers.set("X-Frame-Options", "DENY");
-  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  if (isAdmin) res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  res.headers.set("X-Robots-Tag", "noindex, nofollow");
   return res;
 }
 
@@ -131,7 +136,7 @@ export async function proxy(req: NextRequest) {
   if (!isAdminPage && !isAdminApi && !isUserPage && !isUserApi) return NextResponse.next();
 
   // Always accessible: login pages and auth APIs
-  if (pathname === LOGIN_PATH || pathname === "/api/admin/auth/login") return addSecurityHeaders(NextResponse.next(), true);
+  if (pathname === LOGIN_PATH || pathname === "/api/admin/auth/login") return adminHeaders(NextResponse.next());
   if (pathname.startsWith("/api/auth/")) return NextResponse.next();
 
   const session = await getSessionFromRequest(req);
@@ -158,17 +163,14 @@ export async function proxy(req: NextRequest) {
         const forbidden = req.nextUrl.clone();
         forbidden.pathname = FORBIDDEN_PATH;
         forbidden.search = "";
-        return addSecurityHeaders(
-          NextResponse.rewrite(forbidden, { status: 403 }),
-          true,
-        );
+        return adminHeaders(NextResponse.rewrite(forbidden, { status: 403 }));
       }
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = LOGIN_PATH;
       loginUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    return addSecurityHeaders(NextResponse.next(), true);
+    return adminHeaders(NextResponse.next());
   }
 
   // ── User routes — require any valid session ──
@@ -182,10 +184,10 @@ export async function proxy(req: NextRequest) {
       loginUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    return addSecurityHeaders(NextResponse.next());
+    return NextResponse.next();
   }
 
-  return addSecurityHeaders(NextResponse.next());
+  return NextResponse.next();
 }
 
 export const config = {
