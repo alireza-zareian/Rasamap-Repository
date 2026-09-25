@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
+import { fetchJson, FetchError, errorMessage } from "@/lib/client/fetch-json";
 import { Lightbox } from "./Lightbox";
 import { C, MODERATION_COLOR, MODERATION_LABEL } from "./constants";
 import { Badge } from "./Badge";
@@ -27,6 +27,8 @@ interface Listing {
   description: string;
   phone: string;
   createdAt: string;
+  /** Sent back with a decision, so it lands only on the version shown here. */
+  updatedAt: string;
   reviewNote: string | null;
   submittedBy: { id: number; name: string; phone: string } | null;
 }
@@ -68,7 +70,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
-  const decide = async (id: number, decision: Decision) => {
+  const decide = async (id: number, seen: string, decision: Decision) => {
     if (busyId) return;                       // one decision in flight at a time
     const note = (notes[id] ?? "").trim();
     if (decision !== "approve" && !note) {
@@ -80,13 +82,15 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
       await fetchJson(`/api/admin/listings/${id}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision, note: note || undefined }),
+        body: JSON.stringify({ decision, note: note || undefined, seen }),
       });
       // The row has left the queue — drop it rather than refetching everything.
       setListings(prev => prev.filter(l => l.id !== id));
       setNotes(prev => { const next = { ...prev }; delete next[id]; return next; });
     } catch (err) {
       setError(errorMessage(err));
+      // The submitter changed it in the meantime: show the new version.
+      if (err instanceof FetchError && err.status === 409) load();
     } finally {
       setBusyId(null);
     }
@@ -204,16 +208,16 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
 
                   {canDecide && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, justifyContent: "center" }}>
-                      <button onClick={() => decide(l.id, "approve")} disabled={anyBusy}
+                      <button onClick={() => decide(l.id, l.updatedAt, "approve")} disabled={anyBusy}
                         style={{ background: anyBusy ? C.border : C.green, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                         {l.plan === "featured" ? <Sparkles size={13} /> : <Check size={13} />}
                         {busy ? "..." : l.plan === "featured" ? "تأیید پرداخت و انتشار" : "تأیید و انتشار"}
                       </button>
-                      <button onClick={() => decide(l.id, "revision")} disabled={anyBusy}
+                      <button onClick={() => decide(l.id, l.updatedAt, "revision")} disabled={anyBusy}
                         style={{ background: "none", border: "1px solid rgba(249,115,22,0.5)", color: "#f97316", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                         <PencilLine size={13} /> نیاز به اصلاح
                       </button>
-                      <button onClick={() => decide(l.id, "reject")} disabled={anyBusy}
+                      <button onClick={() => decide(l.id, l.updatedAt, "reject")} disabled={anyBusy}
                         style={{ background: "none", border: `1px solid ${C.border}`, color: "#ef4444", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                         <X size={13} /> رد
                       </button>

@@ -867,7 +867,7 @@ test("a listing submitted under a Persian name still gets a URL-safe slug", asyn
   const slug = admin.json.billboard.slug;
   assert.match(slug, /^[a-z0-9-]+$/, `slug is not URL-safe: ${slug}`);
 
-  await api(`/api/admin/listings/${id}/decision`, { method: "POST", token: adminToken, body: { decision: "approve" } });
+  await decide(adminToken, id, { decision: "approve" });
   assert.equal((await api(`/api/billboards/${slug}`)).status, 200, "an approved listing must be readable by slug");
 });
 
@@ -1418,15 +1418,27 @@ async function submitListing(token, name, plan = "free") {
   return res.json.listing.id;
 }
 
+/** The version of a queued listing the admin is looking at — see decideListing. */
+async function seenVersion(adminToken, id) {
+  const queue = await api("/api/admin/listings?limit=50", { token: adminToken });
+  const row = queue.json.listings.find(l => l.id === id);
+  assert.ok(row, `listing ${id} is not in the approval queue`);
+  return row.updatedAt;
+}
+
+/** A decision on the version currently in the queue, unless `seen` says otherwise. */
+async function decide(adminToken, id, body) {
+  const seen = body.seen ?? await seenVersion(adminToken, id);
+  return api(`/api/admin/listings/${id}/decision`, { method: "POST", token: adminToken, body: { ...body, seen } });
+}
+
 test("approving a free listing publishes it and writes a durable audit row", async () => {
   const userToken  = await mintSession({ userId: "1", role: "user" });
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(userToken, "بیلبورد در انتظار تأیید");
 
-  const decision = await api(`/api/admin/listings/${id}/decision`, {
-    method: "POST", token: adminToken, body: { decision: "approve" },
-  });
+  const decision = await decide(adminToken, id, { decision: "approve" });
   assert.equal(decision.status, 200, JSON.stringify(decision.json));
   assert.equal(decision.json.listing.moderation, "approved");
   assert.equal(decision.json.listing.featured, false, "a free plan must not be promoted");
@@ -1444,9 +1456,7 @@ test("approving a featured listing grants the promotion; a free one never does",
 
   const id = await submitListing(userToken, "بیلبورد ویژه در انتظار پرداخت", "featured");
 
-  const decision = await api(`/api/admin/listings/${id}/decision`, {
-    method: "POST", token: adminToken, body: { decision: "approve" },
-  });
+  const decision = await decide(adminToken, id, { decision: "approve" });
   assert.equal(decision.status, 200, JSON.stringify(decision.json));
   assert.equal(decision.json.listing.moderation, "approved");
   assert.equal(decision.json.listing.featured, true, "confirming payment should grant the featured slot");
@@ -1457,11 +1467,10 @@ test("a decided listing cannot be decided again (409)", async () => {
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(userToken, "بیلبورد یک‌بار تصمیم");
-  assert.equal((await api(`/api/admin/listings/${id}/decision`, { method: "POST", token: adminToken, body: { decision: "approve" } })).status, 200);
+  const seen = await seenVersion(adminToken, id);
+  assert.equal((await decide(adminToken, id, { decision: "approve", seen })).status, 200);
 
-  const again = await api(`/api/admin/listings/${id}/decision`, {
-    method: "POST", token: adminToken, body: { decision: "approve" },
-  });
+  const again = await decide(adminToken, id, { decision: "approve", seen });
   assert.equal(again.status, 409);
 });
 
@@ -1471,9 +1480,7 @@ test("a rejected listing is unreachable, not merely absent from search", async (
 
   const name = "بیلبورد رد شده آزمایشی";
   const id = await submitListing(userToken, name);
-  const decision = await api(`/api/admin/listings/${id}/decision`, {
-    method: "POST", token: adminToken, body: { decision: "reject", note: "تصاویر با مکان اعلام‌شده هم‌خوانی ندارد." },
-  });
+  const decision = await decide(adminToken, id, { decision: "reject", note: "تصاویر با مکان اعلام‌شده هم‌خوانی ندارد." });
   assert.equal(decision.status, 200);
   // A rejection is a review state, not an availability: an idle board
   // ("inactive") is public, and a turned-down submission must not be.
@@ -1495,9 +1502,7 @@ test("rejecting or sending a listing back for revision requires a note for the s
   const id = await submitListing(userToken, "بیلبورد بدون توضیح آزمایشی");
 
   for (const decision of ["reject", "revision"]) {
-    const res = await api(`/api/admin/listings/${id}/decision`, {
-      method: "POST", token: adminToken, body: { decision },
-    });
+    const res = await decide(adminToken, id, { decision });
     assert.equal(res.status, 400, `${decision} without a note must be refused`);
   }
 });
@@ -1508,10 +1513,7 @@ test("a revision request parks the listing in needs_revision and the submitter c
 
   const id = await submitListing(userToken, "بیلبورد نیازمند اصلاح آزمایشی");
 
-  const sent = await api(`/api/admin/listings/${id}/decision`, {
-    method: "POST", token: adminToken,
-    body: { decision: "revision", note: "لطفاً ابعاد دقیق سازه را اصلاح کنید." },
-  });
+  const sent = await decide(adminToken, id, { decision: "revision", note: "لطفاً ابعاد دقیق سازه را اصلاح کنید." });
   assert.equal(sent.status, 200, JSON.stringify(sent.json));
   assert.equal(sent.json.listing.moderation, "needs_revision");
 
@@ -1549,15 +1551,37 @@ test("a revision request parks the listing in needs_revision and the submitter c
   assert.equal(again.status, 409);
 });
 
+test("an approval applies only to the version the admin reviewed", async () => {
+  // The admin opens a listing sent back for revision; before they click, the
+  // submitter resends it with new content. Approving must not publish what
+  // nobody looked at.
+  const userToken  = await mintSession({ userId: "1", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+  const name = "بیلبورد نسخه بررسی‌شده";
+  const id = await submitListing(userToken, name);
+  await decide(adminToken, id, { decision: "revision", note: "عکس اضافه کنید." });
+
+  const seen = await seenVersion(adminToken, id);
+  const resent = await api(`/api/listings/${id}`, {
+    method: "PATCH", token: userToken,
+    body: { name, phone: "09120000000", type: "billboard", city: "تهران", region: "۱", location: "محتوای تازه", width: 12, height: 4, faces: 2, price: 55, plan: "free", images: [] },
+  });
+  assert.equal(resent.status, 200, JSON.stringify(resent.json));
+
+  const stale = await decide(adminToken, id, { decision: "approve", seen });
+  assert.equal(stale.status, 409, "a decision on an older version must be refused");
+
+  const fresh = await decide(adminToken, id, { decision: "approve" });
+  assert.equal(fresh.status, 200, "a decision on the current version goes through");
+});
+
 test("only the account that submitted a listing may resubmit it", async () => {
   const owner    = await mintSession({ userId: "1", role: "user" });
   const stranger = await mintSession({ userId: "2", role: "user" });
   const adminToken = await mintSession({ role: "admin" });
 
   const id = await submitListing(owner, "بیلبورد مالکیت آزمایشی");
-  await api(`/api/admin/listings/${id}/decision`, {
-    method: "POST", token: adminToken, body: { decision: "revision", note: "اصلاح شود." },
-  });
+  await decide(adminToken, id, { decision: "revision", note: "اصلاح شود." });
 
   const res = await api(`/api/listings/${id}`, {
     method: "PATCH", token: stranger,

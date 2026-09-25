@@ -190,7 +190,7 @@ export async function listSubmissionQueue(filter: { moderation?: Moderation; pag
         id: true, name: true, city: true, region: true, location: true,
         type: true, price: true, width: true, height: true, faces: true,
         moderation: true, plan: true, featured: true, images: true,
-        description: true, phone: true, createdAt: true, reviewNote: true,
+        description: true, phone: true, createdAt: true, updatedAt: true, reviewNote: true,
         submittedBy: { select: { id: true, name: true, phone: true } },
       },
     }),
@@ -211,20 +211,30 @@ export async function listSubmissionQueue(filter: { moderation?: Moderation; pag
  * re-grant a paid promotion. `note` is the admin's message to the submitter,
  * shown on their dashboard; on an approval without one it clears any earlier
  * feedback.
+ *
+ * `seen` is the listing's updatedAt as the admin's screen showed it, and the
+ * write only lands on that exact version. Checking the state alone let a
+ * submitter resend new content and photos between the admin opening a listing
+ * and clicking approve, and the click published what nobody had reviewed. The
+ * plan the outcome was computed from is part of the same condition, so a
+ * listing that dropped its paid plan cannot be granted the promotion.
  */
-export async function decideListing(id: number, decision: ListingDecision, note: string | null) {
+export async function decideListing(id: number, decision: ListingDecision, note: string | null, seen: Date) {
   const before = await prisma.billboard.findUnique({
     where:  { id },
-    select: { id: true, name: true, moderation: true, plan: true, submittedById: true },
+    select: { id: true, name: true, moderation: true, plan: true, submittedById: true, updatedAt: true },
   });
   if (!before) throw notFound("آگهی یافت نشد");
 
   const outcome = decisionOutcome(decision, before.plan);
   const { count } = await prisma.billboard.updateMany({
-    where: { id, moderation: { in: [...UNDECIDED] } },
+    where: { id, moderation: { in: [...UNDECIDED] }, plan: before.plan, updatedAt: seen },
     data:  { ...outcome, reviewNote: note },
   });
-  if (count === 0) throw conflict("این آگهی قبلاً بررسی شده است");
+  if (count === 0) {
+    if (!(UNDECIDED as readonly string[]).includes(before.moderation)) throw conflict("این آگهی قبلاً بررسی شده است");
+    throw conflict("این آگهی پس از باز کردن شما تغییر کرده است. صفحه را تازه کنید و نسخهٔ جدید را بررسی کنید.");
+  }
 
   revalidateCatalogue();
   const after = await prisma.billboard.findUniqueOrThrow({

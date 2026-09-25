@@ -28,6 +28,8 @@ export const POST = defineRoute(
     body: z.object({
       decision: z.enum(LISTING_DECISIONS),
       note:     z.string().trim().max(1000).optional(),
+      // The listing's updatedAt as the reviewer saw it — see decideListing.
+      seen:     z.string().datetime({ offset: true }),
     }).refine(
       d => d.decision === "approve" || !!d.note,
       { message: "برای رد کردن یا درخواست اصلاح، نوشتن توضیح برای فرستنده الزامی است", path: ["note"] },
@@ -36,7 +38,7 @@ export const POST = defineRoute(
   },
   async ({ params, body, audit }) => {
     const note = body.note || null;
-    const { before, after } = await decideListing(params.id, body.decision, note);
+    const { before, after } = await decideListing(params.id, body.decision, note, new Date(body.seen));
     await audit(AUDIT_ACTION[body.decision], {
       severity: "warn",
       details: {
