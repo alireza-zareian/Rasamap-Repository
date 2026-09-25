@@ -6,33 +6,10 @@ import { buildSessionCookieHeader, createSession, getSession, type Session, type
 import { findActiveStaff } from "@/lib/db/staff";
 import { findCustomer } from "@/lib/db/customers";
 import { isSessionRevoked } from "@/lib/db/sessions";
-import type { StaffRole } from "@/lib/domain/roles";
+import type { Actor, CustomerActor, StaffActor } from "@/lib/domain/actor";
 
-/**
- * Who is making this request — the one identity every route and page reasons
- * about, instead of the raw token.
- *
- * `id` is a number, already parsed, and `kind` says which table it belongs to,
- * so a customer id can never be written into a staff column or the reverse.
- */
-export interface CustomerActor {
-  kind:  "customer";
-  id:    number;
-  name:  string;
-  phone: string;
-  sessionVersion: number;
-}
-
-export interface StaffActor {
-  kind:  "staff";
-  id:    number;
-  name:  string;
-  email: string;
-  role:  StaffRole;
-  sessionVersion: number;
-}
-
-export type Actor = CustomerActor | StaffActor;
+// The types live in lib/domain/actor.ts; re-exported so callers keep one import.
+export type { Actor, CustomerActor, StaffActor };
 
 /**
  * Turn a verified token into an actor.

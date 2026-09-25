@@ -2237,3 +2237,45 @@ test("an unknown phone costs about as much as a wrong password (no timing oracle
     `unknown-account login was far too fast (${unknown.toFixed(0)}ms vs ${known.toFixed(0)}ms) — the padding hash is not a real bcrypt hash`,
   );
 });
+
+test("guard: the import graph has no cycle and nothing in lib/ imports app/ or components/", () => {
+  // §34 measures both and the thesis states them; this keeps them true. A
+  // type-only cycle (lib/auth/actor.ts <-> lib/db/customers.ts) slipped in
+  // once and nothing noticed until the numbers were counted again.
+  const files = new Map(sourceFiles().map(([f, src]) => [f.replaceAll("\\", "/"), src]));
+  const resolve = (spec, from) => {
+    let base;
+    if (spec.startsWith("@/")) base = spec.slice(2);
+    else if (spec.startsWith(".")) base = join(from, "..", spec).replaceAll("\\", "/");
+    else return null;
+    for (const suffix of ["", ".ts", ".tsx", "/index.ts", "/index.tsx"]) {
+      if (files.has(base + suffix)) return base + suffix;
+    }
+    return null;
+  };
+  const deps = new Map();
+  for (const [file, src] of files) {
+    const out = new Set();
+    for (const m of src.matchAll(/(?:^|\n)\s*(?:import|export)\s+(?:[\w*{}\s,]+\s+from\s+)?["']([^"']+)["']/g)) {
+      const target = resolve(m[1], file);
+      if (target && target !== file) out.add(target);
+    }
+    deps.set(file, out);
+  }
+
+  const upward = [...deps].flatMap(([a, ds]) => [...ds].filter(b => a.startsWith("lib/") && /^(app|components)\//.test(b)).map(b => `${a} -> ${b}`));
+  assert.deepEqual(upward, [], "lib/ must not depend on the layers above it");
+
+  const state = new Map();
+  const cycles = [];
+  const visit = (node, path) => {
+    state.set(node, "open");
+    for (const next of deps.get(node) ?? []) {
+      if (state.get(next) === "open") cycles.push([...path, next].join(" -> "));
+      else if (!state.has(next)) visit(next, [...path, next]);
+    }
+    state.set(node, "done");
+  };
+  for (const file of deps.keys()) if (!state.has(file)) visit(file, [file]);
+  assert.deepEqual(cycles, [], "the import graph must stay acyclic");
+});

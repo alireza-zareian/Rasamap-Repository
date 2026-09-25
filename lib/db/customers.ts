@@ -5,7 +5,7 @@ import { hashPassword, passwordMatches } from "@/lib/auth/passwords";
 import { conflict, forbidden, invalid, isUniqueViolation, notFound } from "@/lib/domain/errors";
 import { hasRole } from "@/lib/domain/roles";
 import { otpErrorMessage, verifyOtp } from "./otp-codes";
-import type { CustomerActor, StaffActor } from "@/lib/auth/actor";
+import type { CustomerActor, StaffActor } from "@/lib/domain/actor";
 
 /**
  * Customer accounts — the `users` table. Staff are in ./staff.ts.

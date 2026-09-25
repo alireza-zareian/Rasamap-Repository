@@ -4,7 +4,7 @@ import { prisma } from "./client";
 import { isPublished, revalidateCatalogue } from "./billboards";
 import { forbidden, notFound } from "@/lib/domain/errors";
 import { averageRating } from "@/lib/domain/rating";
-import type { Actor, CustomerActor } from "@/lib/auth/actor";
+import type { Actor, CustomerActor } from "@/lib/domain/actor";
 import { hasRole } from "@/lib/domain/roles";
 
 /**

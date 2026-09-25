@@ -11,7 +11,7 @@ import { UNDECIDED } from "@/lib/domain/billboard";
 import type { Moderation } from "@/lib/types";
 import { discardImages, discardUploads, saveImages } from "@/lib/uploads";
 import { faNum } from "@/lib/format";
-import type { CustomerActor } from "@/lib/auth/actor";
+import type { CustomerActor } from "@/lib/domain/actor";
 
 /**
  * Listings: media items customers submit through /list-media, from submission

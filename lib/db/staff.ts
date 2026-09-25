@@ -3,7 +3,7 @@ import { prisma } from "./client";
 import { hashPassword, passwordMatches } from "@/lib/auth/passwords";
 import { conflict, invalid, isUniqueViolation, notFound } from "@/lib/domain/errors";
 import { isStaffRole, type StaffRole } from "@/lib/domain/roles";
-import type { StaffActor } from "@/lib/auth/actor";
+import type { StaffActor } from "@/lib/domain/actor";
 
 /**
  * Staff accounts — the `admins` table. Customers are in ./customers.ts.
