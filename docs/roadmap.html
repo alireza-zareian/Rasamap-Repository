@@ -4256,6 +4256,26 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">DEEP</div>
+      <div class="ph-title"><h3>بازبینی عمیقِ سه بخشِ بررسی‌نشده + بستنِ باقی‌مانده‌ها</h3><p>۳ مهر ۱۴۰۵ · جست‌وجو، واردکنندهٔ شبانه، پنل مدیریت؛ و IP، idempotency، پاک‌سازیِ فایل</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>IPِ غیرقابل‌جعل بدون proxy</strong> — <code>server.mjs</code> (همان <code>next start</code> به‌علاوهٔ یک سرآیند از سوکت)؛ <code>npm run demo</code> همان یک دستور ماند؛ CPU برابرِ <code>next start</code> اندازه‌گیری شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>Idempotency اتمیک</strong> — کلید با یک INSERT پیش از کار گرفته می‌شود؛ شکست، کلید را آزاد می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پاک‌سازیِ عکس‌های بی‌صاحب</strong> — پس از ارسالِ دوباره، جایگزینی و حذف</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>شمارهٔ تماسِ آگهی در صفِ تأیید</strong> با نشانِ «تأییدشده/تأییدنشده»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>جست‌وجوی فارسی</strong> — «كرج» با کافِ عربی ۱ نتیجه می‌داد به‌جای ۲۷۳، «بیلبورد تهران» ۵ به‌جای ۷۰۷، و «%» همه‌چیز؛ ستونِ تاشدهٔ <code>searchText</code> با trigger (۷ms؛ ستونِ مجازی ۸۰ms بود و کنار رفت)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>واردکنندهٔ شبانه</strong> — اعتبارسنجیِ هر ردیف (۱۰ ردیفِ واقعی ابعادِ اعشاری داشتند و اجرا را نیمه‌کاره می‌کشتند)، و نوشتنِ شرطی تا ویرایشِ هم‌زمانِ ادمین پاک نشود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پنل مدیریت</strong> — صف تأیید و سرنخ‌ها صفحه‌بندی شد (فقط ۵۰ تای اول دیده می‌شد)؛ ۸ بارگذار بدونِ timeout به <code>fetchJson</code> رفتند و خطا را به‌جای «موردی نیست» نشان می‌دهند</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><strong>تصمیمِ محصول</strong> — ردیفی که از منبع حذف شده (<code>missingSince</code>) هنوز منتشر می‌ماند: پنهان شود، نشان بخورد، یا بماند؟</div></div>
+      </div>
+      <div class="proof">ESLint تمیز؛ <strong>۱۲ آزمون واحد + ۱۵۹ آزمون API + ۷ آزمون واردکننده</strong> و <strong>۱۰ جریان مرورگر</strong> موفق، این بار روی خودِ <code>server.mjs</code>. مهاجرتِ <code>searchText</code> پیش از اعمال روی رونوشتِ <code>dev.db</code> زمان‌سنجی شد و با پشتیبان اعمال شد؛ <code>integrity_check</code> پاک. اجرای آزمایشیِ واردکننده روی خوراکِ واقعیِ ۳٬۵۲۸ ردیفی: فقط یک ردیف (۲۰۴۰×۳۱۰ متر) رد شد.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">DEVIL</div>
       <div class="ph-title"><h3>بازبینی بدبینانهٔ دوم — امنیت، تراکنش و تجربهٔ کاربر</h3><p>۳ مهر ۱۴۰۵ · کد بدون اعتماد به کامنت‌ها خوانده شد؛ ۱۹ ایراد و ۳ مورد باقی‌ماندهٔ بعدی همه بسته شد</p></div>
       <div class="ph-badge done">✓ تموم شده</div>

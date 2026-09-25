@@ -194,10 +194,11 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 
 **9b. Run the tests with `npm test` — and never point them at `next dev`**
 
-`npm test` builds and serves a *production* server on :3100 (into `.next-test/`),
-reseeding its own `prisma/test.db`. It finishes in about a minute: first the 9
+`npm test` builds and serves a *production* server on :3100 (into `.next-test/`)
+through `server.mjs`, the same server `npm run demo` runs, reseeding its own
+`prisma/test.db`. It finishes in about a minute: first the 12
 unit tests of the pure rules in `test/unit/` (half a second, no build — also
-`npm run test:unit` on its own), then 155 API tests, then the 6 importer tests in
+`npm run test:unit` on its own), then 159 API tests, then the 7 importer tests in
 `test/sync.test.mjs` — run one after the other on purpose, because the importer
 writes rows the API tests count.
 

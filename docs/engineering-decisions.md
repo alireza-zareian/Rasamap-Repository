@@ -162,6 +162,26 @@ write itself.
   and reset through it* — an account takeover visible only in the audit log. Both
   are super admin only now.
 ---
+- *Without a proxy the client address is a header the client writes.* True
+  under `next start`, which fills X-Forwarded-For only when it is absent.
+  `npm run demo` and `npm start` now run `server.mjs`: `next start` plus one
+  header, `x-rasamap-peer`, written from the socket over any client copy.
+  Measured: the same CPU as `next start` for a ten-route pass.
+
+**Revised 2026-09-25 (second adversarial pass — search and the import).**
+
+- *Search compared bytes.* Arabic ي/ك typed on common keyboards never matched
+  Persian ی/ک, so «كرج» found 1 of Karaj's 273 boards; the words of a query had
+  to sit side by side; `%` matched everything. `billboards.searchText` holds a
+  folded copy of name, city, location and agency (`lib/domain/search.ts`), kept
+  by SQLite triggers so no writer can forget it. A VIRTUAL generated column was
+  measured first and rejected: 80 ms a search against 4 ms; the triggers cost
+  7 ms. PostgreSQL would generate the column instead (`scripts/to-postgres.mjs`).
+- *The nightly import trusted its feed.* It now validates every row (ten real
+  rows carried fractional sizes for an integer column and would have stopped a
+  run half-way), and writes a row only if nobody edited it since the run read
+  it. Not decided yet: a row the feed stopped listing is marked `missingSince`
+  and stays published indefinitely.
 
 ## 4. Rate limiting with a non-spoofable client identity
 
