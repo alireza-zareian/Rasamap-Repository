@@ -4254,6 +4254,31 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
       <div class="proof">معادل‌بودن اثبات شد نه ادعا: متنِ پروندهٔ اصلی با مجموعِ سه پروندهٔ تازه به‌صورت خط‌به‌خط مقایسه شد (<code>comm -23</code>) و <strong>صفر خط</strong> از نسخهٔ اصلی گم شده؛ تنها تفاوت‌ها کامنت‌های سرپروندهٔ تازه و خطوطِ <code>import</code>اند. سپس <code>tsc --noEmit</code> و <code>npm run lint</code> تمیز، <code>npm run build</code> موفق، و <code>npm test</code> <strong>۱۴۲/۱۴۲</strong> (۱۳۷ API + ۵ واردکننده). در میانهٔ کار دو خطایِ مرزیِ برش (یک کامنتِ دونیم‌شده و یک <code>/**</code> یتیم) را همین بررسی‌ها گرفتند — که خودش دلیلِ اجرای آن‌هاست. سپس <code>npm run demo</code> بالا آمد و <strong>از رویِ آدرسِ LAN</strong> (نه <code>localhost</code>) آزموده شد: ۱۹ مسیرِ عمومی، ورودِ کاربر و ادمین، داشبورد، افشایِ شمارهٔ تماس، و RBAC. کوکیِ نشست روی HTTP ساده <code>HttpOnly; SameSite=Strict</code> و بدونِ <code>Secure</code> بود (قانون ۹)؛ شمارهٔ مالک در HTML عمومی نشت نکرد — یعنی همان <code>toPublicBillboard()</code>ی که در این بازآرایی به <code>core.ts</code> منتقل شد، سرِ جایش کار می‌کند. ۲۴۰ درخواستِ هم‌زمان: همه ۲۰۰، صفر ۴۲۹، صفر خطا در لاگ، و CPU پس از آرام‌شدن به ۰٪ برگشت.</div>
     </div>
   </div>
+<div class="phase-card is-next open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">DEVIL</div>
+      <div class="ph-title"><h3>بازبینی بدبینانهٔ دوم — امنیت، تراکنش و تجربهٔ کاربر</h3><p>۳ مهر ۱۴۰۵ · کد بدون اعتماد به کامنت‌ها خوانده شد؛ ۱۶ ایرادِ غیرِ دمویی بسته شد، ۳ ایرادِ دمو در انتظار تصمیم</p></div>
+      <div class="ph-badge todo">→ در جریان</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">قاعدهٔ ۱۱ در <code>AGENTS.md</code>: کامنت ادعاست نه مدرک. هر یافته یا بازتولید شد یا از روی کد نشان داده شد، و هر رفع یک آزمون دارد.</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نشستِ قابل‌ابطال</strong> — <code>sessionVersion</code> در توکن؛ تغییر یا بازنشانی رمز و غیرفعال‌سازی، نشست‌های قبلی را می‌بندد؛ نشستِ مشتری هم با ردیفش چک می‌شود؛ تمدیدِ لغزان پس از ۷ روز متوقف می‌شود؛ <code>SameSite=Lax</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>قفلِ حساب دورزدنی نیست</strong> — بیرون‌ریختنِ کلیدها دیگر قفلِ زنده را پاک نمی‌کند؛ ایمیلِ کارمند در هر دو فرمِ ورود یک سهمیه دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سقفِ حجمِ بدنه هنگامِ خواندن</strong> — ۳۲ کیلوبایت پیش‌فرض، شاملِ درخواستِ chunked؛ مسیرهای عمومی دیگر بدنهٔ نامحدود parse نمی‌کنند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>open redirect در <code>?next=</code></strong> بسته شد (<code>/\evil</code>)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>شمارهٔ مالک</strong> — سقفِ ۴۰ در ساعت برای هر حساب، مستقل از IP</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تصاحبِ حسابِ مشتری</strong> — بازنشانیِ رمز و تغییرِ شماره فقط سوپرادمین</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تأییدِ آگهی به نسخهٔ دیده‌شده گره خورد</strong> — تأیید روی محتوایی که فرستنده بعداً عوض کرده ۴۰۹ می‌گیرد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>درستی و کش</strong> — OTP اتمیک؛ Idempotency-Key واقعاً فرستاده می‌شود؛ دستهٔ عکسِ ادمین همه‌یا‌هیچ و ممیزی‌شده؛ میانگینِ نظر روی همهٔ نظرها؛ مالک به رسانهٔ خودش امتیاز نمی‌دهد؛ جست‌وجوی آزاد کش را پر نمی‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تجربهٔ کاربر</strong> — لیستِ نظرها پس از هر عمل تازه و خطایش نمایش داده می‌شود؛ پیش‌نویسِ فرمِ ثبت رسانه از سفر به صفحهٔ ورود جان سالم به در می‌برد؛ بازگشت به همان صفحه پس از ورود</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><strong>عکسی که هنگامِ دمو آپلود شود ۴۰۴ می‌دهد</strong> — <code>next start</code> فهرستِ <code>public/</code> را فقط موقعِ بالا آمدن می‌خواند (بازتولید شد)</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><strong>ثبت‌نام و بازیابیِ رمز در <code>npm run demo</code> ممکن نیست</strong> — پیامک خاموش و <code>OTP_DEV_ECHO</code> در production غیرفعال</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><strong>IPِ همه در دمو «unknown» است</strong> — همهٔ سالن یک سهمیه؛ <code>X-Real-IP</code> دلخواه آن را دور می‌زند (بازتولید شد)</div></div>
+      </div>
+      <div class="proof"><code>tsc</code> و ESLint تمیز؛ <strong>۹ آزمون واحد + ۱۵۱ آزمون API + ۶ آزمون واردکننده</strong> و <strong>۱۰ جریان مرورگر</strong> موفق. مهاجرتِ افزایشیِ <code>sessionVersion</code> روی <code>dev.db</code> اعمال شد (پشتیبان گرفته شد). رفعِ دورزدنِ قفل با یک اسکریپتِ مستقل پیش و پس از تغییر نشان داده شد.</div>
+    </div>
+  </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">ARCH</div>
