@@ -33,8 +33,9 @@ import { rateLimited, serverError } from "./responses";
  *   role        403 when a staff member's role is below the route's minimum
  *   params      400 "شناسه نامعتبر"
  *   query       400
- *   body        413 when the declared size is exceeded (checked before
- *               reading), 400 when it is not JSON or fails its schema
+ *   body        413 past the route's size (32 KB unless it declares more),
+ *               counted while reading; 400 when it is not JSON or fails its
+ *               schema
  *   handler     a DomainError becomes its status (see STATUS_BY_KIND); any
  *               other throw becomes a 500 with a reference id
  *
@@ -66,8 +67,8 @@ type IpLimiter = (ip: string) => Promise<RateLimitResult>;
  *                right after the access check.
  *   afterBody    a limit keyed on something in the body — the account a
  *                credential form is attacking, the phone a code was sent to.
- *                The body is parsed first; these schemas cap it at a few
- *                hundred bytes, so nothing expensive happens before the check.
+ *                The body is parsed first, so what bounds the work done
+ *                before the check is the body size limit, not the schema.
  *   "none"       only for signing out. Throttling it fails in the dangerous
  *                direction: someone who taps "sign out" twice would be told to
  *                wait and left signed in.
@@ -90,7 +91,7 @@ export interface RouteSpec<
   params?: P;
   query?: Q;
   body?: B;
-  /** Refuse a larger request before reading it (413). */
+  /** Refuse a larger body (413). Defaults to DEFAULT_MAX_BODY_BYTES. */
   maxBodyBytes?: number;
   /** Replaces the default refusals for this route. */
   messages?: {
@@ -138,6 +139,44 @@ const DEFAULT_MESSAGES = {
 };
 
 const fail = (status: number, error: string) => NextResponse.json({ error }, { status });
+
+/**
+ * The body limit for a route that declares none. The largest non-upload body
+ * (an admin's billboard form, 2 000-character description included) is a few
+ * kilobytes; this leaves room for that and nothing like a flood.
+ */
+const DEFAULT_MAX_BODY_BYTES = 32 * 1024;
+
+const TOO_LARGE = Symbol("too-large");
+
+/**
+ * The request body as text, refusing it once it passes `max` bytes.
+ *
+ * Counted while reading rather than trusted from Content-Length: a chunked
+ * request carries no length at all, and `req.json()` would buffer whatever
+ * arrived. Public routes parse their body before their rate limit (the limit is
+ * keyed on the body), so without this an anonymous caller could make the server
+ * hold and parse an arbitrarily large payload for free.
+ */
+async function readBodyCapped(req: NextRequest, max: number): Promise<string | typeof TOO_LARGE> {
+  if (Number(req.headers.get("content-length")) > max) return TOO_LARGE;
+  if (!req.body) return "";
+
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel();
+      return TOO_LARGE;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
 
 /**
  * Next signals control flow by throwing: `redirect()`, `notFound()`, and the
@@ -216,16 +255,16 @@ export function defineRoute<
 
     let body: unknown;
     if (spec.body) {
-      if (spec.maxBodyBytes && Number(req.headers.get("content-length")) > spec.maxBodyBytes) {
-        return fail(413, DEFAULT_MESSAGES.tooLarge);
-      }
+      const text = await readBodyCapped(req, spec.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES);
+      if (text === TOO_LARGE) return fail(413, DEFAULT_MESSAGES.tooLarge);
       // An empty body reaches the schema as `undefined`, so a route whose body
       // is optional says so in its schema (`.optional()`) instead of every
       // route having to tell "no body" apart from "not JSON".
       let raw: unknown;
-      if (req.body !== null && req.headers.get("content-length") !== "0") {
+      if (text) {
         try {
-          raw = await req.json();
+          // Parsed here only to be handed straight to the schema below.
+          raw = JSON.parse(text);
         } catch {
           return fail(400, messages?.invalidBody ?? DEFAULT_MESSAGES.invalidJson);
         }
