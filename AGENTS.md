@@ -8,53 +8,92 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Rasamap — Agent Constraints
 
-Six hard rules. Follow them without exception on every task, every file, every PR.
+The hard rules below apply to every task, every file, every PR. The ones marked
+**(enforced)** also fail `npm run lint` or `npm test` when broken — the prose is
+the reason, the toolchain is the guard.
 
 ---
 
-**1. DB reads go through the ORM — never through static files**
+**1. Only `lib/db/` talks to the database (enforced)**
 
 ```
-✅  import { getAllBillboards, getFilteredBillboards } from "@/lib/db/billboards";
-✅  import type { Billboard } from "@/lib/types";   // types + typeLabels, data-free
-❌  import { everyBillboard, allBillboards, scrapedBillboards } from "@/lib/data";
-❌  import { getFilteredBillboards } from "@/lib/db/billboards/queries";  // reach past index.ts
+✅  import { getFilteredBillboards } from "@/lib/db/billboards";   // a data-layer function
+✅  import { saveReview } from "@/lib/db/reviews";
+✅  import type { Billboard } from "@/lib/types";                   // types + labels, data-free
+❌  import { prisma } from "@/lib/db/client";          // outside lib/db — lint error
+❌  import { everyBillboard } from "@/lib/data";       // the 4 MB seed dataset — lint error
+❌  import { getFilteredBillboards } from "@/lib/db/billboards/queries";  // past index.ts — lint error
 ```
 
-`lib/data.ts` is a TypeScript constant file (static + scraped arrays + a 4 MB JSON import). It cannot receive DB writes and always serves stale data. Any API route or server function that reads from it instead of Prisma is silently serving old records — and any client/page import of it ships the entire dataset into the browser bundle. It is imported **only** by `prisma/seed.ts`. Everything else takes types from `lib/types.ts`.
+`lib/db/` is the Data Access Layer the Next.js data-security guide recommends:
+`import "server-only"` in every file, authorisation on a resource checked there
+(an actor is passed in), and minimal objects handed back. Business logic that
+touches the database — a transaction, a conditional write that guards a state
+change, a get-or-create — lives here, one module per resource
+(`billboards/`, `listings.ts`, `reviews.ts`, `leads.ts`, `customers.ts`,
+`staff.ts`, …). A route handler or a page calls it; neither imports Prisma.
+
+A rule that needs no I/O at all — a state transition, a derived price, a
+schema for a JSON column — goes in `lib/domain/`, which may import nothing but
+zod (enforced) and is unit-tested in `test/unit/`.
+
+A refusal is a `DomainError` (`notFound`, `conflict`, `invalid`, `forbidden` from
+`lib/domain/errors.ts`) with a Persian message — the data layer never builds an
+HTTP response.
+
+`lib/data.ts` is the seed dataset (static + scraped arrays + a 4 MB JSON). It
+is imported **only** by `prisma/seed.ts`; any other import would serve stale
+data, or ship the whole dataset to the browser.
 
 **Where a new billboard helper goes.** `lib/db/billboards/` is split by *direction*, not by topic:
 
 | File | Holds |
 |---|---|
 | `queries.ts` | every read. Nothing in it writes or invalidates the cache. |
-| `mutations.ts` | every write, each ending in `revalidateCatalogue()` when it changes what a visitor sees. |
-| `core.ts` | what both halves need: `fromRow`, `toPublicBillboard`, `toCatalogueItem`, `CATALOGUE_TAG`, `UNPUBLISHED_STATUSES`, `publishedOnly`. |
+| `mutations.ts` | every admin write, each ending in `revalidateCatalogue()` when it changes what a visitor sees. |
+| `core.ts` | what both halves need: `fromRow` (which reads the JSON columns through their schemas), `toPublicBillboard`, `toCatalogueItem`, `CATALOGUE_TAG`, `published`, `isPublished`. |
 | `index.ts` | the public surface. Re-exports `core.ts` **by name** so `fromRow` stays internal, and `export *` for the other two. |
 
-Import from `@/lib/db/billboards` — the folder, never a file inside it. A caller that reaches past `index.ts` pins itself to which half a function currently lives in. If you add an export to `queries.ts` or `mutations.ts` it is public automatically; if you add one to `core.ts`, decide first whether it belongs in `index.ts`'s named list.
+A listing's trip through review is in `lib/db/listings.ts`, not here.
 
 ---
 
-**2. Admin route order is fixed and non-negotiable**
+**2. Every API route is declared with `defineRoute()` (enforced)**
 
 ```
-session check  →  rate limit  →  Zod  →  business logic
+session  →  rate limit  →  role  →  Zod (params, query, body)  →  business logic
 ```
 
-Out of order = security hole. A rate-limit check before auth lets unauthenticated callers exhaust the bucket. Zod before rate-limit lets attackers send oversized payloads for free. Never reorder.
+Out of order = security hole. A rate-limit check before auth lets unauthenticated
+callers exhaust the bucket; Zod before the rate limit lets attackers send
+oversized payloads for free. The order is written once, in `lib/http/route.ts`;
+a route states *what* it needs and the pipeline decides *when*:
+
+```ts
+export const PATCH = defineRoute(
+  { name: "admin/leads/[id]", access: { staff: "editor" }, rateLimit: adminApiRateLimit, params: idParams, body: PatchSchema },
+  async ({ actor, params, body, audit }) => { … },
+);
+```
+
+`access` is `"public"`, `"signed-in"`, `"customer"` or `{ staff: role }`, and the
+handler's `actor` is typed to match — a customer route can never be handed a
+staff id. `rateLimit` is required; `"none"` is allowed only on the two sign-out
+routes (guard test). The pattern, with its edge cases, is at the end of
+`docs/api.md`.
 
 ---
 
 **3. Zod `.safeParse()` only — no raw parse, no raw JSON.parse**
 
 ```
-✅  const result = Schema.safeParse(body);   if (!result.success) return 400;
+✅  body: Schema          // in defineRoute — the pipeline safe-parses it
+✅  const result = Schema.safeParse(value);   if (!result.success) …
 ❌  const data = Schema.parse(body);          // throws, uncaught = 500
 ❌  const data = JSON.parse(req.body);        // no validation = injection surface
 ```
 
-`.parse()` throws on bad input and will produce an unhandled 500. `JSON.parse(userInput)` bypasses all validation. Zod's `.safeParse()` does both parsing and validation in one step.
+`.parse()` throws on bad input and will produce an unhandled 500. `JSON.parse(userInput)` bypasses all validation. Zod's `.safeParse()` does both parsing and validation in one step. Zod's default messages are Persian (`lib/http/zod-messages.ts`), so a schema without its own message still answers in Persian.
 
 ---
 
@@ -80,7 +119,7 @@ Tailwind v4 is present only for CSS custom properties (declared in `globals.css`
 
 ---
 
-**7. Implement only what was explicitly asked — nothing more**
+**6. Implement only what was explicitly asked — nothing more**
 
 ```
 ❌  Task: "add a search box" → you add search box + autocomplete + recent history + keyboard shortcuts
@@ -91,11 +130,11 @@ Before writing code, state in one sentence what you will change. If you spot a r
 
 ---
 
-**6. Roadmap HTML must be updated after every completed task**
+**7. Roadmap HTML must be updated after every completed task**
 
 After finishing any task — bug fix, feature, refactor — open `docs/roadmap.html` and:
 - Completed sub-task: `class="task todo-t"` → `class="task done-t"`, empty tick → `✓`
-- Completed phase card: badge to `✓ انجام شد`, add `<div class="proof">` with what was verified
+- Completed phase card: badge to `✓ تموم شده`, add `<div class="proof">` with what was verified
 - Footer date: update to today in Jalali calendar
 
 Skipping this means the roadmap drifts from reality and the next agent starts with wrong context.
@@ -156,10 +195,11 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 **9b. Run the tests with `npm test` — and never point them at `next dev`**
 
 `npm test` builds and serves a *production* server on :3100 (into `.next-test/`),
-reseeding its own `prisma/test.db`. It finishes in about 44 seconds: 137 API
-tests, then the 5 importer tests in `test/sync.test.mjs` — two files, run one
-after the other on purpose, because the importer writes rows the API tests
-count.
+reseeding its own `prisma/test.db`. It finishes in about a minute: first the 9
+unit tests of the pure rules in `test/unit/` (half a second, no build — also
+`npm run test:unit` on its own), then 142 API tests, then the 6 importer tests in
+`test/sync.test.mjs` — run one after the other on purpose, because the importer
+writes rows the API tests count.
 
 It used to run `next dev`, and the failure mode is worth knowing because it looks
 like a broken test suite rather than a wrong server mode: one test reads the
@@ -204,7 +244,7 @@ harder to read than it found it has not finished.
 
 - **One way to do a thing, not four.** Before hand-rolling a response, a guard,
   a label or a date format, look for the helper that already exists
-  (`rateLimited`, `serverError`, `statusLabels`, `copyText`, `SITE_URL`). Four
+  (`defineRoute`, `rateLimited`, `serverError`, `availabilityLabels`, `copyText`, `SITE_URL`). Four
   spellings of the same 429 is how numbers go stale in three of them.
 - **Delete what your change orphans.** An import nothing uses, a helper nothing
   calls, a constant nothing reads — remove it in the same commit that stranded

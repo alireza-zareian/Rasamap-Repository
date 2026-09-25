@@ -19,12 +19,12 @@ Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Pris
 ## Non-Negotiable Rules
 
 1. Zod: always `.safeParse()`, never `.parse()`
-2. API routes: use `getAllBillboards()` from `lib/db/billboards` — never import `everyBillboard`/`allBillboards`/`scrapedBillboards` from `lib/data.ts`. Import domain **types** and `typeLabels` from `lib/types.ts` (data-free). `lib/data.ts` holds the static/scraped dataset + 4 MB JSON and is imported **only** by `prisma/seed.ts` at build time — importing it from client/page code ships the whole dataset to the browser.
+2. Only `lib/db/` talks to the database (server-only; ESLint refuses `@/lib/db/client` anywhere else). Routes and pages call a `lib/db/*` function; rules with no I/O go in `lib/domain/`; refusals are `DomainError`s. Import domain **types** and labels from `lib/types.ts` (data-free). `lib/data.ts` (static/scraped dataset + 4 MB JSON) is imported **only** by `prisma/seed.ts` — enforced by lint. See rule 1 in `AGENTS.md`
 3. Prisma 7: explicit driver adapter required — see `lib/db/client.ts`
 4. No `JSON.parse(userInput)` — Zod handles parsing
 5. Sort/filter values: always check against allowlists before use in queries
 6. Auth failures: generic error messages only (no user enumeration)
-7. Every admin route: session check → rate limit → Zod → business logic (in that order)
+7. Every API route is declared with `defineRoute()` (`lib/http/route.ts`), which fixes the order session → rate limit → role → Zod → business logic and requires a rate limit. See rule 2 in `AGENTS.md`
 8. Never read the *connection* off the build environment: cookie `Secure` comes from
    `isSecureRequest(req)` not `NODE_ENV`, origin checks read `X-Forwarded-Host`/`Host` not
    `nextUrl.host`, clipboard goes through `lib/client/clipboard.ts`, public URLs through
@@ -43,8 +43,9 @@ Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Pris
 npm run demo    # ← build + start. USE THIS to view or demo the site.
 npm run dev     # ONLY while writing code (hot-reload). 97× more CPU.
 npm run build | lint
-npm test          # 137 API + 5 importer tests on a production build (~44 s)
-npm run test:e2e  # 9 browser flows over the installed Chrome; screenshots on failure
+npm test          # 9 unit + 142 API + 6 importer tests on a production build (~1 min)
+npm run test:unit # the pure rules in lib/domain only — no build, ~0.5 s
+npm run test:e2e  # 10 browser flows over the installed Chrome; screenshots on failure
 npm run db:migrate | db:seed | db:studio | db:dedupe | db:backfill-coords
 npm run db:sync-scraped    # merge the crawler's feed into a live DB (§33) — dry run without --apply
 npm run images:variants   # pre-build the image sizes next/image serves (git-ignored)
@@ -149,8 +150,8 @@ The documentation was consolidated: what used to be 24 files is now these.
 | File | What it carries |
 |---|---|
 | `docs/architecture.md` | the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API |
-| `docs/engineering-decisions.md` | 34 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected, §28 = the deployment surface, §29 = CSP tightening and why script-src keeps 'unsafe-inline', §30 = findability and what Persian breaks in an OG card, §31 = browser tests and the four races behind a flaky suite, §33 = the nightly import and why it cannot undo a person, §34 = why the billboards data layer is split by direction and the two graph properties that are measured rather than claimed) |
-| `docs/api.md` | full HTTP API reference (43 endpoints) **+ the route-writing pattern** (was `api-patterns.md`) |
+| `docs/engineering-decisions.md` | 35 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected, §28 = the deployment surface, §29 = CSP tightening and why script-src keeps 'unsafe-inline', §30 = findability and what Persian breaks in an OG card, §31 = browser tests and the four races behind a flaky suite, §33 = the nightly import and why it cannot undo a person, §34 = why the billboards data layer is split by direction and the two graph properties that are measured rather than claimed, §35 = the adversarial architecture review: the route pipeline, the data layer as the only door to the database, the split of `status`, typed sessions, and where every moved file went) |
+| `docs/api.md` | full HTTP API reference **+ the route-writing pattern (`defineRoute`)** (was `api-patterns.md`) |
 | `docs/codemap.html` | interactive file map generated from the real import graph — supersedes the old hand-written `project-reference.md` |
 | `docs/STATUS.md` | project state, production-readiness triage, 13-layer assessment, remaining work, security audit (was `STATUS.md` + `PLAN.md` + `AUDIT.md` + `next-tasks.md` + `security-audit.md`) |
 | `docs/defense.md` | defence summary, prep checklist, final-review notes, self-assessment (was `presentation-summary.md` + `presentation-prep.md` + `final-review-notes.md` + `self-assessment.md`) |

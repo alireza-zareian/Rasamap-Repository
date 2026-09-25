@@ -21,16 +21,21 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 | Level | Meaning |
 |-------|---------|
 | public | no session needed |
-| user | valid `role: "user"` session cookie (`rasamap_session`) |
-| admin | session with role `viewer` / `editor` / `admin` / `super_admin` (enforced by `proxy.ts` **and** the route) |
+| user | a signed-in **customer** session (`kind: "customer"` in the `rasamap_session` token). A staff session is refused with 403 |
+| user / staff | any signed-in account |
+| admin | a **staff** session with role `viewer` / `editor` / `admin` / `super_admin`, re-checked against its `admins` row on every request (enforced by `proxy.ts` **and** the route) |
 | editor+ | role `editor`, `admin` or `super_admin` |
 | admin+ | role `admin` or `super_admin` |
 
 **Conventions**
 
 - Session is a signed JWT (jose, HS256) in an HttpOnly `SameSite=Strict` cookie.
-- Admin route order is fixed: **session check → rate limit → Zod → business logic**.
-- Rate limits are per-IP, in-memory sliding window (`lib/auth/rate-limit.ts`).
+- Every route is declared with `defineRoute()` (`lib/http/route.ts`), which fixes the
+  order **session → rate limit → role → Zod → business logic** — see the pattern at the end.
+- Rate limits are named policies in `lib/rate-limit/`, fixed window with an optional
+  lockout; the counters live in memory, or in Redis when `REDIS_URL` is set.
+- A refusal from the data layer (`DomainError`) becomes 400/401/403/404/409 in one
+  place; anything unexpected is a 500 with a quotable reference id.
 - Auth failures use generic messages (no user enumeration).
 
 **Idempotency-Key** (optional header on `POST /api/listings`)
@@ -49,12 +54,12 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| GET | `/api/billboards` | public | List with filter + pagination. Query (Zod): `search` (≤100), `type` (allowlist), `status` (allowlist), `city` (≤60), `cities` (CSV, ≤50), `maxPrice` (0–100000), `sortBy` (`price_asc\|price_desc\|traffic_desc\|area_desc`), `page` (1–200), `limit` (1–**48**), `lat`/`lng` (a radial centre — both or neither, else 400) and `radiusKm` (1–50, default 5). Returns `{ items, total, page, pageSize, totalPages }`. With a centre, `total` is the size of the circle and paging is done in the app, because the circle is cut after the rows return. Rate limit is a per-address ceiling with no lockout → 429. `Cache-Control: max-age=60, stale-while-revalidate=300`. Unpublished rows (`pending`, `awaiting_payment`) are never returned, whatever `status` asks for. Owner phone is stripped. |
+| GET | `/api/billboards` | public | List with filter + pagination. Query (Zod): `search` (≤100), `type` (allowlist), `availability` (`available\|busy\|reserved\|inactive`), `city` (≤60), `cities` (CSV, ≤50), `maxPrice` (0–100000), `sortBy` (`price_asc\|price_desc\|traffic_desc\|area_desc`), `page` (1–200), `limit` (1–**48**), `lat`/`lng` (a radial centre — both or neither, else 400) and `radiusKm` (1–50, default 5). Returns `{ items, total, page, pageSize, totalPages }`. With a centre, `total` is the size of the circle and paging is done in the app, because the circle is cut after the rows return. Rate limit is a per-address ceiling with no lockout → 429. `Cache-Control: max-age=60, stale-while-revalidate=300`. Unpublished rows (`pending`, `awaiting_payment`) are never returned, whatever `status` asks for. Owner phone is stripped. |
 | GET | `/api/billboards/[slug]` | public | One billboard. `slug` must match `^[a-z0-9-]+$` → 400 otherwise. 404 if not found **or not yet published**. Same data layer as the detail page's Server Component. Cache as above. |
 | POST | `/api/billboards/[slug]/contact` | user | The owner/agency phone number, plus **the lead it creates**. Kept out of every public response so it cannot be scraped (§20). POST rather than GET because the reveal is now an explicit click and an explicit click is a write: it get-or-creates a `contact_requests` row for (media, account) — a repeat reveal increments `count` instead of adding a row. 404 if the media is not published. A lead is written only for a `role: "user"` session (an admin's `userId` is not a `users` row). If the lead write fails the number is still returned and the failure is logged. `private, no-store`. |
 | GET | `/api/stats` | public | Aggregate counts for the landing page. |
 | GET | `/api/analytics` | public | Market analytics. Optional `?city=<name>`. |
-| GET | `/api/health` | public | Liveness **and** readiness for whatever watches the process. Answers 200 `{ status: "ok" }` only after a `SELECT 1` reaches the database; 503 `{ status: "degraded" }` when it cannot, with the reason going to the log and not to the caller. The body is deliberately bare — no engine, version or uptime — because this is an unauthenticated URL. Exempt from the bot-user-agent filter in `proxy.ts`, since every monitor identifies itself as one, and the only route not wrapped in `withApiLog` (it is polled forever and would bury the log). `no-store`. |
+| GET | `/api/health` | public | Liveness **and** readiness for whatever watches the process. Answers 200 `{ status: "ok" }` only after a `SELECT 1` reaches the database; 503 `{ status: "degraded" }` when it cannot, with the reason going to the log and not to the caller. The body is deliberately bare — no engine, version or uptime — because this is an unauthenticated URL. Exempt from the bot-user-agent filter in `proxy.ts`, since every monitor identifies itself as one, and the only route that writes no request log (`log: false` — it is polled forever and would bury the log). `no-store`. |
 
 ### User — reviews
 
@@ -63,7 +68,7 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 | GET | `/api/reviews?billboardId=<id>` | public | Reviews for a billboard, latest 50, with the average. |
 | POST | `/api/reviews` | user | Body (Zod): `billboardId`, `rating` (1–5), `comment` (10–1000). 404 if the media does not exist or is not published. One review per user per billboard (DB unique constraint) — a repeat submission edits the existing row. The write and the recomputation of `billboards.rating` / `reviewCount` from the reviews table happen in one `prisma.$transaction`. 201 on success. |
 
-| POST | `/api/reviews/[id]/replies` | user / staff | Reply to a review, one level deep. Body (Zod): `body` (2–600). A staff reply stores no account id — the env-configured administrator has no `admins` row, so `authorName` is written onto the reply and `isStaff` drives the badge. 404 for an unknown review. 201. |
+| POST | `/api/reviews/[id]/replies` | user / staff | Reply to a review, one level deep. Body (Zod): `body` (2–600). A customer's reply records `userId`, a staff reply records `staffId` — each a real foreign key into its own table — and `authorName` as it was when written. |
 | DELETE | `/api/reviews/[id]/replies/[replyId]` | author / editor+ | Remove a reply. Its author may, and so may an editor or above — a public thread needs a way to be moderated. 404 (not 403) for a reply the caller may not touch. |
 | DELETE | `/api/reviews/[id]` | user | A user removes their own review. 404 — not 403 — for a review that is not theirs, so the response cannot be used to discover which ids exist. The delete and the recomputation of `billboards.rating` / `reviewCount` happen in one `prisma.$transaction`. Editing needs no route: `POST /api/reviews` upserts on (billboardId, userId), so submitting again replaces what is there. |
 
@@ -84,14 +89,14 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 | POST | `/api/auth/otp/send` | public | Start a phone-verified flow. Body (Zod): `phone`, `purpose` (`password_reset` \| `register`). A reset responds identically whether or not the number is registered, so it is no membership oracle; a sign-up answers 409 on a number that already has an account, because the register step must refuse it anyway. Rate limited per phone (3 / 10 min) and per IP (40 / hour). SMS is dormant unless `KAVENEGAR_API_KEY` is set. |
 | POST | `/api/auth/otp/verify` | public | Password reset only (`purpose: "password_reset"`): verify the 6-digit code and set a new password in one step. A sign-up code lives under a different purpose and cannot be spent here. Codes are HMAC-hashed, 5-minute TTL, single-use, 5 attempts. Writes `password_reset_self`. |
 | POST | `/api/auth/logout` | public | Clears the session cookie. |
-| GET | `/api/auth/me` | user | Current session `{ userId, name, phone, role }`. |
+| GET | `/api/auth/me` | user / staff | The signed-in account `{ id, name, phone, email, role, isStaff }` (a customer's role reads `"user"`), plus a sliding refresh of the session cookie when under two hours remain. |
 | PATCH | `/api/auth/me` | user | Update `name` and/or `password` for the current user. |
 
 ### Admin — auth
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| POST | `/api/admin/auth/login` | public | Credentials are checked against the `admins` table, not against the environment: `ADMIN_EMAIL` / `ADMIN_PASSWORD_HASH` are read only by `prisma/seed.ts`, which upserts the first `admins` row from them. An inactive account never signs in. bcrypt + JWT + audit entry. Rate limit: 5 tries / 15 min **per account** (plus a loose per-address ceiling with no lockout — see `lib/auth/rate-limit.ts`). |
+| POST | `/api/admin/auth/login` | public | Credentials are checked against the `admins` table, not against the environment: `ADMIN_EMAIL` / `ADMIN_PASSWORD_HASH` are read only by `prisma/seed.ts`, which upserts the first `admins` row from them. An inactive account never signs in. bcrypt + JWT + audit entry. Rate limit: 5 tries / 15 min **per account** (plus a loose per-address ceiling with no lockout — see `lib/rate-limit/index.ts`). |
 | POST | `/api/admin/auth/logout` | admin | Clears the admin session. |
 | GET | `/api/admin/auth/me` | admin | Current admin session. |
 
@@ -99,14 +104,14 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| GET | `/api/admin/billboards` | admin | List for the admin table. Query (Zod): `q`, `city`, `type`, `status`, `page`, `limit` (≤100), `sort` (`<key>_<dir>`, keys `id\|price\|name\|city`, dirs `asc\|desc`). `no-store`. |
+| GET | `/api/admin/billboards` | admin | List for the admin table. Query (Zod): `q`, `city`, `type`, `availability`, `moderation`, `page`, `limit` (≤100), `sort` (`<key>_<dir>`, keys `id\|price\|name\|city`, dirs `asc\|desc`). `no-store`. |
 | POST | `/api/admin/billboards` | editor+ | Create. Body (Zod): `name`, `location`, `city`, `type` (allowlist), `price`, plus optional `agency`, `phone`, `description`, `width`, `height`, `faces`, `lat`, `lng`. 201. |
 | GET | `/api/admin/billboards/[id]` | admin | Single record for the edit view. `no-store`. |
-| PUT | `/api/admin/billboards/[id]` | editor+ | Partial update. Body (Zod): any of `name`, `location`, `city`, `type`, `status`, `lat`, `lng`, `price`, `description`, `agency`, `phone`, `width`, `height`, `faces`. |
+| PUT | `/api/admin/billboards/[id]` | editor+ | Partial update. Body (Zod): any of `name`, `location`, `city`, `type`, `availability`, `lat`, `lng`, `price`, `description`, `agency`, `phone`, `width`, `height`, `faces`. |
 | DELETE | `/api/admin/billboards/[id]` | admin+ | Deletes. Refuses (409) if the billboard has reviews (they reference it with no cascade). |
 | PUT | `/api/admin/billboards/[id]/images` | editor+ | Replace the image list. Mixes already-saved URLs (kept) with new base64 data URLs (validated by magic bytes, then written). Keeps the denormalised `hasImages` flag in step. |
-| GET | `/api/admin/billboards/stats` | admin | Aggregate counts by type / status / city for the admin dashboard. |
-| GET | `/api/admin/listings` | editor+ | The approval queue: submissions still in `pending` / `awaiting_payment`, newest first, with the submitter. Query: `status`, `page`, `limit` (≤50). `no-store`. |
+| GET | `/api/admin/billboards/stats` | admin | Aggregate counts by type / availability / city for the admin dashboard. |
+| GET | `/api/admin/listings` | editor+ | The approval queue: submissions not yet approved (`pending`, `awaiting_payment`, `needs_revision`, `rejected`), newest first, with the submitter. Query: `moderation`, `page`, `limit` (≤50). `no-store`. |
 | POST | `/api/admin/listings/[id]/decision` | admin+ | Decide on a submission — the only place the listing state machine runs. Body (Zod): `decision` (`approve\|reject\|revision`), `note?` (≤1000, **required** for `reject` and `revision`). `approve` publishes it (`available`) and additionally grants `featured: true` when the submitted plan was `featured` (this is the manual payment confirmation); `reject` sets `rejected`; `revision` sets `needs_revision` and sends the note to the submitter's dashboard for an edit-and-resend. The note is stored on `reviewNote` and cleared on resubmit. 409 if the row was already decided. Writes `listing_approved` / `listing_rejected` / `listing_revision_requested`. |
 | GET | `/api/admin/customers` | admin+ | Registered end-user directory. Query: `q` (name/phone), `page`, `limit` (≤100), `sort` (`created_desc` \| `created_asc` \| `name_asc`). Returns `{ users: [{id,name,phone,createdAt,listingCount,reviewCount}], total, page, pages }`. `no-store`. Never returns the password hash. |
 | GET | `/api/admin/customers/[id]` | admin+ | One user + their last 50 submitted listings + listing/review counts. `no-store`. Never returns the password hash. |
@@ -149,8 +154,9 @@ enumeration by body **or by timing**), the OTP reset flow, the listing pipeline
 (upload magic-byte validation, plan → status, Idempotency-Key replay),
 object-level authorisation on `/api/listings`, admin RBAC, the approval state
 machine, reviews and the denormalised rating aggregate, analytics coverage
-counts, and the durable audit log. **142 tests** (137 API + 5 covering the nightly
-importer), plus 9 browser flows in `npm run test:e2e`.
+counts, and the durable audit log. **157 tests** (9 unit tests of the pure rules,
+142 API, 6 covering the nightly importer), plus 10 browser flows in
+`npm run test:e2e`.
 
 ---
 
@@ -162,80 +168,64 @@ Read this file when writing or modifying API routes.
 
 ---
 
-### Admin Route Template
+### Every route: `defineRoute`
 
-Every admin route follows this exact order:
+A route states what it needs; `lib/http/route.ts` decides when. The order —
+**access → rate limit → role → params / query / body → handler** — is written
+once there, so no route can reorder it, and the compiler refuses a route that
+names no rate limit.
 
 ```ts
-import { NextRequest, NextResponse } from "next/server";
-import { getStaffSession } from "@/lib/auth/users";
-import { getClientIp } from "@/lib/auth/client-ip";
-import { adminApiRateLimit } from "@/lib/auth/rate-limit";
-import { rateLimited } from "@/lib/api-rate-limit";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { defineRoute } from "@/lib/http/route";
+import { idParams } from "@/lib/http/params";
+import { adminApiRateLimit } from "@/lib/rate-limit";
+import { updateLead } from "@/lib/db/leads";
 
-export async function GET(req: NextRequest) {
-  // 1. Auth — getStaffSession, never getSession: getSession also returns a
-  // valid session for a role:"user" (customer) account, which is exactly the
-  // hole an admin route must not have. It re-reads the admins row on every
-  // request, so a demoted/deactivated admin loses access immediately.
-  const session = await getStaffSession();
-  if (!session) return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
-
-  // 2. Rate limit
-  const ip = getClientIp(req);
-  const rl = adminApiRateLimit(ip);
-  if (!rl.allowed) return rateLimited(rl, { endpoint: "admin/example", ip, userId: session.userId, userEmail: session.email });
-
-  // 3. Zod validation of query params
-  const schema = z.object({ /* ... */ });
-  const parsed = schema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
-  if (!parsed.success) return NextResponse.json({ error: "پارامترهای نامعتبر" }, { status: 400 });
-
-  // 4. Business logic
-  const data = await someDbQuery(parsed.data);
-  return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
-}
+// PATCH /api/admin/leads/[id] — editor+
+export const PATCH = defineRoute(
+  {
+    name: "admin/leads/[id]",          // logs and audit rows
+    access: { staff: "editor" },       // "public" | "signed-in" | "customer" | { staff: role }
+    rateLimit: adminApiRateLimit,      // a named policy; "none" only for signing out
+    params: idParams,                  // 400 "شناسه نامعتبر" when it fails
+    body: z.object({ status: z.enum(["new", "contacted", "closed"]).optional(), note: z.string().max(500).optional() }),
+  },
+  async ({ actor, params, body, audit }) => {
+    const { before, lead } = await updateLead(params.id, body);   // throws DomainError → 404/409
+    await audit("lead_update", { details: { leadId: params.id, from: before.status, to: lead.status } });
+    return NextResponse.json({ lead });                          // no-store is added for non-public routes
+  },
+);
 ```
 
-### User Route Template
+What the handler receives is already typed by what the route declared:
+`actor` is a `StaffActor` for `{ staff: … }`, a `CustomerActor` for
+`"customer"`, either for `"signed-in"`, and `null` for `"public"`; `params`,
+`query` and `body` are the Zod outputs.
 
-```ts
-export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session || session.role !== "user")
-    return NextResponse.json({ error: "احراز هویت لازم است" }, { status: 401 });
+Rules the pipeline cannot enforce, and the reviewer should:
 
-  const ip = getClientIp(req);
-  const rl = userApiRateLimit(ip);
-  if (!rl.allowed) return rateLimited(rl, { endpoint: "example", ip, userId: session.userId });
-
-  let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: "درخواست نامعتبر" }, { status: 400 }); }
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "اطلاعات نامعتبر" }, { status: 400 });
-
-  // business logic
-}
-```
-
-### Public Route Template
-
-```ts
-export async function GET(req: NextRequest) {
-  // Zod validate query params
-  // Query DB via lib/db/billboards/
-  return NextResponse.json(data);
-}
-```
-
----
+- **No Prisma in a route.** Business logic and every query live in `lib/db/*`
+  (ESLint refuses `@/lib/db/client` anywhere else). A rule that holds with no
+  I/O at all — a state transition, a derived price — goes in `lib/domain/*`.
+- **Refuse with a `DomainError`** (`notFound`, `conflict`, `invalid`,
+  `forbidden` from `lib/domain/errors.ts`), with a Persian message. The route
+  does not choose the status code.
+- **A second, input-keyed limit** (per phone number, per account) is checked in
+  the handler with `ctx.tooMany(rl)`, or declared as
+  `rateLimit: { afterBody: (body, ip) => … }` when it *is* the route's limit —
+  the sign-in forms, whose tight budget follows the account in the body.
+- **Audit** with `ctx.audit(action, …)`: the actor goes in as a real foreign key.
 
 ### RBAC Roles
 
-`super_admin > admin > editor > viewer > user`
+Staff: `super_admin > admin > editor > viewer` (`lib/domain/roles.ts`). A
+customer is a different kind of account, not the bottom rung — a route admits
+one or the other through `access`.
 
-Check: `hasPermission(session.role, "admin")` — returns true if session role ≥ required role.
+Check inside logic: `hasRole(actor.role, "admin")`.
 
 - DELETE billboard: requires `admin`
 - PUT/update billboard: requires `editor`
@@ -265,7 +255,7 @@ Check: `hasPermission(session.role, "admin")` — returns true if session role �
 | POST | `/api/admin/auth/logout` | clears cookie |
 | GET | `/api/admin/auth/me` | returns admin session |
 
-### Reservation Endpoints (user auth required)
+### Listing Endpoints (customer session required)
 
 | Method | Route | Notes |
 |---|---|---|

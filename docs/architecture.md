@@ -14,13 +14,15 @@ Next.js is a different category and does not have that constraint.
 
 | Path | Used by | Mechanism | Rationale |
 |------|---------|-----------|-----------|
-| **A — the server reads the database directly** | The billboard detail page (`app/billboard/[slug]/page.tsx`), a React Server Component | `getBillboardBySlug()` from `lib/db/billboards/`, during server render | One hop (server → DB): no HTTP round-trip to ourselves, no JSON serialize/parse, no extra request. This is the pattern the Next.js documentation recommends — a Server Component does not need an API endpoint to read data. |
-| **B — the browser calls the HTTP API** | The signed-in and interactive surfaces: Dashboard, Admin, Analytics, list-media, Compare, `ReviewsSection`, `BillboardContact` | `fetch("/api/...")` from `"use client"` code | These screens are sessions, not documents: the user submits a listing, approves one, posts a review, reveals a phone number. That data has to travel over HTTP after the page has loaded. |
+| **A — the server reads the data layer directly** | Every page's first screen: home, catalogue, map, media detail, analytics, the customer dashboard and every admin panel section | A Server Component calls a function from `lib/db/` while it renders | One hop (server → DB): no HTTP round-trip to ourselves, no JSON serialise/parse, no extra request. This is the pattern the Next.js documentation recommends — a Server Component does not need an API endpoint to read data. |
+| **B — the browser calls the HTTP API** | What a user *does* after the page has loaded: post a review, reveal a phone number, submit or resubmit a listing, approve one, page through an admin table, pick a city on /analytics | `fetchJson("/api/…")` from `"use client"` code | These are actions and user-driven refreshes, not documents. They have to travel over HTTP because they happen after the page exists. |
 
-Both paths call the **same data layer**, `lib/db/billboards/` (Prisma). A
-route handler and a Server Component that read the same resource run the same
-query through the same module: one source of truth, no duplicated logic, no
-"the page is stale but the API is fresh".
+The rule is short: **the first screen is rendered with its data on the server;
+the browser asks the API only in response to what the user does.**
+
+Both paths call the **same data layer**, `lib/db/`. A route handler and a Server
+Component that read the same resource run the same function: one source of
+truth, no duplicated logic, no "the page is stale but the API is fresh".
 
 ## 3. An analogy
 
@@ -32,89 +34,108 @@ Rasamap is a restaurant that also delivers:
 
 - A guest at a table (a page being rendered) → the waiter brings the food
   straight from the kitchen. No packaging, no driver. This is **Path A**.
-- A delivery order (the browser asking for fresh data after load — a filter, the
-  next page, a submitted listing, an admin decision) → the food is packed and a
-  driver takes it out. This is **Path B**.
-- The kitchen (`lib/db/billboards/`) is the same for both.
+- A delivery order (the browser asking for something after the page has loaded —
+  a submitted review, an admin decision, the next page of a table) → the food
+  is packed and a driver takes it out. This is **Path B**.
+- **The kitchen** (`lib/db/`) is the same for both, and it is the only room with
+  access to the pantry: nothing outside it may open the database (ESLint
+  refuses the import).
+- **The recipes** (`lib/domain/`) are written down apart from the kitchen —
+  what an approval does to a listing, how a yearly price follows from a
+  monthly one — so they can be checked without lighting a stove (unit tests,
+  no database).
+- **The front door** (`lib/http/route.ts`) is where every delivery order is
+  checked, in the same order every time: who is ordering, whether they are
+  ordering too fast, whether they are allowed this dish, whether the order
+  makes sense — and only then is it passed to the kitchen.
 
 Sending the dine-in plates out the delivery window and back in, just for
 uniformity, would be slower and pointless — which is what routing every page
 through `fetch("/api/...")` during render would amount to.
 
-## 4. Performance
+## 4. The layers
 
-| | Server Component → DB (Path A) | Page fetching its own `/api/` route |
-|---|---|---|
-| Network hops | 1 (server → DB) | 2+ (server → HTTP to itself → route → DB) |
-| Extra work | none | build a `Request`, run the handler, serialise JSON, parse it back |
-| Typical cost here | ~5–20 ms | ~40–150 ms + more CPU per request |
-| Static generation / caching | works | breaks (needs an absolute URL and a running server) |
+```
+app/**/page.tsx          pages — Server Components render the first screen (Path A)
+app/api/**/route.ts      routes — each declares its contract with defineRoute() (Path B)
+components/              UI; "use client" only where there is interaction
+        │
+        ▼
+lib/http/                the request pipeline: access → rate limit → role → Zod → handler
+lib/auth/                session token, typed Actor (customer | staff), passwords
+lib/rate-limit/          named limits; counters in memory, or Redis when REDIS_URL is set
+        │
+        ▼
+lib/db/                  the data access layer — server-only, the only code that imports Prisma
+lib/domain/              the product's rules, with no I/O at all
+        │
+        ▼
+prisma/schema.prisma     the tables, enums and foreign keys
+```
 
-At scale, Path A is the faster choice. Converting the detail page to fetch from
-`/api/billboards/[slug]` during render would add latency and CPU to every
-request.
+This is the shape the Next.js data-security guide recommends for a new project
+(`node_modules/next/dist/docs/01-app/02-guides/data-security.md`): a
+**Data Access Layer** that only runs on the server (`import "server-only"`),
+performs authorisation checks, and returns minimal DTOs. Three parts of it are
+enforced by the toolchain rather than by prose:
+
+| Rule | Enforced by |
+|---|---|
+| Only `lib/db/` imports the database client; nothing imports `lib/data.ts` except the seed; nothing reaches past `lib/db/billboards/index.ts` | `no-restricted-imports` in `eslint.config.mjs` |
+| `lib/domain/` imports nothing with I/O | the same rule, scoped to that folder |
+| Every API route goes through `defineRoute()` and names a rate limit | the route's types, and a guard test in `test/api.test.mjs` |
+| A customer id is never written where a staff id belongs, or the reverse | `Actor` is a discriminated union (`kind: "customer" \| "staff"`), and the session token carries `kind` |
 
 ## 5. Current data-access map
 
-| Page | Source | Path |
+| Page | First screen (Path A) | After load (Path B) |
 |------|--------|------|
-| `/` (Home) | `getCachedShowcaseBillboards()`, `getCachedSiteStats()` — Server Component | **A** |
-| `/explore` | `getCachedFilteredBillboards()` — Server Component; the query string is the state | **A** |
-| `/explore/map` | `getCachedMapPins()`, `getCachedFilteredBillboards()`, `getCachedSiteStats()` — Server Component | **A** |
-| `/billboard/[slug]` | `getCachedBillboardBySlug()`, `getCachedRelatedBillboards()` — Server Component | **A** |
-| `/dashboard` | `fetch("/api/auth/me")`, `fetch("/api/listings")` | B |
-| `/admin` | `fetch("/api/admin/*")` (also guarded by `proxy.ts`) | B |
-| `/analytics` | `fetch("/api/analytics")` | B |
-| `/list-media` | `fetch("/api/listings")` | B |
-| `/compare` | `localStorage` (objects originally from `/api/billboards`) | B (cached) |
+| `/` (Home) | `getCachedShowcaseBillboards()`, `getCachedSiteStats()` | — |
+| `/explore` | `getCachedFilteredBillboards()` — the query string is the state | — (a filter is a new address) |
+| `/explore/map` | `getCachedMapPins()`, `getCachedFilteredBillboards()` | — |
+| `/billboard/[slug]` | `getCachedBillboardBySlug()`, `getCachedRelatedBillboards()` | reviews, replies, the phone reveal |
+| `/analytics` | `getCachedCatalogueAnalytics()` | a city's figures |
+| `/dashboard` | `getActor()`, `listOwnListings()` | profile edits, resubmitting a listing |
+| `/admin/*` | `requireStaff()` in the layout; `getAdminStats()` on the overview and scraper sections | tables, decisions, edits |
+| `/list-media` | — (a form) | the submission |
+| `/compare` | — (`localStorage`) | — |
 
-The four read-heavy pages a visitor lands on render on the server; the pages
-behind a sign-in, where the screen is a long-lived interactive session rather
-than a document, stay on the API. The `getCached*` wrappers live in
-`lib/db/cached.ts` and sit in front of the same `lib/db/billboards/` functions a
-route handler calls — caching is a layer over the data layer, not a second copy
-of it.
+The `getCached*` wrappers live in `lib/db/cached.ts` and sit in front of the
+same `lib/db/` functions a route handler calls — caching is a layer over the data
+layer, not a second copy of it. Every resource a page reads this way also has a
+REST endpoint, backed by the same module — see [`api.md`](./api.md). So Path A
+is not a private back door: it is the same query, reached without an HTTP hop
+the server would be making to itself.
 
-Every resource a page reads this way also has a REST endpoint (`GET
-/api/billboards/[slug]` and the rest), backed by the same module — see
-[`api.md`](./api.md). So Path A is not a private back door: it is the same query,
-reached without an HTTP hop the server would be making to itself.
+## 6. Measured, not asserted
 
-## 6. Is the architecture finished?
+From the `import` data `docs/thesis/build.py` extracts (195 TypeScript files,
+497 edges):
 
-The shape is sound and standard and needs no restructuring: a shared data layer,
-the client talking to the API, the server rendering from the database directly,
-`proxy.ts` as the auth boundary, Zod on every input.
+- **Zero cycles.** No file depends, directly or through others, on itself.
+- **Zero upward edges.** Dependencies run one way — pages and routes →
+  components → `lib` — so any layer can be read, tested or replaced on its own.
+- **13 files import the database client, all of them inside `lib/db/`.** Before
+  the data layer was made the only door (§35), 30 did, including the route
+  handlers themselves.
+- **One route pipeline.** All 35 route files declare themselves through
+  `defineRoute()`; the order of the security checks is written once.
 
-What remains is incremental tuning, not redesign:
-
-- Partial Prerendering on `/explore`
-- streaming more of the static page chrome
-- HTTP-level response caching on the remaining GET routes
-
-These are tracked in `docs/STATUS.md`. The current design is not "perfect and
-unimprovable"; it is correct, and improvement from here is tuning rather than
-architectural change.
-
-Two properties of the dependency graph are measured rather than asserted, from
-the same `import` data `docs/thesis/build.py` extracts: across 165 TypeScript
-files and 489 edges there are **zero** edges pointing from a lower layer up into
-a higher one, and **zero** cycles. Dependencies run one way — `app → components →
-lib → prisma` — which is what makes any one layer readable, testable and
-replaceable on its own. See §34 of [`engineering-decisions.md`](./engineering-decisions.md).
+What remains is tuning, not redesign — Partial Prerendering on `/explore`,
+streaming more of the static chrome — tracked in `docs/STATUS.md`.
 
 ## 7. Summary
 
 Rasamap uses both of the data paths its framework offers, and each where it is
-faster. The four pages a visitor lands on — home, catalogue, map, media detail —
-render on the server and read through the data layer directly, which is the
-pattern the Next.js documentation recommends and avoids having the server make an
-HTTP call to itself. Everything interactive behind a sign-in talks to `/api/`,
-and every resource has a REST endpoint regardless, backed by the same module. A
-headless framework has only the API path because it has no server-rendered UI;
-Next.js has both.
+faster. Every page renders its first screen on the server by calling the data
+layer directly — the pattern the Next.js documentation recommends, which avoids
+the server making an HTTP call to itself. What a user does after that goes to
+`/api/`, through one pipeline that checks the session, the rate, the role and
+the input in a fixed order before the data layer is reached. A headless
+framework has only the API path because it has no server-rendered UI; Next.js
+has both.
 
-The data layer those paths share is `lib/db/billboards/`, split by direction —
-`queries.ts` reads, `mutations.ts` writes, `core.ts` holds what both need — so
-the rule that a write drops the catalogue cache tag is visible in the file names
-rather than left to prose.
+The data layer both paths share is `lib/db/` — server-only, the one place that
+talks to the database, and the place authorisation on a resource lives. The
+rules of the product sit beside it in `lib/domain/`, with no I/O, which is what
+lets them be unit-tested in under a second.

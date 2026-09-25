@@ -4256,6 +4256,28 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">ARCH</div>
+      <div class="ph-title"><h3>بازبینی بدبینانهٔ معماری — از شعار به قاعدهٔ اجراشدنی</h3><p>۳ مهر ۱۴۰۵ · هشت ایراد ریشه‌ای؛ هر کدام حالا با lint، نوع یا آزمون نگه داشته می‌شود — §۳۵</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px">این بار کد به‌جای مستندات خوانده شد، با فرض اینکه ساختار بی‌طراحی رشد کرده است. هر یافته با چیزی جایگزین شد که ابزارها — نه یک پاراگراف — از آن محافظت می‌کنند.</p>
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>یک خط لوله برای هر ۳۵ مسیر API</strong> — <code>defineRoute()</code> در <code>lib/http/route.ts</code> ترتیب «نشست ← سقف نرخ ← نقش ← Zod ← منطق» را یک بار اجرا می‌کند؛ مسیر بدون سقف نرخ کامپایل نمی‌شود و آزمون نگهبان هر مسیری را که دور خط لوله صادر شود رد می‌کند.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>لایهٔ دسترسی داده، تنها درِ پایگاه داده</strong> — <code>lib/db/</code> با <code>server-only</code>، یک ماژول برای هر منبع؛ قاعده‌های بی‌ورودی/خروجی در <code>lib/domain/</code> با آزمون واحد. قاعدهٔ ESLint وارد کردن <code>db/client</code> را بیرون از <code>lib/db</code> رد می‌کند: ۳۰ فایل ← ۱۳ فایل.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نشستِ نوع‌دار</strong> — توکن می‌گوید مشتری است یا کارمند؛ <code>Actor</code> نوع‌دار جلوی نوشتن شناسهٔ کارمند در کلید خارجی مشتری را می‌گیرد (باگ واقعی ثبت آگهی با نشست کارمند بسته شد). کلیدهای خارجی واقعی برای پاسخ کارمند و ردیف ممیزی؛ جدول مردهٔ <code>owners</code> حذف شد.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>شکستن <code>status</code></strong> — <code>availability</code> و <code>moderation</code> با enum؛ «منتشرشده» یک بار تعریف شده؛ ویرایش مدیر دیگر نمی‌تواند وضعیت بررسی را دور بزند. وضعیت خزنده به <code>billboard_sources</code> رفت و ستون‌های بی‌مصرف حذف شدند.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ستون‌های JSON با Zod خوانده می‌شوند</strong> — به‌جای <code>as unknown as</code>؛ یک ردیف خراب صفحه را ۵۰۰ نمی‌کند.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پنل مدیریت با مسیرهای جدا</strong> — <code>app/admin/(panel)/</code>: بررسی حساب روی سرور پیش از رندر، هر بخش نشانی و مرز خطای خودش، نشانی‌های قدیمی <code>?tab=</code> هدایت می‌شوند. پیشخوان و تحلیل بازار هم صفحهٔ اولشان را روی سرور می‌سازند.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سقف نرخ همراه <code>REDIS_URL</code></strong> — اسکریپت اتمی Lua در Redis، بازگشت فوری به حافظه هنگام قطعی؛ آزموده با Redis خاموش، روشن و در دسترس‌نبودن. استقراری انجام نشد.</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>قاعده‌ها از متن به ابزار</strong> — مرزهای معماری در ESLint، مستندات (AGENTS، CLAUDE، api، architecture، README، نقشهٔ کد، اسلاید) با کد هم‌تراز شد.</div></div>
+        <div class="task todo-t"><div class="tick"></div><div><strong>امتیاز و تعداد نظرِ ساختگیِ ردیف‌های خزنده</strong> — آگاهانه برای دمو نگه داشته شد؛ پیش از راه‌اندازی واقعی باید ستون‌ها nullable و مقدارهای ساختگی حذف شوند.</div></div>
+      </div>
+      <div class="proof">مهاجرت پیش از اجرا روی رونوشتِ پایگاه دادهٔ واقعی آزموده شد: ۳٬۵۳۶ ردیف پیش و پس، ۴ ردیف در بررسی، ۳٬۵۱۱ رکورد منبع، <code>integrity_check</code> و <code>foreign_key_check</code> پاک، و <code>migrate diff</code> خالی. سپس <code>tsc</code>، ESLint، ساخت تولیدی، <strong>۹ آزمون واحد + ۱۴۲ آزمون API + ۶ آزمون واردکننده</strong> و <strong>۱۰ جریان مرورگر</strong> همه موفق. گراف: ۱۹۵ فایل، ۴۹۷ یال، صفر چرخه، صفر پیوند رو به بالا.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">SYNC</div>
       <div class="ph-title"><h3>هم‌ترازیِ مستندات با کدِ واقعی</h3><p>۱ مهر ۱۴۰۵ · هر سندِ داورمحور دوباره از روی خودِ مخزن راستی‌آزمایی شد</p></div>
       <div class="ph-badge done">✓ تموم شده</div>
@@ -5197,7 +5219,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۱ مهر ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۳ مهر ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>

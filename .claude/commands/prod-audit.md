@@ -489,15 +489,18 @@ waiting for me — stopping only under rule 0.7.
 - **Scale reality:** ~2800-3500 billboard rows, read-heavy, a handful of concurrent
   users during the demo. Not a high-traffic product.
 - **Already done — do NOT redo (confirm, then move on):** security headers + CSP
-  (`next.config.ts`), auth guard (`proxy.ts`), sliding-window rate limiting
-  (`lib/auth/rate-limit.ts`), RBAC (`lib/auth/users.ts`), bcrypt cost 12 + timing-safe
+  (`next.config.ts`), auth guard (`proxy.ts`), one route pipeline for every API route
+  (`lib/http/route.ts`), rate limiting with a memory/Redis store (`lib/rate-limit/`),
+  typed customer/staff actors + RBAC (`lib/auth/actor.ts`, `lib/domain/roles.ts`), a
+  server-only data layer that alone imports Prisma (`lib/db/`), bcrypt cost 12 + timing-safe
   dummy hash, Zod `.safeParse()` on every route, allowlists for sort/filter, styled
   Persian `app/error.tsx` + `app/not-found.tsx`, `app/robots.ts` + `app/sitemap.ts`,
   server-side pagination on `/api/billboards`, composite DB indexes, reservation overlap
-  check already wrapped in a `prisma.$transaction`, in-memory audit log
-  (`lib/auth/audit.ts`).
-- **Hard constraints (never violate):** Zod `.safeParse()` only; admin route order
-  `session -> rate limit -> Zod -> business logic`; DB reads via `lib/db/billboards/`
+  check already wrapped in a `prisma.$transaction`, audit log in memory and in
+  `audit_logs` (`lib/audit.ts`).
+- **Hard constraints (never violate):** Zod `.safeParse()` only; every route declared
+  with `defineRoute()` (order `session -> rate limit -> role -> Zod -> business logic`);
+  DB access only through `lib/db/*`
   never `lib/data.ts`; all user-visible strings in Persian; styling is inline
   `style={{}}` only, no Tailwind classes in JSX; `proxy.ts` not `middleware.ts`.
 - **Deferred by decision (out of scope for this audit):** scraper/geocoding pipeline,

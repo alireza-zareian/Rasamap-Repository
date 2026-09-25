@@ -6,7 +6,7 @@
 //  WHY THIS EXISTS, AND WHAT IT IS FOR
 // ─────────────────────────────────────────────────────────────────────────
 //
-//  The 116 API tests prove the server answers correctly. They open no browser,
+//  The API tests prove the server answers correctly. They open no browser,
 //  so nothing checked that the answers become a usable page: whether the form
 //  submits, whether the filter bar actually filters, whether the compare tray
 //  appears. The thesis lists this as a known gap; this closes it.
@@ -235,7 +235,7 @@ test("an owner can submit a listing and see it as pending", async () => {
   });
 });
 
-// ── 5. the reviewer's decision ────────────────────────────────────────────
+// ── 5. the panel ──────────────────────────────────────────────────────────
 test("the admin login page refuses a customer's credentials", async () => {
   await withBrowser("admin-gate", async (b) => {
     await b.goto(`${BASE}/admin`);

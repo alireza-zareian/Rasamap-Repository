@@ -7,10 +7,12 @@ isolated SQLite database (`prisma/test.db`, git-ignored, never `dev.db`).
 ## Run
 
 ```bash
-npm test          # reset test db -> seed -> next build -> next start :3100 -> run tests -> stop
+npm test          # unit tests -> reset test db -> seed -> next build -> next start :3100 -> API + importer tests -> stop
+npm run test:unit # only the pure rules in lib/domain: no build, no server, ~0.5 s
 ```
 
-113 tests, about 38 seconds end to end. `npm test` is fully self-contained. It sets its own env (`AUTH_SECRET`,
+157 tests — 9 unit tests of the pure rules (`test/unit/`), 142 API tests, 6
+covering the nightly importer — in about a minute end to end. `npm test` is fully self-contained. It sets its own env (`AUTH_SECRET`,
 `DATABASE_URL=file:./prisma/test.db`, dummy admin/Neshan vars) which override
 any `.env*` file, so it never reads or writes the development database.
 
@@ -32,6 +34,14 @@ Helper scripts (rarely needed on their own):
 npm run test:reset   # recreate prisma/test.db schema from prisma/schema.prisma
 npm run test:seed    # load fixtures: 3 billboards, 2 users (password "secret123")
 ```
+
+### Unit tests
+
+`test/unit/*.test.mjs` import `lib/domain/*.ts` straight into Node, which strips
+the TypeScript types on load. That works because `lib/domain` has no I/O by
+construction — ESLint refuses any database, framework or `node:` import there —
+so a rule of the product (a listing's state transitions, a derived price, a
+JSON column's shape) is tested without building anything.
 
 ## What is covered
 

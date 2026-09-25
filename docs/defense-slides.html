@@ -474,23 +474,25 @@ erDiagram
 <section class="slide">
   <p class="kick">۱۳ · سازمان‌دهی کد</p>
   <h2>معماری در خودِ گراف دیده می‌شود</h2>
-  <p class="sub" style="font-size:19px">۱۳۲ فایل، ۴۰۱ پیوند <code>import</code>، استخراج‌شده
-  با پیمایش خودکار مخزن — نه توصیف آرزوشده، بلکه اندازه‌گیری وضع موجود.</p>
+  <p class="sub" style="font-size:19px">۱۹۵ فایل، ۴۹۷ پیوند <code>import</code>، استخراج‌شده
+  با پیمایش خودکار مخزن — نه توصیف آرزوشده، بلکه اندازه‌گیری وضع موجود. صفر چرخه، صفر پیوندِ رو به بالا.</p>
   <div class="cols">
     <table>
       <thead><tr><th style="width:26%">وابسته</th><th>فایل</th></tr></thead>
       <tbody>
-        <tr><td><b>۳۴</b></td><td><code>lib/api-log.ts</code></td></tr>
-        <tr><td><b>۳۳</b></td><td><code>lib/auth/session.ts</code></td></tr>
-        <tr><td><b>۳۲</b></td><td><code>lib/auth/client-ip.ts</code></td></tr>
-        <tr><td><b>۳۲</b></td><td><code>lib/auth/rate-limit.ts</code></td></tr>
-        <tr><td><b>۳۱</b></td><td><code>lib/db/client.ts</code></td></tr>
+        <tr><td><b>۳۵</b></td><td><code>lib/http/route.ts</code></td></tr>
+        <tr><td><b>۳۵</b></td><td><code>lib/rate-limit/index.ts</code></td></tr>
+        <tr><td><b>۱۹</b></td><td><code>lib/auth/actor.ts</code></td></tr>
+        <tr><td><b>۱۶</b></td><td><code>lib/db/billboards/index.ts</code></td></tr>
+        <tr><td><b>۱۳</b></td><td><code>lib/db/client.ts</code> — همه درون <code>lib/db/</code></td></tr>
       </tbody>
     </table>
     <div class="quote g">
-      این هشت فایل نخست <b>دقیقاً مرحله‌های پایپلاینِ درخواست‌اند</b>.<br><br>
-      اینکه ۳۱ فایل به <code>db/client.ts</code> وابسته‌اند و <b>هیچ فایلی اتصال جداگانه‌ای
-      نمی‌سازد</b>، یعنی ادعای «یک نقطهٔ ورود به پایگاه داده» <b>قابل بررسی است، نه شعار</b>.
+      هر ۳۵ مسیر API از <b>یک خط لوله</b> می‌گذرند (<code>lib/http/route.ts</code>): ترتیب
+      «نشست ← سقف نرخ ← نقش ← اعتبارسنجی ← منطق» یک بار نوشته شده، نه ۳۵ بار.<br><br>
+      اتصال پایگاه داده را فقط <b>۱۳ فایلِ لایهٔ داده</b> وارد می‌کنند (پیش‌تر ۳۰ فایل، از جمله
+      خودِ مسیرها) و قاعدهٔ ESLint ورود آن را جای دیگر <b>رد می‌کند</b> — ادعای «یک نقطهٔ ورود
+      به پایگاه داده» <b>قابل بررسی است، نه شعار</b>.
     </div>
   </div>
 </section>
