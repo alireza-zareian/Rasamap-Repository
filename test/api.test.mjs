@@ -194,6 +194,16 @@ test("POST /api/billboards/[slug]/contact returns the phone to a signed-in user"
   assert.equal(typeof json.phone, "string");
 });
 
+test("phone reveals are limited per account, whatever address they come from", async () => {
+  // A staff session, so the loop records no leads for the tests that count them.
+  const token = await mintSession({ role: "viewer" });
+  let last;
+  for (let i = 0; i < 41; i++) {
+    last = await api("/api/billboards/valiasr-tower/contact", { method: "POST", token, ip: uniqueIp() });
+  }
+  assert.equal(last.status, 429);
+});
+
 test("POST /api/billboards/[slug]/contact 404s on an unpublished listing", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
   const { status } = await api("/api/billboards/pending-listing/contact", { method: "POST", token });

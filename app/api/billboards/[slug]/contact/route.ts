@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/http/route";
 import { slugParams } from "@/lib/http/params";
-import { userApiRateLimit } from "@/lib/rate-limit";
+import { contactRevealRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { getBillboardBySlug } from "@/lib/db/billboards";
 import { recordLead } from "@/lib/db/leads";
 import { notFound } from "@/lib/domain/errors";
@@ -28,7 +28,10 @@ export const POST = defineRoute(
     params: slugParams,
     messages: { signedOut: "برای دیدن اطلاعات تماس باید وارد حساب کاربری شوید" },
   },
-  async ({ actor, params }) => {
+  async ({ actor, params, tooMany }) => {
+    const perAccount = await contactRevealRateLimit(`${actor.kind}:${actor.id}`);
+    if (!perAccount.allowed) return tooMany(perAccount);
+
     const billboard = await getBillboardBySlug(params.slug);
     if (!billboard) throw notFound("رسانه یافت نشد");
     const phone = billboard.phone && billboard.phone !== "—" ? billboard.phone.trim() : "";

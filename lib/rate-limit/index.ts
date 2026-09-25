@@ -210,6 +210,24 @@ export function otpVerifyRateLimit(phone: string): Promise<RateLimitResult> {
 }
 
 /**
+ * Owner phone reveals, per account.
+ *
+ * The phone number is the one thing the catalogue does not give away, and the
+ * per-address limit around it is no guard: an address is shared by a whole
+ * office and, without a proxy in front, chosen by the caller. Keyed on the
+ * account instead, a single sign-up can no longer walk the catalogue and carry
+ * off every number. Forty an hour is far past what a person comparing media
+ * needs; no lockout, so the budget simply refills.
+ */
+export function contactRevealRateLimit(accountKey: string): Promise<RateLimitResult> {
+  return checkRateLimit(`contact_reveal:${accountKey}`, {
+    windowMs:    60 * 60 * 1000,
+    maxRequests: 40,
+    lockoutMs:   0,
+  });
+}
+
+/**
  * Public API rate limit — applied to /api/billboards to slow automated
  * crawling. Normal browser usage never comes close to this ceiling.
  */
