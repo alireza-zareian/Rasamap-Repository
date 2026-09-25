@@ -158,8 +158,8 @@ enumeration by body **or by timing**), the OTP reset flow, the listing pipeline
 (upload magic-byte validation, plan → status, Idempotency-Key replay),
 object-level authorisation on `/api/listings`, admin RBAC, the approval state
 machine, reviews and the denormalised rating aggregate, analytics coverage
-counts, and the durable audit log. **179 tests** (12 unit tests of the pure rules,
-160 API, 7 covering the nightly importer), plus 10 browser flows in
+counts, and the durable audit log. **181 tests** (12 unit tests of the pure rules,
+162 API, 7 covering the nightly importer), plus 11 browser flows in
 `npm run test:e2e`.
 
 ---

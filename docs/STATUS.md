@@ -389,7 +389,7 @@ npm run demo             # ساخت + اجرا روی localhost:3000 — برا�
 npm run dev              # فقط هنگام کدنویسی (۹۷ برابر CPU بیشتر — §۲۲)
 npm run build            # باید بدون خطا پاس شود
 npm run lint
-npm test                 # ۱۷۹ آزمون روی یک ساخت تولیدی
+npm test                 # ۱۸۱ آزمون روی یک ساخت تولیدی
 npm run bench            # بنچمارک بار (سرور dev باید بالا باشد)
 npm run db:migrate
 npm run db:seed          # 3545 رکورد
@@ -506,7 +506,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 | F4 | `project-ai.zip` (265 KB) tracked at repo root; `.DS_Store` scattered. → **fixed** — `.gitignore` updated and neither is tracked. | Low |
 | F5 | No `PRE_DEPLOY_CHECKLIST.md` / `RUNBOOK.md`. → **fixed** | Med |
 | F6 | No `LICENSE`. → **fixed** — MIT. | Low |
-| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 179 tests (`npm test`, on a production build) plus 10 browser flows (`npm run test:e2e`). | Med |
+| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 181 tests (`npm test`, on a production build) plus 11 browser flows (`npm run test:e2e`). | Med |
 | F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. → **fixed** — every live count now reads the same (3,536 rows, 3,532 published, 101 cities, 3,020 geocoded, verified against `dev.db`); older figures survive only in dated history entries. The module split is stated in `AGENTS.md` rule 1 and F15: `lib/types.ts` is data-free, `lib/data.ts` holds the dataset and is imported only by `prisma/seed.ts`. | Low |
 | F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |

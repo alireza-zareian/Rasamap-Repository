@@ -198,7 +198,7 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 through `server.mjs`, the same server `npm run demo` runs, reseeding its own
 `prisma/test.db`. It finishes in about a minute: first the 12
 unit tests of the pure rules in `test/unit/` (half a second, no build — also
-`npm run test:unit` on its own), then 159 API tests, then the 7 importer tests in
+`npm run test:unit` on its own), then 162 API tests, then the 7 importer tests in
 `test/sync.test.mjs` — run one after the other on purpose, because the importer
 writes rows the API tests count.
 

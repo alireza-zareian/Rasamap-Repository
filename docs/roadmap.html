@@ -4256,6 +4256,26 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">AUDIT3</div>
+      <div class="ph-title"><h3>دور سوم — مستندات هم‌تراز، و بخش‌هایی که هنوز خوانده نشده بود</h3><p>۴ مهر ۱۴۰۵ · هر عدد از خودِ مخزن بازشمرده شد؛ دو پس‌رفتِ کارِ خودم پیدا و بسته شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حلقه در گرافِ import</strong> — کارِ نشستِ قابل‌ابطال دو حلقهٔ نوعی ساخته بود؛ نوع‌های <code>Actor</code> به <code>lib/domain</code> رفتند و یک آزمونِ نگهبان هر حلقه یا پیوندِ رو به بالا را رد می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>انتخابِ مقایسه با تازه‌سازیِ صفحه پاک می‌شد</strong> — آزمونِ مرورگر روی کدِ قدیم شکست می‌خورد؛ حالا ماندگار است و قیمتِ تازه نشان داده می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سقف برای هر حساب</strong> — ثبتِ آگهی (۱۰ در ساعت، هر کدام تا ۱۰ مگابایت عکس)، نظر و پاسخ</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ویرایشِ رسانه با ابعادِ اعشاری</strong> خطای ۵۰۰ می‌داد؛ حالا پیامِ فارسی</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تحلیلِ بازار</strong> — ۱۲ پرس‌وجو در هر درخواست، بی‌کش؛ حالا کش‌شده و فقط برای شهرهای موجود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>استقرار</strong> — سقفِ بدنهٔ nginx از بزرگ‌ترین آپلود کمتر بود؛ درگاهِ ۳۰۰۰ پشتِ nginx فقط روی loopback (<code>BIND_ADDRESS</code>)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>کدِ «فراموشی رمز» فقط روی خودِ لپ‌تاپ</strong> — تا کسی در جلسه نتواند رمزِ حسابِ دمو را عوض کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پایان‌نامه، پوستر، اسلایدها، دفاع، README</strong> — همهٔ اعداد بازشمرده و PDFها دوباره ساخته شدند</div></div>
+      </div>
+      <div class="proof">ESLint تمیز؛ <strong>۱۲ آزمون واحد + ۱۶۲ آزمون API + ۷ آزمون واردکننده</strong> و <strong>۱۱ جریانِ مرورگر</strong> موفق. سه رفع (حلقه، مقایسه، ابعادِ اعشاری) با اجرای آزمونِ تازه روی کدِ قدیم اثبات شدند که واقعاً شکست می‌خورد. پیمایشِ مرورگر روی ده صفحه در دو پهنای ۳۹۰ و ۱۲۸۰: صفر کنترلِ بی‌نام، صفر سرریزِ افقی.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">DEEP</div>
       <div class="ph-title"><h3>بازبینی عمیقِ سه بخشِ بررسی‌نشده + بستنِ باقی‌مانده‌ها</h3><p>۳ مهر ۱۴۰۵ · جست‌وجو، واردکنندهٔ شبانه، پنل مدیریت؛ و IP، idempotency، پاک‌سازیِ فایل</p></div>
       <div class="ph-badge done">✓ تموم شده</div>
@@ -5267,7 +5287,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۳ مهر ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۴ مهر ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>
