@@ -2,6 +2,7 @@
 import { useState, Suspense } from "react";
 import { useCurrentUser } from "@/lib/client/use-current-user";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
+import { safeNextPath } from "@/lib/client/next-path";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, AlertTriangle, ArrowRight, User, ShieldCheck } from "lucide-react";
@@ -15,9 +16,7 @@ function LoginForm() {
   const router = useRouter();
   const { refresh } = useCurrentUser();
   const searchParams = useSearchParams();
-  const rawNext = searchParams.get("next") ?? "";
-  // Only allow same-origin paths (start with / but not //)
-  const nextPath = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/dashboard";
+  const requestedNext = safeNextPath(searchParams.get("next"));
 
   /**
    * Which kind of account the form is dressed for.
@@ -116,9 +115,9 @@ function LoginForm() {
       // does not reload it. Without this the visitor would arrive signed in but
       // be shown the signed-out header until they reloaded by hand.
       await refresh();
-      // A team member who signed in here almost certainly wants the panel; a
-      // customer wants wherever they were headed.
-      router.push(data.user?.isStaff ? "/admin" : nextPath);
+      // Back to wherever they were headed; with no destination, a team member
+      // wants the panel and a customer their dashboard.
+      router.push(requestedNext ?? (data.user?.isStaff ? "/admin" : "/dashboard"));
     } catch (err) {
       // Covers a refusal from the API (wrong password, rate limit) and a
       // network failure alike — fetchJson has already turned both into the
