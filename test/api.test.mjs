@@ -908,6 +908,27 @@ test("POST /api/listings accepts a real PNG upload", async () => {
   assert.equal(status, 201, JSON.stringify(json));
 });
 
+test("a photo uploaded while the server is running is served, and nothing outside uploads is", async () => {
+  // next start lists public/ once at boot; this photo is written long after.
+  const token = await mintSession({ userId: "2", role: "user" });
+  const sent = await api("/api/listings", {
+    method: "POST", token,
+    body: { name: "بیلبورد عکس تازه", phone: "09120000000", type: "billboard", city: "شیراز", width: 10, height: 3, faces: 1, price: 40, images: [pngDataUrl()] },
+  });
+  assert.equal(sent.status, 201, JSON.stringify(sent.json));
+  const mine = await api("/api/listings", { token });
+  const url = mine.json.listings.find(l => l.id === sent.json.listing.id).images[0];
+
+  const photo = await fetch(BASE + url, { headers: { "user-agent": "Mozilla/5.0 (rasamap-test-suite)" } });
+  assert.equal(photo.status, 200, `${url} was not served`);
+  assert.equal(photo.headers.get("content-type"), "image/png");
+
+  for (const probe of ["/uploads/..%2F..%2Fpackage.json", "/uploads/listings/%2E%2E/%2E%2E/%2E%2E/.env"]) {
+    const res = await fetch(BASE + probe, { headers: { "user-agent": "Mozilla/5.0 (rasamap-test-suite)" } });
+    assert.equal(res.status, 404, `${probe} escaped the uploads folder`);
+  }
+});
+
 test("POST /api/listings rejects a non-image disguised as a PNG (magic-byte check)", async () => {
   const token = await mintSession({ userId: "1", role: "user" });
   const { status, json } = await api("/api/listings", {

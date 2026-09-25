@@ -23,8 +23,8 @@
 // ============================================================
 
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, writeFile, rm, readFile } from "node:fs/promises";
+import { join, resolve, sep } from "node:path";
 import { faNum } from "@/lib/format";
 import { MAX_IMAGE_BYTES, MAX_LISTING_IMAGES } from "@/lib/domain/listing";
 
@@ -157,5 +157,32 @@ export async function discardImages(dir: string): Promise<void> {
     await rm(dir, { recursive: true, force: true });
   } catch {
     /* best effort: an orphaned folder is harmless, a thrown error here is not */
+  }
+}
+
+const UPLOAD_ROOT = resolve(process.cwd(), "public", "uploads");
+
+const CONTENT_TYPE: Record<string, string> = { jpg: "image/jpeg", png: "image/png", webp: "image/webp" };
+
+/**
+ * An uploaded file, read for app/uploads/[...path]/route.ts, or null.
+ *
+ * `next start` lists the files under public/ once, when it boots, and serves
+ * only those: a photo written a minute later answered 404 until the server was
+ * restarted (reproduced on this build). So a listing submitted during a demo
+ * showed broken images, and an admin's new photos did the same. Files that
+ * existed at boot are still served statically; this is the fallback for the
+ * rest, and it only ever hands back one of the three image types saveImages()
+ * writes, from inside public/uploads.
+ */
+export async function readUpload(segments: string[]): Promise<{ body: Buffer; contentType: string } | null> {
+  const full = resolve(UPLOAD_ROOT, ...segments);
+  if (!full.startsWith(UPLOAD_ROOT + sep)) return null;
+  const contentType = CONTENT_TYPE[full.slice(full.lastIndexOf(".") + 1).toLowerCase()];
+  if (!contentType) return null;
+  try {
+    return { body: await readFile(full), contentType };
+  } catch {
+    return null;
   }
 }
