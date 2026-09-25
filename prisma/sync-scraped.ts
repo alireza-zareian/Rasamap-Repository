@@ -28,8 +28,8 @@
 // value, and guessing wrong would erase the correction.
 //
 // Rows that stop appearing in the feed are marked with `missingSince` (on the
-// same billboard_sources row), never deleted — reviews, contact requests and
-// submitted listings reference them.
+// same billboard_sources row) and shown as busy, never deleted — reviews,
+// contact requests and submitted listings reference them.
 //
 // The same argument applies in the other direction. A row the feed has and the
 // database does not may be new, or it may be one somebody removed on purpose —
@@ -442,21 +442,35 @@ async function main() {
   }
 
   // Gone from the feed. Marked once, on the run that first misses it.
+  //
+  // It also stops being offered as free. A listing the source took down has
+  // most often been let, so leaving it "available" kept inviting calls about a
+  // board that was gone, with the old number. It becomes `busy`: still on the
+  // site, with its reviews and leads, but no longer presented as bookable.
+  // Only an `available` row moves — `busy` already says it, and `inactive` /
+  // `reserved` are a person's decisions (DECIDED_AVAILABILITY). When the row
+  // returns to the feed, the feed's status applies again (availabilityWrite).
   const vanished = existing.filter(r => !presentSlugs.has(r.slug) && r.sourceRecord?.missingSince == null);
   counts.marked = vanished.length;
   if (APPLY && vanished.length > 0) {
     const now = new Date();
     const withRecord = vanished.filter(r => r.sourceRecord).map(r => r.id);
     const withoutRecord = vanished.filter(r => !r.sourceRecord).map(r => r.id);
-    await prisma.billboardSource.updateMany({
-      where: { billboardId: { in: withRecord } },
-      data:  { missingSince: now },
-    });
-    if (withoutRecord.length > 0) {
-      await prisma.billboardSource.createMany({
-        data: withoutRecord.map(billboardId => ({ billboardId, missingSince: now })),
+    await prisma.$transaction(async tx => {
+      await tx.billboardSource.updateMany({
+        where: { billboardId: { in: withRecord } },
+        data:  { missingSince: now },
       });
-    }
+      if (withoutRecord.length > 0) {
+        await tx.billboardSource.createMany({
+          data: withoutRecord.map(billboardId => ({ billboardId, missingSince: now })),
+        });
+      }
+      await tx.billboard.updateMany({
+        where: { id: { in: vanished.map(r => r.id) }, availability: "available" },
+        data:  { availability: "busy" },
+      });
+    });
   }
 
   report(counts, changedByField, protectedByField, raw.length, existing.length, invalid);

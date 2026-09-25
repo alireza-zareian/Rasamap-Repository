@@ -138,11 +138,13 @@ test("a row that disappears from the feed is marked, not deleted — and unmarke
     const b = await db.billboard.findUnique({ where: { slug: B }, include: { sourceRecord: true } });
     assert.ok(b, "a row that left the feed was deleted — its reviews would have gone with it");
     assert.ok(b.sourceRecord?.missingSince instanceof Date, "the row was not marked as missing");
+    assert.equal(b.availability, "busy", "a board the source took down must stop being offered as free");
 
     const back = sync([feedRow(A, { id: 900001, price: 1500 }), feedRow(B, { id: 900002, price: 2500 })]);
     assert.equal(counted(back, "back after being missing"), 1, back);
     const returned = await db.billboard.findUnique({ where: { slug: B }, include: { sourceRecord: true } });
     assert.equal(returned?.sourceRecord?.missingSince, null);
+    assert.equal(returned?.availability, "available", "back in the feed, the feed's status applies again");
   } finally { await db.$disconnect(); }
 });
 

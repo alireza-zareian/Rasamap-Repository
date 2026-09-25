@@ -180,8 +180,9 @@ write itself.
 - *The nightly import trusted its feed.* It now validates every row (ten real
   rows carried fractional sizes for an integer column and would have stopped a
   run half-way), and writes a row only if nobody edited it since the run read
-  it. Not decided yet: a row the feed stopped listing is marked `missingSince`
-  and stays published indefinitely.
+  it. A row the feed stopped listing is marked `missingSince` and, if it was
+  `available`, becomes `busy` — the source most often took it down because it
+  was let — and the feed's status applies again if it comes back.
 
 ## 4. Rate limiting with a non-spoofable client identity
 
