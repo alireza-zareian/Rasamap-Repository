@@ -1400,6 +1400,31 @@ test("the photo list keeps only photos the record already has", async () => {
   }
 });
 
+test("a bad photo in an admin batch writes none of it, and a good batch is audited", async () => {
+  const editor = await mintSession({ role: "editor" });
+  const dir = join(process.cwd(), "public", "uploads", "billboards");
+  const folders = () => { try { return readdirSync(dir).length; } catch { return 0; } };
+
+  const before = folders();
+  const bad = await api("/api/admin/billboards/6/images", {
+    method: "PUT", token: editor,
+    body: { images: ["/uploads/test/1.jpg", pngDataUrl(), fakeImageDataUrl()] },
+  });
+  assert.equal(bad.status, 400);
+  assert.equal(folders(), before, "the valid photo ahead of the bad one must not be left on disk");
+
+  const good = await api("/api/admin/billboards/6/images", {
+    method: "PUT", token: editor,
+    body: { images: [pngDataUrl(), "/uploads/test/1.jpg"] },
+  });
+  assert.equal(good.status, 200, JSON.stringify(good.json));
+  assert.equal(good.json.images[1], "/uploads/test/1.jpg", "order is kept");
+  assert.match(good.json.images[0], /^\/uploads\/billboards\/[0-9a-f-]+\/1\.png$/);
+
+  const audit = await api("/api/admin/audit", { token: await mintSession({ role: "admin" }) });
+  assert.ok(audit.json.persisted.some(r => r.action === "billboard_images_update"));
+});
+
 test("DELETE /api/admin/billboards/[id] with role 'editor' is 403 (needs admin+)", async () => {
   const token = await mintSession({ role: "editor" });
   const { status } = await api("/api/admin/billboards/2", { method: "DELETE", token });

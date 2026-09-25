@@ -18,8 +18,11 @@ export const PUT = defineRoute(
     body: z.object({ images: z.array(z.string().min(1)).max(MAX_ADMIN_IMAGES) }),
     maxBodyBytes: maxUploadBodyBytes(MAX_ADMIN_IMAGES),
   },
-  async ({ params, body }) => {
-    const images = await replaceBillboardImages(params.id, body.images);
+  async ({ params, body, audit }) => {
+    const images = await replaceBillboardImages(params.id, body.images, MAX_ADMIN_IMAGES);
+    // A customer's listing can have its photos replaced here, so the change has
+    // to be answerable afterwards like any other edit.
+    await audit("billboard_images_update", { details: { billboardId: params.id, count: images.length } });
     return NextResponse.json({ images });
   },
 );

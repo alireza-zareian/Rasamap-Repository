@@ -27,6 +27,7 @@ export type AuditAction =
   | "logout"
   | "billboard_create"
   | "billboard_update"
+  | "billboard_images_update"
   | "billboard_delete"
   | "listing_approved"
   | "listing_rejected"

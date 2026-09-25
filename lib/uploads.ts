@@ -2,7 +2,8 @@
 // RASAMAP — image upload validation
 //
 // Images arrive as base64 data URLs from the browser (the listing wizard and
-// the admin image manager). Everything a client tells us about a file is a
+// the admin image manager), and both are written by saveImages() below.
+// Everything a client tells us about a file is a
 // claim, so nothing here trusts any of it:
 //
 //   - the declared MIME type is checked against the file's own magic bytes, so
@@ -116,10 +117,10 @@ export type SaveResult =
  * served statically, so an unguessable path keeps a not-yet-approved listing's
  * photos from being enumerated. Returns public URLs in the input order.
  */
-export async function saveImages(scope: string, sources: string[]): Promise<SaveResult> {
+export async function saveImages(scope: string, sources: string[], max: number = MAX_LISTING_IMAGES): Promise<SaveResult> {
   if (sources.length === 0) return { ok: true, urls: [], dir: "" };
-  if (sources.length > MAX_LISTING_IMAGES) {
-    return { ok: false, error: `حداکثر ${faNum(MAX_LISTING_IMAGES)} تصویر مجاز است.` };
+  if (sources.length > max) {
+    return { ok: false, error: `حداکثر ${faNum(max)} تصویر مجاز است.` };
   }
 
   // Decode and validate everything before touching the disk, so a bad image in

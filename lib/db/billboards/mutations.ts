@@ -6,9 +6,7 @@ import { fromRow, revalidateCatalogue } from "./core";
 import { derivedPrices } from "@/lib/domain/pricing";
 import { NO_TRAFFIC } from "@/lib/domain/billboard";
 import { conflict, invalid, notFound } from "@/lib/domain/errors";
-import { writeFile, mkdir } from "node:fs/promises";
-import { join } from "node:path";
-import { decodeImageDataUrl } from "@/lib/uploads";
+import { discardImages, saveImages } from "@/lib/uploads";
 
 /**
  * Every write to the billboards table. Each one that changes what a visitor
@@ -199,16 +197,18 @@ export async function deleteBillboard(id: number): Promise<{ slug: string; name:
  * Replace a media item's photos, in the order given.
  *
  * The list mixes two kinds of entry: photos already on the record, kept as they
- * are, and newly picked files as data URLs — validated by their own magic bytes
- * (lib/uploads.ts), then written under public/uploads/billboards/<id>/.
+ * are, and newly picked files as data URLs. A kept photo must be one the record
+ * already has — this used to keep any string starting with "/" or "http", so an
+ * arbitrary external address could be stored and shown on the public page; the
+ * customer's resubmission applies the same rule (../listings.ts).
  *
- * A kept photo must be one the record already has. Anything else that is not a
- * data URL is refused: this used to keep any string starting with "/" or
- * "http", so an arbitrary external address could be stored and then shown on
- * the public page. The customer's resubmission applies the same rule
- * (../listings.ts).
+ * New files go through saveImages(), the same path a customer's listing takes:
+ * every file is checked before any is written, and the folder is removed again
+ * if the row cannot be updated. This used to write each file as it was decoded,
+ * so a bad fourth photo left the first three on disk with nothing pointing at
+ * them.
  */
-export async function replaceBillboardImages(id: number, entries: string[]): Promise<string[]> {
+export async function replaceBillboardImages(id: number, entries: string[], max: number): Promise<string[]> {
   const existing = await prisma.billboard.findUnique({ where: { id }, select: { images: true, allImages: true } });
   if (!existing) throw notFound("بیلبورد یافت نشد");
   const current = new Set([
@@ -216,29 +216,26 @@ export async function replaceBillboardImages(id: number, entries: string[]): Pro
     ...((existing.allImages as string[] | null) ?? []),
   ]);
 
-  const dir = join(process.cwd(), "public", "uploads", "billboards", String(id));
-  await mkdir(dir, { recursive: true });
-
-  const images: string[] = [];
-  const stamp = Date.now();
-  for (let i = 0; i < entries.length; i++) {
-    const src = entries[i];
-    if (!src.startsWith("data:")) {
-      if (!current.has(src)) throw invalid("تصویر انتخاب‌شده متعلق به این رسانه نیست");
-      images.push(src);
-      continue;
-    }
-    const decoded = decodeImageDataUrl(src, i);
-    if (!decoded.ok) throw invalid(decoded.error);
-    const filename = `${stamp}-${i}.${decoded.image.ext}`;
-    await writeFile(join(dir, filename), decoded.image.buffer);
-    images.push(`/uploads/billboards/${id}/${filename}`);
+  const isNew = (src: string) => src.startsWith("data:");
+  if (entries.some(src => !isNew(src) && !current.has(src))) {
+    throw invalid("تصویر انتخاب‌شده متعلق به این رسانه نیست");
   }
 
-  // `hasImages` is a denormalised flag: it is the first key of the default
-  // ordering on every public listing and drives the analytics coverage count,
-  // so it has to move with `images` or the two drift apart.
-  await prisma.billboard.update({ where: { id }, data: { images, hasImages: images.length > 0 } });
+  const saved = await saveImages("billboards", entries.filter(isNew), max);
+  if (!saved.ok) throw invalid(saved.error);
+
+  const fresh = saved.urls[Symbol.iterator]();
+  const images = entries.map(src => (isNew(src) ? fresh.next().value as string : src));
+
+  try {
+    // `hasImages` is a denormalised flag: it is the first key of the default
+    // ordering on every public listing and drives the analytics coverage count,
+    // so it has to move with `images` or the two drift apart.
+    await prisma.billboard.update({ where: { id }, data: { images, hasImages: images.length > 0 } });
+  } catch (err) {
+    await discardImages(saved.dir);
+    throw err;
+  }
   revalidateCatalogue();
   return images;
 }

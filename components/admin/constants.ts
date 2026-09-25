@@ -54,6 +54,7 @@ export const AUDIT_ACTION: Record<string, { title: string; desc: string }> = {
   logout:                  { title: "خروج",                   desc: "یک مدیر از حساب خودش خارج شد." },
   billboard_create:        { title: "ساخت رسانه",             desc: "یک بیلبورد تازه به دیتابیس اضافه شد." },
   billboard_update:        { title: "ویرایش رسانه",           desc: "مشخصات یک بیلبورد (قیمت، مکان، وضعیت و…) تغییر کرد." },
+  billboard_images_update: { title: "تغییر تصاویر رسانه",     desc: "تصاویر یک رسانه جایگزین یا مرتب شد." },
   billboard_delete:        { title: "حذف رسانه",              desc: "یک بیلبورد برای همیشه از دیتابیس پاک شد." },
   listing_approved:        { title: "تأیید آگهی",             desc: "آگهی‌ای که یک کاربر ثبت کرده بود تأیید و منتشر شد." },
   listing_rejected:        { title: "رد آگهی",                desc: "آگهی‌ای که یک کاربر ثبت کرده بود رد شد." },
