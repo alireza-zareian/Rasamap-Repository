@@ -1487,6 +1487,18 @@ test("approving a featured listing grants the promotion; a free one never does",
   assert.equal(decision.json.listing.featured, true, "confirming payment should grant the featured slot");
 });
 
+test("the account that listed a media item cannot rate it", async () => {
+  const owner      = await mintSession({ userId: "1", role: "user" });
+  const other      = await mintSession({ userId: "2", role: "user" });
+  const adminToken = await mintSession({ role: "admin" });
+  const id = await submitListing(owner, "بیلبورد بدون امتیاز مالک");
+  assert.equal((await decide(adminToken, id, { decision: "approve" })).status, 200);
+
+  const body = { billboardId: id, rating: 5, comment: "بهترین رسانه‌ای که دیده‌ام، واقعاً." };
+  assert.equal((await api("/api/reviews", { method: "POST", token: owner, body })).status, 403);
+  assert.equal((await api("/api/reviews", { method: "POST", token: other, body })).status, 201);
+});
+
 test("a decided listing cannot be decided again (409)", async () => {
   const userToken  = await mintSession({ userId: "1", role: "user" });
   const adminToken = await mintSession({ role: "admin" });

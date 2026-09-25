@@ -16,9 +16,11 @@ export const GET = defineRoute(
   },
   async ({ query }) => {
     const result = await listReviews(query.billboardId);
-    // Short: a thread people are replying to in real time should not sit in a
-    // shared cache for half a minute after an answer lands.
-    return NextResponse.json(result, { headers: { "Cache-Control": "public, max-age=5, stale-while-revalidate=30" } });
+    // Not cached at all. The page re-reads this right after every post, edit,
+    // reply and delete, and `max-age=5, stale-while-revalidate=30` let the
+    // browser answer that re-read from its own cache — so a deleted reply
+    // could stay on screen for half a minute after the delete succeeded.
+    return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
   },
 );
 

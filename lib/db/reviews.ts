@@ -2,7 +2,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./client";
 import { isPublished, revalidateCatalogue } from "./billboards";
-import { notFound } from "@/lib/domain/errors";
+import { forbidden, notFound } from "@/lib/domain/errors";
 import { averageRating } from "@/lib/domain/rating";
 import type { Actor, CustomerActor } from "@/lib/auth/actor";
 import { hasRole } from "@/lib/domain/roles";
@@ -42,21 +42,29 @@ async function refreshRatingSummary(tx: Prisma.TransactionClient, billboardId: n
   });
 }
 
-/** The newest 50 reviews of a media item, each with its thread oldest-first. */
+/**
+ * The newest 50 reviews of a media item, each with its thread oldest-first,
+ * and the average and count over *all* of them. Taking both from the page of
+ * 50 made the header disagree with the card's rating once a media item had
+ * more reviews than that.
+ */
 export async function listReviews(billboardId: number) {
-  const reviews = await prisma.review.findMany({
-    where:   { billboardId },
-    include: {
-      user:    { select: { name: true } },
-      // Oldest first inside a thread — a conversation reads downwards, even
-      // though the reviews themselves are newest-first.
-      replies: { orderBy: { createdAt: "asc" }, select: REPLY_FIELDS },
-    },
-    orderBy: { createdAt: "desc" },
-    take:    50,
-  });
-  const avg = reviews.length ? averageRating(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : null;
-  return { reviews, avg, total: reviews.length };
+  const [reviews, agg] = await Promise.all([
+    prisma.review.findMany({
+      where:   { billboardId },
+      include: {
+        user:    { select: { name: true } },
+        // Oldest first inside a thread — a conversation reads downwards, even
+        // though the reviews themselves are newest-first.
+        replies: { orderBy: { createdAt: "asc" }, select: REPLY_FIELDS },
+      },
+      orderBy: { createdAt: "desc" },
+      take:    50,
+    }),
+    prisma.review.aggregate({ where: { billboardId }, _avg: { rating: true }, _count: { _all: true } }),
+  ]);
+  const total = agg._count._all;
+  return { reviews, avg: total ? averageRating(agg._avg.rating) : null, total };
 }
 
 /** Create or replace this customer's review of a published media item. */
@@ -69,8 +77,11 @@ export async function saveReview(
   // The media has to exist and be published — a review on an unapproved
   // listing would be invisible anyway, and this keeps an arbitrary id from
   // creating one.
-  const billboard = await prisma.billboard.findUnique({ where: { id: billboardId }, select: { moderation: true } });
+  const billboard = await prisma.billboard.findUnique({ where: { id: billboardId }, select: { moderation: true, submittedById: true } });
   if (!billboard || !isPublished(billboard.moderation)) throw notFound("رسانه یافت نشد");
+  // The account that listed a media item is the one party whose rating of it
+  // means nothing. It may still answer reviews in the thread.
+  if (billboard.submittedById === author.id) throw forbidden("امکان ثبت امتیاز برای رسانه‌ای که خودتان ثبت کرده‌اید وجود ندارد");
 
   const review = await prisma.$transaction(async tx => {
     const saved = await tx.review.upsert({

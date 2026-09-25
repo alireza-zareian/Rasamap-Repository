@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCurrentUser } from "@/lib/client/use-current-user";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
@@ -62,7 +63,10 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
 export default function ReviewsSection({ billboardId }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [avg, setAvg] = useState<number | null>(null);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const pathname = usePathname();
   // undefined = still asking, null = signed out.
 
   // Form state
@@ -81,11 +85,13 @@ export default function ReviewsSection({ billboardId }: Props) {
   const [replyBusy, setReplyBusy] = useState(false);
   const [busyReplyId, setBusyReplyId] = useState<number | null>(null);
 
+  // A failure is shown, not swallowed: an empty catch here used to answer a
+  // server error with "no reviews yet — be the first", which is a false
+  // statement about the media rather than a message about the request.
   const fetchReviews = useCallback(() => {
-    fetch(`/api/reviews?billboardId=${billboardId}`)
-      .then(r => r.json())
-      .then(d => { setReviews(d.reviews ?? []); setAvg(d.avg); })
-      .catch(() => {})
+    fetchJson<{ reviews?: Review[]; avg: number | null; total: number }>(`/api/reviews?billboardId=${billboardId}`)
+      .then(d => { setReviews(d.reviews ?? []); setAvg(d.avg); setTotal(d.total); setLoadError(""); })
+      .catch(err => setLoadError(errorMessage(err)))
       .finally(() => setLoading(false));
   }, [billboardId]);
 
@@ -216,7 +222,7 @@ export default function ReviewsSection({ billboardId }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <StarRating value={Math.round(avg)} />
             <span style={{ fontSize: "1rem", fontWeight: 800, color: "#f59e0b" }}>{avg}</span>
-            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>({reviews.length} نظر)</span>
+            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>({total} نظر)</span>
           </div>
         )}
       </div>
@@ -257,7 +263,7 @@ export default function ReviewsSection({ billboardId }: Props) {
 
       {user === null && (
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 16, textAlign: "center" }}>
-          برای ثبت نظر باید <Link href="/login" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>وارد حساب کاربری</Link> شوید
+          برای ثبت نظر باید <Link href={`/login?next=${encodeURIComponent(pathname)}`} style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>وارد حساب کاربری</Link> شوید
         </div>
       )}
 
@@ -268,6 +274,11 @@ export default function ReviewsSection({ billboardId }: Props) {
       {/* Reviews list */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "20px 0", color: "var(--text-muted)", fontSize: "0.82rem" }}>در حال بارگذاری...</div>
+      ) : loadError ? (
+        <div role="alert" style={{ textAlign: "center", padding: "20px 0", color: "var(--text-muted)", fontSize: "0.82rem" }}>
+          <div style={{ marginBottom: 10 }}>نظرها بارگذاری نشد. {loadError}</div>
+          <button type="button" onClick={() => { setLoading(true); fetchReviews(); }} style={actionBtn("var(--accent)", "var(--border)")}>تلاش دوباره</button>
+        </div>
       ) : reviews.length === 0 ? (
         <div style={{ textAlign: "center", padding: "28px 0", color: "var(--text-muted)", fontSize: "0.82rem" }}>
           <Star size={28} style={{ opacity: 0.25, display: "block", margin: "0 auto 10px" }} />
