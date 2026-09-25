@@ -6,6 +6,7 @@ import { issueOtp } from "@/lib/db/otp-codes";
 import { isPhoneRegistered } from "@/lib/db/customers";
 import { sendOtp, smsEnabled } from "@/lib/sms";
 import { auditLog } from "@/lib/audit";
+import { isLocalNetworkRequest } from "@/lib/auth/client-ip";
 
 // Echo the code back on screen, for a machine with no SMS line — the demo
 // laptop. It used to be refused whenever NODE_ENV was "production", which
@@ -13,10 +14,11 @@ import { auditLog } from "@/lib/audit";
 // could not be completed at all: the code reached no phone and no screen.
 //
 // It is keyed on the fact that matters instead: there is no SMS line to send
-// through. It needs the explicit flag too, and it switches itself off the
-// moment KAVENEGAR_API_KEY is set. Left on in a real deployment without SMS,
-// anyone could reset any customer's password, which is why lib/env.ts warns
-// loudly at boot whenever it is armed.
+// through. It needs the explicit flag too, it switches itself off the moment
+// KAVENEGAR_API_KEY is set, and it answers only a local-network visit
+// (isLocalNetworkRequest): left on by mistake on a public server, it still
+// shows nothing to anyone arriving by a public domain or address. lib/env.ts
+// also warns at boot whenever it is armed.
 const DEV_ECHO = process.env.OTP_DEV_ECHO === "1" && !smsEnabled;
 
 // POST /api/auth/otp/send — start a phone-verified flow: reset or sign-up (public)
@@ -30,7 +32,7 @@ export const POST = defineRoute(
       purpose: z.enum(["password_reset", "register"]),
     }),
   },
-  async ({ ip, body, tooMany }) => {
+  async ({ req, ip, body, tooMany }) => {
     const { phone, purpose } = body;
 
     // Keyed on the number being texted: this is what bounds the SMS bill.
@@ -64,7 +66,7 @@ export const POST = defineRoute(
       const code = await issueOtp(phone, purpose);
       const r = await sendOtp(phone, code);
       auditLog("otp_sent", "info", { ip, details: { purpose, delivered: r.sent, smsEnabled } });
-      if (DEV_ECHO) devCode = code;
+      if (DEV_ECHO && isLocalNetworkRequest(req, ip)) devCode = code;
     }
 
     const message = purpose === "register"

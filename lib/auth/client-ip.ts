@@ -60,3 +60,28 @@ export function getClientIp(req: NextRequest): string {
   const idx = Math.max(0, parts.length - Math.max(1, TRUSTED_PROXIES));
   return parts[idx];
 }
+
+/**
+ * Loopback, link-local or a private LAN range (RFC 1918, IPv6 ULA), with the
+ * IPv4-mapped IPv6 form Node reports for an IPv4 peer (`::ffff:192.168.1.5`).
+ */
+export function isPrivateAddress(addr: string): boolean {
+  const a = addr.trim().toLowerCase().replace(/^::ffff:/, "");
+  if (a === "localhost" || a === "::1") return true;
+  if (/^(127|10)\./.test(a) || /^192\.168\./.test(a) || /^169\.254\./.test(a)) return true;
+  const m = /^172\.(\d+)\./.exec(a);
+  if (m && Number(m[1]) >= 16 && Number(m[1]) <= 31) return true;
+  return /^f[cd][0-9a-f]{2}:/.test(a) || /^fe80:/.test(a);
+}
+
+/**
+ * Whether this request is a local-network visit: the address the browser used
+ * (Host, as the browser sent it — never nextUrl, rule 9) and the peer are both
+ * private. True on the demo laptop, over localhost or from a phone on its
+ * Wi-Fi; false for anyone reaching a public domain or a public IP.
+ */
+export function isLocalNetworkRequest(req: NextRequest, ip: string): boolean {
+  const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").split(",")[0].trim();
+  const hostname = host.startsWith("[") ? host.slice(1, host.indexOf("]")) : host.replace(/:\d+$/, "");
+  return isPrivateAddress(hostname) && isPrivateAddress(ip);
+}
