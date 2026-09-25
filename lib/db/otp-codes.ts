@@ -60,12 +60,18 @@ export async function verifyOtp(phone: string, purpose: OtpPurpose, code: string
   });
   if (!row) return { ok: false, reason: "not_found" };
   if (row.expiresAt.getTime() < Date.now()) return { ok: false, reason: "expired" };
-  if (row.attempts >= MAX_ATTEMPTS) return { ok: false, reason: "too_many_attempts" };
+  // The attempt is claimed before the code is compared, and only while the
+  // count is still under the cap. Reading `attempts` and incrementing it after
+  // a mismatch let concurrent guesses all read the same count and all be
+  // compared, so the cap of five was really "five, plus however many arrive
+  // at once".
+  const { count: claimed } = await prisma.otpCode.updateMany({
+    where: { id: row.id, consumedAt: null, attempts: { lt: MAX_ATTEMPTS } },
+    data:  { attempts: { increment: 1 } },
+  });
+  if (claimed === 0) return { ok: false, reason: "too_many_attempts" };
 
-  if (!equalHex(row.codeHash, hashCode(code))) {
-    await prisma.otpCode.update({ where: { id: row.id }, data: { attempts: { increment: 1 } } });
-    return { ok: false, reason: "mismatch" };
-  }
+  if (!equalHex(row.codeHash, hashCode(code))) return { ok: false, reason: "mismatch" };
 
   // Consumption is conditional on the row still being unconsumed, not a bare
   // update, so two concurrent verifies with the same correct code (a
