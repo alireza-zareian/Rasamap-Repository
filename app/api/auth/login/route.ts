@@ -3,7 +3,7 @@ import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { isClientIpTrusted } from "@/lib/auth/client-ip";
 import { startSession } from "@/lib/auth/actor";
-import { userLoginAttempt, resetAccountAttempts } from "@/lib/rate-limit";
+import { adminLoginAttempt, userLoginAttempt, resetAccountAttempts } from "@/lib/rate-limit";
 import { verifyStaffCredentials } from "@/lib/db/staff";
 import { verifyCustomerCredentials } from "@/lib/db/customers";
 import { auditLog } from "@/lib/audit";
@@ -47,10 +47,15 @@ export const POST = defineRoute(
   {
     name: "auth/login",
     access: "public",
-    // One budget per identifier, whichever store it belongs to: a staff email
-    // and a customer phone never collide, so a caller cannot double their tries
-    // by alternating between the two shapes.
-    rateLimit: { afterBody: (b, ip) => userLoginAttempt(b.identifier, ip) },
+    // One budget per account, whichever form it is attacked through. A staff
+    // email is charged to the same budget as /api/admin/auth/login; when the
+    // two forms kept separate counters, an administrator's password took
+    // fifteen guesses per window instead of five.
+    rateLimit: {
+      afterBody: (b, ip) => EMAIL.test(b.identifier)
+        ? adminLoginAttempt(b.identifier, ip)
+        : userLoginAttempt(b.identifier, ip),
+    },
     body: LoginSchema,
     messages: { invalidBody: DENIED },
   },
@@ -68,7 +73,7 @@ export const POST = defineRoute(
         return NextResponse.json({ error: DENIED }, { status: 401 });
       }
 
-      await resetAccountAttempts("user_login", identifier);
+      await resetAccountAttempts("login", identifier);
       auditLog("login_success", "info", {
         userId: `staff:${staff.id}`, userEmail: staff.email, ip,
         userAgent: userAgent ?? undefined,

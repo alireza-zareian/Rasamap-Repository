@@ -609,6 +609,18 @@ test("repeated failures lock the account they are aimed at", async () => {
   assert.match(last.json.error, /این حساب/, "the message should say the account is locked, not the network");
 });
 
+test("a staff email has one attempt budget across both sign-in forms", async () => {
+  const email = `budget-${Date.now()}@example.com`;
+  for (let i = 0; i < 5; i++) {
+    await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: email, password: "wrong-pass" } });
+  }
+  const viaAdminForm = await api("/api/admin/auth/login", {
+    method: "POST", ip: uniqueIp(),
+    body: { email, password: "wrong-pass" },
+  });
+  assert.equal(viaAdminForm.status, 429, "failures on the shared form must count against the staff form too");
+});
+
 test("one account's failures do not lock another account on the same address", async () => {
   // This is the whole point of keying on the account. Several people behind one
   // office, campus or carrier address share it, and — as card B1 records — an
