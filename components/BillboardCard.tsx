@@ -65,7 +65,7 @@ export default function BillboardCard({
               <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>ت/ماه</span>
             </div>
             <div style={{ display: "flex", gap: 5 }}>
-              <button onClick={e => { e.stopPropagation(); onCompare(); }} className="card-action-btn" style={{
+              <button onClick={e => { e.stopPropagation(); onCompare(); }} className="card-action-btn" aria-label={isCompared ? "حذف از مقایسه" : "افزودن به مقایسه"} aria-pressed={isCompared} style={{
                 ...smallBtnStyle,
                 background: isCompared ? "var(--accent-warm)" : "var(--bg-card)",
                 border: `1px solid ${isCompared ? "var(--accent-warm)" : "var(--border)"}`,
@@ -158,7 +158,7 @@ export default function BillboardCard({
             <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>ت/ماه</span>
           </div>
           <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-            <button onClick={e => { e.stopPropagation(); onCompare(); }} className="card-action-btn" style={{
+            <button onClick={e => { e.stopPropagation(); onCompare(); }} className="card-action-btn" aria-label={isCompared ? "حذف از مقایسه" : "افزودن به مقایسه"} aria-pressed={isCompared} style={{
               background: isCompared ? "var(--accent-warm)" : "var(--bg-card)",
               border: `1px solid ${isCompared ? "var(--accent-warm)" : "var(--border)"}`,
               color: isCompared ? "#111" : "var(--text-muted)",

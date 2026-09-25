@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useCompareList } from "@/lib/client/use-compare-list";
+import { fetchJson, FetchError } from "@/lib/client/fetch-json";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import CompareModal from "@/components/CompareModal";
@@ -11,27 +13,33 @@ import { Scale, X, ArrowLeft } from "lucide-react";
 import { faNum } from "@/lib/format";
 
 export default function ComparePage() {
-  const [compareList, setCompareList] = useState<CatalogueItem[]>([]);
+  const { items: compareList, setItems: setCompareList, remove, ready: loaded } = useCompareList();
   const [showModal, setShowModal] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [refreshed, setRefreshed] = useState(false);
 
+  // The stored cards are a snapshot from whenever they were ticked. Before two
+  // of them are put side by side, each is read again: a price may have moved,
+  // and a listing taken down since then must not be compared as if it existed.
   useEffect(() => {
-    // Mount-only hydration from localStorage — a browser-only source that
-    // cannot be read during SSR render, so a setState-in-effect is correct here.
-    /* eslint-disable react-hooks/set-state-in-effect */
-    try {
-      const saved = localStorage.getItem("rasamap_compare");
-      if (saved) setCompareList(JSON.parse(saved));
-    } catch {}
-    setLoaded(true);
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, []);
-
-  const remove = (id: number) => {
-    const next = compareList.filter(b => b.id !== id);
-    setCompareList(next);
-    try { localStorage.setItem("rasamap_compare", JSON.stringify(next)); } catch {}
-  };
+    if (!loaded || refreshed) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRefreshed(true);
+    if (compareList.length === 0) return;
+    Promise.all(compareList.map(async b => {
+      try {
+        const { billboard } = await fetchJson<{ billboard: CatalogueItem }>(`/api/billboards/${encodeURIComponent(b.slug)}`);
+        return billboard;
+      } catch (err) {
+        // Gone or unpublished: drop it. Anything else (offline): keep the snapshot.
+        return err instanceof FetchError && err.status === 404 ? null : b;
+      }
+    })).then(fresh => {
+      const kept = fresh.filter((b): b is CatalogueItem => b !== null);
+      if (kept.length < fresh.length) setNotice("رسانه‌ای که انتخاب کرده بودید دیگر در سایت نیست و از مقایسه برداشته شد.");
+      setCompareList(kept);
+    });
+  }, [loaded, refreshed, compareList, setCompareList]);
 
   if (!loaded) return null;
 
@@ -47,6 +55,10 @@ export default function ComparePage() {
         <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: 32 }}>
           رسانه‌های انتخابی از صفحه جستجو را اینجا کنار هم ببینید
         </div>
+
+        {notice && (
+          <div role="status" style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: 16 }}>{notice}</div>
+        )}
 
         {compareList.length === 0 && (
           <div style={{ textAlign: "center", padding: "80px 20px", background: "var(--bg-surface)", borderRadius: 16, border: "1px solid var(--border)" }}>

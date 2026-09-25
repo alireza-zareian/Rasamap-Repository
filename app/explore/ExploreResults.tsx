@@ -1,10 +1,11 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { CatalogueItem } from "@/lib/types";
 import BillboardCard from "@/components/BillboardCard";
 import CompareModal from "@/components/CompareModal";
 import CompareBar from "@/components/CompareBar";
 import Toast from "@/components/Toast";
+import { MAX_COMPARE, useCompareList } from "@/lib/client/use-compare-list";
 
 /**
  * The results grid.
@@ -12,27 +13,17 @@ import Toast from "@/components/Toast";
  * The cards themselves come from the server: this component receives them as
  * props and never fetches. It is a Client Component only because comparison is
  * a browser-side selection — which two records the visitor has ticked, held in
- * localStorage so /compare can pick them up. A Client Component is still
+ * localStorage so /compare can pick them up (lib/client/use-compare-list.ts). A Client Component is still
  * rendered to HTML on the server, so the prices, names and photos are in the
  * document either way; what "use client" buys here is the tick box working.
  */
 
-/** The compare tray holds two records — enough to put side by side, no more. */
-const MAX_COMPARE = 2;
-const COMPARE_KEY = "rasamap_compare";
-
 interface ToastState { msg: string; type: "success" | "error" | "info" }
 
 export default function ExploreResults({ items, view }: { items: CatalogueItem[]; view: "grid" | "list" }) {
-  const [compareList, setCompareList] = useState<CatalogueItem[]>([]);
+  const { items: compareList, setItems: setCompareList, remove, clear } = useCompareList();
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
-
-  // Written on every change so the /compare page, a separate document, reads
-  // the same selection.
-  useEffect(() => {
-    try { localStorage.setItem(COMPARE_KEY, JSON.stringify(compareList)); } catch {}
-  }, [compareList]);
 
   const handleCompare = useCallback((b: CatalogueItem) => {
     setCompareList(prev => {
@@ -44,7 +35,7 @@ export default function ExploreResults({ items, view }: { items: CatalogueItem[]
       setToast({ msg: `${b.name.substring(0, 22)}... به مقایسه اضافه شد`, type: "info" });
       return [...prev, b];
     });
-  }, []);
+  }, [setCompareList]);
 
   return (
     <>
@@ -71,9 +62,9 @@ export default function ExploreResults({ items, view }: { items: CatalogueItem[]
       )}
       <CompareBar
         items={compareList}
-        onRemove={id => setCompareList(prev => prev.filter(b => b.id !== id))}
+        onRemove={remove}
         onCompare={() => setShowCompareModal(true)}
-        onClear={() => setCompareList([])}
+        onClear={clear}
       />
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </>

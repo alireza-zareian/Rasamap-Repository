@@ -281,3 +281,24 @@ test("the catalogue is usable at phone width", async () => {
     await b.screenshot(join(SHOTS, "phone-explore.png"));
   }, { width: 390, height: 844 });
 });
+
+// ── compare survives the page it was made on ──────────────────────────────
+test("a compare selection survives a reload and reaches /compare", async () => {
+  await withBrowser("compare-persists", async (b) => {
+    await b.goto(`${BASE}/explore`);
+    await b.waitForSelector("button[aria-label='افزودن به مقایسه']");
+    // Two different cards: after the first click that card's button is renamed.
+    await b.click("button[aria-label='افزودن به مقایسه']");
+    await b.waitForSelector("button[aria-pressed='true']");
+    await b.click("button[aria-label='افزودن به مقایسه']");
+    await b.waitFor("document.querySelectorAll(\"button[aria-pressed='true']\").length === 2", { label: "two cards ticked" });
+
+    // /explore used to start from an empty list and save it on mount, so a
+    // reload wiped the selection before anyone could compare it.
+    await b.goto(`${BASE}/explore`);
+    await b.waitFor("document.querySelectorAll(\"button[aria-pressed='true']\").length === 2", { label: "the selection after a reload" });
+
+    await b.goto(`${BASE}/compare`);
+    await b.waitForText("مقایسه رسانه‌های انتخابی");
+  });
+});
