@@ -75,7 +75,7 @@ type IpLimiter = (ip: string) => Promise<RateLimitResult>;
  */
 type RateLimitSpec<B> =
   | IpLimiter
-  | { afterBody: (body: B, ip: string) => Promise<CredentialAttempt | RateLimitResult> }
+  | { afterBody: (body: B, ip: string, req: NextRequest) => Promise<CredentialAttempt | RateLimitResult> }
   | "none";
 
 export interface RouteSpec<
@@ -277,7 +277,7 @@ export function defineRoute<
     }
 
     if (typeof spec.rateLimit === "object") {
-      const checked = await spec.rateLimit.afterBody(body as Parsed<B>, ip);
+      const checked = await spec.rateLimit.afterBody(body as Parsed<B>, ip, req);
       const attempt = "result" in checked ? checked : { result: checked, limitedBy: null };
       if (!attempt.result.allowed) {
         return rateLimited(attempt.result, { endpoint: spec.name, ip, actor, limitedBy: attempt.limitedBy });

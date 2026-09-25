@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { buildSessionCookieHeader, createSession, getSession, type Session, type SessionClaims } from "./session";
 import { findActiveStaff } from "@/lib/db/staff";
 import { findCustomer } from "@/lib/db/customers";
+import { isSessionRevoked } from "@/lib/db/sessions";
 import type { StaffRole } from "@/lib/domain/roles";
 
 /**
@@ -38,10 +39,11 @@ export type Actor = CustomerActor | StaffActor;
  *
  * A JWT is a signed statement about who someone was when they signed in, and
  * on its own it stays true until it expires — through a password change, a
- * reset, a deactivation. So every token is confirmed against its row: a missing
- * or deactivated account is no actor, a token whose `ver` is behind the row's
- * sessionVersion was signed out, and the name, number and role that count are
- * the ones in the database rather than the ones in the token.
+ * reset, a deactivation, a sign-out. So every token is confirmed against its
+ * row: a missing or deactivated account is no actor, a token whose `ver` is
+ * behind the row's sessionVersion was signed out everywhere, a token in
+ * revoked_sessions was signed out on its own, and the name, number and role
+ * that count are the ones in the database rather than the ones in the token.
  *
  * This used to skip customers, on the argument that a customer session carries
  * no authority worth revoking. It carries the account itself: without the
@@ -56,6 +58,7 @@ export type Actor = CustomerActor | StaffActor;
 export async function resolveActor(session: Session | null): Promise<Actor | null> {
   if (!session) return null;
   const id = Number(session.sub);
+  if (await isSessionRevoked(session.jti)) return null;
 
   if (session.kind === "customer") {
     const account = await findCustomer(id);
@@ -99,7 +102,8 @@ export async function startSession(
   req: NextRequest,
   authTime: number = Math.floor(Date.now() / 1000),
 ): Promise<NextResponse> {
-  res.headers.set("Set-Cookie", buildSessionCookieHeader(await createSession(claimsFor(actor, authTime)), req));
+  // append, not set: a sign-in also hands out the device cookie (lib/auth/device.ts).
+  res.headers.append("Set-Cookie", buildSessionCookieHeader(await createSession(claimsFor(actor, authTime)), req));
   return res;
 }
 

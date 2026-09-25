@@ -3,6 +3,7 @@
  * Uses signed JWT stored in an HttpOnly, SameSite=Lax cookie (Secure over
  * HTTPS — see isSecureRequest). Never expose raw tokens to client JS.
  */
+import { randomUUID } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
@@ -60,8 +61,11 @@ const ClaimsSchema = z.discriminatedUnion("kind", [
 
 export type SessionClaims = z.infer<typeof ClaimsSchema>;
 
-/** A verified token: its claims plus the expiry the sliding refresh reads. */
-export type Session = SessionClaims & { exp: number };
+/**
+ * A verified token: its claims, the expiry the sliding refresh reads, and its
+ * own id — what signing out revokes (lib/db/sessions.ts).
+ */
+export type Session = SessionClaims & { exp: number; jti: string };
 
 function getSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
@@ -75,6 +79,7 @@ export async function createSession(claims: SessionClaims): Promise<string> {
   return new SignJWT({ ...claims })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
+    .setJti(randomUUID())
     .setExpirationTime(`${MAX_AGE_SECS}s`)
     .sign(getSecret());
 }
@@ -90,8 +95,8 @@ export async function verifySession(token: string): Promise<Session | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret(), { algorithms: ["HS256"] });
     const claims = ClaimsSchema.safeParse(payload);
-    if (!claims.success || typeof payload.exp !== "number") return null;
-    return { ...claims.data, exp: payload.exp };
+    if (!claims.success || typeof payload.exp !== "number" || typeof payload.jti !== "string") return null;
+    return { ...claims.data, exp: payload.exp, jti: payload.jti };
   } catch {
     return null;
   }

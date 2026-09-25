@@ -70,17 +70,26 @@ function accountKey(identifier: string): string {
 /**
  * Both dimensions of one credential attempt.
  *
- * The account is checked first so that a caller who has genuinely exhausted one
- * account's tries is told so, rather than being told the network is busy.
+ * `device` is the id of this browser's device token for the account (see
+ * lib/auth/device.ts), or null. A known device is counted on a budget of its
+ * own, with the same numbers, instead of the account-wide one — so a lockout
+ * that strangers run up against an account never locks out the browser its
+ * owner already signs in from. That is what used to let anyone who knew the
+ * super admin's email keep them out of the panel with five requests.
+ *
+ * The account (or device) is checked first so that a caller who has genuinely
+ * exhausted its tries is told so, rather than being told the network is busy.
  */
 async function credentialAttempt(
   scope: string,
   identifier: string,
   ip: string,
+  device: string | null,
   account: RateLimitOptions,
   address: RateLimitOptions,
 ): Promise<CredentialAttempt> {
-  const acct = await checkRateLimit(`${scope}_acct:${accountKey(identifier)}`, account);
+  const acctKey = device ? `${scope}_dev:${device}` : `${scope}_acct:${accountKey(identifier)}`;
+  const acct = await checkRateLimit(acctKey, account);
   if (!acct.allowed) return { result: acct, limitedBy: "account" };
 
   const addr = await checkRateLimit(`${scope}_ip:${ip}`, address);
@@ -93,8 +102,8 @@ async function credentialAttempt(
  * Staff sign-in. Five tries against one email, then that email waits a quarter
  * of an hour; the address gets a much looser ceiling and is never locked.
  */
-export function adminLoginAttempt(email: string, ip: string): Promise<CredentialAttempt> {
-  return credentialAttempt("login", email, ip,
+export function adminLoginAttempt(email: string, ip: string, device: string | null): Promise<CredentialAttempt> {
+  return credentialAttempt("login", email, ip, device,
     { windowMs: 15 * 60 * 1000, maxRequests: 5,   lockoutMs: 15 * 60 * 1000 },
     { windowMs: 15 * 60 * 1000, maxRequests: 100, lockoutMs: 0 },
   );
@@ -105,16 +114,17 @@ export function adminLoginAttempt(email: string, ip: string): Promise<Credential
  * are more often mistyped than an email is, and the account lockout is shorter
  * for the same reason.
  */
-export function userLoginAttempt(identifier: string, ip: string): Promise<CredentialAttempt> {
-  return credentialAttempt("user_login", identifier, ip,
+export function userLoginAttempt(identifier: string, ip: string, device: string | null): Promise<CredentialAttempt> {
+  return credentialAttempt("user_login", identifier, ip, device,
     { windowMs: 15 * 60 * 1000, maxRequests: 10,  lockoutMs: 10 * 60 * 1000 },
     { windowMs: 15 * 60 * 1000, maxRequests: 150, lockoutMs: 0 },
   );
 }
 
-/** Clear an account's failures after it signs in successfully. */
-export function resetAccountAttempts(scope: CredentialScope, identifier: string): Promise<void> {
-  return store.reset(`${scope}_acct:${accountKey(identifier)}`);
+/** Clear an account's failures (and this device's) after it signs in successfully. */
+export async function resetAccountAttempts(scope: CredentialScope, identifier: string, device: string | null = null): Promise<void> {
+  await store.reset(`${scope}_acct:${accountKey(identifier)}`);
+  if (device) await store.reset(`${scope}_dev:${device}`);
 }
 
 /**

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { isClientIpTrusted } from "@/lib/auth/client-ip";
 import { startSession } from "@/lib/auth/actor";
+import { knownDevice, rememberDevice } from "@/lib/auth/device";
 import { adminLoginAttempt, userLoginAttempt, resetAccountAttempts } from "@/lib/rate-limit";
 import { verifyStaffCredentials } from "@/lib/db/staff";
 import { verifyCustomerCredentials } from "@/lib/db/customers";
@@ -52,9 +53,12 @@ export const POST = defineRoute(
     // two forms kept separate counters, an administrator's password took
     // fifteen guesses per window instead of five.
     rateLimit: {
-      afterBody: (b, ip) => EMAIL.test(b.identifier)
-        ? adminLoginAttempt(b.identifier, ip)
-        : userLoginAttempt(b.identifier, ip),
+      afterBody: async (b, ip, req) => {
+        const device = await knownDevice(req, b.identifier);
+        return EMAIL.test(b.identifier)
+          ? adminLoginAttempt(b.identifier, ip, device)
+          : userLoginAttempt(b.identifier, ip, device);
+      },
     },
     body: LoginSchema,
     messages: { invalidBody: DENIED },
@@ -73,7 +77,7 @@ export const POST = defineRoute(
         return NextResponse.json({ error: DENIED }, { status: 401 });
       }
 
-      await resetAccountAttempts("login", identifier);
+      await resetAccountAttempts("login", identifier, await knownDevice(req, identifier));
       auditLog("login_success", "info", {
         userId: `staff:${staff.id}`, userEmail: staff.email, ip,
         userAgent: userAgent ?? undefined,
@@ -82,6 +86,7 @@ export const POST = defineRoute(
       const res = NextResponse.json({
         ok: true, user: { id: String(staff.id), name: staff.name, role: staff.role, isStaff: true },
       });
+      await rememberDevice(res, req, identifier);
       return startSession(res, { kind: "staff", ...staff }, req);
     }
 
@@ -90,10 +95,11 @@ export const POST = defineRoute(
     const customer = await verifyCustomerCredentials(identifier, password);
     if (!customer) return NextResponse.json({ error: DENIED }, { status: 401 });
 
-    await resetAccountAttempts("user_login", identifier);
+    await resetAccountAttempts("user_login", identifier, await knownDevice(req, identifier));
     const res = NextResponse.json({
       ok: true, user: { id: customer.id, name: customer.name, phone: customer.phone, isStaff: false },
     });
+    await rememberDevice(res, req, identifier);
     return startSession(res, { kind: "customer", ...customer }, req);
   },
 );

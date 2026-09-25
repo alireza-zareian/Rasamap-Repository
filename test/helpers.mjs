@@ -2,7 +2,7 @@
 // No test framework dependency — uses Node's built-in `node:test` + `fetch`.
 
 import { SignJWT } from "jose";
-import { createHmac } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
@@ -55,6 +55,7 @@ export async function mintSession({ userId, email = "tester", name = "Tester", r
   return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
+    .setJti(randomUUID())
     .setExpirationTime("1h")
     .sign(SECRET);
 }
@@ -131,11 +132,10 @@ export function randomPhone() {
  * Recover the one-time code that `POST /api/auth/otp/send` just issued.
  *
  * The server never stores the code — only an HMAC-SHA256 of it keyed by
- * AUTH_SECRET (lib/otp.ts) — so there is nothing to read back. The route can
- * echo the code when OTP_DEV_ECHO=1, but that affordance is also gated on
- * NODE_ENV so it can never arm on a real deployment, and the suite runs
- * against a production build. Rather than weaken that guard for the
- * convenience of a test, this walks the six-digit space against the stored
+ * AUTH_SECRET (lib/db/otp-codes.ts) — so there is nothing to read back. The
+ * route can echo the code when OTP_DEV_ECHO=1 and no SMS line exists (the demo
+ * laptop), but the runners force that off so the suite proves the flow without
+ * it. Instead this walks the six-digit space against the stored
  * hash: one second at worst, and it proves the flow using only what a real
  * client would receive by SMS.
  */

@@ -647,6 +647,46 @@ test("a staff email has one attempt budget across both sign-in forms", async () 
   assert.equal(viaAdminForm.status, 429, "failures on the shared form must count against the staff form too");
 });
 
+/** The device cookie a successful sign-in hands out — see lib/auth/device.ts. */
+function deviceCookie(res) {
+  for (const c of res.headers.getSetCookie?.() ?? []) {
+    const m = /^rasamap_device=([^;]+)/.exec(c);
+    if (m) return `rasamap_device=${m[1]}`;
+  }
+  return null;
+}
+
+test("strangers locking an account out do not lock out the browser its owner signs in from", async () => {
+  const email = "super99002@test.local";
+  const first = await api("/api/admin/auth/login", { method: "POST", ip: uniqueIp(), body: { email, password: "secret123" } });
+  assert.equal(first.status, 200, JSON.stringify(first.json));
+  const device = deviceCookie(first);
+  assert.ok(device, "a successful sign-in should hand out a device cookie");
+
+  let stranger;
+  for (let i = 0; i < 6; i++) {
+    stranger = await api("/api/admin/auth/login", { method: "POST", ip: uniqueIp(), body: { email, password: "wrong-pass" } });
+  }
+  assert.equal(stranger.status, 429, "the account-wide budget still stops a guesser");
+
+  const owner = await api("/api/admin/auth/login", {
+    method: "POST", ip: uniqueIp(), headers: { cookie: device },
+    body: { email, password: "secret123" },
+  });
+  assert.equal(owner.status, 200, "the owner's own browser must still get in");
+});
+
+test("signing out revokes that token, and only that one", async () => {
+  const phone = randomPhone();
+  const registered = await registerUser({ phone, ip: uniqueIp() });
+  const here = tokenFromSetCookie(registered);
+  const elsewhere = tokenFromSetCookie(await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { phone, password: "secret123" } }));
+
+  assert.equal((await api("/api/auth/logout", { method: "POST", token: here })).status, 200);
+  assert.equal((await api("/api/auth/me", { token: here })).status, 401, "a copy of a signed-out token must not work");
+  assert.equal((await api("/api/auth/me", { token: elsewhere })).status, 200, "another device stays signed in");
+});
+
 test("one account's failures do not lock another account on the same address", async () => {
   // This is the whole point of keying on the account. Several people behind one
   // office, campus or carrier address share it, and — as card B1 records — an

@@ -431,3 +431,18 @@ model AuditLog {
   @@index([timestamp])
   @@map("audit_logs")
 }
+
+// ── RevokedSession ─────────────────────────────────────────────
+// A session token that was signed out before it expired. A signed token stays
+// valid until its expiry on its own, so clearing the cookie only helped the
+// browser that did it: a copy elsewhere kept working. The row outlives the
+// token by nothing — it is pruned once `expiresAt` has passed, when the token
+// would be refused anyway. Revoking every session of an account at once is
+// sessionVersion's job, not this table's.
+model RevokedSession {
+  jti       String   @id
+  expiresAt DateTime
+
+  @@index([expiresAt])
+  @@map("revoked_sessions")
+}
