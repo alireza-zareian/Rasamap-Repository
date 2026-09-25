@@ -261,3 +261,22 @@ harder to read than it found it has not finished.
 
 The test: could someone who has never opened this repository read the file
 top to bottom and follow it? If the honest answer is no, the change is not done.
+
+---
+
+**11. A comment is a claim, not evidence**
+
+Most comments here were written by earlier agents explaining why their own
+change was right. Read them as the author's argument, never as proof.
+
+*When asked to find what is wrong* (an audit, a review, "devil's advocate"):
+judge the code by what it does, not by what its comments say it does. Question
+the design, not only its execution. Try to break it — a request, a test, a
+probe server on a spare port — and label each finding **verified** or
+**suspected**. "Already handled" needs a line of code or a test behind it. No
+praise, no softening.
+
+*When writing a comment:* give the reason and its limits — what was measured,
+where, and what it does not cover ("assumes a proxy appends X-Forwarded-For").
+No verdicts such as "this is safe", "cannot happen" or "the correct
+architecture" unless a test enforces it; then name the test.
