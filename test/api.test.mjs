@@ -36,7 +36,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows, registerUser } from "./helpers.mjs";
+import { BASE, api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows, registerUser } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
 
@@ -617,6 +617,22 @@ test("repeated failures lock the account they are aimed at", async () => {
   }
   assert.equal(last.status, 429);
   assert.match(last.json.error, /این حساب/, "the message should say the account is locked, not the network");
+});
+
+test("an oversized body is refused on a public route, chunked or not", async () => {
+  const big = JSON.stringify({ identifier: "09120000000", password: "x", pad: "a".repeat(64 * 1024) });
+  const plain = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: big });
+  assert.equal(plain.status, 413);
+
+  // A streamed body carries no Content-Length, which is what the old check read.
+  const bytes = new TextEncoder().encode(big);
+  const stream = new ReadableStream({ start(c) { c.enqueue(bytes); c.close(); } });
+  const res = await fetch(`${BASE}/api/auth/login`, {
+    method: "POST", body: stream, duplex: "half",
+    headers: { "content-type": "application/json", "user-agent": "Mozilla/5.0 (rasamap-test-suite)", "x-forwarded-for": uniqueIp() },
+    signal: AbortSignal.timeout(30_000),
+  });
+  assert.equal(res.status, 413);
 });
 
 test("a staff email has one attempt budget across both sign-in forms", async () => {
