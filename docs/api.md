@@ -91,7 +91,7 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 | POST | `/api/auth/login` | public | Body (Zod): `identifier` (a `09…` mobile number **or** a staff email — `phone` and `email` are still accepted as aliases) and `password`. The credential's own shape decides which table is consulted, so one form serves customers and staff without either answer revealing which store was read. Always runs a **real** bcrypt comparison — against `TIMING_PAD_HASH` when the phone is unknown — so response time cannot be used to enumerate accounts. 401 on bad credentials, identical body for "wrong password" and "unknown user". Rate limit: 10 / 15 min / IP → 429 + lockout. |
 | POST | `/api/auth/otp/send` | public | Start a phone-verified flow. Body (Zod): `phone`, `purpose` (`password_reset` \| `register`). A reset responds identically whether or not the number is registered, so it is no membership oracle; a sign-up answers 409 on a number that already has an account, because the register step must refuse it anyway. Rate limited per phone (3 / 10 min) and per IP (40 / hour). SMS is dormant unless `KAVENEGAR_API_KEY` is set. |
 | POST | `/api/auth/otp/verify` | public | Password reset only (`purpose: "password_reset"`): verify the 6-digit code and set a new password in one step. A sign-up code lives under a different purpose and cannot be spent here. Codes are HMAC-hashed, 5-minute TTL, single-use, 5 attempts. Writes `password_reset_self`. |
-| POST | `/api/auth/logout` | public | Clears the session cookie. |
+| POST | `/api/auth/logout` | public | Revokes this session token (`revoked_sessions`) and clears the cookie. Other devices stay signed in. |
 | GET | `/api/auth/me` | user / staff | The signed-in account `{ id, name, phone, email, role, isStaff }` (a customer's role reads `"user"`), plus a sliding refresh of the session cookie when under two hours remain. |
 | PATCH | `/api/auth/me` | user | Update `name` and/or `password` for the current user. |
 
@@ -100,8 +100,9 @@ CDN). Demo accounts for trying the endpoints: [`RUNBOOK.md`](../RUNBOOK.md).
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
 | POST | `/api/admin/auth/login` | public | Credentials are checked against the `admins` table, not against the environment: `ADMIN_EMAIL` / `ADMIN_PASSWORD_HASH` are read only by `prisma/seed.ts`, which upserts the first `admins` row from them. An inactive account never signs in. bcrypt + JWT + audit entry. Rate limit: 5 tries / 15 min **per account** (plus a loose per-address ceiling with no lockout — see `lib/rate-limit/index.ts`). |
-| POST | `/api/admin/auth/logout` | admin | Clears the admin session. |
+| POST | `/api/admin/auth/logout` | admin | Revokes this session token and clears the cookie. |
 | GET | `/api/admin/auth/me` | admin | Current admin session. |
+| PATCH | `/api/admin/auth/me` | viewer+ | Change one's own password. Body: `currentPassword`, `newPassword` (≥8). Spends the sign-in budget; ends every other session and re-issues this one. |
 
 ### Admin — billboards & listing approval
 
@@ -253,10 +254,11 @@ Check inside logic: `hasRole(actor.role, "admin")`.
 | POST | `/api/auth/register` | phone regex `^09[0-9]{9}$`, verified by a one-time code, bcrypt cost 12 |
 | POST | `/api/auth/login` | rate-limited, timing-safe dummy hash |
 | GET | `/api/auth/me` | returns session user or 401 |
-| POST | `/api/auth/logout` | clears cookie |
+| POST | `/api/auth/logout` | revokes token, clears cookie |
 | POST | `/api/admin/auth/login` | rate-limited, audit logged |
-| POST | `/api/admin/auth/logout` | clears cookie |
+| POST | `/api/admin/auth/logout` | revokes token, clears cookie |
 | GET | `/api/admin/auth/me` | returns admin session |
+| PATCH | `/api/admin/auth/me` | own password change |
 
 ### Listing Endpoints (customer session required)
 

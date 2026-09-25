@@ -144,8 +144,16 @@ write itself.
   token as `ver`, a password change, a reset or a deactivation raises it, and a
   token behind it is signed out. `auth_time` survives refreshes, and the refresh
   stops seven days after the sign-in. Cost: one primary-key read per request that
-  carries a session. Not covered: signing out does not revoke the token (it only
-  clears this browser's cookie).
+  carries a session. Signing out records the token's `jti` in
+  `revoked_sessions`, so a copy of it stops working while the account's other
+  devices stay in.
+- *An account lockout is a defence with no cost to the owner.* It let anyone
+  who knew the super admin's email keep them out with five requests. A
+  successful sign-in now leaves a signed device cookie (`lib/auth/device.ts`),
+  and a known device is counted on its own budget. Not covered: the owner on a
+  device they have never used, while an attack runs.
+- *There was no way for staff to change their own password.* The panel has one
+  now (`PATCH /api/admin/auth/me`), and it ends the account's other sessions.
 - *Strict as the default.* Strict withholds the cookie from every navigation that
   starts on another site, so a signed-in person opening their dashboard from a
   messaging app was sent to the sign-in form. Lax still withholds it from
