@@ -44,6 +44,10 @@ const env = {
   // flows with only what a real client receives: helpers.recoverOtpCode()
   // reads the issued code from the store instead.
   OTP_DEV_ECHO: "0",
+  // Every test request names its own address in X-Forwarded-For, so buckets do
+  // not collide across tests; that is the behind-a-proxy reading. The demo's
+  // own .env says 0, where server.mjs's socket address is used instead.
+  TRUSTED_PROXY_COUNT: "1",
 };
 
 function step(msg) {
@@ -116,8 +120,10 @@ step(`start next on :${PORT}`);
  */
 const SERVER_LOG = join(tmpdir(), `rasamap-server-${PORT}-${process.pid}.log`);
 const serverOut = openSync(SERVER_LOG, "w");
-const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
-  env,
+// server.mjs, the server `npm run demo` runs — not `next start` — so the suite
+// exercises exactly what is presented.
+const server = spawn("node", ["server.mjs"], {
+  env: { ...env, PORT: String(PORT), NODE_ENV: "production" },
   stdio: ["ignore", serverOut, serverOut],
 });
 

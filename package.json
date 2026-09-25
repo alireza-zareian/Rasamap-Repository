@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "demo": "next build && next start",
+    "start": "node server.mjs",
+    "demo": "next build && node server.mjs",
     "lint": "eslint",
     "test": "node test/run.mjs",
     "test:unit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/unit/",

@@ -14,7 +14,8 @@ single process, single DB file.
 
 > ## 🔴 Start it with `npm run demo` — never `npm run dev`
 >
-> `npm run demo` = `next build && next start`. Measured: **9.7 s CPU (`dev`) vs
+> `npm run demo` = `next build && node server.mjs` (`server.mjs` is `next start` plus
+> the real client address — see its header). Measured: **9.7 s CPU (`dev`) vs
 > 0.1 s (`start`)** for a first visit to ten routes — **~97×**. Idle production
 > server: 0.16 s CPU per 10 s, 121 MB RSS. `dev` compiles each route on first
 > click and watches 6710 files; on a fanless laptop that is the difference
@@ -24,7 +25,7 @@ single process, single DB file.
 ### If the site is down or broken — check in this order
 
 1. **Is the process running?**
-   - `ps aux | grep "next start"` (or check the systemd/pm2 unit).
+   - `ps aux | grep "server.mjs"` (or check the systemd/pm2 unit).
    - Restart: `npm start` (or `pm2 restart rasamap` / `systemctl restart rasamap`).
    - Watch the first 20 lines of output for a stack trace.
 
