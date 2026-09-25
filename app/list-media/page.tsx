@@ -44,16 +44,61 @@ function toDataUrl(file: File): Promise<string> {
   });
 }
 
+/**
+ * One key per filled-in form, sent as Idempotency-Key. A submission that
+ * outlives the client's timeout may still have landed; retrying with the same
+ * key replays that answer instead of hitting the duplicate guard with a
+ * confusing "already submitted". getRandomValues rather than randomUUID: the
+ * latter exists only in a secure context, and the demo is opened over plain
+ * http from a phone (AGENTS.md rule 9).
+ */
+function newIdempotencyKey(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * What survives a trip to the sign-in page when the session ran out mid-form.
+ * The text fields only: five photographs as data URLs are several times what
+ * sessionStorage holds, so the owner is asked to add those again.
+ */
+const DRAFT_KEY = "rasamap:list-media-draft";
+type Draft = { form: Record<string, string>; plan: "free" | "featured" };
+
+function readDraft(): Draft | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    sessionStorage.removeItem(DRAFT_KEY);
+    if (!raw) return null;
+    const value: unknown = JSON.parse(raw);
+    const d = value as Partial<Draft>;
+    const formOk = typeof d.form === "object" && d.form !== null && Object.values(d.form).every(v => typeof v === "string");
+    return formOk && (d.plan === "free" || d.plan === "featured") ? (d as Draft) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function ListMediaPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [idempotencyKey] = useState(newIdempotencyKey);
   const [form, setForm] = useState({name:"",type:"billboard",city:"تهران",region:"",location:"",width:"",height:"",faces:"2",price:"",phone:"",desc:""});
   const [plan, setPlan] = useState<"free" | "featured">("free");
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s=(k:string,v:string)=>setForm(f=>({...f,[k]:v}));
+
+  useEffect(() => {
+    const draft = readDraft();
+    if (!draft) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring once from storage the server never sees
+    setForm(f => ({ ...f, ...draft.form }));
+    setPlan(draft.plan);
+    setNotice("اطلاعاتی که وارد کرده بودید بازیابی شد. لطفاً تصاویر را دوباره اضافه کنید.");
+  }, []);
 
   // Nothing here is persisted across a reload — a refresh or an accidental tab
   // close mid-wizard silently drops everything the owner typed, with no
@@ -102,7 +147,7 @@ export default function ListMediaPage() {
         // message.
         timeoutMs: TIMEOUT_MS.upload,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
         body: JSON.stringify({
           name: form.name,
           desc: form.desc,
@@ -124,6 +169,7 @@ export default function ListMediaPage() {
       // A session that expired while the form was being filled in is not an
       // error to read — it is a trip to the sign-in page and back.
       if (err instanceof FetchError && err.status === 401) {
+        try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form, plan })); } catch { /* storage unavailable: the redirect still helps */ }
         router.push(`/login?next=${encodeURIComponent("/list-media")}`);
         return;
       }
@@ -329,6 +375,11 @@ export default function ListMediaPage() {
           </div>
           {step < DONE_STEP && (
             <div style={{padding:"14px 22px",borderTop:"1px solid var(--border)"}}>
+              {notice && !error && (
+                <div role="status" style={{background:"rgba(59,130,246,0.08)",border:"1px solid rgba(59,130,246,0.3)",borderRadius:8,padding:"9px 14px",fontSize:"0.8rem",color:"#3b82f6",marginBottom:10}}>
+                  {notice}
+                </div>
+              )}
               {error && (
                 <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"9px 14px",fontSize:"0.8rem",color:"#ef4444",marginBottom:10}}>
                   {error}
