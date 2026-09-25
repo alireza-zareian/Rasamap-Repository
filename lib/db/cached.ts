@@ -102,8 +102,28 @@ export function getCachedMapPins(p: BillboardFilterParams) {
 
 export const getCachedSiteStats = unstable_cache(getSiteStats, ["site-stats"], cacheOptions);
 
-/** The country-wide market figures on /analytics. */
-export const getCachedCatalogueAnalytics = unstable_cache(() => getCatalogueAnalytics(), ["catalogue-analytics"], cacheOptions);
+const cachedAnalytics = unstable_cache(
+  (city: string | null) => getCatalogueAnalytics(city ?? undefined),
+  ["catalogue-analytics"],
+  cacheOptions,
+);
+
+/**
+ * The market figures on /analytics, country-wide or for one city.
+ *
+ * Twelve queries a call. The city version used to run them on every request
+ * of GET /api/analytics — about 11 ms of CPU each, 600 a minute allowed from
+ * one address. It is cached like the rest of the catalogue, and only for a
+ * city that has published media, so the entries are bounded by the cities in
+ * the catalogue rather than by whatever a caller types; any other name is
+ * answered with the empty figures it would have produced, without a query.
+ */
+export async function getCachedCatalogueAnalytics(city?: string) {
+  if (!city) return cachedAnalytics(null);
+  const { byCity } = await getCachedSiteStats();
+  if (!Object.hasOwn(byCity, city)) return cachedAnalytics("\u0000none");
+  return cachedAnalytics(city);
+}
 
 /**
  * One media item by slug, for its own page.
