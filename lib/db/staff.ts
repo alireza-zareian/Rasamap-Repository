@@ -1,8 +1,9 @@
 import "server-only";
 import { prisma } from "./client";
 import { hashPassword, passwordMatches } from "@/lib/auth/passwords";
-import { conflict, isUniqueViolation, notFound } from "@/lib/domain/errors";
+import { conflict, invalid, isUniqueViolation, notFound } from "@/lib/domain/errors";
 import { isStaffRole, type StaffRole } from "@/lib/domain/roles";
+import type { StaffActor } from "@/lib/auth/actor";
 
 /**
  * Staff accounts — the `admins` table. Customers are in ./customers.ts.
@@ -118,4 +119,27 @@ export async function updateStaff(
     select: PUBLIC_FIELDS,
   });
   return { before: toAccount(existing), after: toAccount(updated) };
+}
+
+/**
+ * A staff member changes their own password. Every session of the account
+ * ends, this one included; the caller re-issues this device's from the returned
+ * account. There was no way to do this at all before — a leaked staff password
+ * could only be answered by deactivating the account.
+ */
+export async function changeOwnStaffPassword(
+  self: StaffActor,
+  currentPassword: string,
+  newPassword: string,
+): Promise<StaffSessionAccount> {
+  const row = await prisma.admin.findUnique({ where: { id: self.id }, select: { passwordHash: true, active: true } });
+  if (!row?.active) throw notFound("کاربر یافت نشد");
+  if (!(await passwordMatches(currentPassword, row.passwordHash))) throw invalid("رمز فعلی اشتباه است");
+
+  const updated = await prisma.admin.update({
+    where:  { id: self.id },
+    data:   { passwordHash: await hashPassword(newPassword), sessionVersion: { increment: 1 } },
+    select: SESSION_FIELDS,
+  });
+  return { ...toAccount(updated), sessionVersion: updated.sessionVersion };
 }

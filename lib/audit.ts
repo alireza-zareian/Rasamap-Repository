@@ -39,6 +39,7 @@ export type AuditAction =
   | "customer_update"
   | "lead_update"
   | "customer_password_reset"
+  | "admin_password_change"
   | "password_reset_self"
   | "otp_sent"
   | "rate_limit_hit"

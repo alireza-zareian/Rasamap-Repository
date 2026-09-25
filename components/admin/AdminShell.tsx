@@ -2,11 +2,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ClipboardList, ClipboardCheck, Handshake, ShieldCheck, Bot, Users, ScrollText, Globe } from "lucide-react";
+import { LayoutDashboard, ClipboardList, ClipboardCheck, Handshake, ShieldCheck, Bot, Users, ScrollText, Globe, KeyRound } from "lucide-react";
 import { fetchJson } from "@/lib/client/fetch-json";
 import type { StaffRole } from "@/lib/domain/roles";
 import { C, ROLE_LABEL, ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
+import { ChangePasswordModal } from "./ChangePasswordModal";
 
 /**
  * The frame every panel section renders inside: the top bar and the section
@@ -29,6 +30,7 @@ export function AdminShell({ user, children }: { user: { name: string; role: Sta
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -58,6 +60,9 @@ export function AdminShell({ user, children }: { user: { name: string; role: Sta
           <Link href="/" className="admin-topbar-sitelink" aria-label="مشاهده سایت" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.75rem", fontWeight: 600, padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.accent}55`, background: `${C.accent}12`, color: C.accent, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}>
             <Globe size={13} /> <span className="admin-topbar-sitelink-label">مشاهده سایت</span>
           </Link>
+          <button onClick={() => setChangingPassword(true)} aria-label="تغییر رمز" title="تغییر رمز" style={{ display: "inline-flex", alignItems: "center", padding: "6px 9px", borderRadius: 7, border: `1px solid ${C.border}`, background: "none", color: C.muted, cursor: "pointer", flexShrink: 0 }}>
+            <KeyRound size={14} />
+          </button>
           <button onClick={handleLogout} disabled={loggingOut} style={{ fontSize: "0.75rem", padding: "6px 12px", borderRadius: 7, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: "pointer", flexShrink: 0 }}>
             {loggingOut ? "..." : "خروج"}
           </button>
@@ -80,6 +85,7 @@ export function AdminShell({ user, children }: { user: { name: string; role: Sta
 
         <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
       </div>
+      {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
     </div>
   );
 }

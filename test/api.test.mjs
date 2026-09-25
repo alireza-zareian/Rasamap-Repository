@@ -1169,6 +1169,31 @@ test("super_admin can create an admin, change its role, and both are audited", a
 
 // ── Admin — a session is only as good as the account behind it ─────
 
+test("a staff member can change their own password, which ends their other sessions", async () => {
+  const superToken = await mintSession({ role: "super_admin", userId: "99003" });
+  const email = `pwchange_${Date.now()}@example.com`;
+  const created = await api("/api/admin/users", {
+    method: "POST", token: superToken,
+    body: { email, name: "Password Changer", role: "viewer", password: "first-pass-1" },
+  });
+  assert.equal(created.status, 200, JSON.stringify(created.json));
+
+  const signIn = (password) => api("/api/admin/auth/login", { method: "POST", ip: uniqueIp(), body: { email, password } });
+  const other = tokenFromSetCookie(await signIn("first-pass-1"));
+  const self  = tokenFromSetCookie(await signIn("first-pass-1"));
+
+  const wrong = await api("/api/admin/auth/me", { method: "PATCH", token: self, body: { currentPassword: "nope", newPassword: "second-pass-2" } });
+  assert.equal(wrong.status, 400);
+
+  const changed = await api("/api/admin/auth/me", { method: "PATCH", token: self, body: { currentPassword: "first-pass-1", newPassword: "second-pass-2" } });
+  assert.equal(changed.status, 200, JSON.stringify(changed.json));
+  const renewed = tokenFromSetCookie(changed);
+
+  assert.equal((await api("/api/admin/auth/me", { token: renewed })).status, 200, "this device stays in");
+  assert.equal((await api("/api/admin/auth/me", { token: other })).status, 401, "every other session ends");
+  assert.equal((await signIn("second-pass-2")).status, 200);
+});
+
 test("a valid token for a deactivated admin is refused", async () => {
   // The signature is genuine and the token has not expired. What changed is the
   // account: `active` is false. Before getStaffSession nothing read the row
