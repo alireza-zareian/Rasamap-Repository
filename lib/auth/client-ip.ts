@@ -3,35 +3,32 @@ import type { NextRequest } from "next/server";
 /**
  * Best-effort client IP for rate limiting and audit logs.
  *
- * `X-Forwarded-For` is `client, proxy1, proxy2, …`. The leftmost value is
- * set by the client and is trivially spoofable — taking it (`.split(",")[0]`)
- * lets a caller send a fresh fake IP on every request and dodge a per-IP
- * limit. Instead we take the entry the outermost *trusted* proxy actually
- * observed, `TRUSTED_PROXY_COUNT` positions from the right.
+ * `X-Forwarded-For` is `client, proxy1, proxy2, …`, each proxy appending the
+ * address it saw. The leftmost value is whatever the client wrote, so the one
+ * worth reading is the entry the outermost *trusted* proxy appended,
+ * `TRUSTED_PROXY_COUNT` positions from the right.
  *
- * TRUSTED_PROXY_COUNT — number of reverse proxies in front of the app
- * (nginx = 1, Cloudflare + nginx = 2). Default 1. Set 0 only when the app is
- * exposed directly with no proxy, in which case `X-Forwarded-For` is ignored
- * entirely and `x-real-ip` (or "unknown") is used.
+ * TRUSTED_PROXY_COUNT — reverse proxies in front of the app (nginx = 1,
+ * Cloudflare + nginx = 2). Default 1. 0 means `next start` is reached directly,
+ * which is the demo laptop.
  *
- * ── The limit of that defence, said out loud ────────────────────────────────
- *
- * Taking the entry from the right works because each proxy *appends* the
- * address it actually saw, so a forged value is pushed leftwards out of the
- * position being read. **That is conditional on a proxy really being there.**
- * With nothing in front, nothing is appended and a forged header is the whole
- * chain — so the value returned here is simply whatever the caller chose.
- *
- * Next.js fills this header from the socket when it is absent
+ * With 0, the address comes from Next itself: when a request arrives without
+ * the header, Next fills it from the socket
  * (`req.headers['x-forwarded-for'] ??= …socket.remoteAddress` in
- * base-server.js), but `??=` means "only if absent": a caller who sends the
- * header keeps it, and nothing downstream can tell the two cases apart.
+ * base-server.js). That is the real peer, and it is read here. This used to
+ * ignore the header at 0 and read `x-real-ip` instead, which nothing sets —
+ * so every visitor was "unknown" and a whole room shared one budget, while a
+ * caller could still pick any address by sending that header (both reproduced
+ * against `npm run demo`).
  *
- * The consequences are recorded in card B1 of docs/roadmap.html, and they are
- * the reason **no protection in this codebase rests on the address alone**:
- * sign-in is limited per account as well (see credentialAttempt in
- * ./rate-limit.ts), which no header can move a caller off. Run behind the nginx
- * config in deploy/ for the address to mean anything at all.
+ * ── The limit of this, said out loud ─────────────────────────────────────────
+ *
+ * `??=` means "only if absent". Without a proxy, a caller who sends the header
+ * keeps it, so the value is then a claim rather than an observation, and
+ * nothing downstream can tell the two apart (isClientIpTrusted() says false).
+ * No protection here rests on the address alone: sign-in is limited per
+ * account and phone reveals per account (lib/rate-limit). Put the nginx config
+ * in deploy/ in front of a public server for the address to mean more.
  */
 const TRUSTED_PROXIES = Math.max(
   0,
@@ -56,18 +53,10 @@ export function isClientIpTrusted(req: NextRequest): boolean {
 }
 
 export function getClientIp(req: NextRequest): string {
-  if (TRUSTED_PROXIES > 0) {
-    const xff = req.headers.get("x-forwarded-for");
-    if (xff) {
-      const parts = xff.split(",").map((p) => p.trim()).filter(Boolean);
-      if (parts.length > 0) {
-        const idx = Math.min(
-          parts.length - 1,
-          Math.max(0, parts.length - TRUSTED_PROXIES),
-        );
-        return parts[idx];
-      }
-    }
-  }
-  return req.headers.get("x-real-ip")?.trim() || "unknown";
+  const parts = (req.headers.get("x-forwarded-for") ?? "").split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length === 0) return "unknown";
+  // With no proxy the rightmost entry is the one Next wrote from the socket;
+  // with N proxies it is the one the outermost of them appended.
+  const idx = Math.max(0, parts.length - Math.max(1, TRUSTED_PROXIES));
+  return parts[idx];
 }
