@@ -1,0 +1,10 @@
+.title { font-size: 1.15rem; font-weight: 800; margin: 0 0 6px; }
+.lede { font-size: 0.78rem; color: var(--text-muted); margin: 0 0 24px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.column { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.column h2 { font-size: 0.82rem; font-weight: 700; margin: 0 0 14px; }
+
+@media (max-width: 900px) {
+  .columns { grid-template-columns: 1fr; }
+}

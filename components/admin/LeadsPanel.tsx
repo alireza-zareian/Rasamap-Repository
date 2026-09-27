@@ -1,12 +1,15 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
-import { C } from "./constants";
 import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";
 import { leadStatusLabels, LEAD_STATUSES } from "@/lib/types";
 import { Handshake, Inbox, Repeat, Save } from "lucide-react";
 import { faNum } from "@/lib/format";
+import { Button } from "@/components/ui/Button";
+import { cssVar } from "@/components/ui/css-var";
+import form from "@/components/ui/form.module.css";
+import styles from "./admin.module.css";
 
 const PAGE_SIZE = 50;
 
@@ -21,11 +24,12 @@ interface Lead {
   billboard: { id: number; name: string; slug: string; city: string; type: string; price: number; agency: string; phone: string } | null;
 }
 
-const STATUS_TONE: Record<string, [string, string]> = {
-  new:       ["var(--accent)", "rgba(59,123,245,0.12)"],
-  contacted: ["#f59e0b",       "rgba(245,158,11,0.12)"],
-  closed:    [C.green,         "rgba(34,197,94,0.12)"],
+const STATUS_TONE: Record<string, string> = {
+  new:       "var(--accent)",
+  contacted: "#f59e0b",
+  closed:    "var(--green)",
 };
+const statusTone = (s: string) => STATUS_TONE[s] ?? "var(--text-muted)";
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("fa-IR", { year: "numeric", month: "short", day: "numeric" });
 
@@ -117,19 +121,17 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, gap: 10, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}>
-          <Handshake size={16} /> سرنخ‌ها ({faNum(total)})
-        </div>
-        <select value={filter} onChange={e => setFilter(e.target.value)} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "7px 10px", borderRadius: 8, outline: "none" }}>
+      <div className={styles.head}>
+        <h1 className={styles.title}><Handshake size={16} /> سرنخ‌ها ({faNum(total)})</h1>
+        <select className={styles.control} aria-label="وضعیت پیگیری" value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="">همه</option>
           {LEAD_STATUSES.map(s => (
-            <option key={s} value={s}>{leadStatusLabels[s]} ({counts[s] ?? 0})</option>
+            <option key={s} value={s}>{leadStatusLabels[s]} ({faNum(counts[s] ?? 0)})</option>
           ))}
         </select>
       </div>
 
-      <div style={{ fontSize: "0.75rem", color: C.muted, lineHeight: 1.9, marginBottom: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}>
+      <p className={styles.explain}>
         هر ردیف یعنی یک کاربر روی صفحهٔ یک رسانه دکمهٔ «نمایش شمارهٔ تماس» را زده است.
         رسامپ معامله را انجام نمی‌دهد و خریدار مستقیم با صاحب رسانه تماس می‌گیرد،
         پس این جدول تنها ردِ تقاضایی است که پلتفرم می‌بیند: چه رسانه‌ای متقاضی دارد و چه کسی دنبالش بوده.
@@ -137,91 +139,77 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
         اگر همان کاربر دوباره شماره را بگیرد ردیف تازه ساخته نمی‌شود؛ شمارندهٔ «دفعات» بالا می‌رود —
         پس عدد بزرگ یعنی علاقهٔ جدی‌تر. وضعیت پیگیری و یادداشت را شما ثبت می‌کنید و
         <b> یادداشت هرگز به کاربر نشان داده نمی‌شود</b>.
-      </div>
+      </p>
 
-      {error && (
-        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 14px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 12 }}>{error}</div>
-      )}
+      {error && <div role="alert" className={`${form.error} ${styles.banner}`}>{error}</div>}
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "0.85rem" }}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری...</div>
       ) : error && leads.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "24px 0" }}>
-          <button onClick={load} style={{ background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 18px", borderRadius: 8, cursor: "pointer" }}>تلاش دوباره</button>
-        </div>
+        <div className={styles.state}><Button onClick={load}>تلاش دوباره</Button></div>
       ) : leads.length === 0 ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "48px 0", color: C.muted, fontSize: "0.85rem" }}>
-          <Inbox size={16} /> هنوز درخواست تماسی ثبت نشده است
-        </div>
+        <div className={`${styles.state} ${styles.stateRow}`}><Inbox size={16} /> هنوز درخواست تماسی ثبت نشده است</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className={styles.queue}>
           {leads.map(l => {
-            const [tone, toneBg] = STATUS_TONE[l.status] ?? [C.muted, C.surface];
             const busy = busyId === l.id;
+            const draft = notes[l.id];
             return (
-              <div key={l.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14 }}>
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
-                  <div style={{ flex: 1, minWidth: 220 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4, flexWrap: "wrap" }}>
-                      {l.billboard && <TypeIcon type={l.billboard.type} size={14} />}
-                      <a href={l.billboard ? `/billboard/${l.billboard.slug}` : "#"} target="_blank" rel="noreferrer"
-                        style={{ fontSize: "0.88rem", fontWeight: 700, color: C.text, textDecoration: "none" }}>
-                        {l.billboard?.name ?? "رسانهٔ حذف‌شده"}
-                      </a>
-                      <Badge text={leadStatusLabels[l.status] ?? l.status} color={tone} bg={toneBg} />
-                      {l.count > 1 && (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.68rem", color: C.yellow }}>
-                          <Repeat size={11} /> {faNum(l.count)} بار
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: "0.75rem", color: C.muted, lineHeight: 1.9 }}>
-                      {l.billboard ? `${l.billboard.city} · ${faNum(l.billboard.price)}M تومان/ماه · صاحب رسانه: ${l.billboard.agency || "—"} ${l.billboard.phone || ""}` : "—"}<br />
-                      متقاضی: <b style={{ color: C.text }}>{l.user?.name ?? "حساب حذف‌شده"}</b>
-                      {l.user?.phone ? ` (${l.user.phone})` : ""} · آخرین درخواست: {fmt(l.lastRequestedAt)}
-                    </div>
-
-                    {canEdit ? (
-                      <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
-                        <textarea
-                          value={notes[l.id] ?? l.note ?? ""}
-                          onChange={e => setNotes(prev => ({ ...prev, [l.id]: e.target.value }))}
-                          rows={2}
-                          maxLength={500}
-                          placeholder="یادداشت داخلی (فقط برای تیم مدیریت)"
-                          style={{ flex: 1, minWidth: 200, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.75rem", lineHeight: 1.8, padding: "8px 10px", borderRadius: 8, outline: "none", resize: "vertical" }}
-                        />
-                        <button onClick={() => patch(l.id, { note: (notes[l.id] ?? l.note ?? "").trim() })} disabled={busy || notes[l.id] === undefined}
-                          style={{ background: "none", border: `1px solid ${C.border}`, color: notes[l.id] === undefined ? C.muted : C.accent, fontFamily: C.font, fontSize: "0.75rem", fontWeight: 600, padding: "8px 12px", borderRadius: 8, cursor: busy || notes[l.id] === undefined ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}>
-                          <Save size={12} /> {busy ? "..." : "ذخیرهٔ یادداشت"}
-                        </button>
-                      </div>
-                    ) : l.note ? (
-                      <div style={{ fontSize: "0.73rem", color: C.muted, marginTop: 8, background: C.surface, borderRadius: 8, padding: "8px 10px", lineHeight: 1.8 }}>{l.note}</div>
-                    ) : null}
+              <article key={l.id} className={styles.item}>
+                <div className={styles.itemMain}>
+                  <div className={styles.itemTitle}>
+                    {l.billboard && <TypeIcon type={l.billboard.type} size={14} />}
+                    {l.billboard
+                      ? <a href={`/billboard/${l.billboard.slug}`} target="_blank" rel="noreferrer">{l.billboard.name}</a>
+                      : <span>رسانهٔ حذف‌شده</span>}
+                    <Badge text={leadStatusLabels[l.status] ?? l.status} tone={statusTone(l.status)} />
+                    {l.count > 1 && (
+                      <span className={styles.warn}><Repeat size={11} /> {faNum(l.count)} بار</span>
+                    )}
+                  </div>
+                  <div className={styles.itemMeta}>
+                    {l.billboard ? `${l.billboard.city} · ${faNum(l.billboard.price)}M تومان/ماه · صاحب رسانه: ${l.billboard.agency || "—"} ${l.billboard.phone || ""}` : "—"}<br />
+                    متقاضی: <b>{l.user?.name ?? "حساب حذف‌شده"}</b>
+                    {l.user?.phone ? ` (${l.user.phone})` : ""} · آخرین درخواست: {fmt(l.lastRequestedAt)}
                   </div>
 
-                  {canEdit && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
-                      {LEAD_STATUSES.filter(s => s !== l.status).map(s => {
-                        const [t] = STATUS_TONE[s] ?? [C.muted];
-                        return (
-                          <button key={s} onClick={() => patch(l.id, { status: s })} disabled={busy}
-                            style={{ background: "none", border: `1px solid ${t}55`, color: t, fontFamily: C.font, fontSize: "0.76rem", fontWeight: 600, padding: "7px 14px", borderRadius: 8, cursor: busy ? "default" : "pointer", whiteSpace: "nowrap" }}>
-                            {busy ? "..." : `→ ${leadStatusLabels[s]}`}
-                          </button>
-                        );
-                      })}
+                  {canEdit ? (
+                    <div className={`${form.row} ${styles.noteRow}`}>
+                      <textarea
+                        className={styles.note}
+                        value={draft ?? l.note ?? ""}
+                        onChange={e => setNotes(prev => ({ ...prev, [l.id]: e.target.value }))}
+                        rows={2}
+                        maxLength={500}
+                        aria-label="یادداشت داخلی"
+                        placeholder="یادداشت داخلی (فقط برای تیم مدیریت)"
+                      />
+                      <Button size="sm" onClick={() => patch(l.id, { note: (draft ?? l.note ?? "").trim() })} disabled={busy || draft === undefined}>
+                        <Save size={12} /> {busy ? "..." : "ذخیرهٔ یادداشت"}
+                      </Button>
                     </div>
-                  )}
+                  ) : l.note ? (
+                    <div className={styles.quote}>{l.note}</div>
+                  ) : null}
                 </div>
-              </div>
+
+                {canEdit && (
+                  <div className={styles.itemSide}>
+                    {LEAD_STATUSES.filter(s => s !== l.status).map(s => (
+                      <button key={s} type="button" className={styles.toneButton} style={cssVar("--tone", statusTone(s))}
+                        onClick={() => patch(l.id, { status: s })} disabled={busy}>
+                        {busy ? "..." : `→ ${leadStatusLabels[s]}`}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </article>
             );
           })}
           {page < pages && (
-            <button onClick={loadMore} disabled={loadingMore} style={{ alignSelf: "center", background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "9px 22px", borderRadius: 8, cursor: loadingMore ? "default" : "pointer" }}>
+            <Button className={styles.more} onClick={loadMore} disabled={loadingMore}>
               {loadingMore ? "در حال بارگذاری..." : `نمایش بیشتر (${faNum(Math.max(0, total - leads.length))} مورد دیگر)`}
-            </button>
+            </Button>
           )}
         </div>
       )}

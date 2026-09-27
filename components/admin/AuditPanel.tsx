@@ -1,10 +1,19 @@
 "use client";
 import { useState, useEffect } from "react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
-import { C, auditGloss } from "./constants";
+import { auditGloss } from "./constants";
 import { Badge } from "./Badge";
 import { ScrollText } from "lucide-react";
 import { faNum } from "@/lib/format";
+import form from "@/components/ui/form.module.css";
+import styles from "./admin.module.css";
+import own from "./AuditPanel.module.css";
+
+const SEVERITY: Record<string, { label: string; tone: string }> = {
+  info:     { label: "اطلاع",  tone: "var(--text-muted)" },
+  warn:     { label: "هشدار",  tone: "#f59e0b" },
+  critical: { label: "بحرانی", tone: "var(--red)" },
+};
 
 interface Row {
   id: string | number;
@@ -33,73 +42,63 @@ export function AuditPanel() {
       .finally(() => setLoading(false));
   }, []);
 
-  const sevC: Record<string, string> = { info: C.muted, warn: "#f59e0b", critical: "#ef4444" };
   const rows = view === "persisted" ? persisted : logs;
 
   const tab = (key: "persisted" | "live", label: string, count: number) => (
-    <button
-      onClick={() => setView(key)}
-      style={{
-        background: view === key ? C.accent : "transparent",
-        color: view === key ? "#fff" : C.muted,
-        border: `1px solid ${view === key ? C.accent : C.border}`,
-        borderRadius: 8, padding: "6px 14px", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer",
-      }}
-    >
-      {label} <span style={{ opacity: 0.7 }}>({faNum(count)})</span>
+    <button type="button" role="tab" aria-selected={view === key} className={own.view} onClick={() => setView(key)}>
+      {label} <span>({faNum(count)})</span>
     </button>
   );
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><ScrollText size={16} /> لاگ‌های امنیتی</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div className={styles.head}>
+        <h1 className={styles.title}><ScrollText size={16} /> لاگ‌های امنیتی</h1>
+        <div className={own.views} role="tablist" aria-label="منبع لاگ">
           {tab("persisted", "پایدار (دیتابیس)", persisted.length)}
           {tab("live", "زنده (حافظه)", logs.length)}
         </div>
       </div>
 
-      <div style={{ fontSize: "0.72rem", color: C.muted, marginBottom: 14, lineHeight: 1.8 }}>
+      <p className={own.lede}>
         {view === "persisted"
           ? "رکوردهای ماندگار در جدول audit_logs — بعد از ری‌استارت هم باقی می‌مانند. کارهای مدیر: ساخت/ویرایش/حذف رسانه، تأیید یا رد آگهی کاربران، و مدیریت حساب‌ها."
           : "بافر حافظه (۵۰۰ مورد آخر) — شامل ورود/خروج و رویدادهای امنیتی؛ با ری‌استارت پاک می‌شود."}
-      </div>
+      </p>
 
       {loading ? (
-        <div style={{ textAlign: "center", color: C.muted, padding: 40 }}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری...</div>
       ) : error ? (
-        <div role="alert" style={{ textAlign: "center", color: "#ef4444", padding: 40 }}>لاگ خوانده نشد. {error}</div>
+        <div role="alert" className={form.error}>لاگ خوانده نشد. {error}</div>
       ) : rows.length === 0 ? (
-        <div style={{ textAlign: "center", color: C.muted, padding: 40 }}>هنوز رکوردی ثبت نشده</div>
+        <div className={styles.state}>هنوز رکوردی ثبت نشده</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <ul className={own.rows}>
           {rows.map(row => {
             const gloss = auditGloss(row.action);
+            const severity = SEVERITY[row.severity] ?? { label: row.severity, tone: "var(--text-muted)" };
             return (
-            <div key={String(row.id)} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 5, minWidth: 0, maxWidth: "100%" }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-                  <Badge text={row.severity.toUpperCase()} color={sevC[row.severity] ?? C.muted} bg={`${sevC[row.severity] ?? C.muted}18`} />
-                  <span style={{ fontSize: "0.82rem", fontWeight: 700 }}>{gloss?.title ?? row.action}</span>
-                  <span style={{ fontSize: "0.68rem", color: C.muted, fontFamily: "monospace", overflowWrap: "anywhere" }}>{row.action}</span>
+              <li key={String(row.id)} className={own.row}>
+                <div className={own.body}>
+                  <div className={own.line}>
+                    <Badge text={severity.label} tone={severity.tone} />
+                    <strong>{gloss?.title ?? row.action}</strong>
+                    <span className={own.code}>{row.action}</span>
+                  </div>
+                  {gloss && <p className={own.desc}>{gloss.desc}</p>}
+                  <div className={own.line}>
+                    {row.userEmail && <span className={own.wrap}>{row.userEmail}</span>}
+                    {row.ip && <span>IP: <span className={own.code}>{row.ip}</span></span>}
+                    {view === "persisted" && row.details != null && (
+                      <span className={own.code}>{typeof row.details === "string" ? row.details : JSON.stringify(row.details)}</span>
+                    )}
+                  </div>
                 </div>
-                {gloss && <div style={{ fontSize: "0.72rem", color: C.muted, lineHeight: 1.7 }}>{gloss.desc}</div>}
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-                  {row.userEmail && <span style={{ fontSize: "0.75rem", color: C.muted, overflowWrap: "anywhere" }}>{row.userEmail}</span>}
-                  {row.ip && <span style={{ fontSize: "0.72rem", color: C.muted }}>IP: {row.ip}</span>}
-                  {view === "persisted" && row.details != null && (
-                    <span style={{ fontSize: "0.7rem", color: C.muted, fontFamily: "monospace", overflowWrap: "anywhere", minWidth: 0 }}>
-                      {typeof row.details === "string" ? row.details : JSON.stringify(row.details)}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div style={{ fontSize: "0.7rem", color: C.muted, flexShrink: 0 }}>{new Date(row.timestamp).toLocaleString("fa-IR")}</div>
-            </div>
+                <time className={own.time} dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString("fa-IR")}</time>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );

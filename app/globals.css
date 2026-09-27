@@ -268,34 +268,6 @@ button, a, input, select, label,
               color 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
 }
 
-/* ── Responsive helpers ─────────────────────────────────────────── */
-@media (max-width: 768px) {
-  /* Admin: sidebar becomes a wrapping row of tab buttons above the content;
-     the 3-column overview charts stack. Desktop (>768px) is untouched. */
-  .admin-shell { flex-direction: column !important; }
-  .admin-sidebar { width: 100% !important; }
-  .admin-sidebar > div { position: static !important; }
-  .admin-sidebar button { display: inline-block !important; width: auto !important; }
-  .admin-3col { grid-template-columns: 1fr !important; }
-
-  /* Admin topbar: the logo row + role badge + name + logout don't fit a phone
-     width and the right group runs off the card. Tighten padding, drop the
-     "پنل مدیریت" sub-label and divider, and let the admin name ellipsize so
-     the badge and logout button always stay on-screen. */
-  .admin-topbar { padding: 0 12px !important; gap: 8px !important; }
-  .admin-topbar-sep, .admin-topbar-sub { display: none !important; }
-  .admin-topbar-name { max-width: 64px; }
-  /* Same icon-only-on-mobile pattern as the public Topbar's logout label:
-     keep the "view site" button, drop its text so the badge/name/logout row
-     still fits a phone width. */
-  .admin-topbar-sitelink { padding: 6px 8px !important; }
-  .admin-topbar-sitelink-label { display: none !important; }
-
-  /* Admin create/edit modals: the two-column field grid is too tight at
-     phone width — collapse to a single column. */
-  .admin-modal-grid { grid-template-columns: 1fr !important; }
-}
-
 /* ── Ambient polish — reusable decoration classes ──────────────── */
 
 /* Film grain: one fixed, non-interactive layer over the whole viewport.

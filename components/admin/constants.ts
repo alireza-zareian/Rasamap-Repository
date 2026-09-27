@@ -1,51 +1,33 @@
 import type { AuditAction } from "@/lib/audit";
-
-export const C = {
-  bg:      "var(--bg-deep)",
-  card:    "var(--bg-card)",
-  surface: "var(--bg-surface)",
-  border:  "var(--border)",
-  accent:  "var(--accent)",
-  green:   "var(--green)",
-  red:     "#ef4444",
-  yellow:  "#f59e0b",
-  purple:  "#8b5cf6",
-  text:    "var(--text-main)",
-  muted:   "var(--text-muted)",
-  font:    "Vazirmatn, sans-serif",
-} as const;
+import { typeLabels } from "@/lib/types";
 
 // One label map per question for the whole app — the admin filters, the edit
 // modal and the row badges read the same maps as the public cards, so a state
 // cannot be spelled two ways. See Availability / Moderation in lib/types.ts.
-import { typeLabels } from "@/lib/types";
 
 export { availabilityLabels as AVAILABILITY_LABEL, moderationLabels as MODERATION_LABEL } from "@/lib/types";
 
 /** Indexed with plain strings read back from the API, hence the wider type. */
 export const TYPE_LABEL: Record<string, string> = typeLabels;
 
-export const AVAILABILITY_COLOR: Record<string, [string, string]> = {
-  available: [C.green,  "rgba(34,197,94,0.12)"],
-  busy:      ["#f59e0b","rgba(245,158,11,0.12)"],
-  reserved:  ["#8b5cf6","rgba(139,92,246,0.12)"],
-  inactive:  [C.muted,  "rgba(148,163,184,0.12)"],
-  unknown:   [C.muted,  "rgba(148,163,184,0.12)"],
+// Availability is shown in the same colours as on the public site —
+// availabilityTone in components/ui/availability.ts. The panel had its own
+// copy, in which "busy" was amber here and red everywhere else.
+export const MODERATION_TONE: Record<string, string> = {
+  pending:          "#f59e0b",
+  awaiting_payment: "#8b5cf6",
+  needs_revision:   "#f97316",
+  rejected:         "var(--red)",
+  approved:         "var(--green)",
+  suspended:        "var(--text-muted)",
 };
+export const moderationTone = (m: string) => MODERATION_TONE[m] ?? "var(--text-muted)";
 
-export const MODERATION_COLOR: Record<string, [string, string]> = {
-  pending:          ["#f59e0b","rgba(245,158,11,0.16)"],
-  awaiting_payment: ["#8b5cf6","rgba(139,92,246,0.16)"],
-  needs_revision:   ["#f97316","rgba(249,115,22,0.12)"],
-  rejected:         ["#ef4444","rgba(239,68,68,0.12)"],
-  approved:         [C.green,  "rgba(34,197,94,0.12)"],
-  suspended:        [C.muted,  "rgba(148,163,184,0.16)"],
-};
 export const ROLE_LABEL: Record<string, string> = {
   super_admin: "سوپر ادمین", admin: "ادمین", editor: "ویرایشگر", viewer: "بیننده",
 };
 export const ROLE_COLOR: Record<string, string> = {
-  super_admin: "#ef4444", admin: "var(--accent)", editor: "#8b5cf6", viewer: "var(--text-muted)",
+  super_admin: "var(--red)", admin: "var(--accent)", editor: "#8b5cf6", viewer: "var(--text-muted)",
 };
 
 // Plain-Persian gloss for every audit action, so an admin who cannot read the

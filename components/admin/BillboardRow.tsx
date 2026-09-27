@@ -1,8 +1,13 @@
-import type { Billboard } from "@/lib/types";
+import { sourceLabel, type Billboard } from "@/lib/types";
 import { Check, AlertTriangle } from "lucide-react";
-import { C, AVAILABILITY_COLOR, AVAILABILITY_LABEL, MODERATION_COLOR, MODERATION_LABEL, TYPE_LABEL } from "./constants";
+import { faNum } from "@/lib/format";
 import { TypeIcon } from "@/components/TypeIcon";
+import { Button } from "@/components/ui/Button";
+import { availabilityTone } from "@/components/ui/availability";
+import { AVAILABILITY_LABEL, MODERATION_LABEL, TYPE_LABEL, moderationTone } from "./constants";
 import { Badge } from "./Badge";
+import styles from "./admin.module.css";
+import own from "./BillboardsPanel.module.css";
 
 export function BillboardRow({ b, onEdit, onDelete, onVisibility }: {
   b: Billboard;
@@ -14,41 +19,38 @@ export function BillboardRow({ b, onEdit, onDelete, onVisibility }: {
   // A row still in review shows where it is in review — that is what an admin
   // needs to act on. A published row shows whether the board is free.
   const inReview = b.moderation !== "approved";
-  const [label, [sc, sbg]] = inReview
-    ? [MODERATION_LABEL[b.moderation], MODERATION_COLOR[b.moderation] ?? [C.muted, C.surface]]
-    : [AVAILABILITY_LABEL[b.availability], AVAILABILITY_COLOR[b.availability] ?? [C.muted, C.surface]];
+  const [label, tone] = inReview
+    ? [MODERATION_LABEL[b.moderation], moderationTone(b.moderation)]
+    : [AVAILABILITY_LABEL[b.availability], availabilityTone(b.availability)];
   return (
-    <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-      <td style={{ padding: "10px 12px", fontSize: "0.82rem", fontWeight: 600, color: C.text, maxWidth: 240 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          <span style={{ display: "flex", flexShrink: 0, color: C.muted }}><TypeIcon type={b.type} size={13} /></span>
-          {b.name}
-        </div>
-        <div style={{ fontSize: "0.68rem", color: C.muted, marginTop: 2 }}>{b.city} · {b.location?.slice(0, 38)}</div>
+    <tr>
+      <td className={own.nameCell}>
+        <div className={own.name}><TypeIcon type={b.type} size={13} /> {b.name}</div>
+        <div className={own.place}>{b.city} · {b.location?.slice(0, 38)}</div>
       </td>
-      <td style={{ padding: "10px 8px", fontSize: "0.78rem", color: C.muted }}>{TYPE_LABEL[b.type] ?? b.type}</td>
-      <td style={{ padding: "10px 8px" }}><Badge text={label} color={sc} bg={sbg} /></td>
-      <td style={{ padding: "10px 8px", fontSize: "0.78rem", color: C.text }}>{b.price}M</td>
-      <td style={{ padding: "10px 8px", fontSize: "0.75rem" }}>
-        {b.lat && b.lng
-          ? <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: C.green }}><Check size={12} /> {b.lat.toFixed(4)}</span>
-          : <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#f59e0b" }}><AlertTriangle size={12} /> ندارد</span>}
+      <td className={styles.muted}>{TYPE_LABEL[b.type] ?? b.type}</td>
+      <td><Badge text={label ?? b.moderation} tone={tone} /></td>
+      <td>{faNum(b.price)}M</td>
+      <td>
+        {b.lat != null && b.lng != null
+          ? <span className={styles.ok}><Check size={12} /> {b.lat.toFixed(4)}</span>
+          : <span className={styles.warn}><AlertTriangle size={12} /> ندارد</span>}
       </td>
-      <td style={{ padding: "10px 8px", fontSize: "0.75rem" }}>
+      <td>
         {b.images?.length > 0
-          ? <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: C.green }}><Check size={12} /> {b.images.length}</span>
-          : <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#f59e0b" }}><AlertTriangle size={12} /> ۰</span>}
+          ? <span className={styles.ok}><Check size={12} /> {faNum(b.images.length)}</span>
+          : <span className={styles.warn}><AlertTriangle size={12} /> ۰</span>}
       </td>
-      <td style={{ padding: "10px 8px", fontSize: "0.75rem", color: C.muted }}>{b.source ?? "manual"}</td>
-      <td style={{ padding: "10px 8px" }}>
-        <div style={{ display: "flex", gap: 6 }}>
-          <button onClick={() => onEdit(b)} style={{ fontSize: "0.75rem", padding: "5px 12px", borderRadius: 7, background: "rgba(255,77,0,0.1)", color: C.accent, border: "1px solid rgba(255,77,0,0.3)", cursor: "pointer", fontFamily: C.font, fontWeight: 600 }}>ویرایش</button>
+      <td className={styles.muted}>{sourceLabel(b.source)}</td>
+      <td>
+        <div className={styles.actions}>
+          <Button size="sm" intent="primary" onClick={() => onEdit(b)}>ویرایش</Button>
           {(b.moderation === "approved" || b.moderation === "suspended") && (
-            <button onClick={() => onVisibility(b)} style={{ fontSize: "0.75rem", padding: "5px 10px", borderRadius: 7, background: "none", color: C.muted, border: `1px solid ${C.border}`, cursor: "pointer", fontFamily: C.font, whiteSpace: "nowrap" }}>
+            <Button size="sm" intent="quiet" onClick={() => onVisibility(b)}>
               {b.moderation === "approved" ? "توقف انتشار" : "انتشار دوباره"}
-            </button>
+            </Button>
           )}
-          <button onClick={() => onDelete(b)} style={{ fontSize: "0.75rem", padding: "5px 10px", borderRadius: 7, background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)", cursor: "pointer", fontFamily: C.font }}>حذف</button>
+          <Button size="sm" intent="danger" onClick={() => onDelete(b)}>حذف</Button>
         </div>
       </td>
     </tr>

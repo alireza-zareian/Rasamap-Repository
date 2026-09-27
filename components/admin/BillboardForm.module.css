@@ -1,0 +1,15 @@
+/* The fields of the create and edit dialogs: two columns, with the wide
+   fields spanning both, and one column on a phone. */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.full { grid-column: 1 / -1; }
+.size { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.required { color: var(--accent); }
+.caution {
+  display: flex; align-items: flex-start; gap: 6px; padding: 10px; border-radius: 8px; font-size: 0.7rem; line-height: 1.8;
+  color: #f59e0b; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.caution svg { flex-shrink: 0; margin-top: 4px; }
+
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
+}

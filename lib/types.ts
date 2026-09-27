@@ -182,3 +182,10 @@ export const DATA_SOURCES: Record<string, { name: string; site: string }> = {
   aradholding:  { name: "آراد هلدینگ", site: "https://aradholding.com" },
   irbillboard:  { name: "ایران بیلبورد", site: "https://irbillboard.com" },
 };
+
+/** Any row's source, in words: a crawled site's name, or how the row was made. */
+export function sourceLabel(key: string | null | undefined): string {
+  if (!key || key === "manual") return "ثبت دستی ادمین";
+  if (key === "listing") return "ثبت‌شده توسط کاربران";
+  return DATA_SOURCES[key]?.name ?? key;
+}

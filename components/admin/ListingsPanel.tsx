@@ -2,12 +2,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchJson, FetchError, errorMessage } from "@/lib/client/fetch-json";
 import { Lightbox } from "./Lightbox";
-import { C, MODERATION_COLOR, MODERATION_LABEL } from "./constants";
+import { MODERATION_LABEL, moderationTone } from "./constants";
 import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/TypeIcon";
 import { planLabels } from "@/lib/types";
 import { ClipboardCheck, Check, X, Sparkles, ImageOff, PencilLine } from "lucide-react";
 import { faNum } from "@/lib/format";
+import { Button } from "@/components/ui/Button";
+import { cssVar } from "@/components/ui/css-var";
+import form from "@/components/ui/form.module.css";
+import styles from "./admin.module.css";
+import own from "./ListingsPanel.module.css";
 
 interface Listing {
   id: number;
@@ -128,11 +133,9 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, gap: 10, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}>
-          <ClipboardCheck size={16} /> تأیید آگهی‌ها ({faNum(total)})
-        </div>
-        <select value={filter} onChange={e => setFilter(e.target.value)} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "7px 10px", borderRadius: 8, outline: "none" }}>
+      <div className={styles.head}>
+        <h1 className={styles.title}><ClipboardCheck size={16} /> تأیید آگهی‌ها ({faNum(total)})</h1>
+        <select className={styles.control} aria-label="وضعیت بررسی" value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="">همه در انتظار</option>
           <option value="pending">در انتظار تأیید</option>
           <option value="awaiting_payment">در انتظار پرداخت</option>
@@ -141,7 +144,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
         </select>
       </div>
 
-      <div style={{ fontSize: "0.75rem", color: C.muted, lineHeight: 1.9, marginBottom: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}>
+      <p className={styles.explain}>
         رسانه‌هایی که کاربران از طریق «ثبت رسانه» فرستاده‌اند و هنوز منتشر نشده‌اند.
         تا وقتی تأیید نشوند در جستجو، نقشه، آمار و نقشهٔ سایت دیده نمی‌شوند.
         آگهی با پلن <b>ویژه</b> در وضعیت «در انتظار پرداخت» است: پس از دریافت وجه،
@@ -151,127 +154,100 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
         سه تصمیم ممکن است: <b>تأیید و انتشار</b> (توضیح اختیاری)، <b>نیاز به اصلاح</b>
         (آگهی به فرستنده برمی‌گردد تا ویرایش و دوباره ارسال کند) و <b>رد</b>.
         برای «نیاز به اصلاح» و «رد» نوشتن توضیح برای فرستنده الزامی است.
-      </div>
+      </p>
 
-      {error && (
-        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 14px", fontSize: "0.8rem", color: "#ef4444", marginBottom: 12 }}>{error}</div>
-      )}
+      {error && <div role="alert" className={`${form.error} ${styles.banner}`}>{error}</div>}
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "0.85rem" }}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری...</div>
       ) : error && listings.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "24px 0" }}>
-          <button onClick={load} style={{ background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 18px", borderRadius: 8, cursor: "pointer" }}>تلاش دوباره</button>
-        </div>
+        <div className={styles.state}><Button onClick={load}>تلاش دوباره</Button></div>
       ) : listings.length === 0 ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "48px 0", color: C.muted, fontSize: "0.85rem" }}>
-          <Check size={16} /> آگهی در انتظار بررسی وجود ندارد
-        </div>
+        <div className={`${styles.state} ${styles.stateRow}`}><Check size={16} /> آگهی در انتظار بررسی وجود ندارد</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className={styles.queue}>
           {listings.map(l => {
-            const [tone, toneBg] = MODERATION_COLOR[l.moderation] ?? [C.muted, C.surface];
             const busy = busyId === l.id;
-            // Disabling only the busy row's own buttons left every other row's
-            // decide buttons clickable while a decision was in flight — clicking
-            // one did nothing (decide() no-ops when busyId is already set), with
-            // no feedback, which reads as a broken button during a live demo.
+            // Every row's buttons are disabled while any decision is in flight:
+            // decide() no-ops when one is already running, and a button that
+            // silently does nothing reads as broken during a live demo.
             const anyBusy = busyId !== null;
             return (
-              <div key={l.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
-                <div style={{ display: "flex", gap: 12, padding: 14, flexWrap: "wrap" }}>
-                  {/* Submitted photos — an admin has to see these before publishing */}
-                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                    {l.images.length === 0 ? (
-                      <div style={{ width: 84, height: 84, borderRadius: 8, background: C.surface, border: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, color: C.muted, fontSize: "0.62rem" }}>
-                        <ImageOff size={16} /> بدون تصویر
-                      </div>
-                    ) : l.images.slice(0, 3).map((src, i) => (
-                      // A button, not a clickable <img>: reviewing the photos is
-                      // the whole job on this screen, and nothing about an image
-                      // with an onClick reaches the tab order.
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setLightbox(src)}
-                        aria-label={`بزرگ‌نمایی تصویر ${i + 1} از ${l.name}`}
-                        style={{ padding: 0, border: "none", background: "none", borderRadius: 8, cursor: "zoom-in", lineHeight: 0 }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt="" loading="lazy" decoding="async"
-                          style={{ width: 84, height: 84, objectFit: "cover", borderRadius: 8, border: `1px solid ${C.border}`, display: "block" }} />
-                      </button>
-                    ))}
-                  </div>
+              <article key={l.id} className={styles.item}>
+                {/* Submitted photos — an admin has to see these before publishing */}
+                <div className={own.photos}>
+                  {l.images.length === 0 ? (
+                    <div className={own.noPhoto}><ImageOff size={16} /> بدون تصویر</div>
+                  ) : l.images.slice(0, 3).map((src, i) => (
+                    // A button, not a clickable <img>: reviewing the photos is
+                    // the whole job on this screen, and nothing about an image
+                    // with an onClick reaches the tab order.
+                    <button key={i} type="button" className={own.photo} onClick={() => setLightbox(src)}
+                      aria-label={`بزرگ‌نمایی تصویر ${i + 1} از ${l.name}`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt="" loading="lazy" decoding="async" />
+                    </button>
+                  ))}
+                </div>
 
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4, flexWrap: "wrap" }}>
-                      <TypeIcon type={l.type} size={14} />
-                      <span style={{ fontSize: "0.88rem", fontWeight: 700 }}>{l.name}</span>
-                      <Badge text={MODERATION_LABEL[l.moderation] ?? l.moderation} color={tone} bg={toneBg} />
-                      {l.plan === "featured" && (
-                        <Badge text={`پلن ${planLabels.featured}`} color="#f59e0b" bg="rgba(245,158,11,0.12)" />
-                      )}
-                    </div>
-                    <div style={{ fontSize: "0.75rem", color: C.muted, lineHeight: 1.9 }}>
-                      {l.city}{l.region ? ` · ${l.region}` : ""} · {l.location}<br />
-                      {l.width}×{l.height} متر · {l.faces} وجه · {faNum(l.price)}M تومان/ماه<br />
-                      فرستنده: {l.submittedBy ? `${l.submittedBy.name} (${l.submittedBy.phone})` : "نامشخص"} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}<br />
-                      {/* The number buyers will be handed. Nobody verified it unless it
-                          is the submitter's own, which their sign-up code proved — any
-                          other one could be a stranger's, so the reviewer is told. */}
-                      شماره تماس آگهی: <span style={{ direction: "ltr", display: "inline-block" }}>{l.phone}</span>{" "}
-                      {l.submittedBy?.phone === l.phone
-                        ? <Badge text="شمارهٔ تأییدشدهٔ فرستنده" color="#22c55e" bg="rgba(34,197,94,0.12)" />
-                        : <Badge text="تأییدنشده — پیش از تأیید تماس بگیرید" color="#f59e0b" bg="rgba(245,158,11,0.12)" />}
-                    </div>
-                    {l.description && (
-                      <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 8, lineHeight: 1.8, background: C.surface, borderRadius: 8, padding: "8px 10px" }}>
-                        {l.description.slice(0, 400)}
-                      </div>
-                    )}
-                    {l.reviewNote && (
-                      <div style={{ fontSize: "0.72rem", color: "#f97316", marginTop: 8, lineHeight: 1.8, background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.25)", borderRadius: 8, padding: "8px 10px" }}>
-                        توضیح قبلی برای فرستنده: {l.reviewNote}
-                      </div>
-                    )}
-                    {canDecide && (
-                      <textarea
-                        value={notes[l.id] ?? ""}
-                        onChange={e => setNotes(prev => ({ ...prev, [l.id]: e.target.value }))}
-                        rows={2}
-                        maxLength={1000}
-                        placeholder="توضیح برای فرستنده (برای «نیاز به اصلاح» و «رد» الزامی، برای «تأیید» اختیاری)"
-                        style={{ width: "100%", marginTop: 8, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.75rem", lineHeight: 1.8, padding: "8px 10px", borderRadius: 8, outline: "none", resize: "vertical" }}
-                      />
-                    )}
+                <div className={styles.itemMain}>
+                  <div className={styles.itemTitle}>
+                    <TypeIcon type={l.type} size={14} />
+                    <span>{l.name}</span>
+                    <Badge text={MODERATION_LABEL[l.moderation] ?? l.moderation} tone={moderationTone(l.moderation)} />
+                    {l.plan === "featured" && <Badge text={`پلن ${planLabels.featured}`} tone="#f59e0b" />}
                   </div>
-
+                  <div className={styles.itemMeta}>
+                    {l.city}{l.region ? ` · ${l.region}` : ""} · {l.location}<br />
+                    {faNum(l.width)}×{faNum(l.height)} متر · {faNum(l.faces)} وجه · {faNum(l.price)}M تومان/ماه<br />
+                    فرستنده: {l.submittedBy ? <>{l.submittedBy.name} (<span className={own.ltr}>{l.submittedBy.phone}</span>)</> : "نامشخص"} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}<br />
+                    {/* The number buyers will be handed. Nobody verified it unless it
+                        is the submitter's own, which their sign-up code proved — any
+                        other one could be a stranger's, so the reviewer is told. */}
+                    شماره تماس آگهی: <span className={own.ltr}>{l.phone}</span>{" "}
+                    {l.submittedBy?.phone === l.phone
+                      ? <Badge text="شمارهٔ تأییدشدهٔ فرستنده" tone="var(--green)" />
+                      : <Badge text="تأییدنشده — پیش از تأیید تماس بگیرید" tone="#f59e0b" />}
+                  </div>
+                  {l.description && <div className={styles.quote}>{l.description.slice(0, 400)}</div>}
+                  {l.reviewNote && <div className={own.previous}>توضیح قبلی برای فرستنده: {l.reviewNote}</div>}
                   {canDecide && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, justifyContent: "center" }}>
-                      <button onClick={() => decide(l.id, l.updatedAt, "approve")} disabled={anyBusy}
-                        style={{ background: anyBusy ? C.border : C.green, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-                        {l.plan === "featured" ? <Sparkles size={13} /> : <Check size={13} />}
-                        {busy ? "..." : l.plan === "featured" ? "تأیید پرداخت و انتشار" : "تأیید و انتشار"}
-                      </button>
-                      <button onClick={() => decide(l.id, l.updatedAt, "revision")} disabled={anyBusy}
-                        style={{ background: "none", border: "1px solid rgba(249,115,22,0.5)", color: "#f97316", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-                        <PencilLine size={13} /> نیاز به اصلاح
-                      </button>
-                      <button onClick={() => decide(l.id, l.updatedAt, "reject")} disabled={anyBusy}
-                        style={{ background: "none", border: `1px solid ${C.border}`, color: "#ef4444", fontFamily: C.font, fontSize: "0.78rem", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: anyBusy ? "default" : "pointer", opacity: anyBusy && !busy ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-                        <X size={13} /> رد
-                      </button>
-                    </div>
+                    <textarea
+                      className={`${styles.note} ${own.noteBox}`}
+                      value={notes[l.id] ?? ""}
+                      onChange={e => setNotes(prev => ({ ...prev, [l.id]: e.target.value }))}
+                      rows={2}
+                      maxLength={1000}
+                      aria-label={`توضیح برای فرستندهٔ ${l.name}`}
+                      placeholder="توضیح برای فرستنده (برای «نیاز به اصلاح» و «رد» الزامی، برای «تأیید» اختیاری)"
+                    />
                   )}
                 </div>
-              </div>
+
+                {canDecide && (
+                  <div className={styles.itemSide}>
+                    <button type="button" className={`${styles.toneButton} ${styles.solid}`} style={cssVar("--tone", "var(--green)")}
+                      onClick={() => decide(l.id, l.updatedAt, "approve")} disabled={anyBusy}>
+                      {l.plan === "featured" ? <Sparkles size={13} /> : <Check size={13} />}
+                      {busy ? "..." : l.plan === "featured" ? "تأیید پرداخت و انتشار" : "تأیید و انتشار"}
+                    </button>
+                    <button type="button" className={styles.toneButton} style={cssVar("--tone", "#f97316")}
+                      onClick={() => decide(l.id, l.updatedAt, "revision")} disabled={anyBusy}>
+                      <PencilLine size={13} /> نیاز به اصلاح
+                    </button>
+                    <button type="button" className={styles.toneButton} style={cssVar("--tone", "var(--red)")}
+                      onClick={() => decide(l.id, l.updatedAt, "reject")} disabled={anyBusy}>
+                      <X size={13} /> رد
+                    </button>
+                  </div>
+                )}
+              </article>
             );
           })}
           {page < pages && (
-            <button onClick={loadMore} disabled={loadingMore} style={{ alignSelf: "center", background: "none", border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "9px 22px", borderRadius: 8, cursor: loadingMore ? "default" : "pointer" }}>
+            <Button className={styles.more} onClick={loadMore} disabled={loadingMore}>
               {loadingMore ? "در حال بارگذاری..." : `نمایش بیشتر (${faNum(total - listings.length)} مورد دیگر)`}
-            </button>
+            </Button>
           )}
         </div>
       )}

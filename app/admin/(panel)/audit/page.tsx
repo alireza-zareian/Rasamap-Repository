@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/auth/actor";
 import { hasRole } from "@/lib/domain/roles";
 import { SectionCard } from "@/components/admin/Badge";
 import { AuditPanel } from "@/components/admin/AuditPanel";
+import own from "@/components/admin/AuditPanel.module.css";
 
 export default async function AuditSection() {
   const staff = await requireStaff();
@@ -10,7 +11,7 @@ export default async function AuditSection() {
     <SectionCard>
       {hasRole(staff.role, "admin")
         ? <AuditPanel />
-        : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 40, color: "var(--text-muted)" }}><Lock size={16} /> دسترسی فقط برای Admin</div>}
+        : <div className={own.locked}><Lock size={16} /> این بخش فقط برای نقش «ادمین» و بالاتر است</div>}
     </SectionCard>
   );
 }

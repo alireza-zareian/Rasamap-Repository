@@ -1,14 +1,18 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
-import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import type { StaffRole } from "@/lib/domain/roles";
-import { C, ROLE_COLOR } from "./constants";
+import { ROLE_COLOR } from "./constants";
 import { Badge } from "./Badge";
-import { Users, ShieldCheck, Plus, X, AlertTriangle, Search } from "lucide-react";
+import { Users, ShieldCheck, Plus, AlertTriangle, Search } from "lucide-react";
 import { CustomerModal } from "./CustomerModal";
 import { faNum } from "@/lib/format";
 import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/domain/password";
+import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import form from "@/components/ui/form.module.css";
+import styles from "./admin.module.css";
+import own from "./UsersPanel.module.css";
 
 interface SessionUser { id: string; name: string; role: StaffRole; email: string; }
 
@@ -46,16 +50,14 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
   if (!isAdminPlus) {
     return (
       <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700, marginBottom: 8 }}><Users size={16} /> کاربران</div>
-        <div style={{ padding: 14, background: "rgba(245,158,11,0.06)", borderRadius: 10, fontSize: "0.8rem", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
-          این بخش برای نقش «ادمین» و بالاتر در دسترس است.
-        </div>
+        <h1 className={styles.title}><Users size={16} /> کاربران</h1>
+        <p className={own.notice}>این بخش برای نقش «ادمین» و بالاتر در دسترس است.</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+    <div className={own.sections}>
       {isSA && <AdminAccounts />}
       <CustomersSection canManageAccess={isSA} />
     </div>
@@ -99,78 +101,56 @@ function AdminAccounts() {
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
+    <section>
+      <div className={styles.head}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><ShieldCheck size={16} /> حساب‌های مدیریت (ادمین‌ها)</div>
-          <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4, lineHeight: 1.8 }}>
+          <h2 className={styles.title}><ShieldCheck size={16} /> حساب‌های مدیریت (ادمین‌ها)</h2>
+          <p className={own.lede}>
             حساب‌های مدیریتی در جدول admins نگه‌داری می‌شوند. نقش‌ها از کم‌ترین به بیش‌ترین دسترسی:
             بیننده، ویرایشگر، ادمین، سوپر ادمین. هر ساخت یا تغییر نقش در لاگ امنیتی ثبت می‌شود.
-          </div>
+          </p>
         </div>
-        <button onClick={() => setShowAdd(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.78rem", padding: "7px 14px", borderRadius: 8, background: C.accent, border: "none", color: "#fff", fontFamily: C.font, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
-          <Plus size={14} /> افزودن
-        </button>
+        <Button size="sm" intent="primary" onClick={() => setShowAdd(true)}><Plus size={14} /> افزودن</Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(116px, 1fr))", gap: 10, marginBottom: 18 }}>
+      <div className={own.roles}>
         {ROLES.slice().reverse().map(r => (
-          <div key={r.value} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 12, textAlign: "center" }}>
-            <Badge text={r.label} color={ROLE_COLOR[r.value]} bg={`${ROLE_COLOR[r.value]}20`} />
-            <div style={{ fontSize: "0.7rem", color: C.muted, marginTop: 6 }}>{rows.filter(x => x.role === r.value).length} نفر</div>
+          <div key={r.value} className={own.role}>
+            <Badge text={r.label} tone={ROLE_COLOR[r.value]} />
+            <div>{faNum(rows.filter(x => x.role === r.value).length)} نفر</div>
           </div>
         ))}
       </div>
 
-      {error && (
-        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 13px", fontSize: "0.8rem", color: C.red, marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
-          <AlertTriangle size={13} /> {error}
-        </div>
-      )}
+      {error && <div role="alert" className={`${form.error} ${styles.banner}`}><AlertTriangle size={13} /> {error}</div>}
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: 40, color: C.muted, fontSize: "0.85rem" }}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری...</div>
       ) : (
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
+        <div className={`${styles.tableCard} ${styles.scroll}`}>
+          <table className={`${styles.table} ${own.wide}`}>
             <thead>
-              <tr style={{ background: C.card }}>
-                {["نام", "ایمیل", "نقش", "ساخته‌شده", "وضعیت"].map(h => (
-                  <th key={h} style={{ padding: "11px 14px", textAlign: "right", fontSize: "0.75rem", color: C.muted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
-                ))}
-              </tr>
+              <tr>{["نام", "ایمیل", "نقش", "ساخته‌شده", "وضعیت"].map(h => <th key={h}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {rows.map(u => {
                 const isSelf = u.id === currentId;
                 return (
-                  <tr key={u.id} style={{ borderBottom: `1px solid ${C.border}`, opacity: u.active ? 1 : 0.55 }}>
-                    <td style={{ padding: "12px 14px", fontSize: "0.85rem", fontWeight: 600 }}>
-                      {u.name}{isSelf && <span style={{ fontSize: "0.68rem", color: C.muted, marginRight: 6 }}>(شما)</span>}
-                    </td>
-                    <td style={{ padding: "12px 14px", fontSize: "0.8rem", color: C.muted, direction: "ltr", textAlign: "right" }}>{u.email}</td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <select
-                        value={u.role}
-                        disabled={isSelf || busyId === u.id}
-                        onChange={e => patch(u.id, { role: e.target.value as StaffRole })}
-                        style={{ background: C.card, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.78rem", padding: "5px 8px", borderRadius: 7, outline: "none", cursor: isSelf ? "not-allowed" : "pointer" }}
-                      >
+                  <tr key={u.id} className={u.active ? undefined : own.inactive}>
+                    <td className={own.strong}>{u.name}{isSelf && <span className={own.you}>(شما)</span>}</td>
+                    <td className={`${styles.muted} ${own.ltr}`}>{u.email}</td>
+                    <td>
+                      <select className={styles.control} aria-label={`نقش ${u.name}`} value={u.role}
+                        disabled={isSelf || busyId === u.id} onChange={e => patch(u.id, { role: e.target.value as StaffRole })}>
                         {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                       </select>
                     </td>
-                    <td style={{ padding: "12px 14px", fontSize: "0.75rem", color: C.muted }}>{fmt(u.createdAt)}</td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <button
-                        onClick={() => patch(u.id, { active: !u.active })}
-                        disabled={isSelf || busyId === u.id}
-                        style={{ fontSize: "0.72rem", fontWeight: 700, padding: "5px 12px", borderRadius: 7, cursor: isSelf ? "not-allowed" : "pointer", fontFamily: C.font,
-                          border: `1px solid ${u.active ? "rgba(34,197,94,0.4)" : `${C.border}`}`,
-                          background: u.active ? "rgba(34,197,94,0.1)" : "none",
-                          color: u.active ? C.green : C.muted }}
-                      >
+                    <td className={styles.muted}>{fmt(u.createdAt)}</td>
+                    <td>
+                      <Button size="sm" intent={u.active ? "success" : "quiet"} onClick={() => patch(u.id, { active: !u.active })}
+                        disabled={isSelf || busyId === u.id} aria-pressed={u.active}>
                         {u.active ? "فعال" : "غیرفعال"}
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );
@@ -186,7 +166,7 @@ function AdminAccounts() {
           onCreated={a => { setRows(prev => [...prev, a]); setShowAdd(false); }}
         />
       )}
-    </div>
+    </section>
   );
 }
 
@@ -234,60 +214,46 @@ function CustomersSection({ canManageAccess }: { canManageAccess: boolean }) {
   const runSearch = () => { setQuery(q.trim()); setPage(1); };
 
   return (
-    <div>
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.9rem", fontWeight: 700 }}><Users size={16} /> کاربران ثبت‌نام‌شده</div>
-        <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4 }}>
-          همهٔ حساب‌های کاربری سایت (جدول users) — چه سفارش داشته باشند چه نه. {faNum(total)} نفر.
+    <section>
+      <div className={styles.head}>
+        <div>
+          <h2 className={styles.title}><Users size={16} /> کاربران ثبت‌نام‌شده</h2>
+          <p className={own.lede}>همهٔ حساب‌های کاربری سایت (جدول users) — چه آگهی ثبت کرده باشند چه نه. {faNum(total)} نفر.</p>
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", flex: "1 1 220px", gap: 6 }}>
-          <input
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") runSearch(); }}
-            placeholder="جستجوی نام یا شماره..."
-            style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 12px", borderRadius: 8, outline: "none" }}
-          />
-          <button onClick={runSearch} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.78rem", padding: "8px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontFamily: C.font, cursor: "pointer" }}>
-            <Search size={13} /> جستجو
-          </button>
+      <form className={styles.toolbar} onSubmit={e => { e.preventDefault(); runSearch(); }}>
+        <div className={own.searchRow}>
+          <input className={styles.control} value={q} onChange={e => setQ(e.target.value)} aria-label="جستجوی کاربر" placeholder="جستجوی نام یا شماره..." />
+          <Button type="submit" size="sm"><Search size={13} /> جستجو</Button>
         </div>
-        <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 12px", borderRadius: 8, outline: "none" }}>
+        <select className={styles.control} aria-label="مرتب‌سازی" value={sort} onChange={e => { setSort(e.target.value); setPage(1); }}>
           {CUSTOMER_SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
-      </div>
+      </form>
 
-      {error && (
-        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "9px 13px", fontSize: "0.8rem", color: C.red, marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
-          <AlertTriangle size={13} /> {error}
-        </div>
-      )}
+      {error && <div role="alert" className={`${form.error} ${styles.banner}`}><AlertTriangle size={13} /> {error}</div>}
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: 40, color: C.muted, fontSize: "0.85rem" }}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری...</div>
       ) : rows.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 40, color: C.muted, fontSize: "0.85rem" }}>کاربری یافت نشد</div>
+        <div className={styles.state}>کاربری یافت نشد</div>
       ) : (
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
+        <div className={`${styles.tableCard} ${styles.scroll}`}>
+          <table className={styles.table}>
             <thead>
-              <tr style={{ background: C.card }}>
-                {["نام", "شماره", "ثبت‌نام", "آگهی‌ها", "نظرها"].map(h => (
-                  <th key={h} style={{ padding: "11px 14px", textAlign: "right", fontSize: "0.75rem", color: C.muted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
-                ))}
-              </tr>
+              <tr>{["نام", "شماره", "ثبت‌نام", "آگهی‌ها", "نظرها"].map(h => <th key={h}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {rows.map(u => (
-                <tr key={u.id} onClick={() => setOpenId(u.id)} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                  <td style={{ padding: "12px 14px", fontSize: "0.85rem", fontWeight: 600, color: C.accent }}>{u.name}</td>
-                  <td style={{ padding: "12px 14px", fontSize: "0.8rem", color: C.muted, direction: "ltr", textAlign: "right" }}>{u.phone}</td>
-                  <td style={{ padding: "12px 14px", fontSize: "0.75rem", color: C.muted }}>{fmt(u.createdAt)}</td>
-                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{faNum(u.listingCount)}</td>
-                  <td style={{ padding: "12px 14px", fontSize: "0.8rem" }}>{faNum(u.reviewCount)}</td>
+                <tr key={u.id}>
+                  {/* A button, not a clickable row: a row with onClick never
+                      reaches the tab order, so the details were mouse-only. */}
+                  <td><button type="button" className={own.open} aria-label={`مشخصات ${u.name}`} onClick={() => setOpenId(u.id)}>{u.name}</button></td>
+                  <td className={`${styles.muted} ${own.ltr}`}>{u.phone}</td>
+                  <td className={styles.muted}>{fmt(u.createdAt)}</td>
+                  <td>{faNum(u.listingCount)}</td>
+                  <td>{faNum(u.reviewCount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -296,71 +262,61 @@ function CustomersSection({ canManageAccess }: { canManageAccess: boolean }) {
       )}
 
       {pages > 1 && (
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16 }}>
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: page === 1 ? "not-allowed" : "pointer" }}>قبلی</button>
-          <span style={{ padding: "7px 14px", fontSize: "0.78rem", color: C.muted }}>{faNum(page)} / {faNum(pages)}</span>
-          <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontFamily: C.font, cursor: page === pages ? "not-allowed" : "pointer" }}>بعدی</button>
+        <div className={own.pager}>
+          <Button size="sm" intent="quiet" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>قبلی</Button>
+          <span>{faNum(page)} / {faNum(pages)}</span>
+          <Button size="sm" intent="quiet" onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages}>بعدی</Button>
         </div>
       )}
 
       {openId != null && (
         <CustomerModal userId={openId} canManageAccess={canManageAccess} onClose={() => setOpenId(null)} onSaved={load} />
       )}
-    </div>
+    </section>
   );
 }
 
 function AddAdminModal({ onClose, onCreated }: { onClose: () => void; onCreated: (a: AdminRow) => void }) {
-  const boxRef = useModalA11y<HTMLDivElement>(onClose);
-  const [form, setForm] = useState({ name: "", email: "", role: "viewer" as StaffRole, password: "" });
+  const [draft, setDraft] = useState({ name: "", email: "", role: "viewer" as StaffRole, password: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }));
+  const set = (k: keyof typeof draft) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setDraft(f => ({ ...f, [k]: e.target.value }));
 
-  const iS: React.CSSProperties = { width: "100%", background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.82rem", padding: "9px 12px", borderRadius: 8, outline: "none", boxSizing: "border-box" };
-  const lS: React.CSSProperties = { fontSize: "0.72rem", color: C.muted, marginBottom: 5, display: "block" };
-
-  const submit = async () => {
-    if (!form.name.trim()) { setError("نام الزامی است"); return; }
-    if (!form.email.trim()) { setError("ایمیل الزامی است"); return; }
-    if (form.password.length < MIN_PASSWORD_LENGTH) { setError(PASSWORD_TOO_SHORT); return; }
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (saving) return;
+    if (!draft.name.trim()) { setError("نام الزامی است"); return; }
+    if (!draft.email.trim()) { setError("ایمیل الزامی است"); return; }
+    if (draft.password.length < MIN_PASSWORD_LENGTH) { setError(PASSWORD_TOO_SHORT); return; }
     setError(""); setSaving(true);
     try {
       const data = await fetchJson<{ admin: AdminRow }>("/api/admin/users", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.name.trim(), email: form.email.trim(), role: form.role, password: form.password }),
+        body: JSON.stringify({ name: draft.name.trim(), email: draft.email.trim(), role: draft.role, password: draft.password }),
       });
       onCreated(data.admin);
     } catch (err) { setError(errorMessage(err)); setSaving(false); }
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div ref={boxRef} role="dialog" aria-modal="true" aria-label="کاربر مدیریتی جدید" tabIndex={-1} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 26, width: "min(440px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.95rem", fontWeight: 700 }}><Plus size={16} /> کاربر مدیریتی جدید</div>
-          <button type="button" aria-label="بستن فرم کاربر" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
+    <Dialog size="sm" icon={<Plus size={16} />} title="کاربر مدیریتی جدید" onClose={onClose}>
+      <form className={form.stack} onSubmit={submit}>
+        <div className={form.field}><label htmlFor="admn-name" className={form.label}>نام</label><input id="admn-name" className={form.input} value={draft.name} onChange={set("name")} /></div>
+        <div className={form.field}><label htmlFor="admn-email" className={form.label}>ایمیل</label><input id="admn-email" className={`${form.input} ${form.ltr}`} value={draft.email} onChange={set("email")} type="email" autoComplete="off" /></div>
+        <div className={form.field}><label htmlFor="admn-role" className={form.label}>نقش</label>
+          <select id="admn-role" className={form.input} value={draft.role} onChange={set("role")}>
+            {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+          </select>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div><label htmlFor="admn-name" style={lS}>نام</label><input id="admn-name" style={iS} value={form.name} onChange={set("name")} /></div>
-          <div><label htmlFor="admn-email" style={lS}>ایمیل</label><input id="admn-email" style={{ ...iS, direction: "ltr", textAlign: "left" }} value={form.email} onChange={set("email")} type="email" autoComplete="off" /></div>
-          <div><label htmlFor="admn-role" style={lS}>نقش</label>
-            <select id="admn-role" style={iS} value={form.role} onChange={set("role")}>
-              {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-            </select>
-          </div>
-          <div><label htmlFor="admn-password" style={lS}>رمز عبور (حداقل ۸ نویسه)</label><input id="admn-password" style={{ ...iS, direction: "ltr", textAlign: "left" }} value={form.password} onChange={set("password")} type="password" autoComplete="new-password" /></div>
+        <div className={form.field}><label htmlFor="admn-password" className={form.label}>رمز عبور (حداقل {faNum(MIN_PASSWORD_LENGTH)} نویسه)</label><input id="admn-password" className={`${form.input} ${form.ltr}`} value={draft.password} onChange={set("password")} type="password" autoComplete="new-password" /></div>
+        {error && <div role="alert" className={form.error}><AlertTriangle size={13} /> {error}</div>}
+        <div className={form.row}>
+          <Button type="submit" intent="primary" disabled={saving}>{saving ? "در حال ساخت..." : "ساخت کاربر"}</Button>
+          <Button intent="quiet" onClick={onClose}>انصراف</Button>
         </div>
-        {error && <div style={{ marginTop: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>}
-        <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-          <button onClick={submit} disabled={saving} style={{ flex: 1, background: C.accent, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.85rem", fontWeight: 700, padding: 11, borderRadius: 9, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
-            {saving ? "در حال ساخت..." : "ساخت کاربر"}
-          </button>
-          <button onClick={onClose} style={{ padding: "11px 20px", background: "none", border: `1px solid ${C.border}`, color: C.muted, fontFamily: C.font, borderRadius: 9, cursor: "pointer" }}>انصراف</button>
-        </div>
-      </div>
-    </div>
+      </form>
+    </Dialog>
   );
 }

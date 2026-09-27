@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
-import { X, KeyRound, AlertTriangle, Check } from "lucide-react";
+import { KeyRound, AlertTriangle, Check } from "lucide-react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
-import { useModalA11y } from "@/lib/client/use-modal-a11y";
-import { C } from "./constants";
 import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/domain/password";
+import { faNum } from "@/lib/format";
+import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import field from "@/components/ui/form.module.css";
 
 /**
  * A staff member changes their own password (PATCH /api/admin/auth/me).
@@ -12,7 +14,6 @@ import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/domain/password";
  * response, so the panel keeps working without a fresh sign-in.
  */
 export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
-  const boxRef = useModalA11y<HTMLDivElement>(onClose);
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -20,9 +21,6 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
-
-  const iS: React.CSSProperties = { width: "100%", background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.82rem", padding: "9px 12px", borderRadius: 8, outline: "none", boxSizing: "border-box", direction: "ltr", textAlign: "left" };
-  const lS: React.CSSProperties = { fontSize: "0.72rem", color: C.muted, marginBottom: 5, display: "block" };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,37 +39,27 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
     finally { setSaving(false); }
   };
 
+  const input = `${field.input} ${field.ltr}`;
+
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div ref={boxRef} role="dialog" aria-modal="true" aria-label="تغییر رمز عبور" tabIndex={-1} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 26, width: "min(420px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "0.95rem", fontWeight: 700 }}><KeyRound size={16} /> تغییر رمز عبور</div>
-          <button type="button" aria-label="بستن" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={18} /></button>
-        </div>
-        {done ? (
-          <>
-            <div role="status" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, padding: "12px 14px", fontSize: "0.8rem", color: "#22c55e", display: "flex", alignItems: "center", gap: 6 }}>
-              <Check size={15} /> رمز عوض شد. نشست‌های شما در دستگاه‌های دیگر بسته شد.
-            </div>
-            <button onClick={onClose} style={{ marginTop: 16, width: "100%", background: C.accent, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.85rem", fontWeight: 700, padding: 11, borderRadius: 9, cursor: "pointer" }}>بستن</button>
-          </>
-        ) : (
-          <form onSubmit={submit}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div><label htmlFor="pw-current" style={lS}>رمز فعلی</label><input id="pw-current" style={iS} value={form.current} onChange={set("current")} type="password" autoComplete="current-password" /></div>
-              <div><label htmlFor="pw-next" style={lS}>رمز جدید (حداقل ۸ نویسه)</label><input id="pw-next" style={iS} value={form.next} onChange={set("next")} type="password" autoComplete="new-password" /></div>
-              <div><label htmlFor="pw-confirm" style={lS}>تکرار رمز جدید</label><input id="pw-confirm" style={iS} value={form.confirm} onChange={set("confirm")} type="password" autoComplete="new-password" /></div>
-            </div>
-            {error && <div role="alert" style={{ marginTop: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", display: "flex", alignItems: "center", gap: 6 }}><AlertTriangle size={13} /> {error}</div>}
-            <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-              <button type="submit" disabled={saving} style={{ flex: 1, background: C.accent, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.85rem", fontWeight: 700, padding: 11, borderRadius: 9, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
-                {saving ? "در حال ذخیره..." : "ذخیرهٔ رمز جدید"}
-              </button>
-              <button type="button" onClick={onClose} style={{ padding: "11px 20px", background: "none", border: `1px solid ${C.border}`, color: C.muted, fontFamily: C.font, borderRadius: 9, cursor: "pointer" }}>انصراف</button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+    <Dialog size="sm" icon={<KeyRound size={16} />} title="تغییر رمز عبور" onClose={onClose}>
+      {done ? (
+        <>
+          <div role="status" className={field.success}><Check size={15} /> رمز عوض شد. نشست‌های شما در دستگاه‌های دیگر بسته شد.</div>
+          <Button intent="primary" block onClick={onClose}>بستن</Button>
+        </>
+      ) : (
+        <form className={field.stack} onSubmit={submit}>
+          <div className={field.field}><label htmlFor="pw-current" className={field.label}>رمز فعلی</label><input id="pw-current" className={input} value={form.current} onChange={set("current")} type="password" autoComplete="current-password" /></div>
+          <div className={field.field}><label htmlFor="pw-next" className={field.label}>رمز جدید (حداقل {faNum(MIN_PASSWORD_LENGTH)} نویسه)</label><input id="pw-next" className={input} value={form.next} onChange={set("next")} type="password" autoComplete="new-password" /></div>
+          <div className={field.field}><label htmlFor="pw-confirm" className={field.label}>تکرار رمز جدید</label><input id="pw-confirm" className={input} value={form.confirm} onChange={set("confirm")} type="password" autoComplete="new-password" /></div>
+          {error && <div role="alert" className={field.error}><AlertTriangle size={13} /> {error}</div>}
+          <div className={field.row}>
+            <Button type="submit" intent="primary" disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیرهٔ رمز جدید"}</Button>
+            <Button intent="quiet" onClick={onClose}>انصراف</Button>
+          </div>
+        </form>
+      )}
+    </Dialog>
   );
 }

@@ -1,0 +1,44 @@
+.shell { min-height: 100vh; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 100; min-height: 60px; padding: 0 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--bg-card); border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.logo { text-decoration: none; color: var(--text-main); font-size: 1.1rem; font-weight: 800; }
+.logo span { color: var(--accent); }
+.sep { width: 1px; height: 24px; background: var(--border); }
+.sub { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+.account { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.name { font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.siteLink {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;
+  font-size: 0.75rem; font-weight: 600; padding: 6px 12px; border-radius: 7px; text-decoration: none; color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 33%, transparent); background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.body { display: flex; max-width: 1400px; margin: 0 auto; padding: 24px 20px; gap: 20px; }
+.nav { width: 200px; flex-shrink: 0; }
+.navCard { position: sticky; top: 76px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 8px; }
+.navLink {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px 14px; margin-bottom: 2px; border-radius: 8px;
+  font-size: 0.82rem; color: var(--text-muted); text-decoration: none;
+}
+.navLink:hover { color: var(--text-main); }
+.navLink[aria-current="page"] { color: var(--accent); font-weight: 700; background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.main { flex: 1; min-width: 0; }
+
+/* A phone: the menu becomes a wrapping row of links above the section, and
+   the top bar drops its sub-label and the site link's text so the role,
+   name and sign-out still fit on one line. */
+@media (max-width: 768px) {
+  .topbar { padding: 0 12px; gap: 8px; }
+  .sep, .sub, .siteLabel { display: none; }
+  .name { max-width: 64px; }
+  .siteLink { padding: 6px 8px; }
+  .body { flex-direction: column; }
+  .nav { width: 100%; }
+  .navCard { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
+  .navLink { width: auto; margin: 0; padding: 8px 12px; }
+}

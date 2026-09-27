@@ -1,16 +1,21 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, ChevronRight, ChevronLeft } from "lucide-react";
 import type { Billboard } from "@/lib/types";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { faNum } from "@/lib/format";
 import { TypeIcon } from "@/components/TypeIcon";
-import { C, TYPE_LABEL, AVAILABILITY_LABEL, MODERATION_LABEL } from "./constants";
+import { Button } from "@/components/ui/Button";
+import { Dialog, dialogStyles } from "@/components/ui/Dialog";
+import form from "@/components/ui/form.module.css";
+import { TYPE_LABEL, AVAILABILITY_LABEL, MODERATION_LABEL } from "./constants";
 import { BillboardRow } from "./BillboardRow";
 import { CreateModal } from "./CreateModal";
 import { EditModal } from "./EditModal";
 import { ImageManager } from "./ImageManager";
 import { usePermissionNotice } from "./PermissionNotice";
+import styles from "./admin.module.css";
+import own from "./BillboardsPanel.module.css";
 
 /**
  * The media table: search, filters, paging, and the create / edit / photos /
@@ -99,38 +104,35 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
     setVisibilityBusy(false);
   };
 
-  const iS: React.CSSProperties = { background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 12px", borderRadius: 8, outline: "none" };
   const resetPage = <T,>(set: (v: T) => void) => (v: T) => { set(v); setPage(1); };
+  const COLUMNS = ["نام / مکان", "نوع", "وضعیت", "قیمت", "مختصات", "تصاویر", "منبع", ""];
+  const taking = visibilityTarget?.moderation === "approved";
 
   return (
     <div>
       {notice}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+      <div className={styles.head}>
         <div>
-          <div style={{ fontSize: "1rem", fontWeight: 800 }}>مدیریت بیلبوردها</div>
-          <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 2 }}>{faNum(total)} آیتم</div>
+          <h1 className={styles.title}>مدیریت بیلبوردها</h1>
+          <div className={styles.count}>{faNum(total)} آیتم</div>
         </div>
-        {canEdit && (
-          <button onClick={() => setShowCreate(true)} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.82rem", fontWeight: 700, padding: "8px 16px", borderRadius: 8, background: C.green, border: "none", color: "#fff", fontFamily: C.font, cursor: "pointer" }}>
-            <Plus size={15} /> بیلبورد جدید
-          </button>
-        )}
+        {canEdit && <Button intent="success" onClick={() => setShowCreate(true)}><Plus size={15} /> بیلبورد جدید</Button>}
       </div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
-        <input placeholder="جستجو..." aria-label="جستجو" value={search} onChange={e => resetPage(setSearch)(e.target.value)} style={{ ...iS, flex: "1 1 200px" }} />
-        <select aria-label="نوع رسانه" value={filterType} onChange={e => resetPage(setFilterType)(e.target.value)} style={iS}>
+      <div className={styles.toolbar}>
+        <input className={`${styles.control} ${styles.search}`} placeholder="جستجو..." aria-label="جستجو" value={search} onChange={e => resetPage(setSearch)(e.target.value)} />
+        <select className={styles.control} aria-label="نوع رسانه" value={filterType} onChange={e => resetPage(setFilterType)(e.target.value)}>
           <option value="">همه انواع</option>
           {Object.entries(TYPE_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <select aria-label="وضعیت رسانه" value={filterAvailability} onChange={e => resetPage(setFilterAvailability)(e.target.value)} style={iS}>
+        <select className={styles.control} aria-label="وضعیت رسانه" value={filterAvailability} onChange={e => resetPage(setFilterAvailability)(e.target.value)}>
           <option value="">همه وضعیت‌ها</option>
           {Object.entries(AVAILABILITY_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <select aria-label="وضعیت بررسی" value={filterModeration} onChange={e => resetPage(setFilterModeration)(e.target.value)} style={iS}>
+        <select className={styles.control} aria-label="وضعیت بررسی" value={filterModeration} onChange={e => resetPage(setFilterModeration)(e.target.value)}>
           <option value="">همه (بررسی)</option>
           {Object.entries(MODERATION_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <select aria-label="مرتب‌سازی" value={sort} onChange={e => setSort(e.target.value)} style={iS}>
+        <select className={styles.control} aria-label="مرتب‌سازی" value={sort} onChange={e => setSort(e.target.value)}>
           <option value="id_asc">ID ↑</option>
           <option value="id_desc">ID ↓</option>
           <option value="price_desc">قیمت ↓</option>
@@ -138,23 +140,19 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
           <option value="name_asc">نام</option>
         </select>
       </div>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+      <div className={styles.tableCard}>
+        <div className={styles.scroll}>
+          <table className={`${styles.table} ${own.wide}`} aria-busy={loading}>
             <thead>
-              <tr style={{ background: C.surface }}>
-                {["نام / مکان","نوع","وضعیت","قیمت","مختصات","تصاویر","منبع",""].map(h => (
-                  <th key={h} style={{ padding: "11px 12px", textAlign: "right", fontWeight: 600, fontSize: "0.75rem", color: C.muted, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
-                ))}
-              </tr>
+              <tr>{COLUMNS.map((h, i) => <th key={i}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {loading
-                ? <tr><td colSpan={8} style={{ padding: 30, textAlign: "center", color: C.muted }}>در حال بارگذاری...</td></tr>
+                ? <tr><td colSpan={COLUMNS.length} className={styles.stateCell}>در حال بارگذاری...</td></tr>
                 : loadError
-                  ? <tr><td colSpan={8} role="alert" style={{ padding: 30, textAlign: "center", color: "#ef4444" }}>فهرست خوانده نشد. {loadError}</td></tr>
+                  ? <tr><td colSpan={COLUMNS.length} role="alert" className={`${styles.stateCell} ${styles.errorCell}`}>فهرست خوانده نشد. {loadError}</td></tr>
                 : billboards.length === 0
-                  ? <tr><td colSpan={8} style={{ padding: 30, textAlign: "center", color: C.muted }}>موردی یافت نشد</td></tr>
+                  ? <tr><td colSpan={COLUMNS.length} className={styles.stateCell}>موردی یافت نشد</td></tr>
                   : billboards.map(b => (
                       <BillboardRow
                         key={b.id} b={b}
@@ -168,10 +166,10 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
           </table>
         </div>
         {pages > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, padding: "14px 0", borderTop: `1px solid ${C.border}` }}>
-            <button type="button" aria-label="صفحهٔ قبلی" onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1} style={{ ...iS, cursor: page===1?"default":"pointer", padding: "6px 14px" }}>←</button>
-            <span style={{ fontSize: "0.8rem", color: C.muted }}>صفحه {faNum(page)} از {faNum(pages)}</span>
-            <button type="button" aria-label="صفحهٔ بعدی" onClick={() => setPage(p => Math.min(pages,p+1))} disabled={page===pages} style={{ ...iS, cursor: page===pages?"default":"pointer", padding: "6px 14px" }}>→</button>
+          <div className={styles.pager}>
+            <Button size="sm" aria-label="صفحهٔ قبلی" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}><ChevronRight size={14} /></Button>
+            <span>صفحه {faNum(page)} از {faNum(pages)}</span>
+            <Button size="sm" aria-label="صفحهٔ بعدی" onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages}><ChevronLeft size={14} /></Button>
           </div>
         )}
       </div>
@@ -193,66 +191,48 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
       {imgTarget && <ImageManager billboard={imgTarget} onClose={() => setImgTarget(null)} />}
 
       {visibilityTarget && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div role="dialog" aria-modal="true" aria-label="وضعیت انتشار" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: "min(440px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
-            <div style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 10 }}>
-              {visibilityTarget.moderation === "approved" ? "توقف انتشار رسانه" : "انتشار دوبارهٔ رسانه"}
+        <Dialog
+          size="sm"
+          title={taking ? "توقف انتشار رسانه" : "انتشار دوبارهٔ رسانه"}
+          onClose={() => setVisibilityTarget(null)}
+          footer={<>
+            <Button intent="primary" onClick={handleVisibilityConfirm} disabled={visibilityBusy}>{visibilityBusy ? "در حال ثبت…" : "تأیید"}</Button>
+            <Button intent="quiet" onClick={() => setVisibilityTarget(null)}>انصراف</Button>
+          </>}
+        >
+          <p className={dialogStyles.lead}>
+            {taking
+              ? "رسانه از جستجو، نقشه و صفحهٔ عمومی حذف می‌شود؛ خودِ ردیف، نظرها و سرنخ‌هایش می‌مانند و هر وقت خواستید برمی‌گردد."
+              : "رسانه دوباره برای همهٔ بازدیدکنندگان نمایش داده می‌شود."}
+          </p>
+          <div className={dialogStyles.subject}><TypeIcon type={visibilityTarget.type} size={14} /> {visibilityTarget.name}</div>
+          {taking && (
+            <div className={form.field}>
+              <label htmlFor="visibility-note" className={form.label}>دلیل (اختیاری — برای ثبت‌کنندهٔ آگهی نمایش داده می‌شود)</label>
+              <textarea id="visibility-note" className={form.input} value={visibilityNote} onChange={e => setVisibilityNote(e.target.value)} maxLength={1000} rows={3} />
             </div>
-            <div style={{ fontSize: "0.82rem", color: C.muted, marginBottom: 12, lineHeight: 1.9 }}>
-              {visibilityTarget.moderation === "approved"
-                ? "رسانه از جستجو، نقشه و صفحهٔ عمومی حذف می‌شود؛ خودِ ردیف، نظرها و سرنخ‌هایش می‌مانند و هر وقت خواستید برمی‌گردد."
-                : "رسانه دوباره برای همهٔ بازدیدکنندگان نمایش داده می‌شود."}
-            </div>
-            <div style={{ background: C.surface, borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: "0.85rem", fontWeight: 600 }}>
-              <TypeIcon type={visibilityTarget.type} size={14} /> {visibilityTarget.name}
-            </div>
-            {visibilityTarget.moderation === "approved" && (
-              <>
-                <label htmlFor="visibility-note" style={{ display: "block", fontSize: "0.75rem", color: C.muted, marginBottom: 6 }}>دلیل (اختیاری — برای ثبت‌کنندهٔ آگهی نمایش داده می‌شود)</label>
-                <textarea id="visibility-note" value={visibilityNote} onChange={e => setVisibilityNote(e.target.value)} maxLength={1000} rows={3} style={{ ...iS, width: "100%", boxSizing: "border-box", resize: "vertical", marginBottom: 14 }} />
-              </>
-            )}
-            {visibilityError && (
-              <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", marginBottom: 14 }}>
-                <AlertTriangle size={13} style={{ verticalAlign: "-2px" }} /> {visibilityError}
-              </div>
-            )}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={handleVisibilityConfirm} disabled={visibilityBusy} style={{ flex: 1, background: C.accent, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.85rem", fontWeight: 700, padding: 11, borderRadius: 9, cursor: visibilityBusy ? "default" : "pointer", opacity: visibilityBusy ? 0.7 : 1 }}>
-                {visibilityBusy ? "در حال ثبت…" : "تأیید"}
-              </button>
-              <button onClick={() => setVisibilityTarget(null)} style={{ padding: "11px 20px", background: "none", border: `1px solid ${C.border}`, color: C.muted, fontFamily: C.font, borderRadius: 9, cursor: "pointer" }}>
-                انصراف
-              </button>
-            </div>
-          </div>
-        </div>
+          )}
+          {visibilityError && <div role="alert" className={form.error}><AlertTriangle size={13} /> {visibilityError}</div>}
+        </Dialog>
       )}
 
       {deleteTarget && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div role="dialog" aria-modal="true" aria-label="حذف بیلبورد" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: "min(420px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "1rem", fontWeight: 700, marginBottom: 10 }}><Trash2 size={17} /> حذف بیلبورد</div>
-            <div style={{ fontSize: "0.85rem", color: C.muted, marginBottom: 6 }}>این عمل برگشت‌پذیر نیست.</div>
-            <div style={{ background: C.surface, borderRadius: 10, padding: "12px 14px", marginBottom: 18, fontSize: "0.85rem", fontWeight: 600 }}>
-              <TypeIcon type={deleteTarget.type} size={14} /> {deleteTarget.name}
-              <span style={{ fontSize: "0.72rem", color: C.muted, marginRight: 8 }}>#{deleteTarget.id}</span>
-            </div>
-            {deleteError && (
-              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", marginBottom: 14 }}>
-                <AlertTriangle size={13} style={{ verticalAlign: "-2px" }} /> {deleteError}
-              </div>
-            )}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={handleDeleteConfirm} disabled={deleting} style={{ flex: 1, background: "#ef4444", border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.85rem", fontWeight: 700, padding: 11, borderRadius: 9, cursor: deleting ? "default" : "pointer", opacity: deleting ? 0.7 : 1 }}>
-                {deleting ? "در حال حذف..." : "بله، حذف شود"}
-              </button>
-              <button onClick={() => setDeleteTarget(null)} style={{ padding: "11px 20px", background: "none", border: `1px solid ${C.border}`, color: C.muted, fontFamily: C.font, borderRadius: 9, cursor: "pointer" }}>
-                انصراف
-              </button>
-            </div>
+        <Dialog
+          size="sm"
+          icon={<Trash2 size={17} />}
+          title="حذف بیلبورد"
+          onClose={() => setDeleteTarget(null)}
+          footer={<>
+            <Button intent="danger" onClick={handleDeleteConfirm} disabled={deleting}>{deleting ? "در حال حذف..." : "بله، حذف شود"}</Button>
+            <Button intent="quiet" onClick={() => setDeleteTarget(null)}>انصراف</Button>
+          </>}
+        >
+          <p className={dialogStyles.lead}>این عمل برگشت‌پذیر نیست.</p>
+          <div className={dialogStyles.subject}>
+            <TypeIcon type={deleteTarget.type} size={14} /> {deleteTarget.name} <small>#{deleteTarget.id}</small>
           </div>
-        </div>
+          {deleteError && <div role="alert" className={form.error}><AlertTriangle size={13} /> {deleteError}</div>}
+        </Dialog>
       )}
     </div>
   );

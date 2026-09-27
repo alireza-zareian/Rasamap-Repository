@@ -1,0 +1,96 @@
+/* The panel's shared vocabulary: a section head, a filter row, a data table,
+   a queue of cards, badges, and the unhappy states. Each panel adds only what
+   is its own. A colour that varies per row arrives as --tone. */
+
+/* ── Section head ── */
+.head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.title { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 0.95rem; font-weight: 800; }
+.count { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+.explain {
+  font-size: 0.75rem; color: var(--text-muted); line-height: 1.9; margin: 0 0 16px;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+}
+.explain b { color: var(--text-main); }
+
+/* ── Controls ── */
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.control {
+  background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main);
+  font-family: inherit; font-size: 0.8rem; padding: 8px 12px; border-radius: 8px; outline: none;
+}
+.control:focus-visible { border-color: var(--accent); }
+.search { flex: 1 1 200px; }
+.note {
+  width: 100%; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main);
+  font-family: inherit; font-size: 0.75rem; line-height: 1.8; padding: 8px 10px; border-radius: 8px; outline: none; resize: vertical;
+}
+
+/* ── Table ── */
+.tableCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.scroll { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.table th {
+  padding: 11px 12px; text-align: right; font-weight: 600; font-size: 0.75rem; color: var(--text-muted);
+  background: var(--bg-surface); border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.table td { padding: 10px 8px; font-size: 0.78rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.table td:first-child { padding-inline-start: 12px; }
+.table tr:last-child td { border-bottom: none; }
+.muted { color: var(--text-muted); }
+.table td.stateCell { padding: 30px; text-align: center; color: var(--text-muted); }
+.errorCell { color: var(--red); }
+.pager { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 14px 0; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Flags in a cell: present / missing ── */
+.ok, .warn { display: inline-flex; align-items: center; gap: 3px; font-size: 0.75rem; }
+.ok { color: var(--green); }
+.warn { color: #f59e0b; }
+
+/* ── Queue of cards (review queue, leads) ── */
+.queue { display: flex; flex-direction: column; gap: 12px; }
+.item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.itemMain { flex: 1; min-width: 220px; }
+.itemTitle { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 4px; font-size: 0.88rem; font-weight: 700; }
+.itemTitle a { color: var(--text-main); text-decoration: none; }
+.itemMeta { font-size: 0.75rem; color: var(--text-muted); line-height: 1.9; }
+.itemMeta b { color: var(--text-main); }
+.quote { font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; line-height: 1.8; background: var(--bg-surface); border-radius: 8px; padding: 8px 10px; }
+.itemSide { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; justify-content: center; }
+.more { align-self: center; }
+.noteRow { margin-top: 8px; align-items: flex-start; }
+
+/* ── Badge ── */
+.badge {
+  display: inline-block; font-size: 0.68rem; padding: 3px 9px; border-radius: 20px; font-weight: 600; white-space: nowrap;
+  color: var(--tone); background: color-mix(in srgb, var(--tone) 13%, transparent);
+}
+/* A button in a row's own colour — a lead's next status, a review decision. */
+.toneButton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+  background: none; color: var(--tone); font-family: inherit; font-size: 0.76rem; font-weight: 600;
+  padding: 7px 14px; border-radius: 8px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+}
+.toneButton:hover:not(:disabled) { background: color-mix(in srgb, var(--tone) 8%, transparent); }
+.toneButton:disabled { opacity: 0.5; cursor: default; }
+.solid { background: var(--tone); color: #fff; border-color: transparent; }
+.solid:hover:not(:disabled) { background: color-mix(in srgb, var(--tone) 85%, #000); }
+
+/* ── States ── */
+.state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 44px 0; color: var(--text-muted); font-size: 0.85rem; }
+.stateRow { flex-direction: row; gap: 8px; }
+.banner { margin-bottom: 12px; }
+
+/* ── Cards used by the overview ── */
+.section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+.statHead { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.72rem; color: var(--text-muted); }
+.statHead svg { color: var(--tone); }
+.statValue { font-size: 1.6rem; font-weight: 800; color: var(--tone); }
+.statSub { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+.bar { margin-bottom: 10px; }
+.barHead { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+.barHead b { color: var(--text-main); font-weight: 600; }
+.track { height: 6px; border-radius: 4px; background: var(--bg-surface); overflow: hidden; }
+.fill { height: 100%; border-radius: 4px; background: var(--tone); transition: width 0.5s ease; }
