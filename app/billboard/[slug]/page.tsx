@@ -126,9 +126,8 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
   // there is no moment where the markup exists and the permission does not.
   const isStaff = (await getActor())?.kind === "staff";
 
-  // isStaff is part of the cache key, not something read inside the cached
-  // function: a reviewer's view of a listing still under review can never be
-  // handed to a visitor, because they are different entries.
+  // A staff view is read uncached, so a reviewer's view of a listing still
+  // under review can never be stored where a visitor would be handed it.
   const found = await getCachedBillboardBySlug(slug, isStaff);
   if (!found) notFound();
   const { billboard: b, phoneAvailable } = found;

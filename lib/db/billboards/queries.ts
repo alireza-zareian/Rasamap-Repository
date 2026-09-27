@@ -320,6 +320,15 @@ export async function getBillboardBySlug(
 }
 
 /**
+ * Whether any row — published or not — has this slug. One read of the unique
+ * index, and it is what stands between an address a visitor typed and the
+ * cache, which keeps an entry for every distinct slug it is asked about.
+ */
+export async function slugExists(slug: string): Promise<boolean> {
+  return (await prisma.billboard.count({ where: { slug } })) > 0;
+}
+
+/**
  * Suggestions for the foot of a media page.
  *
  * Three widening rings: the same city and the same kind of media first, then

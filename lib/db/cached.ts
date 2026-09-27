@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import {
   CATALOGUE_TAG,
@@ -10,6 +11,7 @@ import {
   toPublicBillboard,
   type BillboardFilterParams,
   getMapPins,
+  slugExists,
 } from "./billboards";
 import { getSiteStats } from "./stats";
 import { getCatalogueAnalytics } from "./analytics";
@@ -58,14 +60,24 @@ async function filteredCataloguePage(p: BillboardFilterParams): Promise<{ items:
 const cachedCataloguePage = unstable_cache(filteredCataloguePage, ["catalogue-page"], cacheOptions);
 
 /**
- * Whether a filter can be one of an unbounded number of values. Free search
- * text and a map centre can be; every other filter is an allowlisted value or a
- * bounded number. The cache is a directory of files with one entry per distinct
- * argument, so caching the open-ended ones let a loop over `?search=` fill the
- * disk — and a query nobody else will ever repeat gains nothing from it anyway.
+ * The first pages of a filter are what people open; page 150 of "billboards
+ * under 37 million" is what a crawler walking every combination opens. Every
+ * other filter is allowlisted, but the cross product of all of them — prices,
+ * pages, cities, sorts — was still a few billion possible entries, each a file.
+ * Past these pages, and on any price ceiling, the query runs uncached: about
+ * 2 ms against an indexed table.
+ */
+const CACHED_PAGES = 5;
+
+/**
+ * Whether a filter is one of too many values to cache. The cache is a directory
+ * of files with one entry per distinct argument, so caching free search text or
+ * a map centre let a loop over `?search=` fill the disk — and a query nobody
+ * else will ever repeat gains nothing from it anyway. Deep pages and price
+ * ceilings are the same case: see CACHED_PAGES.
  */
 function isOpenEnded(p: BillboardFilterParams): boolean {
-  return !!p.search || !!p.near;
+  return !!p.search || !!p.near || p.maxPrice !== undefined || (p.page ?? 1) > CACHED_PAGES;
 }
 
 export function getCachedFilteredBillboards(p: BillboardFilterParams) {
@@ -128,10 +140,6 @@ export async function getCachedCatalogueAnalytics(city?: string) {
 /**
  * One media item by slug, for its own page.
  *
- * `includeUnpublished` is part of the key rather than something this function
- * decides, so a reviewer's view of a listing still under review can never be
- * served to a visitor: the two are different entries.
- *
  * Whether a contact number exists comes back alongside the record, because the
  * number itself is dropped before the record leaves here. The page needs to
  * know whether to offer the button, and asking the database again for a boolean
@@ -139,21 +147,34 @@ export async function getCachedCatalogueAnalytics(city?: string) {
  * number is handed out only by POST /api/billboards/[slug]/contact, to a
  * signed-in caller, as a lead (§23).
  */
-export const getCachedBillboardBySlug = unstable_cache(
-  async (
-    slug: string,
-    includeUnpublished: boolean,
-  ): Promise<{ billboard: Billboard; phoneAvailable: boolean } | null> => {
-    const row = await getBillboardBySlug(slug, { includeUnpublished });
-    if (!row) return null;
-    return {
-      billboard: toPublicBillboard(row),
-      phoneAvailable: !!(row.phone && row.phone !== "—" && row.phone.trim()),
-    };
-  },
-  ["billboard-by-slug"],
-  cacheOptions,
-);
+type MediaPage = { billboard: Billboard; phoneAvailable: boolean } | null;
+
+async function mediaPage(slug: string, includeUnpublished: boolean): Promise<MediaPage> {
+  const row = await getBillboardBySlug(slug, { includeUnpublished });
+  if (!row) return null;
+  return {
+    billboard: toPublicBillboard(row),
+    phoneAvailable: !!(row.phone && row.phone !== "—" && row.phone.trim()),
+  };
+}
+
+const cachedMediaPage = unstable_cache(mediaPage, ["billboard-by-slug"], cacheOptions);
+
+/**
+ * Only a slug that exists reaches the cache. The address is whatever the
+ * visitor typed, and the cache stores its answer even when that answer is
+ * "nothing": forty requests for made-up slugs wrote forty files (measured
+ * against npm run demo), with no limit on how many more. A staff preview is not
+ * cached at all — it is rare, and it must never share an entry with the public.
+ *
+ * React's cache() lets the page and its generateMetadata share one existence
+ * check per request.
+ */
+export const getCachedBillboardBySlug = cache(async (slug: string, includeUnpublished: boolean): Promise<MediaPage> => {
+  if (includeUnpublished) return mediaPage(slug, true);
+  if (!(await slugExists(slug))) return null;
+  return cachedMediaPage(slug, false);
+});
 
 /**
  * The suggestions at the foot of a media page.
