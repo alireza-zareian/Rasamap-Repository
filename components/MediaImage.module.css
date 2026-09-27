@@ -1,0 +1,20 @@
+/* The stand-in for a missing photo: the media type's icon on its own colour.
+   Each type sets three colours; the rules below only read them. */
+.placeholder {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--grad);
+  --grad: linear-gradient(135deg, #1a2640 0%, #0d1520 100%);
+  --ring: rgba(148, 163, 184, 0.25);
+  --glow: rgba(148, 163, 184, 0.6);
+}
+.billboard { --grad: linear-gradient(135deg, #2d1b69 0%, #11093a 100%); --ring: rgba(129, 140, 248, 0.3); --glow: rgba(129, 140, 248, 0.7); }
+.digital   { --grad: linear-gradient(135deg, #0c3d52 0%, #041520 100%); --ring: rgba(56, 189, 248, 0.3);  --glow: rgba(56, 189, 248, 0.7); }
+.bridge    { --grad: linear-gradient(135deg, #4a1535 0%, #1a0514 100%); --ring: rgba(244, 114, 182, 0.3); --glow: rgba(244, 114, 182, 0.7); }
+.station   { --grad: linear-gradient(135deg, #4a2b08 0%, #1a0e02 100%); --ring: rgba(251, 191, 36, 0.3);  --glow: rgba(251, 191, 36, 0.7); }
+.vehicle   { --grad: linear-gradient(135deg, #0d3d1f 0%, #04140b 100%); --ring: rgba(74, 222, 128, 0.3);  --glow: rgba(74, 222, 128, 0.7); }
+
+.hatch { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.07; }
+.mark { position: relative; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; }
+.ring { position: absolute; inset: -8px; border-radius: 50%; background: var(--ring); box-shadow: 0 0 24px 6px var(--ring); }
+.icon { position: relative; display: flex; filter: drop-shadow(0 0 12px var(--glow)); }
+.photo { object-fit: cover; }
