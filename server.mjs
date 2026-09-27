@@ -28,9 +28,25 @@ const handle = app.getRequestHandler();
 
 await app.prepare();
 
-createServer((req, res) => {
+const server = createServer((req, res) => {
   req.headers["x-rasamap-peer"] = req.socket.remoteAddress ?? "";
   handle(req, res);
 }).listen(port, hostname, () => {
   console.log(`> Rasamap ready on http://${hostname ?? "localhost"}:${port}${hostname ? "" : " (and this machine's LAN address)"}`);
 });
+
+// A stop — systemd restarting for a deploy, Ctrl+C at the demo — used to end
+// the process at once, and every request in flight with it: a visitor's form
+// post or a photo upload half-received got a reset connection. Now the server
+// stops taking connections, lets the requests it has finish, and exits; a
+// request that is still running after ten seconds is not waited for.
+for (const signal of ["SIGTERM", "SIGINT"]) {
+  process.once(signal, () => {
+    server.close(() => process.exit(0));
+    // A kept-alive connection that finishes its request after this point goes
+    // idle and would hold close() open until the deadline, so keep sweeping.
+    setInterval(() => server.closeIdleConnections(), 100).unref();
+    server.closeIdleConnections();
+    setTimeout(() => process.exit(0), 10_000).unref();
+  });
+}
