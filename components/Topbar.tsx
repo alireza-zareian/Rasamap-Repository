@@ -5,9 +5,7 @@ import { useTheme } from "@/lib/client/theme";
 import { useCurrentUser } from "@/lib/client/use-current-user";
 import { Map, BarChart2, Scale, Sun, Moon, User, LogOut } from "lucide-react";
 
-interface Props { activeTab?: string; onTabChange?: (t: string) => void; onAddListing?: () => void; }
-
-export default function Topbar({ }: Props) {
+export default function Topbar() {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
   const dark = theme === "dark";

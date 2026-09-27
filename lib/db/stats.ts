@@ -73,14 +73,10 @@ export async function getSiteStats(): Promise<SiteStats> {
 /**
  * The admin dashboard's counters.
  *
- * They read the columns — and only the columns — they need.
- *
- * This used to call getAllBillboards(), which selects every column of every
- * row. The counters need eight of them; the other twenty include `traffic`,
- * `features`, `nearbyLandmarks`, `allImages` and `description`, so the endpoint
- * was decoding several megabytes of JSON for 3,536 rows and then building 3,536
- * full objects, to end up reporting a handful of integers. Measured on the real
- * table: 95 ms for the whole row against 8.3 ms for these eight.
+ * They read the columns — and only the columns — they need. The other twenty
+ * include `traffic`, `features`, `nearbyLandmarks`, `allImages` and
+ * `description`, several megabytes of JSON across the table; measured on the
+ * real table, 95 ms for the whole row against 8.3 ms for these eight.
  *
  * It stays a row read rather than a set of GROUP BYs because one of the figures
  * — the ~50 m grid that estimates how many boards sit on top of each other —
@@ -99,11 +95,9 @@ async function getAdminStatsRows() {
       lat: true, lng: true, images: true,
       sourceRecord: { select: { scrapedAt: true } },
     },
-    // The same order getAllBillboards() used. Nothing here depends on it
-    // arithmetically — but `bySource`, `byCity` and `byType` are built by
-    // walking these rows, so the order decides the order of the keys, and the
-    // panel renders those lists in the order it receives them. Dropping the
-    // sort would have quietly reshuffled the admin dashboard.
+    // Nothing here depends on the order arithmetically — but `bySource`,
+    // `byCity` and `byType` are built by walking these rows, so it decides the
+    // order of their keys, which the panel renders as it receives them.
     orderBy: [{ hasImages: "desc" }, { id: "asc" }],
   });
 }

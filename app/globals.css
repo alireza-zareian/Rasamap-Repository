@@ -275,7 +275,6 @@ input[type=range] { accent-color: var(--accent); }
 [data-theme="light"] [style*="--bg-card"] {
   box-shadow: 0 2px 16px rgba(30,70,180,0.08), 0 1px 4px rgba(30,70,180,0.06);
 }
-[data-theme="light"] .leaflet-container { background: #e8eef8 !important; }
 
 /* ── Smooth theme transition — targeted only, never on * (kills scroll perf) ── */
 button, a, input, select, label,

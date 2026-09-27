@@ -152,8 +152,8 @@ export async function proxy(req: NextRequest) {
   // which is what this did — tells a customer their session failed and leaves
   // them retyping a password that was never the problem.
   if (isAdminPage || isAdminApi) {
-    const isAdminRole = session === "staff";
-    if (!isAdminRole) {
+    const isStaff = session === "staff";
+    if (!isStaff) {
       if (isAdminApi) {
         return session
           ? NextResponse.json({ error: "دسترسی کافی ندارید", code: "FORBIDDEN" }, { status: 403 })

@@ -31,7 +31,6 @@ export type BillboardType = "billboard" | "digital" | "bridge" | "station" | "ve
 export type Availability = "available" | "busy" | "reserved" | "inactive" | "unknown";
 export type Moderation = "pending" | "awaiting_payment" | "needs_revision" | "rejected" | "approved" | "suspended";
 export type ListingPlan = "free" | "featured";
-export type SortOption = "price_asc" | "price_desc" | "traffic_desc" | "area_desc";
 
 export interface TrafficData {
   daily: number;          // vehicles/day
