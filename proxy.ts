@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth/session";
+import { sessionHint } from "@/lib/auth/session";
 
 const ADMIN_PAGE_PATTERN = /^\/admin(\/|$)/;
 /** Exempt from the bot-UA filter — see the note at the top of proxy(). */
@@ -139,7 +139,11 @@ export async function proxy(req: NextRequest) {
   if (pathname === LOGIN_PATH || pathname === "/api/admin/auth/login") return adminHeaders(NextResponse.next());
   if (pathname.startsWith("/api/auth/")) return NextResponse.next();
 
-  const session = await getSessionFromRequest(req);
+  // Which kind of account the cookie claims — routing only. This is Next's
+  // "optimistic check": no database read on a path every request takes. The
+  // session itself is resolved by the page (requireStaff, the dashboard) or by
+  // defineRoute, which is where access is actually decided.
+  const session = sessionHint(req);
 
   // ── Admin routes — require an admin role ──
   //
@@ -148,7 +152,7 @@ export async function proxy(req: NextRequest) {
   // which is what this did — tells a customer their session failed and leaves
   // them retyping a password that was never the problem.
   if (isAdminPage || isAdminApi) {
-    const isAdminRole = session?.kind === "staff";
+    const isAdminRole = session === "staff";
     if (!isAdminRole) {
       if (isAdminApi) {
         return session

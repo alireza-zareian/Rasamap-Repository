@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
-import { startSession } from "@/lib/auth/actor";
 import { adminApiRateLimit, adminLoginAttempt, resetAccountAttempts } from "@/lib/rate-limit";
 import { changeOwnStaffPassword } from "@/lib/db/staff";
 import { NewPassword } from "@/lib/domain/password";
@@ -25,17 +24,17 @@ export const PATCH = defineRoute(
       newPassword:     NewPassword,
     }),
   },
-  async ({ req, ip, actor, body, tooMany, audit }) => {
+  async ({ ip, actor, body, tooMany, audit }) => {
     // The current password is a credential check like a sign-in, so it spends
     // the same budget: a borrowed session must not become a way to guess the
     // password behind it at 600 tries a minute.
     const attempt = await adminLoginAttempt(actor.email, ip, null);
     if (!attempt.result.allowed) return tooMany(attempt.result);
 
-    const account = await changeOwnStaffPassword(actor, body.currentPassword, body.newPassword);
+    await changeOwnStaffPassword(actor, body.currentPassword, body.newPassword);
     await resetAccountAttempts("login", actor.email);
     await audit("admin_password_change", { severity: "warn" });
-    // Every session was signed out by the change; this device gets a new one.
-    return startSession(NextResponse.json({ ok: true }), { kind: "staff", ...account }, req);
+    // Every other session of the account was signed out; this one stays.
+    return NextResponse.json({ ok: true });
   },
 );

@@ -18,7 +18,8 @@ export interface CustomerActor {
   id:    number;
   name:  string;
   phone: string;
-  sessionVersion: number;
+  /** The session this request arrived on — kept when the password changes. */
+  sessionId: string;
 }
 
 export interface StaffActor {
@@ -27,7 +28,7 @@ export interface StaffActor {
   name:  string;
   email: string;
   role:  StaffRole;
-  sessionVersion: number;
+  sessionId: string;
 }
 
 export type Actor = CustomerActor | StaffActor;

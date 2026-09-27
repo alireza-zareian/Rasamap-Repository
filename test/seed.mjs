@@ -93,10 +93,10 @@ async function main() {
 
   // Staff accounts, one per role.
   //
-  // These used to be absent, and every admin test minted a JWT for an id that
+  // These used to be absent, and every admin test minted a session for an id that
   // had no row behind it. That passed for as long as nothing looked — but a
   // session is only as good as the account it names, and the route that checks
-  // it (getStaffSession) reads the row to see whether the account is still
+  // it (findSessionActor in lib/db/sessions.ts) reads the row to see whether the account is still
   // active and still holds the role the token claims. A fabricated session is
   // therefore not a session any more, and rightly so: one could never have
   // existed in production, where the only way to hold a staff token is to have

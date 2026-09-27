@@ -1,36 +1,9 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
-import { isClientIpTrusted } from "@/lib/auth/client-ip";
-import { startSession } from "@/lib/auth/actor";
-import { knownDevice, rememberDevice } from "@/lib/auth/device";
-import { adminLoginAttempt, userLoginAttempt, resetAccountAttempts } from "@/lib/rate-limit";
-import { verifyStaffCredentials } from "@/lib/db/staff";
-import { verifyCustomerCredentials } from "@/lib/db/customers";
-import { auditLog } from "@/lib/audit";
+import { SIGN_IN_DENIED, signIn, signInAttempt } from "@/lib/auth/sign-in";
 
-/**
- * One sign-in form, two kinds of account.
- *
- * Customers register with a mobile number and the team with an email address,
- * so the credential's own shape says which table to look in — there is no
- * guessing, and no probing one store after the other. That is what makes a
- * single form safe here: an email can never match a `users` row and a phone can
- * never match an `admins` one, so nothing about the failure reveals which store
- * was consulted. Both answers are the same sentence, and both cost the same
- * bcrypt comparison.
- *
- * The alternative — leaving staff to a separate page — is what the site had,
- * and it meant an administrator browsing the public catalogue was a stranger to
- * it: unable to answer a review, with no way in but a URL they had to remember.
- */
-
-// Every refusal says exactly this, whichever store was consulted and whatever
-// went wrong — a different wording for "no such account" would be an oracle.
-const DENIED = "شماره/ایمیل یا رمز عبور اشتباه است";
-
-const PHONE = /^09[0-9]{9}$/;
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// POST /api/auth/login — one sign-in form for customers (mobile number) and
+// staff (email). See lib/auth/sign-in.ts for why one form is safe.
 
 // The identifier is accepted under its older names too, so a client from
 // before the shared form keeps working; `identifier` is what the form sends now.
@@ -48,58 +21,9 @@ export const POST = defineRoute(
   {
     name: "auth/login",
     access: "public",
-    // One budget per account, whichever form it is attacked through. A staff
-    // email is charged to the same budget as /api/admin/auth/login; when the
-    // two forms kept separate counters, an administrator's password took
-    // fifteen guesses per window instead of five.
-    rateLimit: {
-      afterBody: async (b, ip, req) => {
-        const device = await knownDevice(req, b.identifier);
-        return EMAIL.test(b.identifier)
-          ? adminLoginAttempt(b.identifier, ip, device)
-          : userLoginAttempt(b.identifier, ip, device);
-      },
-    },
+    rateLimit: { afterBody: (b, ip, req) => signInAttempt(b.identifier, ip, req) },
     body: LoginSchema,
-    messages: { invalidBody: DENIED },
+    messages: { invalidBody: SIGN_IN_DENIED },
   },
-  async ({ req, ip, userAgent, body }) => {
-    const { identifier, password } = body;
-
-    if (EMAIL.test(identifier)) {
-      const staff = await verifyStaffCredentials(identifier.toLowerCase(), password);
-      if (!staff) {
-        auditLog("login_failure", "warn", {
-          ip,
-          userAgent: userAgent ?? undefined,
-          details: { email: identifier, via: "public form", ipTrusted: isClientIpTrusted(req) },
-        });
-        return NextResponse.json({ error: DENIED }, { status: 401 });
-      }
-
-      await resetAccountAttempts("login", identifier, await knownDevice(req, identifier));
-      auditLog("login_success", "info", {
-        userId: `staff:${staff.id}`, userEmail: staff.email, ip,
-        userAgent: userAgent ?? undefined,
-        details: { via: "public form" },
-      });
-      const res = NextResponse.json({
-        ok: true, user: { id: String(staff.id), name: staff.name, role: staff.role, isStaff: true },
-      });
-      await rememberDevice(res, req, identifier);
-      return startSession(res, { kind: "staff", ...staff }, req);
-    }
-
-    if (!PHONE.test(identifier)) return NextResponse.json({ error: DENIED }, { status: 400 });
-
-    const customer = await verifyCustomerCredentials(identifier, password);
-    if (!customer) return NextResponse.json({ error: DENIED }, { status: 401 });
-
-    await resetAccountAttempts("user_login", identifier, await knownDevice(req, identifier));
-    const res = NextResponse.json({
-      ok: true, user: { id: customer.id, name: customer.name, phone: customer.phone, isStaff: false },
-    });
-    await rememberDevice(res, req, identifier);
-    return startSession(res, { kind: "customer", ...customer }, req);
-  },
+  async ({ req, ip, userAgent, body }) => signIn(req, { ip, userAgent }, body.identifier, body.password),
 );

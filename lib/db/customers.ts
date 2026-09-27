@@ -5,6 +5,7 @@ import { hashPassword, passwordMatches } from "@/lib/auth/passwords";
 import { conflict, forbidden, invalid, isUniqueViolation, notFound } from "@/lib/domain/errors";
 import { hasRole } from "@/lib/domain/roles";
 import { otpErrorMessage, verifyOtp } from "./otp-codes";
+import { endSessionsOf } from "./sessions";
 import type { CustomerActor, StaffActor } from "@/lib/domain/actor";
 
 /**
@@ -19,20 +20,9 @@ import type { CustomerActor, StaffActor } from "@/lib/domain/actor";
 const PHONE_TAKEN = "این شماره قبلاً ثبت شده است";
 
 /** A customer as a session sees them. The hash is never selected. */
-export interface CustomerAccount { id: number; name: string; phone: string; sessionVersion: number }
+export interface CustomerAccount { id: number; name: string; phone: string }
 
-const ACCOUNT_FIELDS = { id: true, name: true, phone: true, sessionVersion: true } as const;
-
-/** One customer, for resolving a session — see resolveActor. */
-export async function findCustomer(id: number): Promise<CustomerAccount | null> {
-  return prisma.user.findUnique({ where: { id }, select: ACCOUNT_FIELDS });
-}
-
-/**
- * Every session this customer holds is signed out by raising their
- * sessionVersion; this is the write that goes with a new password.
- */
-const SIGN_OUT_EVERYWHERE = { sessionVersion: { increment: 1 } } as const;
+const ACCOUNT_FIELDS = { id: true, name: true, phone: true } as const;
 
 export async function isPhoneRegistered(phone: string): Promise<boolean> {
   return (await prisma.user.count({ where: { phone } })) > 0;
@@ -46,7 +36,7 @@ export async function isPhoneRegistered(phone: string): Promise<boolean> {
 export async function verifyCustomerCredentials(phone: string, password: string): Promise<CustomerAccount | null> {
   const user = await prisma.user.findUnique({ where: { phone } });
   if (!(await passwordMatches(password, user?.passwordHash))) return null;
-  return { id: user!.id, name: user!.name, phone: user!.phone, sessionVersion: user!.sessionVersion };
+  return { id: user!.id, name: user!.name, phone: user!.phone };
 }
 
 /**
@@ -77,7 +67,7 @@ export async function registerCustomer(input: {
 
 /**
  * A customer changes their own name and/or password. A new password signs out
- * every other session; the caller re-issues this one from the returned account.
+ * every other session, in the same transaction; this one stays.
  */
 export async function updateOwnProfile(
   self: CustomerActor,
@@ -90,13 +80,15 @@ export async function updateOwnProfile(
     throw invalid("رمز فعلی اشتباه است");
   }
 
-  return prisma.user.update({
-    where: { id: self.id },
-    data: {
-      ...(patch.name ? { name: patch.name } : {}),
-      ...(patch.newPassword ? { passwordHash: await hashPassword(patch.newPassword), ...SIGN_OUT_EVERYWHERE } : {}),
-    },
-    select: ACCOUNT_FIELDS,
+  const passwordHash = patch.newPassword ? await hashPassword(patch.newPassword) : undefined;
+  return prisma.$transaction(async tx => {
+    const account = await tx.user.update({
+      where: { id: self.id },
+      data: { ...(patch.name ? { name: patch.name } : {}), ...(passwordHash ? { passwordHash } : {}) },
+      select: ACCOUNT_FIELDS,
+    });
+    if (passwordHash) await endSessionsOf(self, self.sessionId, tx);
+    return account;
   });
 }
 
@@ -115,9 +107,10 @@ export async function resetPasswordWithCode(phone: string, code: string, newPass
   // since vanished gets the same generic refusal as any other failure.
   if (!user) throw invalid("امکان تغییر رمز نیست");
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data:  { passwordHash: await hashPassword(newPassword), ...SIGN_OUT_EVERYWHERE },
+  const passwordHash = await hashPassword(newPassword);
+  await prisma.$transaction(async tx => {
+    await tx.user.update({ where: { id: user.id }, data: { passwordHash } });
+    await endSessionsOf({ kind: "customer", id: user.id }, undefined, tx);
   });
   return user.id;
 }
@@ -234,6 +227,10 @@ export async function setCustomerPassword(id: number, password?: string): Promis
   if (!exists) throw notFound("کاربر یافت نشد");
 
   const next = password ?? readablePassword();
-  await prisma.user.update({ where: { id }, data: { passwordHash: await hashPassword(next), ...SIGN_OUT_EVERYWHERE } });
+  const passwordHash = await hashPassword(next);
+  await prisma.$transaction(async tx => {
+    await tx.user.update({ where: { id }, data: { passwordHash } });
+    await endSessionsOf({ kind: "customer", id }, undefined, tx);
+  });
   return next;
 }

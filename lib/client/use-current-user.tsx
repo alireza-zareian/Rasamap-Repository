@@ -38,7 +38,7 @@ const Ctx = createContext<CurrentUserValue>({
  * ordinary visit spent three requests establishing one fact. Two on the
  * landing page, two on the catalogue.
  *
- * None of them were expensive — the session is a JWT and no query runs — but
+ * None of them were expensive — one primary-key read each — but
  * they are three round-trips a phone on a slow connection waits through, three
  * passes through proxy.ts, and three times the rate-limit accounting, to learn
  * something that cannot change between them.

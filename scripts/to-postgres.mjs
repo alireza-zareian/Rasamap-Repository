@@ -75,7 +75,8 @@ const TABLES = [
   "otpCode",
   "auditLog",
   "idempotencyKey",
-  "revokedSession",
+  // points at user and admin
+  "session",
 ];
 
 /** Prisma's @@map names — what the tables are actually called in PostgreSQL. */
@@ -91,7 +92,7 @@ const TABLE_NAMES = {
   otpCode: "otp_codes",
   auditLog: "audit_logs",
   idempotencyKey: "idempotency_keys",
-  revokedSession: "revoked_sessions",
+  session: "sessions",
 };
 
 /** Rows per insert — quick, and well under PostgreSQL's parameter ceiling. */

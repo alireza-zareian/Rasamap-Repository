@@ -1,7 +1,6 @@
 import "server-only";
 import { insertAuditRow } from "@/lib/db/audit-log";
 import { logger } from "@/lib/logger";
-import type { Actor } from "@/lib/auth/actor";
 
 /**
  * RASAMAP — Audit Log
@@ -101,10 +100,13 @@ export function getRecentAuditLogs(limit = 100): AuditEntry[] {
  * staff, `userId` for a customer — instead of every caller re-deriving both
  * from a session by hand.
  */
+/** Who did it, as far as the log needs to know — an Actor fits, and so does an account just signed in. */
+export type AuditActor = { kind: "customer"; id: number } | { kind: "staff"; id: number; email: string };
+
 export async function recordAudit(
   action: AuditAction,
   ctx: {
-    actor?:     Actor | null;
+    actor?:     AuditActor | null;
     ip?:        string | null;
     userAgent?: string | null;
     severity?:  AuditEntry["severity"];

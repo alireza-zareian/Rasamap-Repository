@@ -30,7 +30,7 @@ const env = {
   ADMIN_EMAIL: "admin@test.local",
   // No "$" here on purpose: passed through spawn env it would be run through
   // @next/env's variable expansion and mangled. The tests never bcrypt-verify
-  // against this value (they mint session JWTs directly).
+  // against this value (they open sessions in the store directly).
   ADMIN_PASSWORD_HASH: "test-admin-hash-not-verified-by-tests",
   ADMIN_NAME: "Test Admin",
   NESHAN_API_KEY: "test-key",

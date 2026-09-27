@@ -1,14 +1,11 @@
 // Shared helpers for the API test suite.
 // No test framework dependency — uses Node's built-in `node:test` + `fetch`.
 
-import { SignJWT } from "jose";
-import { createHmac, randomUUID } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
 export const BASE = process.env.TEST_BASE_URL || "http://localhost:3100";
-
-const SECRET = new TextEncoder().encode(process.env.AUTH_SECRET);
 
 // A browser-ish UA so proxy.ts / route bot-UA filters don't drop the request.
 const UA = "Mozilla/5.0 (rasamap-test-suite)";
@@ -28,36 +25,46 @@ export function uniqueIp() {
 }
 
 /**
- * The staff row each role's session belongs to, seeded by test/seed.mjs.
- *
- * A staff token is checked against its account now (getStaffSession), so a
- * session has to name a real one: the role in the token is only honoured while
- * the row still holds it. Defaulting the id per role keeps every existing call
- * of the form `mintSession({ role: "editor" })` pointing at an editor, rather
- * than at one shared id that would have to be a viewer, an editor and an admin
- * at the same time.
+ * The staff row each role's session belongs to, seeded by test/seed.mjs, so
+ * `mintSession({ role: "editor" })` names a real editor. A session is only as
+ * good as the account it names: the server reads the row on every request.
  */
 const STAFF_IDS = { viewer: "9001", editor: "9002", admin: "9003", super_admin: "9004" };
 
+let db;
+/** One client for the helpers that write fixtures straight into the store. */
+function store() {
+  db ??= new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL }) });
+  return db;
+}
+
 /**
- * Mint a valid session JWT signed with the same AUTH_SECRET the server uses, in
- * the claims format of lib/auth/session.ts. `role: "user"` means a customer
- * (whose `email` argument is their phone); any other role is a staff member.
+ * Open a session the way a sign-in does (lib/db/sessions.ts): a random token
+ * in the cookie, its SHA-256 as the row's id. `role: "user"` means a customer;
+ * any other role is a staff member. `signedInAt` backdates the sign-in, for the
+ * absolute-lifetime test; `idleLeftMs` sets how long until the idle limit.
  */
-export async function mintSession({ userId, email = "tester", name = "Tester", role = "user", ver = 0, authTime } = {}) {
+export async function mintSession({ userId, role = "user", signedInAt, idleLeftMs = 60 * 60 * 1000 } = {}) {
   userId ??= STAFF_IDS[role] ?? "1";
-  // `ver` must match the account's sessionVersion (0 for a seeded row) and
-  // `auth_time` is when the sign-in happened — see ClaimsSchema.
-  const common = { sub: String(userId), name, ver, auth_time: authTime ?? Math.floor(Date.now() / 1000) };
-  const claims = role === "user"
-    ? { kind: "customer", ...common, phone: email }
-    : { kind: "staff", ...common, email, role };
-  return new SignJWT(claims)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setJti(randomUUID())
-    .setExpirationTime("1h")
-    .sign(SECRET);
+  const kind = role === "user" ? "customer" : "staff";
+  const value = `${kind === "staff" ? "s" : "c"}.${randomBytes(32).toString("base64url")}`;
+  await store().session.create({
+    data: {
+      id: createHash("sha256").update(value).digest("hex"),
+      kind,
+      userId:  kind === "customer" ? Number(userId) : null,
+      adminId: kind === "staff" ? Number(userId) : null,
+      ...(signedInAt ? { createdAt: signedInAt } : {}),
+      expiresAt: new Date(Date.now() + idleLeftMs),
+    },
+  });
+  return value;
+}
+
+/** The idle limit of the session behind a cookie value, as the store has it. */
+export async function sessionExpiry(value) {
+  const row = await store().session.findUnique({ where: { id: createHash("sha256").update(value).digest("hex") } });
+  return row?.expiresAt ?? null;
 }
 
 /**
@@ -191,7 +198,7 @@ export async function freshCustomer() {
       const phone = randomPhone();
       try {
         const user = await prisma.user.create({ data: { name: "Fresh Customer", phone, passwordHash: "x" } });
-        return mintSession({ userId: String(user.id), role: "user", email: phone });
+        return mintSession({ userId: String(user.id), role: "user" });
       } catch (err) {
         if (err?.code !== "P2002") throw err; // a phone collision: draw another
       }

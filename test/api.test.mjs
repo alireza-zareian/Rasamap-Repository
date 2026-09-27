@@ -36,7 +36,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { BASE, api, mintSession, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows, registerUser, freshCustomer } from "./helpers.mjs";
+import { BASE, api, mintSession, sessionExpiry, tokenFromSetCookie, uniqueIp, randomPhone, pngDataUrl, fakeImageDataUrl, recoverOtpCode, countOtpRows, registerUser, freshCustomer } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
 
@@ -311,7 +311,7 @@ test("admin search finds a row by its slug", async () => {
 test("anyone signed in can reply to a review, and staff replies are badged", async () => {
   const author = await mintSession({ userId: "1", role: "user" });
   const other  = await mintSession({ userId: "2", role: "user" });
-  const staff  = await mintSession({ role: "admin", name: "پشتیبانی" });
+  const staff  = await mintSession({ role: "admin" });
 
   const review = await api("/api/reviews", {
     method: "POST", token: author,
@@ -409,7 +409,7 @@ test("a wrong phone and a wrong email are refused in exactly the same words", as
 });
 
 test("GET /api/auth/me answers for a staff session with isStaff", async () => {
-  const staff = await mintSession({ role: "editor", name: "ویرایشگر" });
+  const staff = await mintSession({ role: "editor" });
   const { status, json } = await api("/api/auth/me", { token: staff });
   assert.equal(status, 200);
   assert.equal(json.user.isStaff, true);
@@ -788,22 +788,44 @@ test("changing one's own password keeps this session and ends the others", async
     body: { currentPassword: "secret123", newPassword: "brandnew2" },
   });
   assert.equal(changed.status, 200, JSON.stringify(changed.json));
-  const renewed = tokenFromSetCookie(changed);
 
-  assert.equal((await api("/api/auth/me", { token: renewed })).status, 200);
+  assert.equal((await api("/api/auth/me", { token: self })).status, 200, "the browser that changed it stays in");
   assert.equal((await api("/api/auth/me", { token: other })).status, 401);
 });
 
-test("the sliding refresh stops once a sign-in is a week old", async () => {
-  const eightDaysAgo = Math.floor(Date.now() / 1000) - 8 * 24 * 60 * 60;
-  const token = await mintSession({ userId: "2", role: "user", authTime: eightDaysAgo });
-  // mintSession's token expires within the hour, which is inside the refresh window.
-  const res = await api("/api/auth/me", { token });
-  assert.equal(res.status, 200);
-  assert.equal(tokenFromSetCookie(res), null, "an old sign-in must not be renewed");
+test("a session ends a week after signing in, however busy it is", async () => {
+  const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+  const token = await mintSession({ userId: "2", role: "user", signedInAt: eightDaysAgo });
+  assert.equal((await api("/api/auth/me", { token })).status, 401, "an old sign-in must not be honoured");
+});
 
-  const fresh = await api("/api/auth/me", { token: await mintSession({ userId: "2", role: "user" }) });
-  assert.ok(tokenFromSetCookie(fresh), "a recent sign-in is still renewed");
+test("a session past its idle limit is refused, and one in use is extended", async () => {
+  const idle = await mintSession({ userId: "2", role: "user", idleLeftMs: -1000 });
+  assert.equal((await api("/api/auth/me", { token: idle })).status, 401);
+
+  const busy = await mintSession({ userId: "2", role: "user", idleLeftMs: 60 * 1000 });
+  const before = await sessionExpiry(busy);
+  assert.equal((await api("/api/auth/me", { token: busy })).status, 200);
+  const after = await sessionExpiry(busy);
+  assert.ok(after > before, "a request in the second half of the idle window must push it forward");
+});
+
+test("a session cookie whose kind prefix was changed opens nothing", async () => {
+  const customer = await mintSession({ userId: "1", role: "user" });
+  const forged = "s" + customer.slice(1);
+  assert.equal((await api("/api/admin/auth/me", { token: forged })).status, 401);
+  assert.equal((await api("/api/auth/me", { token: forged })).status, 401);
+});
+
+test("signing in and failing to sign in are both in the durable audit log", async () => {
+  const staff = await mintSession({ role: "admin" });
+  const email = `audit-probe-${Date.now()}@example.com`;
+  await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: email, password: "wrong-password" } });
+  const { json } = await api("/api/admin/audit", { token: staff });
+  assert.ok(
+    json.persisted.some(r => r.action === "login_failure" && r.details?.email === email),
+    "a failed sign-in must survive a restart, so it must be in audit_logs",
+  );
 });
 
 // ── Sign-up behind a phone code (card B7) ─────────────────────────
@@ -1235,17 +1257,15 @@ test("a staff member can change their own password, which ends their other sessi
 
   const changed = await api("/api/admin/auth/me", { method: "PATCH", token: self, body: { currentPassword: "first-pass-1", newPassword: "second-pass-2" } });
   assert.equal(changed.status, 200, JSON.stringify(changed.json));
-  const renewed = tokenFromSetCookie(changed);
 
-  assert.equal((await api("/api/admin/auth/me", { token: renewed })).status, 200, "this device stays in");
+  assert.equal((await api("/api/admin/auth/me", { token: self })).status, 200, "this device stays in");
   assert.equal((await api("/api/admin/auth/me", { token: other })).status, 401, "every other session ends");
   assert.equal((await signIn("second-pass-2")).status, 200);
 });
 
 test("a valid token for a deactivated admin is refused", async () => {
-  // The signature is genuine and the token has not expired. What changed is the
-  // account: `active` is false. Before getStaffSession nothing read the row
-  // again, so a revoked administrator kept working until the token ran out.
+  // The session is real and has not expired. What changed is the account:
+  // `active` is false, and every request reads the account with the session.
   const token = await mintSession({ role: "admin", userId: "9005" });
 
   assert.equal((await api("/api/admin/billboards", { token })).status, 401);

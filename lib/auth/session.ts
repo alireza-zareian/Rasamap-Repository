@@ -1,120 +1,34 @@
 /**
- * RASAMAP — Session Management
- * Uses signed JWT stored in an HttpOnly, SameSite=Lax cookie (Secure over
- * HTTPS — see isSecureRequest). Never expose raw tokens to client JS.
+ * RASAMAP — the session cookie.
+ *
+ * The cookie carries an opaque token; what it means is a row in `sessions`
+ * (lib/db/sessions.ts). This file only reads and writes the cookie. HttpOnly,
+ * SameSite=Lax, and Secure whenever the connection is HTTPS (isSecureRequest).
  */
-import { randomUUID } from "node:crypto";
-import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
-import { z } from "zod";
-import { STAFF_ROLES } from "@/lib/domain/roles";
+import { SESSION_MAX_LIFETIME_MS } from "@/lib/domain/session";
 
 const SESSION_COOKIE = "rasamap_session";
-const MAX_AGE_SECS  = 60 * 60 * 8; // 8 hours
 
-/**
- * How long one sign-in can be kept alive by the sliding refresh in
- * GET /api/auth/me. Without a ceiling a token refreshed every few hours never
- * ended, so a copied cookie was a permanent account. Past this the token is
- * left to expire and the person signs in again.
- */
-export const MAX_SESSION_LIFETIME_SECS = 60 * 60 * 24 * 7; // 7 days
+/** The browser keeps the cookie for the absolute lifetime; the row decides sooner. */
+const COOKIE_MAX_AGE_SECS = Math.floor(SESSION_MAX_LIFETIME_MS / 1000);
 
-/**
- * What a session token asserts, as two kinds of account rather than one.
- *
- * Customers and staff live in different tables (`users`, `admins`) with
- * overlapping ids, so "user 7" means nothing until you know which table. The
- * token used to carry a bare `userId` plus a `role` in which "user" meant
- * customer and anything else meant staff — so every caller had to decode the
- * table from the role, and one that forgot wrote a staff id into a customer
- * foreign key (a staff session could submit a listing that was then attributed
- * to whichever customer happened to share the number). `kind` makes the table
- * part of the identity, and the type system makes every caller say which one
- * it wants.
- */
-// `ver` is the account's sessionVersion when the token was issued; a token
-// whose `ver` no longer matches the row is signed out (see resolveActor).
-// `auth_time` is when the person actually signed in, carried unchanged through
-// every refresh so MAX_SESSION_LIFETIME_SECS can be measured from it.
-const Common = {
-  sub:       z.string().regex(/^\d+$/),
-  name:      z.string(),
-  ver:       z.number().int().nonnegative(),
-  auth_time: z.number().int().positive(),
-};
-
-const ClaimsSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind:  z.literal("customer"),
-    ...Common,
-    phone: z.string(),
-  }),
-  z.object({
-    kind:  z.literal("staff"),
-    ...Common,
-    email: z.string(),
-    role:  z.enum(STAFF_ROLES),
-  }),
-]);
-
-export type SessionClaims = z.infer<typeof ClaimsSchema>;
-
-/**
- * A verified token: its claims, the expiry the sliding refresh reads, and its
- * own id — what signing out revokes (lib/db/sessions.ts).
- */
-export type Session = SessionClaims & { exp: number; jti: string };
-
-function getSecret(): Uint8Array {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error("AUTH_SECRET env var must be at least 32 characters");
-  }
-  return new TextEncoder().encode(secret);
-}
-
-export async function createSession(claims: SessionClaims): Promise<string> {
-  return new SignJWT({ ...claims })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setJti(randomUUID())
-    .setExpirationTime(`${MAX_AGE_SECS}s`)
-    .sign(getSecret());
+/** This request's session token, from a Server Component or a Route Handler. */
+export async function readSessionToken(): Promise<string | null> {
+  return (await cookies()).get(SESSION_COOKIE)?.value ?? null;
 }
 
 /**
- * A token is trusted only if its signature holds *and* its claims have the
- * shape above. The signature proves we issued it; the shape check is what
- * turns a token minted before this format — or by a future version with a
- * field renamed — into "signed out" instead of an object whose missing field
- * surfaces three calls later as `NaN`.
+ * Which kind of account the cookie claims to be, for proxy.ts's routing only —
+ * whether to send a visitor to the sign-in page or answer 403. It is read from
+ * the token's prefix without a database lookup (Next's guidance: proxy does
+ * optimistic checks, and runs on every request including prefetches), so it
+ * proves nothing. Every page and route resolves the real session itself.
  */
-export async function verifySession(token: string): Promise<Session | null> {
-  try {
-    const { payload } = await jwtVerify(token, getSecret(), { algorithms: ["HS256"] });
-    const claims = ClaimsSchema.safeParse(payload);
-    if (!claims.success || typeof payload.exp !== "number" || typeof payload.jti !== "string") return null;
-    return { ...claims.data, exp: payload.exp, jti: payload.jti };
-  } catch {
-    return null;
-  }
-}
-
-/** Read session from server-side cookies (Server Components / Route Handlers) */
-export async function getSession(): Promise<Session | null> {
-  const store = await cookies();
-  const token = store.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
-  return verifySession(token);
-}
-
-/** Read session from an incoming NextRequest (proxy.ts) */
-export async function getSessionFromRequest(req: NextRequest): Promise<Session | null> {
-  const token = req.cookies.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
-  return verifySession(token);
+export function sessionHint(req: NextRequest): "customer" | "staff" | null {
+  const value = req.cookies.get(SESSION_COOKIE)?.value ?? "";
+  return value.startsWith("s.") ? "staff" : value.startsWith("c.") ? "customer" : null;
 }
 
 /**
@@ -123,15 +37,10 @@ export async function getSessionFromRequest(req: NextRequest): Promise<Session |
  * `Secure` used to be attached whenever NODE_ENV was "production" — which
  * `next start` sets, including for `npm run demo` on the laptop. A browser
  * refuses to store a `Secure` cookie received over plain HTTP, so a phone
- * opening the demo at `http://<lan-ip>` logged in successfully and was
- * immediately logged out again: the cookie was thrown away on arrival. It went
- * unnoticed because Chrome treats `http://localhost` as a trustworthy origin
- * and keeps the cookie there.
- *
- * The flag belongs on the property it actually describes — the transport — so
- * it is set when the connection is HTTPS (directly, or as reported by the
- * terminating proxy) and omitted when it is not, where it would only prevent
- * the cookie from being stored without protecting anything.
+ * opening the demo at `http://<lan-ip>` signed in and was signed straight out
+ * again. Chrome treats `http://localhost` as trustworthy and keeps the cookie
+ * there, which is why it went unnoticed. The flag follows the transport:
+ * HTTPS directly, or as the terminating proxy reports it.
  */
 export function isSecureRequest(req?: NextRequest): boolean {
   if (!req) return process.env.NODE_ENV === "production";
@@ -140,7 +49,7 @@ export function isSecureRequest(req?: NextRequest): boolean {
   return req.nextUrl.protocol === "https:";
 }
 
-function cookieFlags(value: string, maxAge: number, req?: NextRequest): string {
+function cookieHeader(value: string, maxAge: number, req?: NextRequest): string {
   return [
     `${SESSION_COOKIE}=${value}`,
     `Max-Age=${maxAge}`,
@@ -156,12 +65,10 @@ function cookieFlags(value: string, maxAge: number, req?: NextRequest): string {
   ].join("; ");
 }
 
-/** Write session cookie — called after successful login */
-export function buildSessionCookieHeader(token: string, req?: NextRequest): string {
-  return cookieFlags(token, MAX_AGE_SECS, req);
+export function sessionCookieHeader(value: string, req?: NextRequest): string {
+  return cookieHeader(value, COOKIE_MAX_AGE_SECS, req);
 }
 
-/** Expire the session cookie (secure logout) */
-export function buildLogoutCookieHeader(req?: NextRequest): string {
-  return cookieFlags("", 0, req);
+export function clearedSessionCookieHeader(req?: NextRequest): string {
+  return cookieHeader("", 0, req);
 }
