@@ -102,6 +102,7 @@ step("seed fixtures");
 execSync("node test/seed.mjs", { stdio: "inherit", env });
 
 step("build the app (production mode)");
+execSync("node scripts/clean-build-types.mjs", { stdio: "inherit" });
 execSync("npx next build", { stdio: "inherit", env });
 
 step(`start next on :${PORT}`);
