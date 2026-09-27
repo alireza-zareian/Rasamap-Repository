@@ -39,14 +39,17 @@ enum Availability {
 
 /// Where a listing is in review. Only `approved` is ever publicly visible.
 /// Crawled and admin-created rows start approved; a customer's submission
-/// starts at `pending` (or `awaiting_payment` on a paid plan) and moves only
-/// through POST /api/admin/listings/[id]/decision.
+/// starts at `pending` (or `awaiting_payment` on a paid plan) and moves
+/// through POST /api/admin/listings/[id]/decision. `suspended` is a published
+/// row that staff took down (POST /api/admin/billboards/[id]/visibility), and
+/// only that route puts it back.
 enum Moderation {
   pending
   awaiting_payment
   needs_revision
   rejected
   approved
+  suspended
 }
 
 enum ListingPlan {

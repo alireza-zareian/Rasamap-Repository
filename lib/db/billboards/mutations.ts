@@ -179,7 +179,7 @@ export async function deleteBillboard(id: number): Promise<{ slug: string; name:
     },
   });
   if (!row) throw notFound("بیلبورد یافت نشد");
-  if (row._count.reviews > 0) throw conflict("نمی‌توان رسانه‌ای را که نظر ثبت‌شده دارد حذف کرد");
+  if (row._count.reviews > 0) throw conflict("این رسانه نظر ثبت‌شده دارد و حذف نمی‌شود؛ به‌جای حذف، انتشارش را متوقف کنید");
 
   const crawled = row.source !== null && row.source !== "listing";
   await prisma.$transaction(async tx => {
@@ -195,6 +195,35 @@ export async function deleteBillboard(id: number): Promise<{ slug: string; name:
   await discardUploads([...((row.images as string[] | null) ?? []), ...((row.allImages as string[] | null) ?? [])]);
   revalidateCatalogue();
   return { slug: row.slug, name: row.name, deletedLeads: row._count.contactRequests };
+}
+
+/**
+ * Take a published media item down, or put a taken-down one back.
+ *
+ * Before this there was no way to do either: review state moved only through
+ * the listing decision, which refuses an approved row, and deleting was refused
+ * once a row had a review. An abusive listing with one review stayed public for
+ * good. Taking it down keeps the row, its reviews and its leads; the public
+ * reads simply stop seeing it (see `published`).
+ *
+ * Conditional on the state it expects, like every review transition, so a
+ * double click cannot flip it twice. `note` is written where the submitter's
+ * dashboard shows feedback.
+ */
+export async function setBillboardVisibility(id: number, visible: boolean, note: string | null): Promise<{ name: string }> {
+  const [from, to] = visible ? ["suspended", "approved"] as const : ["approved", "suspended"] as const;
+  const { count } = await prisma.billboard.updateMany({
+    where: { id, moderation: from },
+    data:  { moderation: to, ...(visible ? {} : { reviewNote: note }) },
+  });
+  if (count === 0) {
+    const row = await prisma.billboard.findUnique({ where: { id }, select: { id: true } });
+    if (!row) throw notFound("بیلبورد یافت نشد");
+    throw conflict(visible ? "این رسانه متوقف نشده است" : "فقط رسانهٔ منتشرشده را می‌توان متوقف کرد");
+  }
+  revalidateCatalogue();
+  const row = await prisma.billboard.findUniqueOrThrow({ where: { id }, select: { name: true } });
+  return row;
 }
 
 /**

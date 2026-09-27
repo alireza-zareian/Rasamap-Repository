@@ -36,6 +36,10 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
   const [deleteTarget, setDeleteTarget] = useState<Billboard | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [visibilityTarget, setVisibilityTarget] = useState<Billboard | null>(null);
+  const [visibilityNote, setVisibilityNote] = useState("");
+  const [visibilityBusy, setVisibilityBusy] = useState(false);
+  const [visibilityError, setVisibilityError] = useState("");
   // Shown in place of "nothing found", which a failed load used to claim.
   const [loadError, setLoadError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -74,6 +78,25 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
       setDeleteTarget(null);
     } catch (err) { setDeleteError(errorMessage(err)); }
     setDeleting(false);
+  };
+
+  const handleVisibilityConfirm = async () => {
+    if (!visibilityTarget) return;
+    const visible = visibilityTarget.moderation === "suspended";
+    setVisibilityBusy(true); setVisibilityError("");
+    try {
+      const { moderation } = await fetchJson<{ moderation: Billboard["moderation"] }>(
+        `/api/admin/billboards/${visibilityTarget.id}/visibility`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ visible, ...(visibilityNote.trim() ? { note: visibilityNote.trim() } : {}) }),
+        },
+      );
+      setBillboards(prev => prev.map(b => b.id === visibilityTarget.id ? { ...b, moderation } : b));
+      setVisibilityTarget(null);
+    } catch (err) { setVisibilityError(errorMessage(err)); }
+    setVisibilityBusy(false);
   };
 
   const iS: React.CSSProperties = { background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontFamily: C.font, fontSize: "0.8rem", padding: "8px 12px", borderRadius: 8, outline: "none" };
@@ -137,6 +160,7 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
                         key={b.id} b={b}
                         onEdit={canEdit ? setEditTarget : () => deny("دسترسی ویرایش ندارید")}
                         onDelete={canManage ? row => { setDeleteError(""); setDeleteTarget(row); } : () => deny("دسترسی حذف ندارید")}
+                        onVisibility={canEdit ? row => { setVisibilityError(""); setVisibilityNote(""); setVisibilityTarget(row); } : () => deny("دسترسی تغییر وضعیت انتشار ندارید")}
                       />
                     ))
               }
@@ -167,6 +191,43 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
         />
       )}
       {imgTarget && <ImageManager billboard={imgTarget} onClose={() => setImgTarget(null)} />}
+
+      {visibilityTarget && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div role="dialog" aria-modal="true" aria-label="وضعیت انتشار" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, width: "min(440px, 94vw)", direction: "rtl", boxSizing: "border-box" }}>
+            <div style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 10 }}>
+              {visibilityTarget.moderation === "approved" ? "توقف انتشار رسانه" : "انتشار دوبارهٔ رسانه"}
+            </div>
+            <div style={{ fontSize: "0.82rem", color: C.muted, marginBottom: 12, lineHeight: 1.9 }}>
+              {visibilityTarget.moderation === "approved"
+                ? "رسانه از جستجو، نقشه و صفحهٔ عمومی حذف می‌شود؛ خودِ ردیف، نظرها و سرنخ‌هایش می‌مانند و هر وقت خواستید برمی‌گردد."
+                : "رسانه دوباره برای همهٔ بازدیدکنندگان نمایش داده می‌شود."}
+            </div>
+            <div style={{ background: C.surface, borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: "0.85rem", fontWeight: 600 }}>
+              <TypeIcon type={visibilityTarget.type} size={14} /> {visibilityTarget.name}
+            </div>
+            {visibilityTarget.moderation === "approved" && (
+              <>
+                <label htmlFor="visibility-note" style={{ display: "block", fontSize: "0.75rem", color: C.muted, marginBottom: 6 }}>دلیل (اختیاری — برای ثبت‌کنندهٔ آگهی نمایش داده می‌شود)</label>
+                <textarea id="visibility-note" value={visibilityNote} onChange={e => setVisibilityNote(e.target.value)} maxLength={1000} rows={3} style={{ ...iS, width: "100%", boxSizing: "border-box", resize: "vertical", marginBottom: 14 }} />
+              </>
+            )}
+            {visibilityError && (
+              <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#ef4444", marginBottom: 14 }}>
+                <AlertTriangle size={13} style={{ verticalAlign: "-2px" }} /> {visibilityError}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={handleVisibilityConfirm} disabled={visibilityBusy} style={{ flex: 1, background: C.accent, border: "none", color: "#fff", fontFamily: C.font, fontSize: "0.85rem", fontWeight: 700, padding: 11, borderRadius: 9, cursor: visibilityBusy ? "default" : "pointer", opacity: visibilityBusy ? 0.7 : 1 }}>
+                {visibilityBusy ? "در حال ثبت…" : "تأیید"}
+              </button>
+              <button onClick={() => setVisibilityTarget(null)} style={{ padding: "11px 20px", background: "none", border: `1px solid ${C.border}`, color: C.muted, fontFamily: C.font, borderRadius: 9, cursor: "pointer" }}>
+                انصراف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {deleteTarget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>

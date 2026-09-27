@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCurrentUser } from "@/lib/client/use-current-user";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
+import { hasRole, isStaffRole } from "@/lib/domain/roles";
 
 interface Reply {
   id: number;
@@ -106,12 +107,18 @@ export default function ReviewsSection({ billboardId }: Props) {
   // against — so it is narrowed here rather than at the source.
   const { user: currentUser } = useCurrentUser();
   const user = currentUser
-    ? { id: Number(currentUser.id), name: currentUser.name, isStaff: !!currentUser.isStaff }
+    ? {
+        id: Number(currentUser.id),
+        name: currentUser.name,
+        isStaff: !!currentUser.isStaff,
+        // An editor or above may remove any review; the server checks the same.
+        canModerate: !!currentUser.isStaff && isStaffRole(currentUser.role) && hasRole(currentUser.role, "editor"),
+      }
     : currentUser;   // null when signed out, undefined while still asking
 
   // One review per account per media (a unique index enforces it), so there is
   // at most one of these — it is what the edit and delete buttons act on.
-  const mine = user ? reviews.find(r => r.userId === user.id) ?? null : null;
+  const mine = user && !user.isStaff ? reviews.find(r => r.userId === user.id) ?? null : null;
 
   const startEdit = () => {
     if (!mine) return;
@@ -303,11 +310,13 @@ export default function ReviewsSection({ billboardId }: Props) {
                 </div>
               </div>
               <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.7 }}>{r.comment}</p>
-              {/* Actions: editing and deleting belong to the author; replying
-                  is open to anyone signed in. */}
+              {/* Actions: editing and deleting belong to the author, deleting
+                  also to an editor; replying is open to anyone signed in.
+                  Staff and customer ids come from different tables and
+                  overlap, so a staff member is never matched as an author. */}
               {user && (
                 <div style={{ display: "flex", gap: 8, marginTop: 10, paddingTop: 9, borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
-                  {r.userId === user.id && (
+                  {r.userId === user.id && !user.isStaff && (
                     <>
                       <button onClick={startEdit} disabled={deletingId === r.id} style={actionBtn("var(--accent)", "var(--border)")}>
                         <Pencil size={11} /> ویرایش
@@ -316,6 +325,11 @@ export default function ReviewsSection({ billboardId }: Props) {
                         <Trash2 size={11} /> {deletingId === r.id ? "در حال حذف…" : "حذف"}
                       </button>
                     </>
+                  )}
+                  {user.canModerate && (
+                    <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} style={actionBtn("#ef4444", "rgba(239,68,68,0.35)")}>
+                      <Trash2 size={11} /> {deletingId === r.id ? "در حال حذف…" : "حذف (مدیریت)"}
+                    </button>
                   )}
                   <button onClick={() => openReply(r.id)} style={actionBtn("var(--text-muted)", "var(--border)")}>
                     <CornerDownLeft size={11} /> پاسخ
@@ -338,7 +352,7 @@ export default function ReviewsSection({ billboardId }: Props) {
                         <span style={{ fontSize: "0.64rem", color: "var(--text-muted)", marginRight: "auto" }}>
                           {new Date(rp.createdAt).toLocaleDateString("fa-IR")}
                         </span>
-                        {user && (user.isStaff || (rp.userId !== null && rp.userId === user.id)) && (
+                        {user && (user.canModerate || (!user.isStaff && rp.userId !== null && rp.userId === user.id)) && (
                           <button onClick={() => deleteReply(r.id, rp.id)} disabled={busyReplyId === rp.id}
                             style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", fontSize: "0.64rem", gap: 3 }}>
                             <Trash2 size={10} /> {busyReplyId === rp.id ? "…" : "حذف"}

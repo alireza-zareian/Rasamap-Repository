@@ -29,11 +29,12 @@ export type AuditAction =
   | "billboard_update"
   | "billboard_images_update"
   | "billboard_delete"
+  | "billboard_suspended"
+  | "billboard_restored"
   | "listing_approved"
   | "listing_rejected"
   | "listing_revision_requested"
   | "listing_resubmitted"
-  | "admin_access"
   | "admin_user_create"
   | "admin_user_update"
   | "customer_update"
@@ -43,7 +44,7 @@ export type AuditAction =
   | "password_reset_self"
   | "otp_sent"
   | "rate_limit_hit"
-  | "auth_bypass_attempt";
+  | "review_delete";
 
 export interface AuditEntry {
   id:         string;

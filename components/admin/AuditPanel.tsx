@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
-import { C, AUDIT_ACTION } from "./constants";
+import { C, auditGloss } from "./constants";
 import { Badge } from "./Badge";
 import { ScrollText } from "lucide-react";
 import { faNum } from "@/lib/format";
@@ -75,7 +75,7 @@ export function AuditPanel() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {rows.map(row => {
-            const gloss = AUDIT_ACTION[row.action];
+            const gloss = auditGloss(row.action);
             return (
             <div key={String(row.id)} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 5, minWidth: 0, maxWidth: "100%" }}>

@@ -2301,3 +2301,83 @@ test("guard: the import graph has no cycle and nothing in lib/ imports app/ or c
   for (const file of deps.keys()) if (!state.has(file)) visit(file, [file]);
   assert.deepEqual(cycles, [], "the import graph must stay acyclic");
 });
+
+// ── Moderation after publication ────────────────────────────────
+// A published row used to have no way back: the decision route refuses an
+// approved listing, and delete refuses a row with reviews.
+
+test("staff can take a published media item down and put it back", async () => {
+  const editor = await mintSession({ role: "editor" });
+  const viewer = await mintSession({ role: "viewer" });
+  const customer = await mintSession({ userId: "1", role: "user" });
+  const path = "/api/admin/billboards/7/visibility";
+
+  assert.equal((await api(path, { method: "POST", token: customer, body: { visible: false } })).status, 403);
+  assert.equal((await api(path, { method: "POST", token: viewer, body: { visible: false } })).status, 403);
+
+  const down = await api(path, { method: "POST", token: editor, body: { visible: false, note: "محتوای نامناسب" } });
+  assert.equal(down.status, 200);
+  assert.equal(down.json.moderation, "suspended");
+  assert.equal((await api("/api/billboards/takedown-board")).status, 404, "a taken-down row is still public");
+  assert.equal((await api("/billboard/takedown-board")).status, 404);
+
+  // A second click cannot flip it twice.
+  assert.equal((await api(path, { method: "POST", token: editor, body: { visible: false } })).status, 409);
+
+  const up = await api(path, { method: "POST", token: editor, body: { visible: true } });
+  assert.equal(up.status, 200);
+  assert.equal((await api("/api/billboards/takedown-board")).status, 200, "the row did not come back");
+});
+
+test("a listing still in review cannot be taken down or restored through visibility", async () => {
+  const editor = await mintSession({ role: "editor" });
+  const res = await api("/api/admin/billboards/4/visibility", { method: "POST", token: editor, body: { visible: true } });
+  assert.equal(res.status, 409, "visibility must not become a way past review");
+});
+
+test("an editor can remove someone else's review, and the rating follows", async () => {
+  const author = await mintSession({ userId: "2", role: "user" });
+  const created = await api("/api/reviews", {
+    method: "POST", token: author, body: { billboardId: 7, rating: 1, comment: "نظری که مدیر باید بتواند حذفش کند" },
+  });
+  assert.equal(created.status, 201);
+  const id = created.json.review.id;
+
+  const viewer = await mintSession({ role: "viewer" });
+  assert.equal((await api(`/api/reviews/${id}`, { method: "DELETE", token: viewer })).status, 404, "a viewer is not a moderator");
+
+  const editor = await mintSession({ role: "editor" });
+  assert.equal((await api(`/api/reviews/${id}`, { method: "DELETE", token: editor })).status, 200);
+  const after = await api("/api/reviews?billboardId=7");
+  assert.ok(!after.json.reviews.some(r => r.id === id));
+  assert.equal(after.json.avg, null);
+});
+
+test("replying under an unpublished media item is refused", async () => {
+  const editor = await mintSession({ role: "editor" });
+  const author = await mintSession({ userId: "1", role: "user" });
+  const created = await api("/api/reviews", {
+    method: "POST", token: author, body: { billboardId: 7, rating: 5, comment: "نظری روی رسانه‌ای که متوقف می‌شود" },
+  });
+  assert.equal(created.status, 201);
+  const reviewId = created.json.review.id;
+
+  const path = "/api/admin/billboards/7/visibility";
+  assert.equal((await api(path, { method: "POST", token: editor, body: { visible: false } })).status, 200);
+  try {
+    const reply = await api(`/api/reviews/${reviewId}/replies`, { method: "POST", token: author, body: { body: "پاسخ زیر رسانهٔ متوقف" } });
+    assert.equal(reply.status, 404);
+  } finally {
+    await api(path, { method: "POST", token: editor, body: { visible: true } });
+    await api(`/api/reviews/${reviewId}`, { method: "DELETE", token: author });
+  }
+});
+
+test("a new password shorter than eight characters is refused everywhere it can be set", async () => {
+  const customer = await mintSession({ userId: "2", role: "user" });
+  const r1 = await api("/api/auth/me", { method: "PATCH", token: customer, body: { currentPassword: "secret123", newPassword: "short7!" } });
+  assert.equal(r1.status, 400);
+  const staff = await mintSession({ role: "viewer" });
+  const r2 = await api("/api/admin/auth/me", { method: "PATCH", token: staff, body: { currentPassword: "secret123", newPassword: "short7!" } });
+  assert.equal(r2.status, 400);
+});

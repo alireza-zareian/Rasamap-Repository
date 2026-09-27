@@ -20,6 +20,9 @@ import { hasRole } from "@/lib/domain/roles";
 
 const REPLY_FIELDS = { id: true, reviewId: true, userId: true, authorName: true, isStaff: true, body: true, createdAt: true } as const;
 
+/** Replies shown under one review. */
+const REPLIES_SHOWN = 50;
+
 /**
  * `billboards.rating` / `reviewCount` are a denormalised summary of this table
  * — they are what every catalogue card and the compare table read — so every
@@ -47,10 +50,14 @@ async function refreshRatingSummary(tx: Prisma.TransactionClient, billboardId: n
 }
 
 /**
- * The newest 50 reviews of a media item, each with its thread oldest-first,
- * and the average and count over *all* of them. Taking both from the page of
- * 50 made the header disagree with the card's rating once a media item had
- * more reviews than that.
+ * The newest 50 reviews of a media item, each with the first REPLIES_SHOWN
+ * replies of its thread oldest-first, and the average and count over *all* of
+ * them. Taking both from the page of 50 made the header disagree with the
+ * card's rating once a media item had more reviews than that.
+ *
+ * The thread is capped for the same reason the reviews are: one account may
+ * post thirty replies every ten minutes, and without a ceiling a single busy
+ * thread grew every read of the page without bound.
  */
 export async function listReviews(billboardId: number) {
   const [reviews, agg] = await Promise.all([
@@ -60,7 +67,7 @@ export async function listReviews(billboardId: number) {
         user:    { select: { name: true } },
         // Oldest first inside a thread — a conversation reads downwards, even
         // though the reviews themselves are newest-first.
-        replies: { orderBy: { createdAt: "asc" }, select: REPLY_FIELDS },
+        replies: { orderBy: { createdAt: "asc" }, take: REPLIES_SHOWN, select: REPLY_FIELDS },
       },
       orderBy: { createdAt: "desc" },
       take:    50,
@@ -101,18 +108,26 @@ export async function saveReview(
 }
 
 /**
- * Remove the author's own review. Someone else's is reported as missing rather
- * than forbidden: the difference would tell a stranger which ids exist.
+ * Remove a review. Two people may, as with a reply: whoever wrote it, and an
+ * editor or above — a public review only its author could remove had no answer
+ * to an abusive one. Anyone else is told it is missing rather than forbidden:
+ * the difference would tell a stranger which ids exist.
+ *
+ * Returns whether this was moderation rather than the author's own delete, so
+ * the route can audit the one that needs answering for.
  */
-export async function deleteReview(author: CustomerActor, id: number): Promise<void> {
+export async function deleteReview(actor: Actor, id: number): Promise<{ moderated: boolean; billboardId: number }> {
   const review = await prisma.review.findUnique({ where: { id }, select: { userId: true, billboardId: true } });
-  if (!review || review.userId !== author.id) throw notFound("نظر یافت نشد");
+  const isAuthor = actor.kind === "customer" && review?.userId === actor.id;
+  const isModerator = actor.kind === "staff" && hasRole(actor.role, "editor");
+  if (!review || (!isAuthor && !isModerator)) throw notFound("نظر یافت نشد");
 
   const changed = await prisma.$transaction(async tx => {
     await tx.review.delete({ where: { id } });
     return refreshRatingSummary(tx, review.billboardId);
   });
   if (changed) revalidateCatalogue();
+  return { moderated: !isAuthor, billboardId: review.billboardId };
 }
 
 /**
@@ -126,8 +141,13 @@ export async function deleteReview(author: CustomerActor, id: number): Promise<v
  * what the thread shows. `isStaff` drives the badge.
  */
 export async function addReply(author: Actor, reviewId: number, body: string) {
-  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true } });
-  if (!review) throw notFound("نظر یافت نشد");
+  const review = await prisma.review.findUnique({
+    where:  { id: reviewId },
+    select: { id: true, billboard: { select: { moderation: true } } },
+  });
+  // A thread under a media item the public cannot see would be invisible too —
+  // the same rule saveReview applies to the review itself.
+  if (!review || !isPublished(review.billboard.moderation)) throw notFound("نظر یافت نشد");
 
   const isStaff = author.kind === "staff";
   return prisma.reviewReply.create({

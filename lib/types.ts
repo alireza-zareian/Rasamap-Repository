@@ -20,7 +20,8 @@ export type BillboardType = "billboard" | "digital" | "bridge" | "station" | "ve
  * ever returned by a public read. A customer's submission starts at `pending`
  * (or `awaiting_payment` on a paid plan); an admin decision moves it to
  * `approved`, `rejected` (turned down for good) or `needs_revision` (sent back
- * for the submitter to edit and resubmit).
+ * for the submitter to edit and resubmit). `suspended` is a published row
+ * that staff took down, and can put back.
  *
  * They used to be one `status` column, which is how an admin editing "is this
  * board busy" could set a listing to `pending`, and why every public query had
@@ -28,7 +29,7 @@ export type BillboardType = "billboard" | "digital" | "bridge" | "station" | "ve
  * the Prisma enums in lib/db/billboards/core.ts.
  */
 export type Availability = "available" | "busy" | "reserved" | "inactive";
-export type Moderation = "pending" | "awaiting_payment" | "needs_revision" | "rejected" | "approved";
+export type Moderation = "pending" | "awaiting_payment" | "needs_revision" | "rejected" | "approved" | "suspended";
 export type ListingPlan = "free" | "featured";
 export type SortOption = "price_asc" | "price_desc" | "traffic_desc" | "area_desc";
 
@@ -138,6 +139,7 @@ const MODERATION_LABELS = {
   needs_revision:   "نیاز به اصلاح",
   rejected:         "رد شده",
   approved:         "منتشر شده",
+  suspended:        "متوقف‌شده",
 } satisfies Record<Moderation, string>;
 
 export const availabilityLabels: Record<string, string> = AVAILABILITY_LABELS;

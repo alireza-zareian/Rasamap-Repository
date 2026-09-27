@@ -137,11 +137,13 @@ async function main() {
     billboard({ id: 5, name: "Unpaid Listing",  slug: "unpaid-listing",  city: "تهران", type: "digital",   moderation: "awaiting_payment", plan: "featured", price: 200, source: "listing", submittedById: 1 }),
     // Has an image, so the analytics coverage count has something to find.
     billboard({ id: 6, name: "Photo Board", slug: "photo-board", city: "شیراز", type: "billboard", availability: "available", price: 4000, views: 6000, width: 10, height: 3, hasImages: true, images: ["/uploads/test/1.jpg"] }),
+    // Taken down and put back by the moderation tests; nothing else reads it.
+    billboard({ id: 7, name: "Takedown Board", slug: "takedown-board", city: "اصفهان", type: "billboard", availability: "available", price: 4500 }),
   ]) {
     await prisma.billboard.create({ data: row });
   }
 
-  console.log("seeded: 6 billboards (2 unpublished, 1 with an image), 3 users, 8 admins (password 'secret123')");
+  console.log("seeded: 7 billboards (2 unpublished, 1 with an image), 3 users, 8 admins (password 'secret123')");
   await prisma.$disconnect();
 }
 

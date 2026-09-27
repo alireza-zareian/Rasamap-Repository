@@ -4,7 +4,13 @@ import { C, AVAILABILITY_COLOR, AVAILABILITY_LABEL, MODERATION_COLOR, MODERATION
 import { TypeIcon } from "@/components/TypeIcon";
 import { Badge } from "./Badge";
 
-export function BillboardRow({ b, onEdit, onDelete }: { b: Billboard; onEdit: (b: Billboard) => void; onDelete: (b: Billboard) => void }) {
+export function BillboardRow({ b, onEdit, onDelete, onVisibility }: {
+  b: Billboard;
+  onEdit: (b: Billboard) => void;
+  onDelete: (b: Billboard) => void;
+  /** Take a published row down, or put a taken-down one back. */
+  onVisibility: (b: Billboard) => void;
+}) {
   // A row still in review shows where it is in review — that is what an admin
   // needs to act on. A published row shows whether the board is free.
   const inReview = b.moderation !== "approved";
@@ -37,6 +43,11 @@ export function BillboardRow({ b, onEdit, onDelete }: { b: Billboard; onEdit: (b
       <td style={{ padding: "10px 8px" }}>
         <div style={{ display: "flex", gap: 6 }}>
           <button onClick={() => onEdit(b)} style={{ fontSize: "0.75rem", padding: "5px 12px", borderRadius: 7, background: "rgba(255,77,0,0.1)", color: C.accent, border: "1px solid rgba(255,77,0,0.3)", cursor: "pointer", fontFamily: C.font, fontWeight: 600 }}>ویرایش</button>
+          {(b.moderation === "approved" || b.moderation === "suspended") && (
+            <button onClick={() => onVisibility(b)} style={{ fontSize: "0.75rem", padding: "5px 10px", borderRadius: 7, background: "none", color: C.muted, border: `1px solid ${C.border}`, cursor: "pointer", fontFamily: C.font, whiteSpace: "nowrap" }}>
+              {b.moderation === "approved" ? "توقف انتشار" : "انتشار دوباره"}
+            </button>
+          )}
           <button onClick={() => onDelete(b)} style={{ fontSize: "0.75rem", padding: "5px 10px", borderRadius: 7, background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)", cursor: "pointer", fontFamily: C.font }}>حذف</button>
         </div>
       </td>
