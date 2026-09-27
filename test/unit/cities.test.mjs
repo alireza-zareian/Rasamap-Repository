@@ -45,3 +45,12 @@ test("a location is read out of the links people paste", async () => {
   assert.equal(parseMapLocation("خیابان ولیعصر"), null);
   assert.equal(parseMapLocation(""), null);
 });
+
+test("a Persian name makes a readable, URL-safe slug", async () => {
+  const { slugify } = await import("../../lib/domain/slug.ts");
+  assert.equal(slugify("بیلبورد اتوبان همت", "x1"), "bilbord-atoban-hmt-x1");
+  assert.equal(slugify("تلویزیون شهری ۲", "x1"), "tloizion-shhri-2-x1");
+  assert.equal(slugify("Valiasr Tower", "x1"), "valiasr-tower-x1");
+  assert.equal(slugify("—", "x1"), "listing-x1");
+  assert.match(slugify("ب".repeat(200), "x1"), /^[a-z0-9-]{1,70}$/);
+});

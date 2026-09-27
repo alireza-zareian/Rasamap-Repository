@@ -7,6 +7,8 @@ import { derivedPrices } from "@/lib/domain/pricing";
 import { NO_TRAFFIC } from "@/lib/domain/billboard";
 import { conflict, invalid, notFound } from "@/lib/domain/errors";
 import { discardImages, discardUploads, saveImages } from "@/lib/uploads";
+import { slugify } from "@/lib/domain/slug";
+import { randomBytes } from "node:crypto";
 
 /**
  * Every write to the billboards table. Each one that changes what a visitor
@@ -31,29 +33,6 @@ export interface BillboardCreateInput {
 }
 
 /**
- * Build a URL-safe slug.
- *
- * ASCII only, because `GET /api/billboards/[slug]` validates against
- * `^[a-z0-9-]+$`. The previous version kept the Persian block, so every
- * user-submitted listing got a slug that route answered with 400 — the record
- * was published but unreachable through the public API.
- *
- * Persian names therefore contribute nothing and the slug falls back to
- * `listing-<base36 timestamp>`, which matches the shape the scraper already
- * produces (`scraped-bih-63fa5bde`) and stays unique via the suffix.
- */
-function slugify(name: string, suffix: string): string {
-  const ascii = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")   // any run of non-ASCII/punctuation → one dash
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60)
-    .replace(/-+$/, "");           // don't let the slice leave a trailing dash
-
-  return `${ascii || "listing"}-${suffix}`;
-}
-
-/**
  * The columns a new row needs but its creator does not set: a slug, a zeroed
  * traffic block and empty lists. Shared by an admin create here and a
  * customer's submission in ../listings.ts, so the two cannot disagree about
@@ -61,7 +40,10 @@ function slugify(name: string, suffix: string): string {
  */
 export function blankBillboardFields(name: string) {
   return {
-    slug: slugify(name, Date.now().toString(36)),
+    // Six random base-36 characters: the timestamp this used to be collided
+    // for two listings made in the same millisecond, and the unique index then
+    // reported the second as a duplicate of the first.
+    slug: slugify(name, randomBytes(4).readUInt32BE(0).toString(36).padStart(6, "0").slice(-6)),
     age: 0,
     // No traffic survey exists for a hand-entered or user-submitted media item,
     // so the block stays zeroed — and estimatedViews mirrors it.
