@@ -6,6 +6,7 @@ import { CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
 import { Scale, Star, Sparkles } from "lucide-react";
 import { useTheme } from "@/lib/client/theme";
 import { faNum, faCompact } from "@/lib/format";
+import { availabilityTone } from "@/components/ui/availability";
 
 interface BillboardCardProps {
   billboard: CatalogueItem;
@@ -19,7 +20,7 @@ export default function BillboardCard({
 }: BillboardCardProps) {
   const { theme } = useTheme();
   const dark = theme === "dark";
-  const statusColor = b.availability === "available" ? "var(--green-accent)" : b.availability === "busy" ? "var(--red)" : "var(--accent-warm)";
+  const statusColor = availabilityTone(b.availability);
   const statusLabel = `● ${availabilityLabels[b.availability] ?? b.availability}`;
   // Hover lift/shadow only — 2 renders per hover, nothing on mousemove.
   const [hovered, setHovered] = useState(false);
@@ -127,7 +128,7 @@ export default function BillboardCard({
           {typeLabels[b.type]}
         </div>
         {/* Status */}
-        <div style={{ position: "absolute", top: 8, left: 8, background: `${statusColor}18`, border: `1px solid ${statusColor}44`, borderRadius: 6, padding: "2px 9px", fontSize: "0.7rem", color: statusColor, fontWeight: 600, backdropFilter: "blur(4px)" }}>
+        <div style={{ position: "absolute", top: 8, left: 8, background: `color-mix(in srgb, ${statusColor} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${statusColor} 27%, transparent)`, borderRadius: 6, padding: "2px 9px", fontSize: "0.7rem", color: statusColor, fontWeight: 600, backdropFilter: "blur(4px)" }}>
           {statusLabel}
         </div>
         {/* Paid promotion — the only thing `featured` buys is this badge and a

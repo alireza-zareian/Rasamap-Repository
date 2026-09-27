@@ -57,7 +57,7 @@ import {
 } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { z } from "zod";
-import { StringListSchema, TrafficSchema } from "../lib/domain/billboard";
+import { availabilityFromFeed, StringListSchema, TrafficSchema } from "../lib/domain/billboard";
 import { canonicalCity } from "../lib/geo/iran-cities";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
@@ -247,7 +247,7 @@ export function decide(row: Row, feed: FeedRow, snapshot: Record<string, unknown
 
 /** Availability moves under its own rule — see DECIDED_AVAILABILITY. */
 function availabilityWrite(row: Row, feed: FeedRow): Availability | null {
-  const next = asEnum(feed.status, Availability);
+  const next = availabilityFromFeed(feed.status);
   if (!next || next === row.availability) return null;
   if (DECIDED_AVAILABILITY.includes(row.availability)) return null;
   return next;
@@ -448,9 +448,10 @@ async function main() {
   // most often been let, so leaving it "available" kept inviting calls about a
   // board that was gone, with the old number. It becomes `busy`: still on the
   // site, with its reviews and leads, but no longer presented as bookable.
-  // Only an `available` row moves — `busy` already says it, and `inactive` /
-  // `reserved` are a person's decisions (DECIDED_AVAILABILITY). When the row
-  // returns to the feed, the feed's status applies again (availabilityWrite).
+  // Only an `available` or `unknown` row moves — `busy` already says it, and
+  // `inactive` / `reserved` are a person's decisions (DECIDED_AVAILABILITY).
+  // When the row returns to the feed, the feed's status applies again
+  // (availabilityWrite).
   const vanished = existing.filter(r => !presentSlugs.has(r.slug) && r.sourceRecord?.missingSince == null);
   counts.marked = vanished.length;
   if (APPLY && vanished.length > 0) {
@@ -468,7 +469,7 @@ async function main() {
         });
       }
       await tx.billboard.updateMany({
-        where: { id: { in: vanished.map(r => r.id) }, availability: "available" },
+        where: { id: { in: vanished.map(r => r.id) }, availability: { in: ["available", "unknown"] } },
         data:  { availability: "busy" },
       });
     });
@@ -496,7 +497,7 @@ async function insert(feed: FeedRow) {
       region: String(feed.region ?? ""),
       city: String(feed.city ?? ""),
       type: asEnum(feed.type, BillboardType) ?? "billboard",
-      availability: asEnum(feed.status, Availability) ?? "available",
+      availability: availabilityFromFeed(feed.status) ?? "unknown",
       width, height,
       area: Math.round(width * height),
       faces: Number(feed.faces ?? 1),

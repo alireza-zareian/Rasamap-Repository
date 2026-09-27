@@ -30,11 +30,14 @@ enum BillboardType {
 }
 
 /// What the media item itself is doing. Describes the board, not the listing.
+/// `unknown` is a crawled board: the sources list it but never say whether it
+/// is free, so the owner has to be asked (see availabilityFromFeed).
 enum Availability {
   available
   busy
   reserved
   inactive
+  unknown
 }
 
 /// Where a listing is in review. Only `approved` is ever publicly visible.

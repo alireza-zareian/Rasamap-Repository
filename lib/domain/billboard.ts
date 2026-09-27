@@ -21,6 +21,27 @@ export const TrafficSchema = z.object({
 
 export const StringListSchema = z.array(z.string());
 
+/**
+ * A crawled row's availability, from the feed's `status`.
+ *
+ * Every crawler writes "available" for every board it finds: it means "listed
+ * at the source", not "free this month" — none of the sources publish that.
+ * Shown as «خالی», it was a promise nobody had made, on 3,500 boards. So a
+ * crawler's "available" becomes `unknown` («استعلام از مالک»); what a
+ * crawler does know — a board gone from its source — still comes through.
+ * Returns null for a status the enum does not have.
+ */
+export function availabilityFromFeed(status: unknown): "busy" | "reserved" | "inactive" | "unknown" | null {
+  switch (status) {
+    case "available":
+    case "unknown":  return "unknown";
+    case "busy":     return "busy";
+    case "reserved": return "reserved";
+    case "inactive": return "inactive";
+    default:         return null;
+  }
+}
+
 /** What a media item with no traffic survey shows: a zeroed block. */
 export const NO_TRAFFIC: z.infer<typeof TrafficSchema> = {
   daily: 0, peakHour: "08:00", congestionLevel: 5, pedestrian: 0, estimatedViews: 0, viewabilityScore: 0,

@@ -18,6 +18,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { everyBillboard } from "../lib/data";
 import { canonicalCity } from "../lib/geo/iran-cities";
+import { availabilityFromFeed } from "../lib/domain/billboard";
 
 type StaticBillboard = (typeof everyBillboard)[number];
 
@@ -41,7 +42,8 @@ function toRow(b: StaticBillboard) {
     region: b.region,
     city: canonicalCity(b.city),
     type: b.type,
-    availability: b.status,
+    // A crawled row's "available" is "listed at the source", not "free".
+    availability: b.source ? availabilityFromFeed(b.status) ?? "unknown" : b.status,
     width: b.width,
     height: b.height,
     // Denormalised sort keys — see the comments on the schema fields.

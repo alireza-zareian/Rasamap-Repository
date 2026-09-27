@@ -16,11 +16,9 @@ import BillboardContact from "@/components/BillboardContact";
 import { typeLabels, availabilityLabels, moderationLabels, type Billboard } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-url";
 import { faNum } from "@/lib/format";
+import { availabilityTone } from "@/components/ui/availability";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
-const AVAILABILITY_COLOR: Record<string, string> = {
-  available: "#22c55e", busy: "#ef4444", reserved: "#f59e0b", inactive: "#6b7280",
-};
 
 /** Suggestions at the foot of the page — one marquee's worth. */
 const RELATED_COUNT = 12;
@@ -71,10 +69,11 @@ function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
         price: b.price * 10_000_000,
         unitCode: "MON",
       },
-      availability:
-        b.availability === "available"
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
+      // Only what is known: a crawled board's state is not (see
+      // availabilityFromFeed), and saying InStock for it would be a guess.
+      ...(b.availability === "available" ? { availability: "https://schema.org/InStock" }
+        : b.availability === "unknown" ? {}
+        : { availability: "https://schema.org/OutOfStock" }),
       areaServed: { "@type": "City", name: b.city },
       ...(phoneAvailable ? { seller: { "@type": "Organization", name: b.agency || "رسامپ" } } : {}),
     },
@@ -142,7 +141,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
     ...(b.images ?? []),
     ...((b.allImages ?? []).filter(u => !(b.images ?? []).includes(u))),
   ];
-  const statusColor = AVAILABILITY_COLOR[b.availability] ?? "#6b7280";
+  const statusColor = availabilityTone(b.availability);
   const area = b.width * b.height;
 
   return (
@@ -201,7 +200,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, lineHeight: 1.3, textAlign: "right" }}>{b.name}</h1>
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", flexShrink: 0 }}>
                 <span style={{ fontSize: "0.68rem", padding: "2px 9px", borderRadius: 20, background: "rgba(255,77,0,0.1)", color: "var(--accent)", fontWeight: 600, whiteSpace: "nowrap" }}>{TYPE_LABEL[b.type] ?? b.type}</span>
-                <span style={{ fontSize: "0.68rem", padding: "2px 9px", borderRadius: 20, background: `${statusColor}18`, color: statusColor, fontWeight: 600, whiteSpace: "nowrap" }}>{availabilityLabels[b.availability] ?? b.availability}</span>
+                <span style={{ fontSize: "0.68rem", padding: "2px 9px", borderRadius: 20, background: `color-mix(in srgb, ${statusColor} 10%, transparent)`, color: statusColor, fontWeight: 600, whiteSpace: "nowrap" }}>{availabilityLabels[b.availability] ?? b.availability}</span>
                 <ShareButton title={b.name} />
               </div>
             </div>

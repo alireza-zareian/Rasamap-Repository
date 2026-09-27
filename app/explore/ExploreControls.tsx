@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, LayoutGrid, List, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train, MapPin, ChevronDown, Crosshair } from "lucide-react";
-import type { BillboardType } from "@/lib/types";
+import { AVAILABILITIES, availabilityLabels, type BillboardType } from "@/lib/types";
 import { provinces, getProvince } from "@/lib/geo/iran-cities";
 import { faNum } from "@/lib/format";
 import {
@@ -302,8 +302,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
                 style={selectStyle}
               >
                 <option value="">همه وضعیت‌ها</option>
-                <option value="available">فقط خالی</option>
-                <option value="busy">فقط مشغول</option>
+                {AVAILABILITIES.map(a => <option key={a} value={a}>{availabilityLabels[a]}</option>)}
               </select>
             </div>
             <div>

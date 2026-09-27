@@ -28,7 +28,7 @@ export type BillboardType = "billboard" | "digital" | "bridge" | "station" | "ve
  * to carry a list of four values to exclude. Both unions are checked against
  * the Prisma enums in lib/db/billboards/core.ts.
  */
-export type Availability = "available" | "busy" | "reserved" | "inactive";
+export type Availability = "available" | "busy" | "reserved" | "inactive" | "unknown";
 export type Moderation = "pending" | "awaiting_payment" | "needs_revision" | "rejected" | "approved" | "suspended";
 export type ListingPlan = "free" | "featured";
 export type SortOption = "price_asc" | "price_desc" | "traffic_desc" | "area_desc";
@@ -131,6 +131,7 @@ const AVAILABILITY_LABELS = {
   busy:      "مشغول",
   reserved:  "رزرو شده",
   inactive:  "غیرفعال",
+  unknown:   "استعلام از مالک",
 } satisfies Record<Availability, string>;
 
 const MODERATION_LABELS = {

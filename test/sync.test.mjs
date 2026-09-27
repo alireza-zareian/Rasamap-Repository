@@ -144,7 +144,7 @@ test("a row that disappears from the feed is marked, not deleted — and unmarke
     assert.equal(counted(back, "back after being missing"), 1, back);
     const returned = await db.billboard.findUnique({ where: { slug: B }, include: { sourceRecord: true } });
     assert.equal(returned?.sourceRecord?.missingSince, null);
-    assert.equal(returned?.availability, "available", "back in the feed, the feed's status applies again");
+    assert.equal(returned?.availability, "unknown", "back in the feed, the feed's status applies again (a crawler's \"available\" reads as unknown)");
   } finally { await db.$disconnect(); }
 });
 
@@ -209,4 +209,14 @@ test("an unreadable feed row is skipped, reported, and never makes a row look mi
     feedRow("scraped-sync-frac", { id: 900010, width: 10.8, height: 2.6 }),
   ]);
   assert.equal(counted(again, "marked missing"), 0, again);
+});
+
+test("a crawled board is never presented as free on the crawler's word", async () => {
+  const db = prisma();
+  try {
+    const slug = "scraped-sync-availability";
+    sync([feedRow(slug, { id: 900021, status: "available" })]);
+    const row = await db.billboard.findUnique({ where: { slug } });
+    assert.equal(row?.availability, "unknown", "the sources never say whether a board is let");
+  } finally { await db.$disconnect(); }
 });

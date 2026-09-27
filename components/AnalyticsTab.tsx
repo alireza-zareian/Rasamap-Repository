@@ -4,6 +4,7 @@ import { PieChart, LayoutGrid, Building2, Wallet, Database, X } from "lucide-rea
 import { typeLabels, availabilityLabels } from "@/lib/types";
 import { faNum } from "@/lib/format";
 import { fetchJson } from "@/lib/client/fetch-json";
+import { availabilityTone } from "@/components/ui/availability";
 
 interface AnalyticsData {
   total: number;
@@ -21,10 +22,6 @@ interface AnalyticsData {
 const TYPE_FA = typeLabels as Record<string, string>;
 const STATUS_FA = availabilityLabels;
 
-const STATUS_COLOR: Record<string, string> = {
-  available: "var(--green)", busy: "var(--red, #ef4444)",
-  reserved: "var(--accent-warm)", inactive: "var(--text-muted)",
-};
 const TYPE_COLORS = ["var(--accent)", "var(--accent-warm)", "var(--green)", "var(--purple, #8b5cf6)", "#06b6d4"];
 
 function Bar({ label, value, max, color = "var(--accent)", suffix = "" }: {
@@ -122,7 +119,7 @@ export default function AnalyticsTab({ initial }: { initial: AnalyticsData }) {
       <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px" }}>
         <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}><PieChart size={14} /> وضعیت اشغال</div>
         {Object.entries(data.byAvailability).map(([status, count]) => (
-          <Bar key={status} label={STATUS_FA[status] ?? status} value={count} max={data.total} color={STATUS_COLOR[status] ?? "var(--accent)"} />
+          <Bar key={status} label={STATUS_FA[status] ?? status} value={count} max={data.total} color={availabilityTone(status)} />
         ))}
       </div>
 
