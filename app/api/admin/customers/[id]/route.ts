@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { idParams } from "@/lib/http/params";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { getCustomer, updateCustomer } from "@/lib/db/customers";
+import { MobileNumber } from "@/lib/domain/phone";
 
 // GET /api/admin/customers/[id] — one customer + the media they submitted (admin+).
 export const GET = defineRoute(
@@ -22,7 +23,7 @@ export const PATCH = defineRoute(
     body: z
       .object({
         name:  z.string().min(1).max(120).trim().optional(),
-        phone: z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست").optional(),
+        phone: MobileNumber().optional(),
       })
       .refine(d => d.name !== undefined || d.phone !== undefined, { message: "تغییری ارسال نشده" }),
   },

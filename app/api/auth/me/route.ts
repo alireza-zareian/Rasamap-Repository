@@ -3,7 +3,7 @@ import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { userApiRateLimit, publicApiRateLimit } from "@/lib/rate-limit";
 import { updateOwnProfile } from "@/lib/db/customers";
-import { NewPassword } from "@/lib/domain/password";
+import { GivenPassword, NewPassword } from "@/lib/domain/password";
 
 /**
  * GET /api/auth/me — who is signed in.
@@ -42,7 +42,7 @@ export const PATCH = defineRoute(
     rateLimit: userApiRateLimit,
     body: z.object({
       name:            z.string().min(2).max(100).trim().optional(),
-      currentPassword: z.string().min(1).max(128).optional(),
+      currentPassword: GivenPassword.optional(),
       newPassword:     NewPassword.optional(),
     })
       .refine(d => !(d.newPassword && !d.currentPassword), { message: "برای تغییر رمز، رمز فعلی لازم است" })

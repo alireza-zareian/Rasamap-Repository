@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { SIGN_IN_DENIED, signIn, signInAttempt } from "@/lib/auth/sign-in";
+import { GivenPassword } from "@/lib/domain/password";
+import { latinDigits } from "@/lib/domain/digits";
 
 // POST /api/auth/login — one sign-in form for customers (mobile number) and
 // staff (email). See lib/auth/sign-in.ts for why one form is safe.
@@ -12,9 +14,9 @@ const LoginSchema = z
     identifier: z.string().optional(),
     phone:      z.string().optional(),
     email:      z.string().optional(),
-    password:   z.string().min(1).max(128),
+    password:   GivenPassword,
   })
-  .transform(b => ({ identifier: (b.identifier ?? b.phone ?? b.email ?? "").trim(), password: b.password }))
+  .transform(b => ({ identifier: latinDigits((b.identifier ?? b.phone ?? b.email ?? "").trim()), password: b.password }))
   .refine(b => b.identifier.length > 0 && b.identifier.length <= 160);
 
 export const POST = defineRoute(

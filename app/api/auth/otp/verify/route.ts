@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { otpVerifyRateLimit, resetAccountAttempts } from "@/lib/rate-limit";
 import { resetPasswordWithCode } from "@/lib/db/customers";
 import { NewPassword } from "@/lib/domain/password";
+import { MobileNumber } from "@/lib/domain/phone";
 
 // POST /api/auth/otp/verify — finish a phone-verified password reset (public).
 export const POST = defineRoute(
@@ -12,7 +13,7 @@ export const POST = defineRoute(
     access: "public",
     rateLimit: { afterBody: b => otpVerifyRateLimit(b.phone) },
     body: z.object({
-      phone:       z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
+      phone:       MobileNumber(),
       purpose:     z.literal("password_reset"),
       code:        z.string().regex(/^\d{6}$/, "کد باید ۶ رقم باشد"),
       newPassword: NewPassword,

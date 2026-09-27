@@ -7,6 +7,7 @@ import { isPhoneRegistered } from "@/lib/db/customers";
 import { sendOtp, smsEnabled } from "@/lib/sms";
 import { auditLog } from "@/lib/audit";
 import { isLocalNetworkRequest, isLoopbackAddress } from "@/lib/auth/client-ip";
+import { MobileNumber } from "@/lib/domain/phone";
 
 // Echo the code back on screen, for a machine with no SMS line — the demo
 // laptop. It used to be refused whenever NODE_ENV was "production", which
@@ -28,7 +29,7 @@ export const POST = defineRoute(
     access: "public",
     rateLimit: otpSendIpRateLimit,
     body: z.object({
-      phone:   z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
+      phone:   MobileNumber(),
       purpose: z.enum(["password_reset", "register"]),
     }),
   },

@@ -7,6 +7,7 @@ import { isPhoneRegistered, registerCustomer } from "@/lib/db/customers";
 import { conflict } from "@/lib/domain/errors";
 import { sendSms } from "@/lib/sms";
 import { NewPassword } from "@/lib/domain/password";
+import { MobileNumber } from "@/lib/domain/phone";
 
 // An account is opened only on a number whose owner answered a code sent to it.
 // The number is the identity here — it is what signs in, what a reset is sent
@@ -19,7 +20,7 @@ export const POST = defineRoute(
     rateLimit: registrationRateLimit,
     body: z.object({
       name:     z.string().min(2).max(100).trim(),
-      phone:    z.string().regex(/^09[0-9]{9}$/, "شماره موبایل معتبر نیست"),
+      phone:    MobileNumber(),
       password: NewPassword,
       code:     z.string().regex(/^\d{6}$/, "کد تأیید باید ۶ رقم باشد"),
     }),

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { SIGN_IN_DENIED, signIn, signInAttempt } from "@/lib/auth/sign-in";
+import { GivenPassword } from "@/lib/domain/password";
 
 // POST /api/admin/auth/login — the staff-only sign-in form. Same budget and
 // same refusal as the public form; it only refuses a phone number.
@@ -11,7 +12,7 @@ export const POST = defineRoute(
     rateLimit: { afterBody: (b, ip, req) => signInAttempt(b.email, ip, req) },
     body: z.object({
       email:    z.string().email().max(254).toLowerCase().trim(),
-      password: z.string().min(1).max(128),
+      password: GivenPassword,
     }),
     messages: { invalidBody: SIGN_IN_DENIED },
   },

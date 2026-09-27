@@ -1,3 +1,5 @@
+import { latinDigits } from "./digits.ts";
+
 /**
  * A place, as people actually hand one over: a link copied from a map app, or
  * two numbers. And the links that open a place in the map apps people use.
@@ -18,15 +20,9 @@ export const IRAN_LNG = { min: 44, max: 64 } as const;
 
 export type LatLng = { lat: number; lng: number };
 
-const PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
-const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
-
+/** Latin digits, and the Persian decimal point and comma as their Latin twins. */
 function westernDigits(s: string): string {
-  return s
-    .replace(/[۰-۹]/g, d => String(PERSIAN_DIGITS.indexOf(d)))
-    .replace(/[٠-٩]/g, d => String(ARABIC_DIGITS.indexOf(d)))
-    .replace(/٫/g, ".")
-    .replace(/،/g, ",");
+  return latinDigits(s).replace(/٫/g, ".").replace(/،/g, ",");
 }
 
 const NUM = String.raw`(-?\d{1,3}(?:\.\d+)?)`;

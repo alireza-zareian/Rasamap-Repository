@@ -776,6 +776,35 @@ test("otp/send + otp/verify resets the password; the new one then logs in", asyn
   assert.ok(tokenFromSetCookie(login));
 });
 
+// A phone on a Persian keyboard types ۱۲۳ for numbers, and those are other
+// characters than 123. The sign-in form converted them and the reset form did
+// not, so a password reset to Persian digits could never be typed back in.
+test("digits typed on a Persian keyboard are the same digits in a phone number and a password", async () => {
+  const phone = randomPhone();
+  const persian = (s) => s.replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+  const registered = await registerUser({ phone, ip: uniqueIp() });
+  assert.equal(registered.status, 200, JSON.stringify(registered.json));
+
+  const send = await api("/api/auth/otp/send", {
+    method: "POST", ip: uniqueIp(),
+    body: { phone: persian(phone), purpose: "password_reset" },
+  });
+  assert.equal(send.status, 200, JSON.stringify(send.json));
+  const code = await recoverOtpCode(phone);
+
+  const reset = await api("/api/auth/otp/verify", {
+    method: "POST", ip: uniqueIp(),
+    body: { phone: persian(phone), purpose: "password_reset", code, newPassword: "رمز۱۲۳۴۵۶" },
+  });
+  assert.equal(reset.status, 200, JSON.stringify(reset.json));
+
+  const login = await api("/api/auth/login", {
+    method: "POST", ip: uniqueIp(),
+    body: { identifier: phone, password: "رمز123456" },
+  });
+  assert.equal(login.status, 200, "a password set with Persian digits must sign in with Latin ones");
+});
+
 test("changing one's own password keeps this session and ends the others", async () => {
   const phone = randomPhone();
   const registered = await registerUser({ phone, ip: uniqueIp() });

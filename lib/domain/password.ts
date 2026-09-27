@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { latinDigits } from "./digits.ts";
 
 /**
  * The one password rule, for customers and staff alike.
@@ -18,5 +19,14 @@ export const PASSWORD_TOO_SHORT = `رمز عبور باید حداقل ${MIN_PAS
 
 export const NewPassword = z
   .string()
-  .min(MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT)
-  .max(MAX_PASSWORD_LENGTH, "رمز عبور بیش از حد طولانی است");
+  .transform(latinDigits)
+  .pipe(z.string()
+    .min(MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT)
+    .max(MAX_PASSWORD_LENGTH, "رمز عبور بیش از حد طولانی است"));
+
+/**
+ * A password being checked rather than set: any length, so an account made
+ * under an older, shorter rule can still sign in. Same digit conversion as
+ * NewPassword, or a password set with Persian digits would never match.
+ */
+export const GivenPassword = z.string().min(1).max(MAX_PASSWORD_LENGTH).transform(latinDigits);

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { adminApiRateLimit, adminLoginAttempt, resetAccountAttempts } from "@/lib/rate-limit";
 import { changeOwnStaffPassword } from "@/lib/db/staff";
-import { NewPassword } from "@/lib/domain/password";
+import { GivenPassword, NewPassword } from "@/lib/domain/password";
 
 // GET /api/admin/auth/me — the signed-in staff member, safe fields only.
 export const GET = defineRoute(
@@ -20,7 +20,7 @@ export const PATCH = defineRoute(
     access: { staff: "viewer" },
     rateLimit: adminApiRateLimit,
     body: z.object({
-      currentPassword: z.string().min(1).max(128),
+      currentPassword: GivenPassword,
       newPassword:     NewPassword,
     }),
   },

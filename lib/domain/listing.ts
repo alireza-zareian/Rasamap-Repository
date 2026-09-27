@@ -1,6 +1,7 @@
 import { z } from "zod";
 // With its extension, so Node can load this file on its own for the unit tests.
 import { IRAN_LAT, IRAN_LNG } from "./location.ts";
+import { MobileNumber } from "./phone.ts";
 
 /**
  * A listing is a media item a customer submitted through /list-media. It is a
@@ -95,7 +96,7 @@ function optionalCoordinate(min: number, max: number) {
 export const ListingFieldsSchema = z.object({
   name:     z.string().trim().min(3, "نام رسانه باید حداقل ۳ کاراکتر باشد").max(100),
   desc:     z.string().max(1000).default(""),
-  phone:    z.string().trim().regex(/^09\d{9}$/, "شماره تماس معتبر نیست (مثال: 09123456789)"),
+  phone:    MobileNumber("شماره تماس معتبر نیست (مثال: 09123456789)"),
   type:     z.enum(["billboard", "digital", "bridge", "station"]),
   city:     z.string().trim().min(1, "شهر الزامی است").max(50),
   region:   z.string().trim().max(100).default(""),

@@ -16,6 +16,9 @@ import { NO_TRAFFIC, StringListSchema, TrafficSchema } from "../../lib/domain/bi
 import {
   ListingFieldsSchema, decisionOutcome, initialModeration,
 } from "../../lib/domain/listing.ts";
+import { latinDigits } from "../../lib/domain/digits.ts";
+import { MobileNumber } from "../../lib/domain/phone.ts";
+import { NewPassword, GivenPassword } from "../../lib/domain/password.ts";
 
 test("the three longer prices follow from the monthly one", () => {
   assert.deepEqual(derivedPrices(100), { price: 100, priceWeekly: 25, priceQuarterly: 270, priceYearly: 960 });
@@ -71,4 +74,20 @@ test("a traffic block and a list of strings are checked, not assumed", () => {
   assert.ok(!TrafficSchema.safeParse({ daily: "many" }).success);
   assert.ok(StringListSchema.safeParse(["/a.jpg"]).success);
   assert.ok(!StringListSchema.safeParse("/a.jpg").success);
+});
+
+test("Persian and Arabic digits read as Latin ones in numbers and passwords", () => {
+  assert.equal(latinDigits("۰۹۱۲۳۴۵۶۷۸۹"), "09123456789");
+  assert.equal(latinDigits("٠٩١٢"), "0912");
+  assert.equal(latinDigits("abc"), "abc");
+
+  const phone = MobileNumber().safeParse(" ۰۹۱۲۳۴۵۶۷۸۹ ");
+  assert.equal(phone.success && phone.data, "09123456789");
+  assert.equal(MobileNumber().safeParse("۰۸۱۲۳۴۵۶۷۸۹").success, false);
+
+  const set = NewPassword.safeParse("رمز۱۲۳۴۵");
+  const given = GivenPassword.safeParse("رمز12345");
+  assert.ok(set.success && given.success);
+  assert.equal(set.data, given.data, "the password stored and the password typed must compare equal");
+  assert.equal(NewPassword.safeParse("۱۲۳۴۵۶۷").success, false, "still too short after conversion");
 });
