@@ -2246,6 +2246,52 @@ before/after measurement like the one above goes in the commit.
 
 ---
 
+## 38. Fourth review: what one visitor costs the server
+
+**Context.** Asked whether the effects load the server, and to question
+everything again. The unit of measure this time was not one request but one
+*visit*: a real browser loads a page, scrolls it once, and the server's own CPU
+counter (`/proc/<pid>/stat`) is read before and after.
+
+**What that found, and what changed.**
+
+| Finding | Evidence | Change |
+|---|---|---|
+| Link prefetch was most of the server's work | one visit: landing 63 background requests, catalogue 91, media page 53 — mostly media pages nobody opened; the catalogue page itself is ~20 ms, the visit was 660 ms | `components/ui/IntentLink.tsx` on list links (prefetch on pointer, touch or focus). Visit: 480 → 420, 660 → 440, 420 → 370 ms; requests 63 → 20, 91 → 22, 53 → 22 |
+| The logo shimmer repainted forever | `background-position` is not composited: 600 style recalcs and 383 ms of main thread per idle 10 s on /about | two sweeps, then stops: 5 recalcs, 9 ms |
+| Every photo was revalidated on every view | `public/` defaults to `max-age=0` | a week for `/images/scraped/*` (names follow the media, not the content) |
+| The nginx example skipped the hotlink check | it serves `/images/` itself, so `proxy.ts` never runs | `valid_referers` in the example |
+| A 1.2 MB PNG could declare 20000 × 20000 | built one; the listing route accepted it (the new test failed first) | header dimensions read and capped at 8000 px / 40 MP |
+| A stop reset every open request | — | `server.mjs` finishes requests in flight: 20 of 20 answered 200 across a SIGTERM, exit 2.5 s later |
+
+**Probed and already sound** (each by an attack, not by reading): 540
+distinct query strings grew the query cache by 5 entries (free text, map
+centre, price ceilings and deep pages bypass it); 70 requests each naming a
+different address in `x-rasamap-peer`, `X-Forwarded-For` and a second casing
+were still refused at the 61st; 200 customers reviewing one billboard at the
+same instant all got 201 with no lock errors in 1.5 s, and the stored average
+matched the table; one customer submitting 20 times at once left one row;
+expired sessions, OTP codes, idempotency keys and old audit rows all have a
+purge; a signed-in visit writes its session at most once per four hours;
+search engines and chat-app preview bots pass the bot filter.
+
+**Measured and left alone.** About 150 of the ~225 KB of JavaScript every page
+ships is React DOM and the Next runtime; the app's own code is about 20 KB. The
+page HTML carries the React Server Components payload beside the markup
+(45–63 KB) — that is how the App Router hydrates, not a leak: nothing in it is
+a field the page does not draw.
+
+**Not done, and why.** Compression happens inside Node, 30–40% of each
+request's CPU; behind nginx, `compress: false` and nginx's own gzip would move
+that work to C — but it cannot be measured without the nginx this environment
+lacks, and on the demo laptop there is no nginx. A short `proxy_cache` in
+nginx for anonymous GETs of the catalogue would take the render off repeat
+visits entirely; same reason. SQLite `synchronous=NORMAL` would save a sync per
+write; the Prisma adapter opens its own connection, and 200 concurrent writes
+already finish in 1.5 s.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -2297,4 +2343,5 @@ before/after measurement like the one above goes in the commit.
 | 2026-09-26 | **Second adversarial review, and a deep pass over the unreviewed parts** | Sessions made revocable (sessionVersion, revoked token ids, seven-day ceiling), device cookies against lockout abuse, bounded bodies, open redirect closed, per-account limits on phone reveals and writes, version-bound listing decisions, atomic idempotency, uploads served after boot and cleaned when orphaned, `server.mjs` for an unforgeable client address, Persian search folding (trigger-kept `searchText`), a validated nightly import that never overwrites a concurrent edit, paged admin lists, a compare selection that survives a reload, integer-only admin sizes. Two regressions of this work found and fixed by recounting: import cycles (now a guard test) and stale thesis numbers. 12 unit + 162 API + 7 importer tests, 11 browser flows. |
 | 2026-09-27 | **Third review — sessions, uploads, styles** | §36 — database sessions instead of a JWT; multipart uploads stored outside `public/`; `TRUSTED_PROXY_COUNT` defaults to 0; bounded page cache; take-down and review moderation; `unknown` availability for crawled rows, linked sources, Iranian map links; every dataset city known; readable slugs; one password rule and Persian digits read as Latin; CSS modules across the site with shared `Button`/`Dialog`/`StatusScreen`, and a test that an animation named in a module is defined there. 18 unit + 181 API + 8 importer + 11 browser tests; a stranger learns nothing of the internals (no framework banner, `/api-docs` staff-only) and the JSON catalogue has its own budget (§20b). |
 | 2026-09-27 | **Native visual effects** | §37 — card-to-gallery morph (View Transitions), scroll reveals (view timelines); main-thread time unchanged within noise; three compare-selection faults behind a flaky test fixed. |
+| 2026-09-27 | **Fourth review — cost of a visit** | §38 — list links prefetch on intent (a catalogue visit's background requests 91 → 22, server CPU 660 → 440 ms); the shimmer no longer repaints forever; photos cached a week; gigantic-image uploads refused; graceful shutdown. Seven attacks on existing defences, all held. |
 | 2026-09-27 | **3D hero street** | §37 — CSS 3D street of real media on the landing, one-shot arrival + scroll-linked approach; no server cost, load time within noise; a 300 ms 3D floor plane and a flattening opacity found by measurement and designed out. Card spotlight removed. |

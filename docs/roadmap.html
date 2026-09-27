@@ -4256,6 +4256,23 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">AUDIT5</div>
+      <div class="ph-title"><h3>بازبینی پنجم — یک بازدید چقدر برای سرور خرج دارد</h3><p>۵ مهر ۱۴۰۵ · §۳۸ در سندِ تصمیم‌ها؛ واحدِ اندازه‌گیری یک بازدیدِ کامل در مرورگرِ واقعی، نه یک درخواست</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پیش‌بارگذاری با نیتِ کاربر</strong> — کارت‌ها، اسلایدها، تیکر، صفحه‌بندی و فوتر فقط وقتی ماوس، انگشت یا فوکوس برسد پیش‌بارگذاری می‌شوند. درخواست‌های پس‌زمینهٔ یک بازدید از کاتالوگ ۹۱ → ۲۲ و CPU سرور ۶۶۰ → ۴۴۰ میلی‌ثانیه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>درخشش لوگو دیگر بی‌پایان نیست</strong> — در حالتِ بیکار روی «درباره ما» کارِ تردِ اصلی از ۳۸۳ به ۹ میلی‌ثانیه در هر ۱۰ ثانیه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>عکس‌ها یک هفته در مرورگر می‌مانند</strong> — قبلاً هر بازدید دربارهٔ هر عکس دوباره از سرور می‌پرسید؛ و قاعدهٔ ضدِ hotlink به نمونهٔ nginx هم رسید</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>عکسِ «بمب»</strong> — فایلِ ۱٫۲ مگابایتیِ ۲۰۰۰۰×۲۰۰۰۰ که در مرورگرِ ادمین ۱٫۶ گیگابایت می‌شد رد می‌شود؛ آزمونش اول روی کدِ قدیم شکست خورد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>خاموش‌شدنِ آرام</strong> — با توقفِ سرور، درخواست‌های در جریان تمام می‌شوند: ۲۰ از ۲۰ پاسخ ۲۰۰</div></div>
+      </div>
+      <div class="proof">هفت حمله به دفاع‌های موجود، همه ایستادند: ۵۴۰ آدرسِ متفاوت کش را فقط ۵ مدخل بزرگ کرد؛ جعلِ IP با سه هدر در درخواستِ ۶۱ رد شد؛ ۲۰۰ نظرِ هم‌زمان همه ۲۰۱ با میانگینِ درست؛ ۲۰ ارسالِ هم‌زمانِ یک نفر یک ردیف؛ پاک‌سازیِ جدول‌های منقضی؛ نوشتنِ نشست حداکثر هر ۴ ساعت؛ ربات‌های موتورِ جستجو آزاد. <strong>۱۸ آزمون واحد + ۱۸۲ API + ۸ واردکننده</strong> و <strong>۱۱ جریانِ مرورگر</strong> موفق.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">AUDIT4</div>
       <div class="ph-title"><h3>بازبینی از نگاهِ داور — نشست، آپلود، داده، و CSS Modules</h3><p>۵ مهر ۱۴۰۵ · §۳۶ در سندِ تصمیم‌ها؛ هر تغییر با آزمون یا اسکرین‌شاتِ قبل/بعد</p></div>
       <div class="ph-badge done">✓ تموم شده</div>
