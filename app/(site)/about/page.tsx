@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { Search, Scale, MapPin, Shield, Zap, TrendingUp } from "lucide-react";
 import { getCachedSiteStats } from "@/lib/db/cached";
 import { logger } from "@/lib/logger";
 import { faNum } from "@/lib/format";
+import { ButtonLink } from "@/components/ui/Button";
+import { cssVar } from "@/components/ui/css-var";
+import styles from "../info-pages.module.css";
 
 const advantages = [
   {
@@ -18,7 +20,7 @@ const advantages = [
   {
     Icon: MapPin,
     title: "موقعیت دقیق",
-    desc: "مختصات GPS هر رسانه — با یک کلیک موقعیت دقیق را در Google Maps ببینید.",
+    desc: "مختصات هر رسانه — با یک کلیک موقعیت دقیق را در نشان، بلد یا گوگل‌مپ ببینید.",
   },
   {
     Icon: Shield,
@@ -49,34 +51,29 @@ export default async function AboutPage() {
     logger.error("about: site stats unavailable", { error: String(err) });
   }
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-
-      {/* Hero */}
-      <section className="section-halo" style={{ maxWidth: 800, margin: "0 auto", padding: "100px 24px 60px", textAlign: "center" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(59,123,245,0.1)", border: "1px solid rgba(59,123,245,0.25)", borderRadius: 99, padding: "5px 16px", fontSize: "0.72rem", color: "var(--accent)", fontWeight: 700, marginBottom: 24 }}>
-          پروژه دانشگاهی
-        </div>
-        <h1 style={{ fontSize: "2.4rem", fontWeight: 900, marginBottom: 20, lineHeight: 1.3 }}>
+    <main>
+      <section className={`${styles.hero} section-halo`}>
+        <div className={styles.pill}>پروژه دانشگاهی</div>
+        <h1 className={styles.heroTitle}>
           بازار تبلیغات محیطی ایران<br />
-          <span style={{ color: "var(--accent)" }}>دیجیتال می‌شود</span>
+          <span>دیجیتال می‌شود</span>
         </h1>
-        <p style={{ fontSize: "1rem", color: "var(--text-muted)", lineHeight: 1.9, fontWeight: 300, maxWidth: 560, margin: "0 auto 32px" }}>
+        <p className={styles.heroText}>
           رسامپ یک پلتفرم دیجیتال برای جستجو و مقایسهٔ رسانه‌های تبلیغاتی محیطی ایران است —
           بدون تماس تلفنی، بدون واسطه، با قیمت شفاف.
         </p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/explore" style={{ background: "var(--accent)", color: "#fff", textDecoration: "none", padding: "12px 28px", borderRadius: 9, fontWeight: 700, fontSize: "0.9rem", boxShadow: "0 4px 16px rgba(59,123,245,0.3)" }}>جستجوی رسانه</Link>
-          <Link href="/contact" style={{ border: "1px solid var(--border)", color: "var(--text-main)", textDecoration: "none", padding: "12px 28px", borderRadius: 9, fontSize: "0.9rem" }}>تماس با ما</Link>
+        <div className={`${styles.actions} ${styles.center}`}>
+          <ButtonLink href="/explore" intent="primary" className={styles.cta}>جستجوی رسانه</ButtonLink>
+          <ButtonLink href="/contact" className={styles.cta}>تماس با ما</ButtonLink>
         </div>
       </section>
 
-      {/* Story */}
-      <section style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "var(--bg-card)", padding: "60px 24px" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.75rem", color: "var(--accent)", fontWeight: 700, letterSpacing: 2, marginBottom: 16 }}>داستان رسامپ</div>
-          <h2 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: 20 }}>چرا رسامپ ساخته شد؟</h2>
-          <div style={{ fontSize: "0.92rem", color: "var(--text-muted)", lineHeight: 2, fontWeight: 300 }}>
-            <p style={{ marginBottom: 16 }}>
+      <section className={`${styles.band} ${styles.banded} ${styles.story}`}>
+        <div className={styles.narrow}>
+          <div className={styles.kicker}>داستان رسامپ</div>
+          <h2 className={styles.h2}>چرا رسامپ ساخته شد؟</h2>
+          <div className={styles.prose}>
+            <p>
               بازار رسانه‌های محیطی ایران — بیلبورد، تلویزیون شهری، عرشه پل و ایستگاه — همیشه مبهم بوده.
               کسب‌وکارها مجبور بودند با ده‌ها آژانس تماس بگیرند، هفته‌ها صبر کنند، و بدون مقایسه واقعی تصمیم بگیرند.
             </p>
@@ -88,59 +85,49 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section style={{ padding: "60px 24px" }}>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <div className="about-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, textAlign: "center" }}>
-            {[
-              { num: `${faNum(total)}+`, label: "رسانه ثبت‌شده", color: "var(--accent)" },
-              { num: `${faNum(cityCount)}+`, label: "شهر پوشش‌داده", color: "var(--green-accent)" },
-              { num: "۱۰۰٪", label: "آنلاین و رایگان", color: "var(--accent-warm)" },
-            ].map(s => (
-              <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "28px 16px" }}>
-                <div style={{ fontSize: "2rem", fontWeight: 900, color: s.color, marginBottom: 8 }}>{s.num}</div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
+      <section className={styles.band}>
+        <div className={styles.stats}>
+          {[
+            { num: `${faNum(total)}+`, label: "رسانه ثبت‌شده", color: "var(--accent)" },
+            { num: `${faNum(cityCount)}+`, label: "شهر پوشش‌داده", color: "var(--green-accent)" },
+            { num: "۱۰۰٪", label: "آنلاین و رایگان", color: "var(--accent-warm)" },
+          ].map(s => (
+            <div key={s.label} className={styles.stat} style={cssVar("--tone", s.color)}>
+              <strong>{s.num}</strong>
+              <span>{s.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Advantages */}
-      <section style={{ padding: "60px 24px", borderTop: "1px solid var(--border)", background: "var(--bg-card)" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div style={{ fontSize: "0.75rem", color: "var(--accent)", fontWeight: 700, letterSpacing: 2, marginBottom: 12 }}>چرا رسامپ؟</div>
-            <h2 style={{ fontSize: "1.7rem", fontWeight: 800 }}>آنچه رسامپ ارائه می‌دهد</h2>
+      <section className={`${styles.band} ${styles.banded}`}>
+        <div className={styles.wide}>
+          <div className={styles.sectionHead}>
+            <div className={styles.kicker}>چرا رسامپ؟</div>
+            <h2 className={styles.h2}>آنچه رسامپ ارائه می‌دهد</h2>
           </div>
-          <div className="how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+          <ul className={styles.grid3}>
             {advantages.map(a => (
-              <div key={a.title} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "24px 20px" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(59,123,245,0.1)", border: "1px solid rgba(59,123,245,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", marginBottom: 14 }}>
-                  <a.Icon size={20} />
-                </div>
-                <div style={{ fontWeight: 700, marginBottom: 8, fontSize: "0.92rem" }}>{a.title}</div>
-                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.8, fontWeight: 300 }}>{a.desc}</div>
-              </div>
+              <li key={a.title} className={styles.feature}>
+                <div className={styles.featureIcon}><a.Icon size={20} /></div>
+                <h3 className={styles.featureTitle}>{a.title}</h3>
+                <p className={styles.featureText}>{a.desc}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* Values */}
-      <section style={{ padding: "60px 24px" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: 16 }}>ارزش‌های ما</h2>
-          <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.9, fontWeight: 300, marginBottom: 36 }}>
-            رسامپ یک پروژه دانشگاهی با اهداف واقعی است. ما به شفافیت، صداقت، و ساده‌سازی فرآیندهای پیچیده اعتقاد داریم.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-            <Link href="/explore" style={{ background: "var(--accent)", color: "#fff", textDecoration: "none", padding: "12px 28px", borderRadius: 9, fontWeight: 700, fontSize: "0.9rem" }}>شروع جستجو</Link>
-            <Link href="/list-media" style={{ border: "1px solid var(--border)", color: "var(--text-main)", textDecoration: "none", padding: "12px 28px", borderRadius: 9, fontSize: "0.9rem" }}>ثبت رسانه شما</Link>
+      <section className={styles.band}>
+        <div className={styles.closing}>
+          <h2 className={styles.h2}>ارزش‌های ما</h2>
+          <p>رسامپ یک پروژه دانشگاهی با اهداف واقعی است. ما به شفافیت، صداقت، و ساده‌سازی فرآیندهای پیچیده اعتقاد داریم.</p>
+          <div className={`${styles.actions} ${styles.center}`}>
+            <ButtonLink href="/explore" intent="primary" className={styles.cta}>شروع جستجو</ButtonLink>
+            <ButtonLink href="/list-media" className={styles.cta}>ثبت رسانه شما</ButtonLink>
           </div>
         </div>
       </section>
-
-    </div>
+    </main>
   );
 }

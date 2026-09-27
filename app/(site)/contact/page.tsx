@@ -1,4 +1,6 @@
 import { Mail, Send, Building2, Clock } from "lucide-react";
+import styles from "../info-pages.module.css";
+import button from "@/components/ui/button.module.css";
 
 const contacts = [
   {
@@ -33,56 +35,46 @@ const contacts = [
 
 export default function ContactPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-
-      <main style={{ maxWidth: 680, margin: "0 auto", padding: "96px 20px 40px" }}>
+    <main className={styles.page}>
+      <div className={styles.narrow}>
         <div className="section-halo">
-          <h1 style={{ fontSize: "2rem", fontWeight: 900, marginBottom: 8 }}>تماس با ما</h1>
-          <div style={{ width: 48, height: 4, background: "var(--accent)", borderRadius: 2, marginBottom: 16 }} />
-          <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginBottom: 40, lineHeight: 1.8 }}>
-            رسامپ یک پروژه دانشگاهی است. برای سوال، پیشنهاد، یا همکاری از کانال‌های زیر تماس بگیرید.
-          </p>
+          <h1 className={styles.h1}>تماس با ما</h1>
+          <div className={styles.rule} />
+          <p className={styles.lede}>رسامپ یک پروژه دانشگاهی است. برای سوال، پیشنهاد، یا همکاری از کانال‌های زیر تماس بگیرید.</p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 40 }}>
+        <div className={styles.channels}>
           {contacts.map(c => (
-            <div key={c.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "20px" }}>
-              <c.Icon size={22} style={{ color: "var(--accent)", marginBottom: 10 }} />
-              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: 4 }}>{c.label}</div>
+            <div key={c.label} className={`${styles.card} ${styles.channel}`}>
+              <c.Icon size={22} />
+              <div className={styles.channelLabel}>{c.label}</div>
               {c.href ? (
-                <a href={c.href} target={c.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"
-                  style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--accent)", textDecoration: "none" }}>
+                <a href={c.href} className={styles.channelValue}
+                  {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
                   {c.val}
                 </a>
               ) : (
-                <div style={{ fontSize: "0.9rem", fontWeight: 700 }}>{c.val}</div>
+                <div className={styles.channelValue}>{c.val}</div>
               )}
-              <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: 4 }}>{c.sub}</div>
+              <div className={styles.channelSub}>{c.sub}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 28 }}>
-          <div style={{ fontWeight: 700, marginBottom: 12, fontSize: "0.95rem" }}>تماس مستقیم</div>
-          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.9, margin: "0 0 20px" }}>
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>تماس مستقیم</h2>
+          <p className={styles.cardText}>
             برای ارسال پیام می‌توانید مستقیماً از طریق ایمیل یا تلگرام با ما در ارتباط باشید.
             در اسرع وقت پاسخ می‌دهیم.
           </p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <a href="mailto:info@rasamap.ir"
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--accent)", color: "#fff", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", fontWeight: 700, fontSize: "0.85rem", padding: "10px 20px", borderRadius: 9, textDecoration: "none" }}>
-              <Mail size={15} />
-              ارسال ایمیل
-            </a>
-            <a href="https://t.me/rasamap" target="_blank" rel="noopener noreferrer"
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--bg-surface)", color: "var(--text-main)", border: "1px solid var(--border)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", fontWeight: 600, fontSize: "0.85rem", padding: "10px 20px", borderRadius: 9, textDecoration: "none" }}>
-              <Send size={15} />
-              تلگرام
-            </a>
+          <div className={styles.actions}>
+            {/* Plain <a>, not ButtonLink: mailto: and an outside site are not
+                routes for next/link to prefetch. */}
+            <a href="mailto:info@rasamap.ir" className={`${button.button} ${button.primary}`}><Mail size={15} /> ارسال ایمیل</a>
+            <a href="https://t.me/rasamap" target="_blank" rel="noopener noreferrer" className={`${button.button} ${button.secondary}`}><Send size={15} /> تلگرام</a>
           </div>
         </div>
-      </main>
-
-    </div>
+      </div>
+    </main>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail } from "lucide-react";
+import styles from "../info-pages.module.css";
 
 const sections = [
   { title: "۱. پذیرش شرایط", body: "با استفاده از پلتفرم رسامپ، کاربر تمامی شرایط و قوانین مندرج در این سند را می‌پذیرد. استفاده از خدمات به معنای موافقت با این شرایط است." },
@@ -14,31 +15,29 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+    <main className={styles.page}>
+      <div className={styles.narrow}>
+        <h1 className={styles.h1}>قوانین و مقررات</h1>
+        <div className={styles.rule} />
+        <div className={styles.updated}>آخرین به‌روزرسانی: شهریور ۱۴۰۵</div>
 
-      <main style={{ maxWidth: 720, margin: "0 auto", padding: "96px 20px 40px" }}>
-        <h1 style={{ fontSize: "2rem", fontWeight: 900, marginBottom: 8 }}>قوانین و مقررات</h1>
-        <div style={{ width: 48, height: 4, background: "var(--accent)", borderRadius: 2, marginBottom: 12 }} />
-        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 36 }}>آخرین به‌روزرسانی: شهریور ۱۴۰۵</div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <ol className={styles.stack}>
           {sections.map(s => (
-            <div key={s.title} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "20px 22px" }}>
-              <div style={{ fontWeight: 700, marginBottom: 10, fontSize: "0.93rem" }}>{s.title}</div>
-              <div style={{ fontSize: "0.85rem", lineHeight: 1.9, color: "var(--text-muted)" }}>{s.body}</div>
-            </div>
+            <li key={s.title} className={styles.card}>
+              <h2 className={styles.cardTitle}>{s.title}</h2>
+              <p className={styles.cardText}>{s.body}</p>
+            </li>
           ))}
-        </div>
+        </ol>
 
-        <div style={{ marginTop: 40, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 22px", display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ display: "flex", color: "var(--accent)" }}><Mail size={20} /></div>
+        <div className={`${styles.card} ${styles.ask}`}>
+          <Mail size={20} />
           <div>
-            <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 3 }}>سوال دارید؟</div>
-            <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>برای هرگونه سوال درباره قوانین، با ما در <Link href="/contact" style={{ color: "var(--accent)", textDecoration: "none" }}>تماس</Link> باشید.</div>
+            <strong>سوال دارید؟</strong>
+            <span>برای هرگونه سوال درباره قوانین، با ما در <Link href="/contact" className={styles.link}>تماس</Link> باشید.</span>
           </div>
         </div>
-      </main>
-
-    </div>
+      </div>
+    </main>
   );
 }
