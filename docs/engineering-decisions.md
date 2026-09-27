@@ -2181,7 +2181,7 @@ browser with `document.getAnimations()`.
 **Context.** Asked for "the best current visual effects". The libraries that
 showcase them in 2026 — Aceternity UI, Magic UI — are built on Tailwind and
 Framer Motion, and this project allows neither in JSX (rule 5) and is demoed on
-a fanless laptop (§22). Their ideas are not their code: the three that carry the
+a fanless laptop (§22). Their ideas are not their code: the ones that carry the
 most are now things the browser does natively.
 
 **Decision.**
@@ -2190,15 +2190,41 @@ most are now things the browser does natively.
 |--------|-----|------------------|
 | A card's photo morphs into the media page's gallery | React `<ViewTransition>` + `experimental.viewTransition`; names from `components/ui/transitions.ts` | none per frame — two snapshots animated by the compositor |
 | Sections ease in as they scroll into view | `animation-timeline: view()` in `components/ui/reveal.module.css` | none — opacity and transform on the compositor |
-| A light follows the mouse over a catalogue card | two custom properties written on `pointermove` | one card repaint; nothing on touch |
+| The landing hero is a street of real media in 3D: the boards arrive from the distance once, and the street comes towards the visitor as the hero scrolls away | CSS 3D transforms in `app/(site)/_landing/hero-scene.module.css`; one-shot keyframes plus `animation-timeline: view()` | none per frame — transforms and opacity on the compositor; nothing loops |
 
 Measured with Chrome's own counters (main-thread task time, median of three):
 landing load 651 → 690–716 ms, landing scroll 274 → 230–233 ms, catalogue load
 591 → 560–663 ms, catalogue scroll 371 → 347–356 ms — inside the spread between
 runs. A browser without either API navigates and scrolls exactly as before;
-`prefers-reduced-motion` turns all three off.
+`prefers-reduced-motion` turns all of them off.
 
-**Not taken.** A number ticker (a counted-up figure is in CSS `content`, which
+A light that followed the mouse over each card was the third effect for a day.
+It was removed: at 16% of the accent over a photograph nobody noticed it, and it
+put a `pointermove` handler on every card to draw it.
+
+**The hero street, and what the server pays for it.** Nothing: the landing is
+prerendered, so the scene is a few more elements in a file built once (the HTML
+went 143 → 139 KB, because the SVG skyline it replaced was larger), and its
+photos are the carousel's own URLs at the carousel's `sizes`, fetched once for
+both. Server CPU per request, 200 requests, before → after: `/` 6.3–7.2 →
+5.6–7.6 ms — the same. In the browser, main-thread time on load (median of
+five) is 660 ms with the scene and 719 ms with it hidden; idle, the page does
+the same work it did before (the ticker's), since both scene animations are
+tied to scrolling.
+
+Two measurements changed the design. A floor made of a 4000 px plane turned
+flat in 3D looked right and cost about 300 ms of rasterising on every load; it
+is now 25 SVG lines drawn in perspective. And animating opacity on the
+`preserve-3d` box flattened every board onto one plane (all six measured at the
+same position) because opacity below 1 is a grouping property; the fade runs on
+the box outside it.
+
+**Not taken.** "Liquid glass" (a `backdrop-filter` fed an SVG displacement
+map): Chromium-only, and it re-renders what is behind it on every scroll frame —
+the opposite of what a fanless laptop wants, on a site whose content is photos
+it would distort. A WebGL hero (Three.js, Spline): a render loop that runs while
+the visitor reads, and a library the size of the rest of the page, for a result
+CSS 3D already reaches here. A number ticker (a counted-up figure is in CSS `content`, which
 a crawler and a screen reader do not read as the number), particle or WebGL
 backgrounds (a GPU cost on the demo laptop for nothing a visitor needs), and
 parallax (§22 removed the last one).
@@ -2214,8 +2240,9 @@ calling its handler. The results now carry `aria-busy` until they are listening.
 **Adding the next one.** Compositor properties only (`transform`, `opacity`,
 `filter` on a snapshot); visible without the feature; off under reduced motion;
 an infinite animation joins the `html.page-hidden` pause list; its keyframes
-live in its own module (the guard test enforces that); and a before/after
-measurement like the one above goes in the commit.
+live in its own module (the guard test enforces that); in 3D, no large plane
+(its raster cost is its full size) and no opacity on a `preserve-3d` box; and a
+before/after measurement like the one above goes in the commit.
 
 ---
 
@@ -2269,4 +2296,5 @@ measurement like the one above goes in the commit.
 | 2026-09-25 | **Adversarial architecture review** | §35 — one route pipeline (`defineRoute`) for all 35 routes; `lib/db/` as the only door to the database (lint-enforced; 30 → 13 importers of the client); typed customer/staff sessions and real foreign keys; `status` split into `availability` + `moderation` with enums; crawler state moved to `billboard_sources`; JSON columns read through Zod; admin panel as server-checked nested routes; rate limits follow `REDIS_URL` with a memory fallback. Migration proved on a copy of the real DB first. 9 unit + 142 API + 6 importer tests, 10 browser flows. |
 | 2026-09-26 | **Second adversarial review, and a deep pass over the unreviewed parts** | Sessions made revocable (sessionVersion, revoked token ids, seven-day ceiling), device cookies against lockout abuse, bounded bodies, open redirect closed, per-account limits on phone reveals and writes, version-bound listing decisions, atomic idempotency, uploads served after boot and cleaned when orphaned, `server.mjs` for an unforgeable client address, Persian search folding (trigger-kept `searchText`), a validated nightly import that never overwrites a concurrent edit, paged admin lists, a compare selection that survives a reload, integer-only admin sizes. Two regressions of this work found and fixed by recounting: import cycles (now a guard test) and stale thesis numbers. 12 unit + 162 API + 7 importer tests, 11 browser flows. |
 | 2026-09-27 | **Third review — sessions, uploads, styles** | §36 — database sessions instead of a JWT; multipart uploads stored outside `public/`; `TRUSTED_PROXY_COUNT` defaults to 0; bounded page cache; take-down and review moderation; `unknown` availability for crawled rows, linked sources, Iranian map links; every dataset city known; readable slugs; one password rule and Persian digits read as Latin; CSS modules across the site with shared `Button`/`Dialog`/`StatusScreen`, and a test that an animation named in a module is defined there. 18 unit + 181 API + 8 importer + 11 browser tests; a stranger learns nothing of the internals (no framework banner, `/api-docs` staff-only) and the JSON catalogue has its own budget (§20b). |
-| 2026-09-27 | **Native visual effects** | §37 — card-to-gallery morph (View Transitions), scroll reveals (view timelines), card spotlight; main-thread time unchanged within noise; three compare-selection faults behind a flaky test fixed. |
+| 2026-09-27 | **Native visual effects** | §37 — card-to-gallery morph (View Transitions), scroll reveals (view timelines); main-thread time unchanged within noise; three compare-selection faults behind a flaky test fixed. |
+| 2026-09-27 | **3D hero street** | §37 — CSS 3D street of real media on the landing, one-shot arrival + scroll-linked approach; no server cost, load time within noise; a 300 ms 3D floor plane and a flattening opacity found by measurement and designed out. Card spotlight removed. |
