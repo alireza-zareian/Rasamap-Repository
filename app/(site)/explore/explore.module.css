@@ -139,3 +139,7 @@
   .grid, .list { padding: 12px; }
   .grid { grid-template-columns: 1fr; }
 }
+
+/* Local: a CSS module renames every animation it names, so a @keyframes in
+   globals.css is out of its reach. */
+@keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }

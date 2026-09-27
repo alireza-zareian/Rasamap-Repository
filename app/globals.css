@@ -82,11 +82,7 @@ body {
 html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
 
 /* ── Animations ─────────────────────────────────────────────────── */
-@keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-@keyframes slideUp  { from { transform:translateY(100%); } to { transform:translateY(0); } }
 @keyframes shimmer  { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-@keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@keyframes relatedScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* Marquees: the live ticker on the landing page and the related-media strip on
    the billboard page. Both hold their list twice and slide -50% for a seamless
@@ -127,25 +123,6 @@ html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
   .related-strip { animation: none !important; }
   .related-marquee { overflow-x: auto !important; }
 }
-
-/* Background orb drift */
-@keyframes orb-drift-1 {
-  0%,100% { transform: translate(0,0) scale(1); }
-  33%     { transform: translate(70px,-50px) scale(1.06); }
-  66%     { transform: translate(-40px,60px) scale(0.96); }
-}
-@keyframes orb-drift-2 {
-  0%,100% { transform: translate(0,0) scale(1); }
-  40%     { transform: translate(-90px,40px) scale(1.09); }
-  70%     { transform: translate(55px,-70px) scale(0.94); }
-}
-@keyframes orb-drift-3 {
-  0%,100% { transform: translate(0,0); }
-  50%     { transform: translate(60px,50px); }
-}
-
-.fade-in   { animation: fadeIn  0.3s ease forwards; }
-.slide-up  { animation: slideUp 0.3s ease forwards; }
 
 .skeleton {
   background: linear-gradient(90deg, var(--bg-surface) 25%, #1e2d44 50%, var(--bg-surface) 75%);

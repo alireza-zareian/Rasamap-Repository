@@ -201,3 +201,7 @@
   .next { left: 4px; }
   .carousel { --slide-w: 240px; }
 }
+
+/* Local: a CSS module renames every animation it names, so a @keyframes in
+   globals.css is out of its reach. */
+@keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }

@@ -141,3 +141,7 @@
 .relatedPrice { margin-top: 8px; display: flex; align-items: baseline; gap: 4px; }
 .relatedPrice strong { font-size: 0.95rem; font-weight: 800; color: var(--accent); }
 .relatedPrice span { font-size: 0.62rem; color: var(--text-muted); }
+
+/* Local: a CSS module renames every animation it names, so a @keyframes in
+   globals.css is out of its reach. */
+@keyframes relatedScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
