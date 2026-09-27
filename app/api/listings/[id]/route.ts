@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { defineRoute } from "@/lib/http/route";
 import { idParams } from "@/lib/http/params";
+import { many, UploadedFile } from "@/lib/http/form";
 import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { resubmitListing } from "@/lib/db/listings";
-import { ListingInputSchema, MAX_LISTING_IMAGES } from "@/lib/domain/listing";
-import { maxUploadBodyBytes } from "@/lib/uploads";
+import { ListingFieldsSchema, MAX_LISTING_IMAGES, maxUploadBodyBytes } from "@/lib/domain/listing";
+import { faNum } from "@/lib/format";
+
+/**
+ * The resubmitted form. `photos` is the whole new photo list in order, each
+ * entry either the address of a photo the listing already has (kept) or a new
+ * file — one field, so the order the submitter chose survives.
+ */
+const ResubmissionForm = ListingFieldsSchema.extend({
+  photos: many(z.union([z.string().min(1).max(300), UploadedFile]), MAX_LISTING_IMAGES, `حداکثر ${faNum(MAX_LISTING_IMAGES)} تصویر مجاز است`),
+});
 
 /**
  * PATCH /api/listings/[id] — the submitter edits a listing an admin sent back
@@ -17,7 +28,7 @@ export const PATCH = defineRoute(
     access: "customer",
     rateLimit: userApiRateLimit,
     params: idParams,
-    body: ListingInputSchema,
+    form: ResubmissionForm,
     maxBodyBytes: maxUploadBodyBytes(MAX_LISTING_IMAGES),
   },
   async ({ actor, params, body, audit, tooMany }) => {
@@ -25,7 +36,8 @@ export const PATCH = defineRoute(
     const perAccount = await accountWriteRateLimit("listing", String(actor.id));
     if (!perAccount.allowed) return tooMany(perAccount);
 
-    const listing = await resubmitListing(actor, params.id, body);
+    const { photos, ...fields } = body;
+    const listing = await resubmitListing(actor, params.id, fields, photos);
     await audit("listing_resubmitted", {
       details: { billboardId: params.id, to: listing.moderation },
     });

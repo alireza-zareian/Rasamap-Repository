@@ -5,7 +5,7 @@ import { conflict, invalid, isUniqueViolation, notFound } from "@/lib/domain/err
 import { derivedPrices } from "@/lib/domain/pricing";
 import {
   decisionOutcome, initialModeration, MAX_LISTING_IMAGES,
-  type ListingDecision, type ListingInput,
+  type ListingDecision, type ListingFields,
 } from "@/lib/domain/listing";
 import { UNDECIDED } from "@/lib/domain/billboard";
 import type { Moderation } from "@/lib/types";
@@ -45,7 +45,7 @@ function toOwnListing(row: OwnRow) {
 }
 
 /** The columns a submission writes, on first submission and on resubmission alike. */
-function submittedFields(input: Omit<ListingInput, "images">) {
+function submittedFields(input: ListingFields) {
   return {
     name:        input.name,
     location:    input.location || input.city,
@@ -82,13 +82,13 @@ export async function listOwnListings(owner: CustomerActor) {
  *
  * Photos are written to disk first, so a rejected image never creates a
  * half-listing; if the row then fails to write, the folder is removed again.
+ * `photos` are the uploaded files, in the order the submitter put them.
  * The partial unique index on (submittedById, name, city) is the floor under
  * the route's opt-in Idempotency-Key: a double-click without the header loses
  * the race here instead of creating a second listing.
  */
-export async function submitListing(owner: CustomerActor, input: ListingInput) {
-  const { images, ...fields } = input;
-  const saved = await saveImages("listings", images);
+export async function submitListing(owner: CustomerActor, fields: ListingFields, photos: File[]) {
+  const saved = await saveImages("listings", photos);
   if (!saved.ok) throw invalid(saved.error);
 
   try {
@@ -120,10 +120,11 @@ export async function submitListing(owner: CustomerActor, input: ListingInput) {
  * `featured` drops back to false (a new review), and the review note is
  * cleared.
  *
- * A kept photo has to be one of this listing's own current URLs — never an
- * arbitrary string a client sends. New photos arrive as data URLs.
+ * `photos` is the new photo list in order: an entry is either one of this
+ * listing's own current URLs, kept — never an arbitrary string a client sends —
+ * or a newly uploaded file.
  */
-export async function resubmitListing(owner: CustomerActor, id: number, input: ListingInput) {
+export async function resubmitListing(owner: CustomerActor, id: number, fields: ListingFields, photos: (string | File)[]) {
   const current = await prisma.billboard.findUnique({
     where:  { id },
     select: { submittedById: true, moderation: true, images: true },
@@ -135,17 +136,18 @@ export async function resubmitListing(owner: CustomerActor, id: number, input: L
     throw conflict("این آگهی در وضعیت «نیاز به اصلاح» نیست و قابل ویرایش نیست");
   }
 
-  const { images, ...fields } = input;
   const currentUrls = (current.images as string[] | null) ?? [];
-  const kept  = images.filter(s => !s.startsWith("data:") && currentUrls.includes(s));
-  const fresh = images.filter(s => s.startsWith("data:"));
-  if (kept.length + fresh.length > MAX_LISTING_IMAGES) {
+  if (photos.some(p => typeof p === "string" && !currentUrls.includes(p))) {
+    throw invalid("تصویر انتخاب‌شده متعلق به این آگهی نیست");
+  }
+  if (photos.length > MAX_LISTING_IMAGES) {
     throw invalid(`حداکثر ${faNum(MAX_LISTING_IMAGES)} تصویر مجاز است`);
   }
 
-  const saved = await saveImages("listings", fresh);
+  const saved = await saveImages("listings", photos.filter((p): p is File => typeof p !== "string"));
   if (!saved.ok) throw invalid(saved.error);
-  const finalImages = [...kept, ...saved.urls];
+  const fresh = saved.urls[Symbol.iterator]();
+  const finalImages = photos.map(p => (typeof p === "string" ? p : fresh.next().value as string));
 
   let count: number;
   try {

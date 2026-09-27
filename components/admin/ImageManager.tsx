@@ -7,10 +7,18 @@ import type { Billboard } from "@/lib/types";
 import { C } from "./constants";
 import { Badge } from "./Badge";
 import { Image as ImageIcon, X, FolderOpen, ArrowUp } from "lucide-react";
+import { photoForm, preparePhotos } from "@/lib/client/photos";
+import { MAX_BILLBOARD_IMAGES } from "@/lib/domain/listing";
+import { faNum } from "@/lib/format";
+
+/** A photo in the list: one the record already has (its address), or a new file with its preview. */
+type Entry = { kept: string } | { file: File; preview: string };
+
+const src = (e: Entry) => ("kept" in e ? e.kept : e.preview);
 
 export function ImageManager({ billboard, onClose }: { billboard: Billboard; onClose: () => void }) {
   const boxRef = useModalA11y<HTMLDivElement>(onClose);
-  const [images, setImages] = useState<string[]>(billboard.images ?? []);
+  const [images, setImages] = useState<Entry[]>((billboard.images ?? []).map(kept => ({ kept })));
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -18,18 +26,14 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
   const [lightbox, setLightbox] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
-  const MAX_MB = 5;
-
-  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    const valid = files.filter(f => ALLOWED.has(f.type) && f.size <= MAX_MB * 1024 * 1024);
-    if (!valid.length) { setError("فقط JPG/PNG/WEBP تا ۵MB"); return; }
-    setUploading(true); setError("");
-    Promise.all(valid.map(f => new Promise<string>(res => {
-      const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsDataURL(f);
-    }))).then(urls => { setImages(p => [...p, ...urls]); setUploading(false); });
     e.target.value = "";
+    setUploading(true); setError("");
+    const { files: ready, error: rejected } = await preparePhotos(files, MAX_BILLBOARD_IMAGES - images.length);
+    setImages(p => [...p, ...ready.map(file => ({ file, preview: URL.createObjectURL(file) }))]);
+    setError(rejected);
+    setUploading(false);
   };
 
   const handleSave = async () => {
@@ -40,12 +44,9 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
         // than the ten seconds a small JSON call is allowed.
         timeoutMs: TIMEOUT_MS.upload,
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images }),
+        body: photoForm({}, images.map(e => ("kept" in e ? e.kept : e.file))),
       });
-      // Replace in-memory data URLs with saved server paths
-      const saved = data.images;
-      setImages(saved);
+      setImages(data.images.map(kept => ({ kept })));
       onClose();
     } catch (err) { setError(errorMessage(err)); }
     finally { setSaving(false); }
@@ -67,7 +68,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
 
         <div onClick={() => fileRef.current?.click()} style={{ border: `2px dashed ${C.accent}`, borderRadius: 12, padding: 20, textAlign: "center", cursor: "pointer", marginBottom: 16, background: "rgba(255,77,0,0.04)" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 6, color: C.muted }}><FolderOpen size={22} /></div>
-          <div style={{ fontSize: "0.82rem", color: C.muted }}>{uploading ? "پردازش..." : "کلیک برای انتخاب (JPG/PNG/WEBP، max 5MB)"}</div>
+          <div style={{ fontSize: "0.82rem", color: C.muted }}>{uploading ? "در حال آماده‌سازی…" : `کلیک برای انتخاب (JPG/PNG/WEBP، حداکثر ${faNum(MAX_BILLBOARD_IMAGES)} تصویر)`}</div>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleFiles} style={{ display: "none" }} />
         </div>
 
@@ -75,7 +76,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
           <div style={{ textAlign: "center", padding: 24, color: C.muted, fontSize: "0.82rem" }}>هیچ تصویری ندارد</div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-            {images.map((src, i) => (
+            {images.map((entry, i) => (
               <div key={i} draggable
                 onDragStart={() => setDragIdx(i)}
                 onDragOver={e => e.preventDefault()}
@@ -88,12 +89,12 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
               >
                 <button
                   type="button"
-                  onClick={e => { e.stopPropagation(); setLightbox(src); }}
+                  onClick={e => { e.stopPropagation(); setLightbox(src(entry)); }}
                   aria-label={`بزرگ‌نمایی تصویر ${i + 1}`}
                   style={{ display: "block", width: "100%", padding: 0, border: "none", background: "none", cursor: "zoom-in", lineHeight: 0 }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" loading="lazy" decoding="async" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 6, display: "block" }} />
+                  <img src={src(entry)} alt="" loading="lazy" decoding="async" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 6, display: "block" }} />
                 </button>
                 {i === 0 && <Badge text="اصلی" color={C.green} bg="rgba(34,197,94,0.12)" />}
                 <div style={{ display: "flex", gap: 4 }}>

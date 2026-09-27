@@ -30,16 +30,17 @@ server {
     listen 80;
     server_name rasamap.ir www.rasamap.ir;
 
-    # Uploaded and scraped photos are large and immutable; let nginx serve them
-    # so Node never wakes up for a picture. Paths are relative to the checkout.
+    # Scraped photos are large and immutable; let nginx serve them so Node never
+    # wakes up for a picture. Paths are relative to the checkout. Uploaded
+    # photos live outside public/ (UPLOAD_DIR) and are served by the app, which
+    # applies the hotlink check.
     root /srv/rasamap/public;
 
     # Above the largest body the app itself accepts: an admin's ten-photo batch
-    # (maxUploadBodyBytes(10) in lib/uploads.ts, about 28 MB); a listing's five
-    # photos are about 14 MB. At 12M nginx answered a legitimate five-photo
-    # listing with its own HTML 413, which the form cannot read. The app still
-    # enforces its own, per-route limits.
-    client_max_body_size 30M;
+    # (maxUploadBodyBytes in lib/domain/listing.ts, about 20 MB). Below it, nginx
+    # would answer a legitimate upload with its own HTML 413, which the form
+    # cannot read. The app still enforces its own, per-route limits.
+    client_max_body_size 24M;
 
     # Next's build output is content-hashed, so it can be cached forever.
     location /_next/static/ {

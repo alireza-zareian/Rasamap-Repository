@@ -20,6 +20,8 @@ const optional = z.object({
   // (prisma/backfill-coordinates.ts). The running app never reads it: there is
   // no client-side map any more, so NEXT_PUBLIC_NESHAN_KEY is gone with it.
   NESHAN_API_KEY: z.string().optional(),
+  // Where uploaded photos are written (lib/uploads.ts); storage/uploads when unset.
+  UPLOAD_DIR: z.string().optional(),
   // Logging (see lib/logger.ts)
   LOG_DIR: z.string().optional(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),

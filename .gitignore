@@ -49,6 +49,8 @@ project-ai.zip
 # (scraper/data/billboards.json is kept: lib/data.ts imports it and the build needs it)
 /public/images/scraped/
 # user-submitted listing photos and admin uploads — runtime content, not source
+# (storage/uploads since they left public/; the old folder is still read)
+/storage/
 /public/uploads/
 /scraper/data/raw_latest.json
 /scraper/data/*.raw.json

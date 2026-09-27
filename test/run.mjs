@@ -39,6 +39,8 @@ const env = {
   // Build into a separate directory so a test run never replaces the .next
   // that `npm run demo` is serving (read by next.config.ts).
   NEXT_DIST_DIR: ".next-test",
+  // Its own upload folder, so test photos never land beside the demo's.
+  UPLOAD_DIR: "storage/test-uploads",
   // SMS stays dormant here (no KAVENEGAR_API_KEY), and the on-screen code echo
   // the demo laptop turns on in .env is forced off, so the suite proves the
   // flows with only what a real client receives: helpers.recoverOtpCode()

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { MAX_BILLBOARD_IMAGES, maxUploadBodyBytes } from "./lib/domain/listing";
 
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control",        value: "on" },
@@ -102,6 +103,13 @@ const nextConfig: NextConfig = {
     deviceSizes: [384, 500],
   },
   productionBrowserSourceMaps: false,
+  experimental: {
+    // Proxy (proxy.ts) buffers every request body it sees, up to 10 MB by
+    // default, and hands the route only that much — so an upload past it
+    // reached the route cut short and failed as "not a valid form". The limit
+    // is the largest body any route accepts: the admin's photo list.
+    proxyClientMaxBodySize: maxUploadBodyBytes(MAX_BILLBOARD_IMAGES),
+  },
   // /api-docs renders docs/api.md at runtime — make sure the standalone/prod
   // build ships that file (it lives outside app/ and public/).
   outputFileTracingIncludes: {

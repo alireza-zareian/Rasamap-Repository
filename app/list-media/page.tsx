@@ -7,18 +7,14 @@ import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import { faNum } from "@/lib/format";
 import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/client/fetch-json";
+import { photoForm, preparePhotos } from "@/lib/client/photos";
+import { MAX_LISTING_IMAGES } from "@/lib/domain/listing";
 
 const steps = ["اطلاعات اصلی","موقعیت و نوع","قیمت‌گذاری","تصاویر","انتخاب پلن","تأیید"];
 const SUBMIT_STEP = 4;   // the plan step is the last one with a submit button
 const DONE_STEP   = 5;
 
-const MAX_PHOTOS = 5;
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
-const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
-// The server independently re-checks every one of these (size, real file type
-// via magic bytes, count) — the browser-side copy only exists so a mistake is
-// caught before a multi-megabyte upload is attempted.
 const PLANS = [
   {
     key: "free",
@@ -34,16 +30,6 @@ const PLANS = [
   },
 ] as const;
 
-/** Read a picked file as a base64 data URL for the JSON request body. */
-function toDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload  = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("read failed"));
-    reader.readAsDataURL(file);
-  });
-}
-
 /**
  * One key per filled-in form, sent as Idempotency-Key. A submission that
  * outlives the client's timeout may still have landed; retrying with the same
@@ -58,8 +44,8 @@ function newIdempotencyKey(): string {
 
 /**
  * What survives a trip to the sign-in page when the session ran out mid-form.
- * The text fields only: five photographs as data URLs are several times what
- * sessionStorage holds, so the owner is asked to add those again.
+ * The text fields only: five photographs are several times what sessionStorage
+ * holds, so the owner is asked to add those again.
  */
 const DRAFT_KEY = "rasamap:list-media-draft";
 type Draft = { form: Record<string, string>; plan: "free" | "featured" };
@@ -88,6 +74,8 @@ export default function ListMediaPage() {
   const [form, setForm] = useState({name:"",type:"billboard",city:"تهران",region:"",location:"",width:"",height:"",faces:"2",price:"",phone:"",desc:""});
   const [plan, setPlan] = useState<"free" | "featured">("free");
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
+  // Photos are shrunk in the browser before they are shown (lib/client/photos.ts).
+  const [preparing, setPreparing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s=(k:string,v:string)=>setForm(f=>({...f,[k]:v}));
 
@@ -110,21 +98,14 @@ export default function ListMediaPage() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [step]);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    const remaining = MAX_PHOTOS - photos.length;
-    const picked: { file: File; preview: string }[] = [];
-    let rejected = "";
-
-    for (const file of files.slice(0, remaining)) {
-      if (!ACCEPTED.includes(file.type)) { rejected = "فقط فرمت JPG، PNG یا WEBP پذیرفته می‌شود."; continue; }
-      if (file.size > MAX_PHOTO_BYTES)   { rejected = "حجم هر تصویر باید کمتر از ۲ مگابایت باشد."; continue; }
-      picked.push({ file, preview: URL.createObjectURL(file) });
-    }
-
-    setError(rejected);
-    setPhotos(prev => [...prev, ...picked]);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    setPreparing(true);
+    const { files: ready, error: rejected } = await preparePhotos(files, MAX_LISTING_IMAGES - photos.length);
+    setPreparing(false);
+    setError(rejected);
+    setPhotos(prev => [...prev, ...ready.map(file => ({ file, preview: URL.createObjectURL(file) }))]);
   }
 
   function removePhoto(idx: number) {
@@ -139,7 +120,6 @@ export default function ListMediaPage() {
     setError("");
     setSubmitting(true);
     try {
-      const images = await Promise.all(photos.map(p => toDataUrl(p.file)));
       await fetchJson("/api/listings", {
         // The upload budget, not the read one: five photographs at two
         // megabytes each over a mobile connection legitimately takes most of a
@@ -147,22 +127,8 @@ export default function ListMediaPage() {
         // message.
         timeoutMs: TIMEOUT_MS.upload,
         method: "POST",
-        headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
-        body: JSON.stringify({
-          name: form.name,
-          desc: form.desc,
-          phone: form.phone,
-          type: form.type,
-          city: form.city,
-          region: form.region,
-          location: form.location,
-          width: form.width ? parseInt(form.width) : 1,
-          height: form.height ? parseInt(form.height) : 1,
-          faces: parseInt(form.faces),
-          price: form.price ? parseInt(form.price) : 1,
-          plan,
-          images,
-        }),
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: photoForm({ ...form, plan }, photos.map(p => p.file)),
       });
       setStep(DONE_STEP);
     } catch (err) {
@@ -258,7 +224,7 @@ export default function ListMediaPage() {
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      {photos.length < MAX_PHOTOS && (
+      {photos.length < MAX_LISTING_IMAGES && (
         // A button, not a clickable div: the real <input type="file"> above is
         // hidden, so this was the only way to add a photograph — and a div with
         // an onClick is in no tab order, which left the whole upload step
@@ -266,11 +232,12 @@ export default function ListMediaPage() {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          style={{border:"2px dashed var(--border)",borderRadius:12,padding:"32px",textAlign:"center",color:"var(--text-muted)",marginBottom:14,cursor:"pointer",width:"100%",background:"none",fontFamily:"inherit",display:"block"}}
+          disabled={preparing}
+          style={{border:"2px dashed var(--border)",borderRadius:12,padding:"32px",textAlign:"center",color:"var(--text-muted)",marginBottom:14,cursor:preparing?"wait":"pointer",width:"100%",background:"none",fontFamily:"inherit",display:"block"}}
         >
           <ImagePlus size={32} style={{margin:"0 auto 10px",display:"block",color:"var(--accent)"}} />
-          <div style={{fontSize:"0.85rem",marginBottom:4}}>برای انتخاب تصویر کلیک کنید</div>
-          <div style={{fontSize:"0.72rem"}}>(حداکثر ۵ تصویر، هر کدام تا ۲ مگابایت — JPG / PNG / WEBP)</div>
+          <div style={{fontSize:"0.85rem",marginBottom:4}}>{preparing ? "در حال آماده‌سازی تصاویر…" : "برای انتخاب تصویر کلیک کنید"}</div>
+          <div style={{fontSize:"0.72rem"}}>(حداکثر {faNum(MAX_LISTING_IMAGES)} تصویر — JPG / PNG / WEBP، عکس گوشی هم مستقیم پذیرفته می‌شود)</div>
         </button>
       )}
       {photos.length > 0 && (
@@ -292,7 +259,7 @@ export default function ListMediaPage() {
         </div>
       )}
       <div style={{background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:8,padding:"10px 14px",fontSize:"0.78rem",color:"var(--green)",display:"flex",alignItems:"flex-start",gap:7}}>
-        <Check size={14} style={{flexShrink:0,marginTop:2}} /> تصاویر پس از بررسی و تأیید کارشناس رسامپ همراه با آگهی منتشر می‌شوند. حداکثر ۵ تصویر، هر کدام تا ۲ مگابایت.
+        <Check size={14} style={{flexShrink:0,marginTop:2}} /> تصاویر پس از بررسی و تأیید کارشناس رسامپ همراه با آگهی منتشر می‌شوند. عکس‌ها پیش از ارسال در همین مرورگر کوچک می‌شوند و اطلاعات مکانِ ذخیره‌شده در آن‌ها حذف می‌شود.
       </div>
     </div>,
     <div key={4}>

@@ -1,18 +1,24 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/http/route";
+import { many, UploadedFile } from "@/lib/http/form";
 import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { idempotency } from "@/lib/db/idempotency";
 import { listOwnListings, submitListing } from "@/lib/db/listings";
-import { ListingInputSchema, MAX_LISTING_IMAGES } from "@/lib/domain/listing";
-import { maxUploadBodyBytes } from "@/lib/uploads";
+import { ListingFieldsSchema, MAX_LISTING_IMAGES, maxUploadBodyBytes } from "@/lib/domain/listing";
+import { faNum } from "@/lib/format";
 
-// POST /api/listings — a customer submits a media item for review.
+const SubmissionForm = ListingFieldsSchema.extend({
+  photos: many(UploadedFile, MAX_LISTING_IMAGES, `حداکثر ${faNum(MAX_LISTING_IMAGES)} تصویر مجاز است`),
+});
+
+// POST /api/listings — a customer submits a media item for review, as a
+// multipart form: the fields, and the photos as files.
 export const POST = defineRoute(
   {
     name: "listings",
     access: "customer",
     rateLimit: userApiRateLimit,
-    body: ListingInputSchema,
+    form: SubmissionForm,
     maxBodyBytes: maxUploadBodyBytes(MAX_LISTING_IMAGES),
     messages: { signedOut: "برای ثبت رسانه باید وارد حساب کاربری خود شوید" },
   },
@@ -24,9 +30,10 @@ export const POST = defineRoute(
     if ("error" in idem) return NextResponse.json({ error: idem.error }, { status: idem.status });
     if ("replay" in idem) return NextResponse.json(idem.replay.body, { status: idem.replay.status });
 
+    const { photos, ...fields } = body;
     let listing;
     try {
-      listing = await submitListing(actor, body);
+      listing = await submitListing(actor, fields, photos);
     } catch (err) {
       // A refused submission leaves the key free, so the same form can retry.
       await idem.claim?.release();

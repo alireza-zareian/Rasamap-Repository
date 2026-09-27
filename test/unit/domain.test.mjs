@@ -14,7 +14,7 @@ import { hasRole, isStaffRole } from "../../lib/domain/roles.ts";
 import { DomainError, isUniqueViolation, notFound } from "../../lib/domain/errors.ts";
 import { NO_TRAFFIC, StringListSchema, TrafficSchema } from "../../lib/domain/billboard.ts";
 import {
-  ListingInputSchema, decisionOutcome, initialModeration,
+  ListingFieldsSchema, decisionOutcome, initialModeration,
 } from "../../lib/domain/listing.ts";
 
 test("the three longer prices follow from the monthly one", () => {
@@ -47,14 +47,14 @@ test("only approving a listing that asked for promotion grants it", () => {
 
 test("a listing's name and city are trimmed, so the duplicate index sees one listing", () => {
   const base = { phone: "09123456789", type: "billboard", width: 10, height: 4, faces: 1, price: 50 };
-  const a = ListingInputSchema.parse({ ...base, name: "بیلبورد آزادی ", city: " تهران" });
-  const b = ListingInputSchema.parse({ ...base, name: "بیلبورد آزادی", city: "تهران" });
+  const a = ListingFieldsSchema.parse({ ...base, name: "بیلبورد آزادی ", city: " تهران" });
+  const b = ListingFieldsSchema.parse({ ...base, name: "بیلبورد آزادی", city: "تهران" });
   assert.equal(a.name, b.name);
   assert.equal(a.city, b.city);
 });
 
 test("a listing refuses a phone that is not an Iranian mobile", () => {
-  const r = ListingInputSchema.safeParse({ name: "بیلبورد", city: "تهران", phone: "123", type: "billboard", width: 1, height: 1, faces: 1, price: 1 });
+  const r = ListingFieldsSchema.safeParse({ name: "بیلبورد", city: "تهران", phone: "123", type: "billboard", width: 1, height: 1, faces: 1, price: 1 });
   assert.equal(r.success, false);
 });
 

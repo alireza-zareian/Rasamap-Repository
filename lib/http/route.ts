@@ -36,6 +36,8 @@ import { rateLimited, serverError } from "./responses";
  *   body        413 past the route's size (32 KB unless it declares more),
  *               counted while reading; 400 when it is not JSON or fails its
  *               schema
+ *   form        the same for a multipart/form-data body — the one that
+ *               carries files. A route declares `body` or `form`, not both.
  *   handler     a DomainError becomes its status (see STATUS_BY_KIND); any
  *               other throw becomes a 500 with a reference id
  *
@@ -90,7 +92,14 @@ export interface RouteSpec<
   rateLimit: RateLimitSpec<Parsed<B>>;
   params?: P;
   query?: Q;
+  /** A JSON body. */
   body?: B;
+  /**
+   * A multipart/form-data body instead of JSON. Each field reaches the schema
+   * as a string or a File, and a field sent more than once as an array of them
+   * (see `many` in lib/http/form.ts).
+   */
+  form?: B;
   /** Refuse a larger body (413). Defaults to DEFAULT_MAX_BODY_BYTES. */
   maxBodyBytes?: number;
   /** Replaces the default refusals for this route. */
@@ -150,7 +159,7 @@ const DEFAULT_MAX_BODY_BYTES = 32 * 1024;
 const TOO_LARGE = Symbol("too-large");
 
 /**
- * The request body as text, refusing it once it passes `max` bytes.
+ * The request body, refusing it once it passes `max` bytes.
  *
  * Counted while reading rather than trusted from Content-Length: a chunked
  * request carries no length at all, and `req.json()` would buffer whatever
@@ -158,9 +167,9 @@ const TOO_LARGE = Symbol("too-large");
  * keyed on the body), so without this an anonymous caller could make the server
  * hold and parse an arbitrarily large payload for free.
  */
-async function readBodyCapped(req: NextRequest, max: number): Promise<string | typeof TOO_LARGE> {
+async function readBodyCapped(req: NextRequest, max: number): Promise<Buffer | typeof TOO_LARGE> {
   if (Number(req.headers.get("content-length")) > max) return TOO_LARGE;
-  if (!req.body) return "";
+  if (!req.body) return Buffer.alloc(0);
 
   const reader = req.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -175,7 +184,29 @@ async function readBodyCapped(req: NextRequest, max: number): Promise<string | t
     }
     chunks.push(value);
   }
-  return Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks);
+}
+
+/**
+ * A multipart body, already read within its size cap, as a plain object: one
+ * value per field, or an array when the field was sent more than once. Parsed
+ * by the platform's own FormData reader over the bytes already counted, so the
+ * cap applies before anything is decoded.
+ */
+async function parseForm(bytes: Buffer, contentType: string): Promise<Record<string, unknown> | null> {
+  if (!contentType.toLowerCase().startsWith("multipart/form-data")) return null;
+  let fd: FormData;
+  try {
+    fd = await new Response(new Uint8Array(bytes), { headers: { "content-type": contentType } }).formData();
+  } catch {
+    return null;
+  }
+  const out: Record<string, unknown> = {};
+  for (const key of new Set(fd.keys())) {
+    const all = fd.getAll(key);
+    out[key] = all.length === 1 ? all[0] : all;
+  }
+  return out;
 }
 
 /**
@@ -254,22 +285,26 @@ export function defineRoute<
     }
 
     let body: unknown;
-    if (spec.body) {
-      const text = await readBodyCapped(req, spec.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES);
-      if (text === TOO_LARGE) return fail(413, DEFAULT_MESSAGES.tooLarge);
-      // An empty body reaches the schema as `undefined`, so a route whose body
-      // is optional says so in its schema (`.optional()`) instead of every
-      // route having to tell "no body" apart from "not JSON".
+    const bodySchema = spec.body ?? spec.form;
+    if (bodySchema) {
+      const bytes = await readBodyCapped(req, spec.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES);
+      if (bytes === TOO_LARGE) return fail(413, DEFAULT_MESSAGES.tooLarge);
       let raw: unknown;
-      if (text) {
+      if (spec.form) {
+        raw = await parseForm(bytes, req.headers.get("content-type") ?? "");
+        if (raw === null) return fail(400, messages?.invalidBody ?? DEFAULT_MESSAGES.invalidJson);
+      } else if (bytes.length > 0) {
+        // An empty JSON body reaches the schema as `undefined`, so a route
+        // whose body is optional says so in its schema (`.optional()`) instead
+        // of every route having to tell "no body" apart from "not JSON".
         try {
           // Parsed here only to be handed straight to the schema below.
-          raw = JSON.parse(text);
+          raw = JSON.parse(bytes.toString("utf8"));
         } catch {
           return fail(400, messages?.invalidBody ?? DEFAULT_MESSAGES.invalidJson);
         }
       }
-      const parsed = spec.body.safeParse(raw);
+      const parsed = bodySchema.safeParse(raw);
       if (!parsed.success) {
         return fail(400, messages?.invalidBody ?? parsed.error.errors[0]?.message ?? DEFAULT_MESSAGES.invalidBody);
       }

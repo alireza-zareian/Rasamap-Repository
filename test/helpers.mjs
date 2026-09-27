@@ -2,6 +2,7 @@
 // No test framework dependency — uses Node's built-in `node:test` + `fetch`.
 
 import { createHash, createHmac, randomBytes } from "node:crypto";
+import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
@@ -77,7 +78,7 @@ export async function sessionExpiry(value) {
  *   itself rather than what it points at — the only way to tell a 307 to the
  *   sign-in page from a 403 refusal, since following one turns it into a 200.
  */
-export async function api(path, { method = "GET", body, token, ip, headers = {}, redirect = "follow" } = {}) {
+export async function api(path, { method = "GET", body, form, token, ip, headers = {}, redirect = "follow" } = {}) {
   const h = { "user-agent": UA, "x-forwarded-for": ip || uniqueIp(), ...headers };
   if (body !== undefined) h["content-type"] = "application/json";
   if (token) h["cookie"] = `rasamap_session=${token}`;
@@ -86,7 +87,8 @@ export async function api(path, { method = "GET", body, token, ip, headers = {},
     method,
     headers: h,
     redirect,
-    body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
+    body: form !== undefined ? toFormData(form)
+      : body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
@@ -100,6 +102,21 @@ export async function api(path, { method = "GET", body, token, ip, headers = {},
   return { status: res.status, json, headers: res.headers };
 }
 
+/**
+ * A multipart body from a plain object, the way the pages build one
+ * (lib/client/photos.ts): an array becomes the field repeated, in order, and a
+ * File is sent as a file.
+ */
+function toFormData(fields) {
+  const fd = new FormData();
+  for (const [key, value] of Object.entries(fields)) {
+    for (const v of Array.isArray(value) ? value : [value]) {
+      fd.append(key, v instanceof Blob ? v : String(v));
+    }
+  }
+  return fd;
+}
+
 /** Extract the session token from a Set-Cookie response header. */
 export function tokenFromSetCookie(res) {
   const cookies = res.headers.getSetCookie?.() ?? [];
@@ -111,23 +128,29 @@ export function tokenFromSetCookie(res) {
 }
 
 /**
- * The smallest valid PNG (1x1, transparent) as a data URL — a real file with a
- * real PNG signature, so the server's magic-byte check accepts it.
+ * The smallest valid PNG (1x1, transparent) — a real file with a real PNG
+ * signature, so the server's magic-byte check accepts it.
  */
-export function pngDataUrl() {
-  const base64 =
+export function pngFile() {
+  const bytes = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk" +
-    "YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-  return `data:image/png;base64,${base64}`;
+    "YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  return new File([bytes], "pixel.png", { type: "image/png" });
 }
 
 /**
- * A payload that *claims* to be a PNG but whose bytes are something else — the
+ * A file that *claims* to be a PNG but whose bytes are something else — the
  * shape of an upload trying to smuggle a non-image past an extension check.
  */
-export function fakeImageDataUrl() {
-  const evil = Buffer.from("MZ\x90\x00\x03 this is not an image at all").toString("base64");
-  return `data:image/png;base64,${evil}`;
+export function fakeImageFile() {
+  return new File([Buffer.from("MZ\x90\x00\x03 this is not an image at all")], "evil.png", { type: "image/png" });
+}
+
+/** Where the server under test writes uploads (test/run.mjs sets UPLOAD_DIR). */
+export function uploadPath(url) {
+  return join(process.env.UPLOAD_DIR, url.slice("/uploads/".length));
 }
 
 /** Random valid Iranian mobile number for register tests. */

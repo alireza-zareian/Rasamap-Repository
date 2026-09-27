@@ -34,7 +34,7 @@ StartLimitIntervalSec=120
 StartLimitBurst=5
 
 # The app writes exactly two places: the SQLite file (if that is the engine)
-# and public/uploads. Everything else can be read-only.
+# and storage/uploads (UPLOAD_DIR). Everything else can be read-only.
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full

@@ -4,6 +4,8 @@ import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/client/fe
 import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import { X, ImagePlus, Check } from "lucide-react";
 import { faNum } from "@/lib/format";
+import { photoForm, preparePhotos } from "@/lib/client/photos";
+import { MAX_LISTING_IMAGES } from "@/lib/domain/listing";
 
 // One of the user's own submissions, with every field the edit form touches.
 export interface EditableListing {
@@ -23,30 +25,17 @@ export interface EditableListing {
   images: string[];
 }
 
-const MAX_PHOTOS = 5;
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
-const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 const TYPES = ["billboard", "digital", "bridge", "station"];
 const TYPE_LABEL: Record<string, string> = {
   billboard: "بیلبورد", digital: "دیجیتال", bridge: "عرشه پل", station: "ایستگاه",
 };
 const BASE_CITIES = ["تهران", "اصفهان", "زنجان", "مشهد", "شیراز", "تبریز", "اهواز"];
 
-/** Read a picked file as a base64 data URL for the JSON request body. */
-function toDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("read failed"));
-    reader.readAsDataURL(file);
-  });
-}
-
 /**
  * The submitter's edit form for a listing an admin sent back ("نیاز به اصلاح").
  * Same fields as /list-media, on one screen. Kept photos are sent back as their
- * existing URLs; newly picked ones as data URLs. Saving PATCHes
- * /api/listings/[id], which returns the row to the review queue.
+ * existing URLs, newly picked ones as files. Saving PATCHes /api/listings/[id],
+ * which returns the row to the review queue.
  */
 export default function EditListingModal({
   listing,
@@ -94,19 +83,12 @@ export default function EditListingModal({
   // Revoke object URLs for removed previews.
   useEffect(() => () => { newPhotos.forEach(p => URL.revokeObjectURL(p.preview)); }, [newPhotos]);
 
-  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    const remaining = MAX_PHOTOS - photoCount;
-    const picked: { file: File; preview: string }[] = [];
-    let rejected = "";
-    for (const file of files.slice(0, remaining)) {
-      if (!ACCEPTED.includes(file.type)) { rejected = "فقط فرمت JPG، PNG یا WEBP پذیرفته می‌شود."; continue; }
-      if (file.size > MAX_PHOTO_BYTES) { rejected = "حجم هر تصویر باید کمتر از ۲ مگابایت باشد."; continue; }
-      picked.push({ file, preview: URL.createObjectURL(file) });
-    }
-    setError(rejected);
-    setNewPhotos(prev => [...prev, ...picked]);
     if (fileRef.current) fileRef.current.value = "";
+    const { files: ready, error: rejected } = await preparePhotos(files, MAX_LISTING_IMAGES - photoCount);
+    setError(rejected);
+    setNewPhotos(prev => [...prev, ...ready.map(file => ({ file, preview: URL.createObjectURL(file) }))]);
   }
 
   function validate(): string | null {
@@ -127,27 +109,11 @@ export default function EditListingModal({
     setError("");
     setSaving(true);
     try {
-      const fresh = await Promise.all(newPhotos.map(p => toDataUrl(p.file)));
       const data = await fetchJson<{ listing: Record<string, unknown> }>(`/api/listings/${listing.id}`, {
         // Photographs travel with this request, so it gets the upload budget.
         timeoutMs: TIMEOUT_MS.upload,
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          desc: form.desc,
-          phone: form.phone.trim(),
-          type: form.type,
-          city: form.city,
-          region: form.region.trim(),
-          location: form.location.trim(),
-          width: parseInt(form.width),
-          height: parseInt(form.height),
-          faces: parseInt(form.faces),
-          price: parseInt(form.price),
-          plan,
-          images: [...keptUrls, ...fresh],
-        }),
+        body: photoForm({ ...form, plan }, [...keptUrls, ...newPhotos.map(p => p.file)]),
       });
       onSaved(data.listing);
     } catch (err) {
@@ -266,7 +232,7 @@ export default function EditListingModal({
                   </button>
                 </div>
               ))}
-              {photoCount < MAX_PHOTOS && (
+              {photoCount < MAX_LISTING_IMAGES && (
                 <button onClick={() => fileRef.current?.click()}
                   style={{ border: "2px dashed var(--border)", background: "none", borderRadius: 8, aspectRatio: "4/3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, color: "var(--text-muted)", cursor: "pointer", fontFamily: "inherit", fontSize: "0.68rem" }}>
                   <ImagePlus size={20} style={{ color: "var(--accent)" }} /> افزودن

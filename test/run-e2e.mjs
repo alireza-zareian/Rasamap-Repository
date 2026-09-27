@@ -49,6 +49,8 @@ const env = {
   // Its own build directory, so a browser run never replaces the .next that
   // `npm run demo` is serving or the .next-test the API suite builds.
   NEXT_DIST_DIR: ".next-e2e",
+  // Its own upload folder, so test photos never land beside the demo's.
+  UPLOAD_DIR: "storage/e2e-uploads",
   TEST_BASE_URL: BASE,
   // Off, as in test/run.mjs: the sign-up flow is proven without the demo echo.
   OTP_DEV_ECHO: "0",

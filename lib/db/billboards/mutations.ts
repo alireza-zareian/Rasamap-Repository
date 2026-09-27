@@ -229,19 +229,17 @@ export async function setBillboardVisibility(id: number, visible: boolean, note:
 /**
  * Replace a media item's photos, in the order given.
  *
- * The list mixes two kinds of entry: photos already on the record, kept as they
- * are, and newly picked files as data URLs. A kept photo must be one the record
- * already has — this used to keep any string starting with "/" or "http", so an
- * arbitrary external address could be stored and shown on the public page; the
- * customer's resubmission applies the same rule (../listings.ts).
+ * An entry is either a photo the record already has, kept as it is, or a newly
+ * uploaded file. A kept photo must be one the record already has — this used
+ * to keep any string starting with "/" or "http", so an arbitrary external
+ * address could be stored and shown on the public page; the customer's
+ * resubmission applies the same rule (../listings.ts).
  *
  * New files go through saveImages(), the same path a customer's listing takes:
  * every file is checked before any is written, and the folder is removed again
- * if the row cannot be updated. This used to write each file as it was decoded,
- * so a bad fourth photo left the first three on disk with nothing pointing at
- * them.
+ * if the row cannot be updated.
  */
-export async function replaceBillboardImages(id: number, entries: string[], max: number): Promise<string[]> {
+export async function replaceBillboardImages(id: number, entries: (string | File)[], max: number): Promise<string[]> {
   const existing = await prisma.billboard.findUnique({ where: { id }, select: { images: true, allImages: true } });
   if (!existing) throw notFound("بیلبورد یافت نشد");
   const current = new Set([
@@ -249,16 +247,15 @@ export async function replaceBillboardImages(id: number, entries: string[], max:
     ...((existing.allImages as string[] | null) ?? []),
   ]);
 
-  const isNew = (src: string) => src.startsWith("data:");
-  if (entries.some(src => !isNew(src) && !current.has(src))) {
+  if (entries.some(e => typeof e === "string" && !current.has(e))) {
     throw invalid("تصویر انتخاب‌شده متعلق به این رسانه نیست");
   }
 
-  const saved = await saveImages("billboards", entries.filter(isNew), max);
+  const saved = await saveImages("billboards", entries.filter((e): e is File => typeof e !== "string"), max);
   if (!saved.ok) throw invalid(saved.error);
 
   const fresh = saved.urls[Symbol.iterator]();
-  const images = entries.map(src => (isNew(src) ? fresh.next().value as string : src));
+  const images = entries.map(e => (typeof e === "string" ? e : fresh.next().value as string));
 
   try {
     // `hasImages` is a denormalised flag: it is the first key of the default
