@@ -141,6 +141,23 @@ export function pngFile() {
 }
 
 /**
+ * A real PNG header declaring 20000 × 20000 pixels. Filled with one colour it
+ * compresses to about 1.2 MB — under the byte ceiling — and decodes to 1.6 GB
+ * in whichever browser shows it. The header is all the server reads, so the
+ * pixels are left out.
+ */
+export function hugePngFile() {
+  const ihdr = Buffer.alloc(25);
+  ihdr.writeUInt32BE(13, 0);
+  ihdr.write("IHDR", 4, "ascii");
+  ihdr.writeUInt32BE(20000, 8);
+  ihdr.writeUInt32BE(20000, 12);
+  ihdr[16] = 8; ihdr[17] = 2;
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  return new File([Buffer.concat([signature, ihdr, Buffer.alloc(64)])], "huge.png", { type: "image/png" });
+}
+
+/**
  * A file that *claims* to be a PNG but whose bytes are something else — the
  * shape of an upload trying to smuggle a non-image past an extension check.
  */

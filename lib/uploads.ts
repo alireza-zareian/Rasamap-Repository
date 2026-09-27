@@ -59,6 +59,48 @@ function sniff(buf: Buffer): ImageKind | null {
   return null;
 }
 
+/**
+ * The largest photo accepted, by the size its header declares. The byte
+ * ceiling does not bound this: 20000 × 20000 of one flat colour is about
+ * 1.2 MB of PNG and 1.6 GB once a browser decodes it — the moderator's, first.
+ * The site's own form scales every photo to 1600 px before sending
+ * (lib/client/photos.ts), so only a file that bypassed it meets these.
+ */
+const MAX_IMAGE_EDGE = 8000;
+const MAX_IMAGE_PIXELS = 40_000_000;
+
+/** Width and height as the file's own header states them, without decoding it. */
+function declaredSize(buf: Buffer, kind: ImageKind): { width: number; height: number } | null {
+  if (kind === "png") {
+    if (buf.length < 24 || buf.toString("ascii", 12, 16) !== "IHDR") return null;
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+  }
+  if (kind === "webp") {
+    if (buf.length < 30) return null;
+    const format = buf.toString("ascii", 12, 16);
+    if (format === "VP8 ") return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
+    if (format === "VP8L") {
+      const bits = buf.readUInt32LE(21);
+      return { width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 };
+    }
+    if (format === "VP8X") return { width: buf.readUIntLE(24, 3) + 1, height: buf.readUIntLE(27, 3) + 1 };
+    return null;
+  }
+  // JPEG: walk the segments to the frame header (SOF0–SOF15, less the three
+  // markers in that range that are not frames: DHT, JPG and DAC).
+  let i = 2;
+  while (i + 9 < buf.length) {
+    if (buf[i] !== 0xff) return null;
+    const marker = buf[i + 1];
+    if (marker === 0xff) { i++; continue; }
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      return { width: buf.readUInt16BE(i + 7), height: buf.readUInt16BE(i + 5) };
+    }
+    i += 2 + buf.readUInt16BE(i + 2);
+  }
+  return null;
+}
+
 type Checked = { ok: true; buffer: Buffer; ext: string } | { ok: false; error: string };
 
 /** One uploaded file, as bytes we are willing to write, or a Persian reason why not. */
@@ -71,6 +113,13 @@ async function checkImage(file: File, index: number): Promise<Checked> {
   const buffer = Buffer.from(await file.arrayBuffer());
   const kind = sniff(buffer);
   if (!kind) return { ok: false, error: `تصویر ${position}: فقط تصویر JPG، PNG یا WEBP پذیرفته می‌شود.` };
+  const size = declaredSize(buffer, kind);
+  if (!size || size.width === 0 || size.height === 0) {
+    return { ok: false, error: `تصویر ${position}: فایل تصویر خوانا نیست.` };
+  }
+  if (Math.max(size.width, size.height) > MAX_IMAGE_EDGE || size.width * size.height > MAX_IMAGE_PIXELS) {
+    return { ok: false, error: `تصویر ${position}: ابعاد تصویر بیش از حد بزرگ است؛ حداکثر ${faNum(MAX_IMAGE_EDGE)} پیکسل در هر ضلع.` };
+  }
   return { ok: true, buffer, ext: EXT[kind] };
 }
 

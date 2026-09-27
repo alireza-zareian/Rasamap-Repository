@@ -36,7 +36,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { BASE, api, mintSession, sessionExpiry, tokenFromSetCookie, uniqueIp, randomPhone, pngFile, fakeImageFile, uploadPath, recoverOtpCode, countOtpRows, registerUser, freshCustomer } from "./helpers.mjs";
+import { BASE, api, mintSession, sessionExpiry, tokenFromSetCookie, uniqueIp, randomPhone, pngFile, fakeImageFile, hugePngFile, uploadPath, recoverOtpCode, countOtpRows, registerUser, freshCustomer } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
 
@@ -2467,6 +2467,17 @@ test("a photo larger than the per-photo ceiling is refused", async () => {
     form: { name: "بیلبورد عکس بزرگ", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40, photos: [big] },
   });
   assert.equal(res.status, 400);
+});
+
+test("a small file that decodes to a gigantic image is refused", async () => {
+  // The byte ceiling does not see it: 20000 × 20000 of one colour is about
+  // 1.2 MB of PNG. The moderator's browser would be the one to decode it.
+  const token = await freshCustomer();
+  const res = await api("/api/listings", {
+    method: "POST", token,
+    form: { name: "بیلبورد عکس غول‌آسا", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40, photos: [hugePngFile()] },
+  });
+  assert.equal(res.status, 400, JSON.stringify(res.json));
 });
 
 test("a photo written under public/uploads by an earlier version is still served", async () => {
