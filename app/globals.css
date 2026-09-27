@@ -133,6 +133,11 @@ html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
 input[type=range] { accent-color: var(--accent); }
 
 /* ── Text shimmer — same proven pattern as .skeleton ────────────── */
+/* It sweeps twice and stops. A moving background-position is not something the
+   compositor can run, so an endless sweep restyled and repainted the text on
+   the main thread at 60 fps for as long as a page stayed open — measured on
+   /about, 600 style recalculations and 383 ms of main-thread work in every
+   ten idle seconds. */
 /* Dark mode base: #D8E4F8 (muted) → #fff (bright peak) → #D8E4F8   */
 /* Light mode base: #14223A (dark) → #4A90FF (blue peak) → #14223A  */
 
@@ -149,7 +154,7 @@ input[type=range] { accent-color: var(--accent); }
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: text-shimmer 5s linear infinite;
+  animation: text-shimmer 5s linear 2;
 }
 [data-theme="light"] .shimmer-heading {
   background: linear-gradient(90deg,
@@ -178,7 +183,7 @@ input[type=range] { accent-color: var(--accent); }
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: text-shimmer 6s linear infinite;
+  animation: text-shimmer 6s linear 2;
 }
 [data-theme="light"] .logo-shimmer {
   background: linear-gradient(90deg,
@@ -194,7 +199,6 @@ input[type=range] { accent-color: var(--accent); }
   background-clip: text;
 }
 
-/* Fix text-shimmer keyframe to match skeleton pattern */
 @keyframes text-shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position:  200% 0; }
@@ -352,8 +356,6 @@ html.page-hidden .bg-orb-1,
 html.page-hidden .bg-orb-2,
 html.page-hidden .bg-orb-3,
 html.page-hidden .bg-orb-4,
-html.page-hidden .shimmer-heading,
-html.page-hidden .logo-shimmer,
 html.page-hidden .ticker-strip,
 html.page-hidden .related-strip,
 html.page-hidden .skeleton {
