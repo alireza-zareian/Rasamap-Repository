@@ -1,5 +1,5 @@
 "use client";
-import { useRef, type ReactNode, type CSSProperties } from "react";
+import { useRef, type ReactNode } from "react";
 
 /**
  * The window around a CSS marquee, made draggable.
@@ -13,11 +13,9 @@ import { useRef, type ReactNode, type CSSProperties } from "react";
  */
 export default function SwipeMarquee({
   className = "",
-  style,
   children,
 }: {
   className?: string;
-  style?: CSSProperties;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -28,7 +26,6 @@ export default function SwipeMarquee({
     <div
       ref={ref}
       className={className}
-      style={style}
       onPointerDown={hold}
       onPointerUp={release}
       onPointerCancel={release}

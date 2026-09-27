@@ -1,0 +1,143 @@
+/* The pieces of a media page that live outside its route folder: the gallery,
+   the traffic estimate, the contact card, the share button and the related
+   strip. One sheet, because they are only ever drawn on that page. */
+
+/* ── Gallery ── */
+.stage {
+  position: relative; display: block; width: 100%; aspect-ratio: 16 / 9;
+  border-radius: 16px; overflow: hidden; cursor: zoom-in;
+  background: var(--bg-surface); border: none; padding: 0; font: inherit;
+}
+.stage img { object-fit: cover; }
+.empty {
+  width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; position: relative;
+  background: var(--bg-surface); border: 1px solid var(--border);
+}
+.pill {
+  position: absolute; bottom: 12px; display: flex; align-items: center; gap: 5px;
+  background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); color: #fff; font-size: 0.7rem;
+}
+.counter { left: 12px; border-radius: 20px; padding: 3px 12px; }
+.zoom { right: 12px; border-radius: 8px; padding: 4px 10px; }
+
+.thumbs { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 4px; }
+.thumb {
+  position: relative; flex-shrink: 0; width: 72px; height: 52px; border-radius: 9px; overflow: hidden;
+  border: 2px solid var(--border); padding: 0; cursor: pointer; background: var(--bg-surface);
+}
+.thumb[aria-current="true"] { border-color: var(--accent); }
+.thumb img { object-fit: cover; }
+
+.lightbox {
+  position: fixed; inset: 0; z-index: 9999; outline: none;
+  background: rgba(0, 0, 0, 0.92); display: flex; align-items: center; justify-content: center;
+}
+.lightboxFrame { position: relative; width: 90vw; max-height: 90vh; }
+.lightboxImage { width: 90vw; height: auto; max-height: 88vh; object-fit: contain; border-radius: 12px; display: block; }
+.lightboxBroken { position: relative; width: 90vw; max-height: 88vh; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; }
+.round {
+  position: absolute; border: none; color: #fff; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.arrow { top: 50%; transform: translateY(-50%); width: 40px; height: 40px; background: rgba(255, 255, 255, 0.12); }
+.prev { right: -52px; }
+.next { left: -52px; }
+.close { top: -16px; left: -16px; width: 32px; height: 32px; background: rgba(255, 255, 255, 0.15); }
+.lightboxCount { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); font-size: 0.72rem; color: rgba(255, 255, 255, 0.6); }
+
+/* On a phone the arrows outside the photo are off-screen; bring them in over
+   its edges. Swiping works too. */
+@media (max-width: 640px) {
+  .prev { right: 6px; background: rgba(0, 0, 0, 0.45); }
+  .next { left: 6px; background: rgba(0, 0, 0, 0.45); }
+}
+
+/* ── Traffic estimate ── */
+.meter { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.meterHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 14px; }
+.meterTitle { font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.meterTitle svg { color: var(--accent); }
+.score {
+  font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 27%, transparent);
+}
+.meterMain { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.gauge { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+.gauge svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+.gauge circle { transition: stroke-dasharray 1s ease; }
+.gaugeValue {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: 800; color: var(--tone);
+}
+.gaugeValue small { font-size: 0.55rem; color: var(--text-muted); font-weight: 400; }
+.views { flex: 1; }
+.viewsValue { font-size: 1.4rem; font-weight: 800; color: var(--tone); }
+.viewsLabel { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
+.facts { display: flex; flex-direction: column; gap: 4px; font-size: 0.72rem; color: var(--text-muted); list-style: none; margin: 0; padding: 0; }
+.facts li { display: flex; align-items: center; gap: 5px; }
+.congestion { margin-bottom: 10px; }
+.congestionHead { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 5px; }
+.congestionHigh { color: var(--accent); }
+.bar { height: 8px; background: var(--bg-card); border-radius: 4px; overflow: hidden; }
+.barFill { height: 100%; border-radius: 4px; background: var(--accent-warm); transition: width 1s; }
+.barHigh { background: linear-gradient(90deg, var(--accent-warm), var(--accent)); }
+.method {
+  display: flex; align-items: center; gap: 5px; font-size: 0.66rem; color: var(--text-muted);
+  padding-top: 8px; border-top: 1px solid var(--border); line-height: 1.5;
+}
+
+/* ── Contact ── */
+.contact { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.muted { font-size: 0.72rem; color: var(--text-muted); }
+.muted b { color: var(--text-main); font-weight: 400; }
+.signIn {
+  display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; border-radius: 10px;
+  background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main);
+  text-decoration: none; font-weight: 600; font-size: 0.8rem;
+}
+.contactLabel { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 6px; }
+.phone, .reveal {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px; border-radius: 10px;
+  background: rgba(34, 197, 94, 0.08); border: 1.5px solid rgba(34, 197, 94, 0.3); color: var(--green);
+  text-decoration: none; font-family: inherit; font-weight: 700;
+}
+.phone { font-size: 0.95rem; direction: ltr; letter-spacing: 0.03em; }
+.reveal { justify-content: center; font-size: 0.85rem; cursor: pointer; }
+.reveal:disabled { background: var(--bg-surface); border-color: var(--border); color: var(--text-muted); cursor: default; }
+.error { font-size: 0.7rem; color: var(--red); margin-top: 7px; line-height: 1.8; }
+
+/* ── Share ── */
+.share {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px;
+  font-size: 0.72rem; font-family: inherit; cursor: pointer; transition: all 0.2s;
+  background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border);
+}
+.share[data-state="copied"] { background: rgba(34, 197, 94, 0.12); color: var(--green); }
+.share[data-state="failed"] { background: rgba(239, 68, 68, 0.12); color: var(--red); }
+
+/* ── Related strip ── */
+.related { border-top: 1px solid var(--border); background: var(--bg-deep); padding: 40px 0 48px; overflow: hidden; }
+.relatedHead { max-width: 1350px; margin: 0 auto; padding: 0 20px 18px; }
+.relatedHead h2 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+.relatedHead p { margin: 4px 0 0; font-size: 0.76rem; color: var(--text-muted); }
+.relatedWindow {
+  -webkit-mask-image: linear-gradient(to left, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to left, transparent, #000 6%, #000 94%, transparent);
+}
+.relatedStrip { display: flex; gap: 16px; padding: 4px 20px; animation: relatedScroll var(--duration) linear infinite; }
+.relatedCard {
+  flex-shrink: 0; width: 230px; border-radius: 14px; overflow: hidden; display: block;
+  text-decoration: none; color: var(--text-main); background: var(--bg-card); border: 1px solid var(--border);
+}
+.relatedPhoto { position: relative; aspect-ratio: 16 / 10; background: var(--bg-surface); }
+.relatedType {
+  position: absolute; top: 8px; right: 8px; font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+  background: color-mix(in srgb, var(--accent) 14%, rgba(0, 0, 0, 0.45)); color: #fff; backdrop-filter: blur(4px);
+}
+.relatedBody { padding: 10px 12px 12px; }
+.relatedName { font-size: 0.82rem; font-weight: 700; line-height: 1.4; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.relatedCity { display: flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 0.68rem; color: var(--text-muted); }
+.relatedPrice { margin-top: 8px; display: flex; align-items: baseline; gap: 4px; }
+.relatedPrice strong { font-size: 0.95rem; font-weight: 800; color: var(--accent); }
+.relatedPrice span { font-size: 0.62rem; color: var(--text-muted); }

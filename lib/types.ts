@@ -171,3 +171,14 @@ export const leadStatusLabels: Record<string, string> = LEAD_STATUS_LABELS;
 /** Allowlist for the admin PATCH, derived from the labels so they cannot drift. */
 export const LEAD_STATUSES = Object.keys(LEAD_STATUS_LABELS) as [LeadStatus, ...LeadStatus[]];
 
+/**
+ * Where a crawled row came from, for the attribution on its page. The rows
+ * are the sources' published listings; naming and linking them is the credit
+ * they are owed, and it tells a visitor where to check what the catalogue
+ * shows.
+ */
+export const DATA_SOURCES: Record<string, { name: string; site: string }> = {
+  billboardiha: { name: "بیلبوردیها", site: "https://billboardiha.com" },
+  aradholding:  { name: "آراد هلدینگ", site: "https://aradholding.com" },
+  irbillboard:  { name: "ایران بیلبورد", site: "https://irbillboard.com" },
+};

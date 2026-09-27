@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Check, Share2, X } from "lucide-react";
 import { copyText } from "@/lib/client/clipboard";
+import styles from "./detail.module.css";
 
 type State = "idle" | "copied" | "failed";
 
@@ -39,21 +40,13 @@ export default function ShareButton({ title }: { title: string }) {
     : state === "failed" ? <><X size={13} /> کپی نشد</>
     : <><Share2 size={13} /> اشتراک‌گذاری</>;
 
-  const color =
-    state === "copied" ? "var(--green)"
-    : state === "failed" ? "#ef4444"
-    : "var(--text-muted)";
-
-  const background =
-    state === "copied" ? "rgba(34,197,94,0.12)"
-    : state === "failed" ? "rgba(239,68,68,0.12)"
-    : "var(--bg-surface)";
-
   return (
     <button
+      type="button"
+      className={styles.share}
+      data-state={state}
       onClick={share}
       title={state === "failed" ? "مرورگر اجازهٔ کپی نداد — نشانی صفحه را دستی کپی کنید" : "اشتراک‌گذاری لینک"}
-      style={{ fontSize: "0.72rem", padding: "4px 12px", borderRadius: 20, background, color, border: "1px solid var(--border)", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", display: "inline-flex", alignItems: "center", gap: 5 }}
     >
       {label}
     </button>

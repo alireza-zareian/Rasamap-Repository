@@ -11,16 +11,18 @@ import ShareButton from "@/components/ShareButton";
 import ReviewsSection from "@/components/ReviewsSection";
 import TrafficMeter from "@/components/TrafficMeter";
 import BillboardContact from "@/components/BillboardContact";
-import { typeLabels, availabilityLabels, moderationLabels, type Billboard } from "@/lib/types";
+import { typeLabels, availabilityLabels, moderationLabels, DATA_SOURCES, type Billboard } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-url";
-import { faNum } from "@/lib/format";
+import { faNum, faCompact } from "@/lib/format";
+import { mapLinks } from "@/lib/domain/location";
 import { availabilityTone } from "@/components/ui/availability";
+import { cssVar } from "@/components/ui/css-var";
+import styles from "./detail.module.css";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
 
 /** Suggestions at the foot of the page — one marquee's worth. */
 const RELATED_COUNT = 12;
-
 
 /**
  * Structured data for one media item.
@@ -139,14 +141,17 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
     ...(b.images ?? []),
     ...((b.allImages ?? []).filter(u => !(b.images ?? []).includes(u))),
   ];
-  const statusColor = availabilityTone(b.availability);
+  const tone = cssVar("--tone", availabilityTone(b.availability));
   const area = b.width * b.height;
+  const source = b.source && b.source !== "manual" ? DATA_SOURCES[b.source] : undefined;
+  const at = b.lat != null && b.lng != null ? { lat: b.lat, lng: b.lng } : null;
+  const links = at ? mapLinks(at) : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
+    <div className={styles.page}>
       {/* Escaping "<" is not decoration: without it a name containing
           "</script>" would end the tag early and turn catalogue data into
-          markup. Nothing in the data does today, and that is not a guarantee. */}
+          markup. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -154,278 +159,203 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
         }}
       />
 
-      {/* Staff preview banner — only ever rendered for a staff session, because
-          only a staff session can reach an unpublished row at all. */}
+      {/* Only a staff session can reach an unpublished row at all. */}
       {unpublished && (
-        <div style={{ background: "rgba(98,71,196,0.12)", borderBottom: "1px solid rgba(98,71,196,0.35)", padding: "70px 20px 12px" }}>
-          <div style={{ maxWidth: 1350, margin: "0 auto", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 800, color: "#8B7BE0" }}>
-              <ShieldCheck size={15} /> پیش‌نمایش همکاران
-            </span>
-            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.9 }}>
-              این آگهی هنوز <b style={{ color: "var(--text-main)" }}>{moderationLabels[b.moderation] ?? b.moderation}</b> است و برای بازدیدکنندگان دیده نمی‌شود.
-            </span>
-            <Link href="/admin/listings" style={{ marginRight: "auto", fontSize: "0.75rem", color: "#8B7BE0", textDecoration: "none", border: "1px solid rgba(98,71,196,0.4)", borderRadius: 8, padding: "5px 13px", whiteSpace: "nowrap" }}>
-              رفتن به صف تأیید ←
-            </Link>
+        <div className={styles.preview}>
+          <div className={styles.previewInner}>
+            <span className={styles.previewTag}><ShieldCheck size={15} /> پیش‌نمایش همکاران</span>
+            <span>این آگهی هنوز <b>{moderationLabels[b.moderation] ?? b.moderation}</b> است و برای بازدیدکنندگان دیده نمی‌شود.</span>
+            <Link href="/admin/listings" className={styles.previewLink}>رفتن به صف تأیید ←</Link>
           </div>
         </div>
       )}
 
-      {/* Breadcrumb */}
-      <div style={{ maxWidth: 1350, margin: "0 auto", padding: unpublished ? "16px 20px 0" : "80px 20px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "0.78rem", color: "var(--text-muted)" }}>
-        {/* These were already links, but a 0.78rem line of text is a ~14px tap
-            target — under half the 44px a finger needs, so on a phone they read
-            as decoration. The padding grows the hit area and the negative margin
-            takes the growth back out of the layout, so nothing moves. */}
-        <Link href="/" style={{ color: "var(--text-muted)", textDecoration: "none", padding: "10px 6px", margin: "-10px -6px" }}>خانه</Link>
-        <span>›</span>
-        <Link href="/explore" style={{ color: "var(--text-muted)", textDecoration: "none", padding: "10px 6px", margin: "-10px -6px" }}>جستجو</Link>
-        <span>›</span>
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 240 }}>{b.name}</span>
-      </div>
+      <nav className={styles.crumbs} aria-label="مسیر صفحه">
+        <Link href="/">خانه</Link>
+        <span aria-hidden>›</span>
+        <Link href="/explore">جستجو</Link>
+        <span aria-hidden>›</span>
+        <span>{b.name}</span>
+      </nav>
 
-      <div style={{ maxWidth: 1350, margin: "0 auto", padding: "16px 20px 40px" }}>
-        <div className="detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 440px", gap: 24, alignItems: "start" }}>
+      <div className={styles.wrap}>
+        <div className={styles.grid}>
+          <div className={styles.main}>
+            <div className={styles.head}>
+              <div className={styles.titleRow}>
+                <h1 className={styles.title}>{b.name}</h1>
+                <div className={styles.badges}>
+                  <span className={`${styles.badge} ${styles.typeBadge}`}>{TYPE_LABEL[b.type] ?? b.type}</span>
+                  <span className={`${styles.badge} ${styles.statusBadge}`} style={tone}>{availabilityLabels[b.availability] ?? b.availability}</span>
+                  <ShareButton title={b.name} />
+                </div>
+              </div>
+              <div className={styles.address}>{b.location}</div>
 
-          {/* Left column */}
-          <div className="detail-main">
-           {/* Head block — on mobile this stays first, above the booking card */}
-           <div className="detail-head">
-            {/* Title row: name right (first in DOM = right in RTL), badges left (second = left) */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
-              <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, lineHeight: 1.3, textAlign: "right" }}>{b.name}</h1>
-              <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", flexShrink: 0 }}>
-                <span style={{ fontSize: "0.68rem", padding: "2px 9px", borderRadius: 20, background: "rgba(255,77,0,0.1)", color: "var(--accent)", fontWeight: 600, whiteSpace: "nowrap" }}>{TYPE_LABEL[b.type] ?? b.type}</span>
-                <span style={{ fontSize: "0.68rem", padding: "2px 9px", borderRadius: 20, background: `color-mix(in srgb, ${statusColor} 10%, transparent)`, color: statusColor, fontWeight: 600, whiteSpace: "nowrap" }}>{availabilityLabels[b.availability] ?? b.availability}</span>
-                <ShareButton title={b.name} />
+              <BillboardGallery images={allImgs} name={b.name} type={b.type} />
+
+              <div className={styles.specs}>
+                {[
+                  { icon: <Ruler size={13} />, label: "ابعاد", val: `${faNum(b.width)}×${faNum(b.height)} متر` },
+                  { icon: <Square size={13} />, label: "مساحت", val: `${faNum(area)} مترمربع` },
+                  { icon: <Layers size={13} />, label: "وجه", val: `${faNum(b.faces)} وجه` },
+                  { icon: <MapPin size={13} />, label: "شهر", val: b.city },
+                ].map(s => (
+                  <div key={s.label} className={styles.spec}>
+                    {s.icon}
+                    <strong>{s.val}</strong>
+                    <span>{s.label}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div style={{ fontSize: "0.76rem", color: "var(--text-muted)", marginBottom: 10, textAlign: "right" }}>{b.location}</div>
 
-            {/* Image — full width, right up under the title */}
-            <BillboardGallery images={allImgs} name={b.name} />
+            <div className={styles.body}>
+              {b.traffic && (
+                <section>
+                  <h2 className={styles.sectionHead}>
+                    آنالیز ترافیک <span className={styles.estimate}>تخمین هوشمند</span>
+                  </h2>
+                  <div className={styles.traffic}>
+                    <div className={styles.meter}><TrafficMeter traffic={b.traffic} /></div>
+                    <div className={styles.stats}>
+                      {[
+                        { label: "تردد روزانه", val: b.traffic.daily ? faCompact(b.traffic.daily) : "—" },
+                        { label: "بینندگان تخمینی", val: b.traffic.estimatedViews ? faCompact(b.traffic.estimatedViews) : "—" },
+                        { label: "امتیاز دیده شدن", val: b.traffic.viewabilityScore ? `${faNum(b.traffic.viewabilityScore)}/۱۰۰` : "—" },
+                        { label: "اوج ترافیک", val: b.traffic.peakHour || "—" },
+                        { label: "سطح تراکم", val: b.traffic.congestionLevel ? `${faNum(b.traffic.congestionLevel)}/۱۰` : "—" },
+                        { label: "عابران پیاده", val: b.traffic.pedestrian ? faCompact(b.traffic.pedestrian) : "—" },
+                      ].map(item => (
+                        <div key={item.label} className={styles.stat}>
+                          <strong>{item.val}</strong>
+                          <span>{item.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <p className={styles.footnote}>
+                    * اعداد ترافیک بر اساس جمعیت شهر، نوع رسانه، و موقعیت مکانی تخمین زده شده‌اند — داده واقعی ممکن است متفاوت باشد.
+                  </p>
+                </section>
+              )}
 
-            {/* Specs chips — below image, Lucide icons */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-              {[
-                { icon: <Ruler size={13} />, label: "ابعاد", val: `${b.width}×${b.height} m` },
-                { icon: <Square size={13} />, label: "مساحت", val: `${area} m²` },
-                { icon: <Layers size={13} />, label: "وجه", val: `${b.faces} وجه` },
-                { icon: <MapPin size={13} />, label: "شهر", val: b.city },
-              ].map(s => (
-                <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ color: "var(--text-muted)", display: "flex" }}>{s.icon}</span>
-                  <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>{s.val}</span>
-                  <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>{s.label}</span>
-                </div>
-              ))}
+              {b.description && (
+                <section className={styles.panel}>
+                  <h2 className={styles.panelTitle}>توضیحات</h2>
+                  <p>{b.description}</p>
+                </section>
+              )}
+
+              {b.features?.length > 0 && (
+                <section className={styles.panel}>
+                  <h2 className={styles.panelTitle}>ویژگی‌ها</h2>
+                  <ul className={styles.tags}>
+                    {b.features.map((f, i) => <li key={i} className={`${styles.tag} ${styles.feature}`}><Check size={12} /> {f}</li>)}
+                  </ul>
+                </section>
+              )}
+
+              {b.nearbyLandmarks?.length > 0 && (
+                <section className={styles.panel}>
+                  <h2 className={styles.panelTitle}>مکان‌های اطراف</h2>
+                  <ul className={styles.tags}>
+                    {b.nearbyLandmarks.map((lm, i) => <li key={i} className={styles.tag}><MapPin size={12} /> {lm}</li>)}
+                  </ul>
+                </section>
+              )}
+
+              <ReviewsSection billboardId={b.id} />
             </div>
-
-           </div>{/* end detail-head */}
-
-           {/* Body block — on mobile this drops below the booking card */}
-           <div className="detail-body">
-            {/* Traffic */}
-            {b.traffic && (
-              <div style={{ marginTop: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>آنالیز ترافیک</span>
-                  <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.35)", color: "#f59e0b", letterSpacing: "0.02em" }}>تخمین هوشمند</span>
-                </div>
-                <div className="detail-traffic" style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
-                  {/* TrafficMeter — 60% width (RTL: right side) */}
-                  <div className="detail-traffic-meter" style={{ flex: "0 0 60%", minWidth: 0 }}>
-                    <TrafficMeter traffic={b.traffic} />
-                  </div>
-                  {/* 6 stat chips — remaining space (RTL: left side) */}
-                  <div style={{ flex: 1, minWidth: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
-                    {[
-                      { label: "تردد روزانه", val: b.traffic.daily ? `${(b.traffic.daily / 1000).toFixed(0)}K` : "—" },
-                      { label: "بینندگان تخمینی", val: b.traffic.estimatedViews ? `${(b.traffic.estimatedViews / 1000).toFixed(0)}K` : "—" },
-                      { label: "امتیاز دیده شدن", val: b.traffic.viewabilityScore ? `${b.traffic.viewabilityScore}/100` : "—" },
-                      { label: "اوج ترافیک", val: b.traffic.peakHour || "—" },
-                      { label: "سطح تراکم", val: b.traffic.congestionLevel ? `${b.traffic.congestionLevel}/10` : "—" },
-                      { label: "عابران پیاده", val: b.traffic.pedestrian ? `${(b.traffic.pedestrian / 1000).toFixed(0)}K` : "—" },
-                    ].map(item => (
-                      <div key={item.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 8px", textAlign: "center" }}>
-                        <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>{item.val}</div>
-                        <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: 4 }}>{item.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: 8, lineHeight: 1.6 }}>
-                  * اعداد ترافیک بر اساس جمعیت شهر، نوع رسانه، و موقعیت مکانی تخمین زده شده‌اند — داده واقعی ممکن است متفاوت باشد.
-                </div>
-              </div>
-            )}
-
-            {/* Description */}
-            {b.description && (
-              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginTop: 16 }}>
-                <div style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: 10 }}>توضیحات</div>
-                <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--text-muted)", lineHeight: 1.8 }}>{b.description}</p>
-              </div>
-            )}
-
-            {/* Features */}
-            {b.features?.length > 0 && (
-              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginTop: 16 }}>
-                <div style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: 12 }}>ویژگی‌ها</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {b.features.map((f, i) => (
-                    <span key={i} style={{ background: "rgba(255,77,0,0.07)", color: "var(--accent)", border: "1px solid rgba(255,77,0,0.2)", padding: "4px 12px", borderRadius: 20, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: 5 }}><Check size={12} /> {f}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Nearby landmarks */}
-            {b.nearbyLandmarks?.length > 0 && (
-              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginTop: 16 }}>
-                <div style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: 12 }}>مکان‌های اطراف</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {b.nearbyLandmarks.map((lm, i) => (
-                    <span key={i} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", padding: "4px 12px", borderRadius: 20, fontSize: "0.75rem", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 5 }}><MapPin size={12} /> {lm}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Reviews */}
-            <ReviewsSection billboardId={b.id} />
-           </div>{/* end detail-body */}
           </div>
 
-          {/* Right sidebar */}
-          <div className="detail-side">
-            {/* Sticky pricing card — compact so map fits below on first load */}
-            <div className="detail-sticky" style={{ position: "sticky", top: 24 }}>
-              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "18px 20px" }}>
-                {/* Price + label on one line */}
-                <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 12, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: "1.85rem", fontWeight: 800, color: "var(--accent)", lineHeight: 1 }}>{faNum(b.price)}</span>
-                  <span style={{ fontSize: "0.73rem", color: "var(--text-muted)" }}>میلیون تومان / ماه</span>
-                  <span style={{ fontSize: "0.6rem", fontWeight: 600, padding: "1px 6px", borderRadius: 20, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b", whiteSpace: "nowrap" }}>حدسی · متغیر</span>
+          <aside className={styles.side}>
+            <div className={styles.sticky}>
+              <div className={styles.priceCard}>
+                <div className={styles.priceLine}>
+                  <span className={styles.price}>{faNum(b.price)}</span>
+                  <span className={styles.priceUnit}>میلیون تومان / ماه</span>
+                  <span className={styles.priceNote}>حدسی · متغیر</span>
                 </div>
 
-                {/* Sub-prices row */}
-                <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+                <div className={styles.tiers}>
                   {[
                     { label: "هفتگی", val: b.priceWeekly },
                     { label: "سه‌ماهه", val: b.priceQuarterly },
                     { label: "سالانه", val: b.priceYearly },
                   ].map(p => (
-                    <div key={p.label} style={{ flex: 1, background: "var(--bg-surface)", borderRadius: 8, padding: "7px 4px", textAlign: "center" }}>
-                      <div style={{ fontSize: "0.8rem", fontWeight: 700 }}>{p.val != null ? faNum(p.val) : "—"}</div>
-                      <div style={{ fontSize: "0.58rem", color: "var(--text-muted)", marginTop: 1 }}>{p.label}</div>
+                    <div key={p.label} className={styles.tier}>
+                      <strong>{p.val != null ? faNum(p.val) : "—"}</strong>
+                      <span>{p.label}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Rasamap lists media it does not own, so there is no checkout
-                    here: the next step is talking to the media's owner. The
-                    phone number is fetched from an authed endpoint only when a
-                    signed-in user asks for it — it is never embedded in the
-                    page HTML or the RSC payload. */}
+                    here: the next step is talking to the owner. The phone
+                    number is fetched from an authed endpoint only when a
+                    signed-in user asks for it — never embedded in the page. */}
                 <BillboardContact hasPhone={phoneAvailable} agency={b.agency} slug={b.slug} />
 
-                <div style={{ marginTop: 10, fontSize: "0.7rem", color: "var(--text-muted)", lineHeight: 1.8, textAlign: "center" }}>
-                  اجاره و قرارداد مستقیماً با صاحب رسانه انجام می‌شود. رسامپ واسطهٔ مالی نیست.
-                </div>
+                <div className={styles.direct}>اجاره و قرارداد مستقیماً با صاحب رسانه انجام می‌شود. رسامپ واسطهٔ مالی نیست.</div>
 
-                <Link href="/explore" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, textDecoration: "none", color: "var(--text-muted)", fontSize: "0.78rem", padding: "6px", marginTop: 6 }}>
-                  <ArrowRight size={13} /> بازگشت به جستجو
-                </Link>
+                <Link href="/explore" className={styles.back}><ArrowRight size={13} /> بازگشت به جستجو</Link>
               </div>
 
-              {/* Source badge */}
-              {b.source && b.source !== "manual" && (
-                <div style={{ marginTop: 8, textAlign: "center", fontSize: "0.63rem", color: "var(--text-muted)" }}>
-                  منبع: {b.source} {b.scrapedAt ? `· ${new Date(b.scrapedAt).toLocaleDateString("fa-IR")}` : ""}
+              {/* A crawled row is the source's published listing. Naming and
+                  linking the source is the credit it is owed, and tells the
+                  visitor where to check what this page says. */}
+              {source && (
+                <div className={styles.source}>
+                  اطلاعات این رسانه از{" "}
+                  <a href={source.site} target="_blank" rel="noopener noreferrer nofollow">{source.name}</a>
+                  {b.scrapedAt && <> · به‌روزرسانی {new Date(b.scrapedAt).toLocaleDateString("fa-IR")}</>}
                 </div>
               )}
-            </div>{/* end sticky */}
+            </div>
 
-            {/* Map — below sticky card, visible on first load without scrolling */}
-            {b.lat && b.lng && (
-              <div style={{ marginTop: 12, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
-                <div style={{ padding: "8px 14px", fontSize: "0.75rem", fontWeight: 700, borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>موقعیت</span>
-                  <a href={`https://www.google.com/maps?q=${b.lat},${b.lng}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>گوگل مپ <ExternalLink size={11} /></a>
-                </div>
+            {at && links && (
+              <div className={styles.map}>
+                <div className={styles.mapHead}>موقعیت</div>
                 <iframe
-                  src={`https://maps.google.com/maps?q=${b.lat},${b.lng}&z=15&output=embed&hl=fa`}
-                  width="100%"
-                  height="260"
-                  style={{ display: "block", border: "none" }}
-                  /* No loading="lazy". On a phone the map sits just below the
+                  src={`https://maps.google.com/maps?q=${at.lat},${at.lng}&z=15&output=embed&hl=fa`}
+                  /* No loading="lazy": on a phone the frame sits just below the
                      fold, and Chrome on Android shrinks the lazy pre-load
-                     distance on a connection it judges slow — so the frame was
-                     never requested on a first view, and only appeared after a
-                     reload, which restores the scroll position and puts it in
-                     the viewport at parse time. One iframe on one page is worth
-                     fetching up front; the vertically scrolling lists elsewhere
-                     keep their lazy loading. */
+                     distance on a slow connection, so it was never requested
+                     on a first view (AGENTS.md rule 9). */
                   allowFullScreen
-                  /* no-referrer, not the default. The page is served over plain
-                     http on a LAN address during a demo, so the old policy handed
-                     Google a referrer of http://192.168.x.x:3000/billboard/... —
-                     a private host it has no reason to trust, and the one input
-                     that differs between the laptop (localhost) and the phone.
-                     Sending none removes the variable, and the embed does not
-                     need it. */
+                  /* no-referrer: over plain http on a LAN address the default
+                     handed Google a private host as referrer — the one input
+                     that differed between the laptop and a phone. */
                   referrerPolicy="no-referrer"
-                  title="موقعیت بیلبورد"
+                  title="موقعیت رسانه روی نقشه"
                 />
-                {/* The embed is Google's, so it only appears if Google is reachable
-                    from the visitor's connection — which on an Iranian mobile line
-                    it often is not. A failed frame is not something the page can
-                    detect (a cross-origin iframe reports load either way, and the
-                    browser paints its own opaque error page over anything placed
-                    behind it), so the way out is stated underneath instead of
-                    conditionally: the coordinates, and a link that opens in
-                    whatever map app the phone already has. */}
-                <div style={{ padding: "9px 14px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
-                    مختصات:
-                    <span style={{ direction: "ltr", display: "inline-block", marginRight: 5, color: "var(--text-main)", fontFamily: "monospace", fontSize: "0.72rem" }}>
-                      {b.lat.toFixed(5)}, {b.lng.toFixed(5)}
-                    </span>
+                {/* The embed is Google's and often unreachable from an Iranian
+                    mobile line, and a failed cross-origin frame cannot be
+                    detected. So the way out is always shown: the coordinates,
+                    and the two Iranian map apps next to Google. */}
+                <div className={styles.mapFoot}>
+                  <span className={styles.coords}>
+                    مختصات: <span>{at.lat.toFixed(5)}, {at.lng.toFixed(5)}</span>
                   </span>
-                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-                    {/* The way into a radial search that works everywhere. The
-                        browser's own position needs a secure context, so on the
-                        demo — served over plain HTTP to a phone on the Wi-Fi —
-                        it is unavailable (rule 9). Starting from a media item
-                        the visitor is already looking at needs no permission,
-                        no secure context and no provider, and is the question
-                        someone on this page actually has. */}
-                    <Link
-                      href={`/explore?lat=${b.lat.toFixed(6)}&lng=${b.lng.toFixed(6)}&radiusKm=${NEARBY_RADIUS_KM}`}
-                      style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none", border: "1px solid rgba(59,123,245,0.28)", borderRadius: 7, padding: "4px 11px", display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}
-                    >
+                  <div className={styles.mapLinks}>
+                    {/* A radial search that needs no geolocation permission and
+                        no secure context — both missing on the LAN demo. */}
+                    <Link href={`/explore?lat=${at.lat.toFixed(6)}&lng=${at.lng.toFixed(6)}&radiusKm=${NEARBY_RADIUS_KM}`} className={styles.mapLink}>
                       <Crosshair size={10} /> رسانه‌های نزدیک این نقطه
                     </Link>
-                    <a
-                      href={`https://www.google.com/maps?q=${b.lat},${b.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontSize: "0.68rem", color: "var(--accent)", textDecoration: "none", border: "1px solid rgba(59,123,245,0.28)", borderRadius: 7, padding: "4px 11px", display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}
-                    >
-                      باز کردن در برنامهٔ نقشه <ExternalLink size={10} />
-                    </a>
+                    <a href={links.neshan} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>نشان <ExternalLink size={10} /></a>
+                    <a href={links.balad} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>بلد <ExternalLink size={10} /></a>
+                    <a href={links.google} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>گوگل مپ <ExternalLink size={10} /></a>
                   </div>
                 </div>
               </div>
             )}
-          </div>
+          </aside>
         </div>
       </div>
 
       <RelatedBillboards items={related} />
-
     </div>
   );
 }
