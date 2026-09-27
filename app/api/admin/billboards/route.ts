@@ -5,6 +5,7 @@ import { adminApiRateLimit } from "@/lib/rate-limit";
 import { getAdminBillboardPage, createBillboard } from "@/lib/db/billboards";
 import { AVAILABILITIES, BILLBOARD_TYPES, MODERATIONS } from "@/lib/types";
 import { FaceCount, MonthlyPrice, SizeMetres } from "@/lib/domain/billboard";
+import { IRAN_LAT, IRAN_LNG } from "@/lib/domain/location";
 
 const SORTS = ["id_asc", "id_desc", "price_asc", "price_desc", "name_asc", "name_desc", "city_asc", "city_desc"] as const;
 
@@ -60,8 +61,8 @@ export const POST = defineRoute(
       width:       SizeMetres.default(12),
       height:      SizeMetres.default(4),
       faces:       FaceCount.default(1),
-      lat:         z.number().min(24).max(40).nullish(),
-      lng:         z.number().min(44).max(64).nullish(),
+      lat:         z.number().min(IRAN_LAT.min).max(IRAN_LAT.max).nullish(),
+      lng:         z.number().min(IRAN_LNG.min).max(IRAN_LNG.max).nullish(),
     }),
   },
   async ({ body, audit }) => {

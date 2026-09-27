@@ -329,6 +329,18 @@ export class Browser {
     `);
   }
 
+  /**
+   * Put files into an <input type="file">, as picking them in the dialog would.
+   * The input may be hidden — the wizard's is, behind its own button — since
+   * DevTools sets the files directly and fires the change event.
+   */
+  async setFiles(selector, paths) {
+    await this.waitForSelector(selector);
+    const { root } = await this.send("DOM.getDocument", { depth: 0 });
+    const { nodeId } = await this.send("DOM.querySelector", { nodeId: root.nodeId, selector });
+    await this.send("DOM.setFileInputFiles", { nodeId, files: paths });
+  }
+
   /** A PNG of the current page, written where a person can actually look. */
   async screenshot(path) {
     const { data } = await this.send("Page.captureScreenshot", { format: "png" });

@@ -1,0 +1,6 @@
+.links { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.72rem; }
+.links a { color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.coords { color: var(--text-muted); direction: ltr; font-size: 0.72rem; }
+.preview { border-radius: 8px; overflow: hidden; border: 1px solid rgba(34, 197, 94, 0.3); }
+.preview iframe { display: block; border: none; width: 100%; height: 200px; }
+.clear { margin-inline-start: auto; }

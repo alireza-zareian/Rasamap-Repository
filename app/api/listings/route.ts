@@ -4,12 +4,12 @@ import { many, UploadedFile } from "@/lib/http/form";
 import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { idempotency } from "@/lib/db/idempotency";
 import { listOwnListings, submitListing } from "@/lib/db/listings";
-import { ListingFieldsSchema, MAX_LISTING_IMAGES, maxUploadBodyBytes } from "@/lib/domain/listing";
+import { COORDINATES_TOGETHER, coordinatesTogether, ListingFieldsSchema, MAX_LISTING_IMAGES, maxUploadBodyBytes } from "@/lib/domain/listing";
 import { faNum } from "@/lib/format";
 
 const SubmissionForm = ListingFieldsSchema.extend({
   photos: many(UploadedFile, MAX_LISTING_IMAGES, `حداکثر ${faNum(MAX_LISTING_IMAGES)} تصویر مجاز است`),
-});
+}).refine(coordinatesTogether, COORDINATES_TOGETHER);
 
 // POST /api/listings — a customer submits a media item for review, as a
 // multipart form: the fields, and the photos as files.

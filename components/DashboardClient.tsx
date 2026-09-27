@@ -7,7 +7,7 @@ import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
 import { moderationLabels, planLabels } from "@/lib/types";
-import EditListingModal, { type EditableListing } from "@/components/EditListingModal";
+import EditListingModal from "@/components/EditListingModal";
 import UserAvatar from "@/components/UserAvatar";
 import { faNum } from "@/lib/format";
 import { MIN_PASSWORD_LENGTH } from "@/lib/domain/password";
@@ -36,6 +36,8 @@ export interface Listing {
   height: number;
   faces: number;
   images: string[];
+  lat: number | null;
+  lng: number | null;
 }
 
 const STATUS_COLOR: Record<string, [string, string]> = {
@@ -44,6 +46,7 @@ const STATUS_COLOR: Record<string, [string, string]> = {
   approved:         ["var(--green)", "rgba(34,197,94,0.12)"],
   rejected:         ["#ef4444", "rgba(239,68,68,0.12)"],
   needs_revision:   ["#f97316", "rgba(249,115,22,0.12)"],
+  suspended:        ["var(--text-muted)", "rgba(148,163,184,0.16)"],
 };
 // What the submitter should do next, per state — a status badge alone doesn't
 // tell someone whether the ball is in their court.
@@ -53,6 +56,7 @@ const STATUS_HINT: Record<string, string> = {
   approved:         "آگهی شما منتشر شده و در جستجو دیده می‌شود.",
   rejected:         "این آگهی تأیید نشد. برای پیگیری با پشتیبانی تماس بگیرید.",
   needs_revision:   "کارشناس از شما خواسته آگهی را اصلاح کنید. توضیح زیر را بخوانید، آگهی را ویرایش کنید و دوباره بفرستید.",
+  suspended:        "نمایش این آگهی توسط تیم رسامپ متوقف شده است. دلیل در توضیح زیر آمده؛ برای پیگیری با پشتیبانی تماس بگیرید.",
 };
 const TYPE_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   billboard: Megaphone, digital: Monitor, bridge: Milestone, station: Train, vehicle: Bus,
@@ -298,7 +302,7 @@ export default function DashboardClient({ account, initialListings }: {
 
       {editing && (
         <EditListingModal
-          listing={editing as EditableListing}
+          listing={editing}
           onClose={() => setEditing(null)}
           onSaved={(updated) => {
             setListings(prev => prev.map(l => (l.id === (updated.id as number) ? { ...l, ...(updated as Partial<Listing>) } : l)));

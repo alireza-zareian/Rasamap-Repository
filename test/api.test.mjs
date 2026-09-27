@@ -923,7 +923,7 @@ test("otp/send is rate limited per phone", async () => {
 test("POST /api/listings without a session is 401", async () => {
   const { status } = await api("/api/listings", {
     method: "POST",
-    form: { name: "بیلبورد تست", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 50 },
+    form: { name: "بیلبورد تست", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 50 },
   });
   assert.equal(status, 401);
 });
@@ -962,7 +962,7 @@ test("POST /api/listings with the featured plan lands in awaiting_payment", asyn
   const { status, json } = await api("/api/listings", {
     method: "POST",
     token,
-    form: { name: "بیلبورد ویژه آزمایشی", phone: "09120000000", type: "digital", city: "تهران", width: 8, height: 3, faces: 1, price: 90, plan: "featured" },
+    form: { name: "بیلبورد ویژه آزمایشی", phone: "09120000000", type: "digital", city: "تهران", location: "خیابان تست", width: 8, height: 3, faces: 1, price: 90, plan: "featured" },
   });
   assert.equal(status, 201, JSON.stringify(json));
   assert.equal(json.listing.moderation, "awaiting_payment");
@@ -973,7 +973,7 @@ test("POST /api/listings accepts a real PNG upload", async () => {
   const { status, json } = await api("/api/listings", {
     method: "POST",
     token,
-    form: { name: "بیلبورد با عکس", phone: "09120000000", type: "billboard", city: "شیراز", width: 10, height: 3, faces: 1, price: 40, photos: [pngFile()] },
+    form: { name: "بیلبورد با عکس", phone: "09120000000", type: "billboard", city: "شیراز", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40, photos: [pngFile()] },
   });
   assert.equal(status, 201, JSON.stringify(json));
 });
@@ -983,7 +983,7 @@ test("a photo uploaded while the server is running is served, and nothing outsid
   const token = await freshCustomer();
   const sent = await api("/api/listings", {
     method: "POST", token,
-    form: { name: "بیلبورد عکس تازه", phone: "09120000000", type: "billboard", city: "شیراز", width: 10, height: 3, faces: 1, price: 40, photos: [pngFile()] },
+    form: { name: "بیلبورد عکس تازه", phone: "09120000000", type: "billboard", city: "شیراز", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40, photos: [pngFile()] },
   });
   assert.equal(sent.status, 201, JSON.stringify(sent.json));
   const mine = await api("/api/listings", { token });
@@ -1004,7 +1004,7 @@ test("POST /api/listings rejects a non-image disguised as a PNG (magic-byte chec
   const { status, json } = await api("/api/listings", {
     method: "POST",
     token,
-    form: { name: "بیلبورد بدافزار", phone: "09120000000", type: "billboard", city: "تهران", width: 10, height: 3, faces: 1, price: 40, photos: [fakeImageFile()] },
+    form: { name: "بیلبورد بدافزار", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40, photos: [fakeImageFile()] },
   });
   assert.equal(status, 400, JSON.stringify(json));
   assert.match(json.error, /تصویر/);
@@ -1015,7 +1015,7 @@ test("POST /api/listings rejects more than five images", async () => {
   const { status } = await api("/api/listings", {
     method: "POST",
     token,
-    form: { name: "بیلبورد پرعکس", phone: "09120000000", type: "billboard", city: "تهران", width: 10, height: 3, faces: 1, price: 40, photos: Array.from({ length: 6 }, pngFile) },
+    form: { name: "بیلبورد پرعکس", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40, photos: Array.from({ length: 6 }, pngFile) },
   });
   assert.equal(status, 400);
 });
@@ -1048,7 +1048,7 @@ test("a duplicate listing submitted later is refused with a clear 409", async ()
   const token = await freshCustomer();
   const payload = {
     name: "بیلبورد تکراری دیرهنگام", phone: "09120000000", type: "billboard",
-    city: "اصفهان", width: 10, height: 3, faces: 1, price: 40,
+    city: "اصفهان", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40,
   };
   assert.equal((await api("/api/listings", { method: "POST", token, form: payload })).status, 201);
 
@@ -1061,7 +1061,7 @@ test("a different user may submit a media with the same name (the constraint is 
   const other = await freshCustomer();
   const { status } = await api("/api/listings", {
     method: "POST", token: other,
-    form: { name: "بیلبورد تکراری دیرهنگام", phone: "09120000000", type: "billboard", city: "اصفهان", width: 10, height: 3, faces: 1, price: 40 },
+    form: { name: "بیلبورد تکراری دیرهنگام", phone: "09120000000", type: "billboard", city: "اصفهان", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40 },
   });
   assert.equal(status, 201);
 });
@@ -1069,7 +1069,7 @@ test("a different user may submit a media with the same name (the constraint is 
 test("listings: a repeated Idempotency-Key replays the first response (no second row)", async () => {
   const token = await freshCustomer();
   const key = "idem-" + Math.random().toString(36).slice(2);
-  const payload = { name: "بیلبورد تکراری", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 60 };
+  const payload = { name: "بیلبورد تکراری", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 60 };
 
   const first = await api("/api/listings", { method: "POST", token, form: payload, headers: { "idempotency-key": key } });
   assert.equal(first.status, 201, JSON.stringify(first.json));
@@ -1086,7 +1086,7 @@ test("listings: concurrent requests with one Idempotency-Key run the work once",
   const key = `race-${Date.now()}`;
   const results = await Promise.all(Array.from({ length: 8 }, (_, i) => api("/api/listings", {
     method: "POST", token, headers: { "idempotency-key": key },
-    form: { name: `بیلبورد کلید همزمان ${i}`, phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 55 },
+    form: { name: `بیلبورد کلید همزمان ${i}`, phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 55 },
   })));
   const ids = new Set(results.filter(r => r.status === 201).map(r => r.json.listing.id));
   assert.equal(ids.size, 1, `the key let ${ids.size} submissions through: ${results.map(r => r.status).join(",")}`);
@@ -1100,7 +1100,7 @@ test("listings: concurrent requests with one Idempotency-Key run the work once",
 test("listings: a refused submission leaves its Idempotency-Key free for the retry", async () => {
   const token = await freshCustomer();
   const key = `retry-${Date.now()}`;
-  const body = { name: "بیلبورد تلاش دوباره", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 55 };
+  const body = { name: "بیلبورد تلاش دوباره", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 55 };
   const bad = await api("/api/listings", { method: "POST", token, headers: { "idempotency-key": key }, form: { ...body, photos: [fakeImageFile()] } });
   assert.equal(bad.status, 400);
   const good = await api("/api/listings", { method: "POST", token, headers: { "idempotency-key": key }, form: body });
@@ -1111,7 +1111,7 @@ test("listings: an Idempotency-Key reused by a different user is rejected with 4
   const tokenA = await freshCustomer();
   const tokenB = await freshCustomer();
   const key = "idem-cross-" + Math.random().toString(36).slice(2);
-  const payload = { name: "بیلبورد مشترک", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 60 };
+  const payload = { name: "بیلبورد مشترک", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 60 };
 
   const a = await api("/api/listings", { method: "POST", token: tokenA, form: payload, headers: { "idempotency-key": key } });
   assert.equal(a.status, 201);
@@ -1125,7 +1125,7 @@ test("one account cannot submit listings without end, whatever address it uses",
   // Each submission may carry ten megabytes of photos; a per-address limit let
   // one account fill the disk from a single sign-up.
   const token = await freshCustomer();
-  const body = (i) => ({ name: `بیلبورد سقف حساب ${i}`, phone: "09120000000", type: "billboard", city: "تهران", width: 5, height: 2, faces: 1, price: 10 });
+  const body = (i) => ({ name: `بیلبورد سقف حساب ${i}`, phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 5, height: 2, faces: 1, price: 10 });
   let last;
   for (let i = 0; i < 11; i++) {
     last = await api("/api/listings", { method: "POST", token, ip: uniqueIp(), form: body(i) });
@@ -1140,7 +1140,7 @@ test("a user cannot see another user's listings via GET /api/listings", async ()
   const created = await api("/api/listings", {
     method: "POST",
     token: tokenA,
-    form: { name: "بیلبورد خصوصی کاربر یک", phone: "09120000000", type: "billboard", city: "تهران", width: 12, height: 4, faces: 2, price: 70 },
+    form: { name: "بیلبورد خصوصی کاربر یک", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 12, height: 4, faces: 2, price: 70 },
   });
   assert.equal(created.status, 201, JSON.stringify(created.json));
   const id = created.json.listing.id;
@@ -2408,7 +2408,7 @@ test("a listing's photos are written under UPLOAD_DIR, not into public/", async 
   const token = await freshCustomer();
   const sent = await api("/api/listings", {
     method: "POST", token,
-    form: { name: "بیلبورد مسیر ذخیره", phone: "09120000000", type: "billboard", city: "شیراز", width: 10, height: 3, faces: 1, price: 40, photos: [pngFile()] },
+    form: { name: "بیلبورد مسیر ذخیره", phone: "09120000000", type: "billboard", city: "شیراز", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40, photos: [pngFile()] },
   });
   assert.equal(sent.status, 201, JSON.stringify(sent.json));
   const mine = await api("/api/listings", { token });
@@ -2421,7 +2421,7 @@ test("a listing sent as JSON instead of a form is refused, not half-read", async
   const token = await freshCustomer();
   const res = await api("/api/listings", {
     method: "POST", token,
-    body: { name: "بیلبورد جیسون", phone: "09120000000", type: "billboard", city: "تهران", width: 10, height: 3, faces: 1, price: 40 },
+    body: { name: "بیلبورد جیسون", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40 },
   });
   assert.equal(res.status, 400);
 });
@@ -2431,7 +2431,7 @@ test("a photo larger than the per-photo ceiling is refused", async () => {
   const big = new File([Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.alloc(2 * 1024 * 1024 + 10)])], "big.jpg", { type: "image/jpeg" });
   const res = await api("/api/listings", {
     method: "POST", token,
-    form: { name: "بیلبورد عکس بزرگ", phone: "09120000000", type: "billboard", city: "تهران", width: 10, height: 3, faces: 1, price: 40, photos: [big] },
+    form: { name: "بیلبورد عکس بزرگ", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان تست", width: 10, height: 3, faces: 1, price: 40, photos: [big] },
   });
   assert.equal(res.status, 400);
 });
@@ -2448,4 +2448,30 @@ test("a photo written under public/uploads by an earlier version is still served
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("a listing can carry its position, and half a position is refused", async () => {
+  const token = await freshCustomer();
+  const base = { name: "بیلبورد با موقعیت", phone: "09120000000", type: "billboard", city: "تهران", location: "خیابان ولیعصر", width: 10, height: 3, faces: 1, price: 40 };
+
+  const half = await api("/api/listings", { method: "POST", token, form: { ...base, lat: "35.75" } });
+  assert.equal(half.status, 400);
+  const abroad = await api("/api/listings", { method: "POST", token, form: { ...base, lat: "48.85", lng: "2.35" } });
+  assert.equal(abroad.status, 400, "a point outside Iran is not a position in this catalogue");
+
+  const sent = await api("/api/listings", { method: "POST", token, form: { ...base, lat: "35.7575", lng: "51.4100" } });
+  assert.equal(sent.status, 201, JSON.stringify(sent.json));
+  const mine = await api("/api/listings", { token });
+  const row = mine.json.listings.find(l => l.id === sent.json.listing.id);
+  assert.equal(row.lat, 35.7575);
+  assert.equal(row.lng, 51.41);
+});
+
+test("a listing without an address is refused", async () => {
+  const token = await freshCustomer();
+  const res = await api("/api/listings", {
+    method: "POST", token,
+    form: { name: "بیلبورد بی‌نشانی", phone: "09120000000", type: "billboard", city: "تهران", width: 10, height: 3, faces: 1, price: 40 },
+  });
+  assert.equal(res.status, 400);
 });

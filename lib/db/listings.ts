@@ -34,7 +34,7 @@ const OWN_FIELDS = {
   id: true, slug: true, name: true, city: true, type: true, price: true,
   moderation: true, availability: true, plan: true, featured: true, images: true,
   createdAt: true, reviewNote: true, description: true, phone: true, region: true,
-  location: true, width: true, height: true, faces: true,
+  location: true, width: true, height: true, faces: true, lat: true, lng: true,
 } as const;
 
 type OwnRow = Awaited<ReturnType<typeof prisma.billboard.findFirstOrThrow<{ select: typeof OWN_FIELDS }>>>;
@@ -48,7 +48,7 @@ function toOwnListing(row: OwnRow) {
 function submittedFields(input: ListingFields) {
   return {
     name:        input.name,
-    location:    input.location || input.city,
+    location:    input.location,
     region:      input.region || input.city,
     city:        input.city,
     type:        input.type,
@@ -61,6 +61,8 @@ function submittedFields(input: ListingFields) {
     faces:       input.faces,
     phone:       input.phone,
     description: input.desc,
+    lat:         input.lat ?? null,
+    lng:         input.lng ?? null,
     ...derivedPrices(input.price),
   };
 }

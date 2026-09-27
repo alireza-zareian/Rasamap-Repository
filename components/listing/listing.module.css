@@ -1,0 +1,78 @@
+/* The listing form's own pieces: the field grid, the photo picker and the
+   plan cards. Inputs, labels and buttons come from components/ui. */
+
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.triple { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) {
+  .triple { grid-template-columns: 1fr 1fr; }
+}
+
+.priceHint {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: var(--accent-warm);
+}
+
+/* ── Photos ── */
+.photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.photo { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 4 / 3; border: 1px solid var(--border); }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.remove {
+  position: absolute; top: 4px; left: 4px;
+  width: 26px; height: 26px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.6); color: #fff;
+  border: none; border-radius: 50%; cursor: pointer;
+}
+.first {
+  position: absolute; bottom: 4px; right: 4px;
+  font-size: 0.62rem; font-weight: 700;
+  background: rgba(34, 197, 94, 0.9); color: #fff;
+  border-radius: 6px; padding: 1px 7px;
+}
+.add {
+  aspect-ratio: 4 / 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  border: 2px dashed var(--border); border-radius: 8px; background: none;
+  color: var(--text-muted); font-family: inherit; font-size: 0.72rem; cursor: pointer;
+}
+.add:hover:not(:disabled) { border-color: var(--accent); color: var(--text-main); }
+.add:disabled { cursor: wait; }
+.add svg { color: var(--accent); }
+.hidden { display: none; }
+
+/* ── Plans ── */
+.plans { display: flex; flex-direction: column; gap: 10px; }
+.plan {
+  display: block;
+  padding: 14px 16px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.planActive { background: rgba(59, 123, 245, 0.08); border-color: var(--accent); }
+.planHead { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.planHead input { accent-color: var(--accent); }
+.planTitle { font-size: 0.92rem; font-weight: 700; flex: 1; }
+.planPrice { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); }
+.planActive .planPrice { color: var(--accent); }
+.perks { display: flex; flex-direction: column; gap: 4px; padding-inline-start: 26px; }
+.perk { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-muted); }
+.perk svg { color: var(--green); flex-shrink: 0; }
+
+.note {
+  display: flex; align-items: flex-start; gap: 7px;
+  background: rgba(245, 166, 35, 0.07);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.78rem; line-height: 1.9;
+  color: var(--accent-warm);
+}
+.note svg { flex-shrink: 0; margin-top: 3px; }

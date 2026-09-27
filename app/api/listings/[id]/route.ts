@@ -5,7 +5,7 @@ import { idParams } from "@/lib/http/params";
 import { many, UploadedFile } from "@/lib/http/form";
 import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { resubmitListing } from "@/lib/db/listings";
-import { ListingFieldsSchema, MAX_LISTING_IMAGES, maxUploadBodyBytes } from "@/lib/domain/listing";
+import { COORDINATES_TOGETHER, coordinatesTogether, ListingFieldsSchema, MAX_LISTING_IMAGES, maxUploadBodyBytes } from "@/lib/domain/listing";
 import { faNum } from "@/lib/format";
 
 /**
@@ -15,7 +15,7 @@ import { faNum } from "@/lib/format";
  */
 const ResubmissionForm = ListingFieldsSchema.extend({
   photos: many(z.union([z.string().min(1).max(300), UploadedFile]), MAX_LISTING_IMAGES, `حداکثر ${faNum(MAX_LISTING_IMAGES)} تصویر مجاز است`),
-});
+}).refine(coordinatesTogether, COORDINATES_TOGETHER);
 
 /**
  * PATCH /api/listings/[id] — the submitter edits a listing an admin sent back

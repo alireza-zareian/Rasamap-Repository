@@ -46,7 +46,7 @@ test("only approving a listing that asked for promotion grants it", () => {
 });
 
 test("a listing's name and city are trimmed, so the duplicate index sees one listing", () => {
-  const base = { phone: "09123456789", type: "billboard", width: 10, height: 4, faces: 1, price: 50 };
+  const base = { phone: "09123456789", type: "billboard", location: "میدان آزادی", width: 10, height: 4, faces: 1, price: 50 };
   const a = ListingFieldsSchema.parse({ ...base, name: "بیلبورد آزادی ", city: " تهران" });
   const b = ListingFieldsSchema.parse({ ...base, name: "بیلبورد آزادی", city: "تهران" });
   assert.equal(a.name, b.name);

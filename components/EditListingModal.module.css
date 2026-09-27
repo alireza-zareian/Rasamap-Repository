@@ -1,0 +1,21 @@
+.backdrop {
+  position: fixed; inset: 0; z-index: 600;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 20px; overflow-y: auto;
+  background: rgba(6, 10, 18, 0.7);
+}
+.box {
+  width: min(620px, 100%);
+  margin: 20px 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  direction: rtl;
+}
+.head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.title { font-size: 1rem; font-weight: 700; margin: 0; }
+.close { background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; padding: 4px; }
+.body { padding: 18px 20px; display: flex; flex-direction: column; gap: 18px; }
+.foot { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
+.cancel { flex: 1; }
+.save { flex: 2; }

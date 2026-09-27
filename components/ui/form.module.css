@@ -1,0 +1,50 @@
+/* Form primitives shared by every form on the site and in the panel.
+   Colours and radii come from the tokens in app/globals.css, so both themes
+   follow without a rule here. */
+
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+
+.label { font-size: 0.75rem; color: var(--text-muted); }
+
+.input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 9px 12px;
+  border-radius: 8px;
+  outline: none;
+}
+.input:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.input:disabled { opacity: 0.6; cursor: not-allowed; }
+textarea.input { resize: vertical; line-height: 1.8; }
+.ltr { direction: ltr; text-align: left; }
+
+.hint { font-size: 0.7rem; color: var(--text-muted); line-height: 1.7; }
+
+.error {
+  display: flex; align-items: flex-start; gap: 6px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--red);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+.success {
+  display: flex; align-items: flex-start; gap: 6px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: var(--green);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+.row { display: flex; gap: 8px; align-items: stretch; }
+.row > .input { flex: 1; }

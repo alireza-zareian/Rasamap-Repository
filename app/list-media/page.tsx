@@ -1,34 +1,26 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ImagePlus, X, Check, Lightbulb, CircleCheckBig, ArrowRight, ArrowLeft, ChevronLeft } from "lucide-react";
+import { Check, CircleCheckBig, ArrowRight, ArrowLeft, ChevronLeft } from "lucide-react";
 import Topbar from "@/components/Topbar";
 import Footer from "@/components/Footer";
-import { faNum } from "@/lib/format";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import form from "@/components/ui/form.module.css";
+import { ListingFields } from "@/components/listing/ListingFields";
+import { PhotoPicker } from "@/components/listing/PhotoPicker";
+import { PlanPicker } from "@/components/listing/PlanPicker";
+import { useListingForm, type ListingDraft } from "@/components/listing/use-listing-form";
 import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/client/fetch-json";
-import { photoForm, preparePhotos } from "@/lib/client/photos";
-import { MAX_LISTING_IMAGES } from "@/lib/domain/listing";
+import { MAX_LISTING_IMAGES, type ListingPlan } from "@/lib/domain/listing";
+import styles from "./page.module.css";
 
-const steps = ["اطلاعات اصلی","موقعیت و نوع","قیمت‌گذاری","تصاویر","انتخاب پلن","تأیید"];
+const STEPS = ["اطلاعات اصلی", "موقعیت و نوع", "قیمت‌گذاری", "تصاویر", "انتخاب پلن", "تأیید"];
+const PHOTO_STEP  = 3;
 const SUBMIT_STEP = 4;   // the plan step is the last one with a submit button
 const DONE_STEP   = 5;
-
-
-const PLANS = [
-  {
-    key: "free",
-    title: "رایگان",
-    price: "۰ تومان",
-    perks: ["نمایش در جستجو و صفحهٔ رسانه", "نمایش شمارهٔ تماس به کاربران عضو", "تأیید توسط کارشناس رسامپ"],
-  },
-  {
-    key: "featured",
-    title: "ویژه",
-    price: "۴۹۰٬۰۰۰ تومان / ۳۰ روز",
-    perks: ["همهٔ امکانات پلن رایگان", "نمایش در ابتدای نتایج جستجو", "نشان «ویژه» روی کارت رسانه"],
-  },
-] as const;
+/** The part of the form each of the first three steps holds. */
+const STEP_GROUP = ["basic", "place", "size"] as const;
 
 /**
  * One key per filled-in form, sent as Idempotency-Key. A submission that
@@ -48,17 +40,16 @@ function newIdempotencyKey(): string {
  * holds, so the owner is asked to add those again.
  */
 const DRAFT_KEY = "rasamap:list-media-draft";
-type Draft = { form: Record<string, string>; plan: "free" | "featured" };
+type SavedDraft = { form: ListingDraft; plan: ListingPlan };
 
-function readDraft(): Draft | null {
+function readDraft(): SavedDraft | null {
   try {
     const raw = sessionStorage.getItem(DRAFT_KEY);
     sessionStorage.removeItem(DRAFT_KEY);
     if (!raw) return null;
-    const value: unknown = JSON.parse(raw);
-    const d = value as Partial<Draft>;
+    const d = JSON.parse(raw) as Partial<SavedDraft>;
     const formOk = typeof d.form === "object" && d.form !== null && Object.values(d.form).every(v => typeof v === "string");
-    return formOk && (d.plan === "free" || d.plan === "featured") ? (d as Draft) : null;
+    return formOk && (d.plan === "free" || d.plan === "featured") ? (d as SavedDraft) : null;
   } catch {
     return null;
   }
@@ -66,31 +57,27 @@ function readDraft(): Draft | null {
 
 export default function ListMediaPage() {
   const router = useRouter();
+  const listing = useListingForm();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [idempotencyKey] = useState(newIdempotencyKey);
-  const [form, setForm] = useState({name:"",type:"billboard",city:"تهران",region:"",location:"",width:"",height:"",faces:"2",price:"",phone:"",desc:""});
-  const [plan, setPlan] = useState<"free" | "featured">("free");
-  const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
-  // Photos are shrunk in the browser before they are shown (lib/client/photos.ts).
-  const [preparing, setPreparing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const s=(k:string,v:string)=>setForm(f=>({...f,[k]:v}));
+  const { setDraft, setPlan } = listing;
 
   useEffect(() => {
-    const draft = readDraft();
-    if (!draft) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring once from storage the server never sees
-    setForm(f => ({ ...f, ...draft.form }));
-    setPlan(draft.plan);
+    const saved = readDraft();
+    if (!saved) return;
+    // Restored once, after mount: sessionStorage does not exist while the
+    // server renders this page, so it cannot be the initial state.
+    setDraft(d => ({ ...d, ...saved.form }));
+    setPlan(saved.plan);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     setNotice("اطلاعاتی که وارد کرده بودید بازیابی شد. لطفاً تصاویر را دوباره اضافه کنید.");
-  }, []);
+  }, [setDraft, setPlan]);
 
-  // Nothing here is persisted across a reload — a refresh or an accidental tab
-  // close mid-wizard silently drops everything the owner typed, with no
-  // explanation. This at least stops the browser from doing it unprompted.
+  // A refresh or an accidental tab close mid-wizard would silently drop
+  // everything typed; this at least stops the browser from doing it unasked.
   useEffect(() => {
     if (step === 0 || step >= DONE_STEP) return;
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
@@ -98,44 +85,39 @@ export default function ListMediaPage() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [step]);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    setPreparing(true);
-    const { files: ready, error: rejected } = await preparePhotos(files, MAX_LISTING_IMAGES - photos.length);
-    setPreparing(false);
-    setError(rejected);
-    setPhotos(prev => [...prev, ...ready.map(file => ({ file, preview: URL.createObjectURL(file) }))]);
+  /** Whatever blocks leaving this step, in the words the server would use. */
+  function stepProblem(current: number): string | null {
+    if (current < STEP_GROUP.length) return listing.check(STEP_GROUP[current]);
+    if (current === PHOTO_STEP && listing.photos.length === 0) return "حداقل یک تصویر از رسانه اضافه کنید.";
+    return null;
   }
 
-  function removePhoto(idx: number) {
-    setPhotos(prev => {
-      URL.revokeObjectURL(prev[idx].preview);
-      return prev.filter((_, i) => i !== idx);
-    });
+  function goNext() {
+    const problem = stepProblem(step);
+    if (problem) { setError(problem); return; }
+    setError("");
+    setStep(s => s + 1);
   }
 
-  async function handleSubmit() {
+  async function submit() {
     if (submitting) return;                 // ignore a double-tap mid-request
     setError("");
     setSubmitting(true);
     try {
       await fetchJson("/api/listings", {
-        // The upload budget, not the read one: five photographs at two
-        // megabytes each over a mobile connection legitimately takes most of a
-        // minute, and cutting that off would be the same bug with a nicer
-        // message.
+        // The upload budget: five photographs over a mobile connection can
+        // legitimately take most of a minute.
         timeoutMs: TIMEOUT_MS.upload,
         method: "POST",
         headers: { "Idempotency-Key": idempotencyKey },
-        body: photoForm({ ...form, plan }, photos.map(p => p.file)),
+        body: listing.toFormData(),
       });
       setStep(DONE_STEP);
     } catch (err) {
-      // A session that expired while the form was being filled in is not an
-      // error to read — it is a trip to the sign-in page and back.
+      // A session that expired while the form was being filled in is a trip to
+      // the sign-in page and back, not an error to read.
       if (err instanceof FetchError && err.status === 401) {
-        try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form, plan })); } catch { /* storage unavailable: the redirect still helps */ }
+        try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form: listing.draft, plan: listing.plan })); } catch { /* storage unavailable: the redirect still helps */ }
         router.push(`/login?next=${encodeURIComponent("/list-media")}`);
         return;
       }
@@ -145,228 +127,84 @@ export default function ListMediaPage() {
     }
   }
 
-  // Required-field check for the current step — blocks "بعدی" until it passes,
-  // so the user never reaches the final submit with empty fields and a cryptic
-  // server error.
-  function validateStep(current: number): string | null {
-    if (current === 0) {
-      if (form.name.trim().length < 2) return "نام رسانه را وارد کنید (حداقل ۲ حرف).";
-      if (!/^09\d{9}$/.test(form.phone.trim())) return "شماره تماس معتبر وارد کنید (۰۹xxxxxxxxx).";
+  const body = (() => {
+    if (step < STEP_GROUP.length) return <ListingFields group={STEP_GROUP[step]} listing={listing} />;
+    if (step === PHOTO_STEP) {
+      return (
+        <PhotoPicker photos={listing.photos} onChange={listing.setPhotos} max={MAX_LISTING_IMAGES} onError={setError} />
+      );
     }
-    if (current === 1) {
-      if (form.region.trim().length < 1) return "منطقه / محله را وارد کنید.";
-      if (form.location.trim().length < 3) return "آدرس دقیق را وارد کنید (حداقل ۳ حرف).";
+    if (step === SUBMIT_STEP) {
+      return (
+        <>
+          <p className={styles.intro}>
+            درآمد رسامپ از ثبت آگهی است، نه از اجاره‌کننده. اجاره و قرارداد مستقیماً بین شما و آگهی‌دهنده انجام می‌شود.
+          </p>
+          <PlanPicker plan={listing.plan} onChange={listing.setPlan} />
+        </>
+      );
     }
-    if (current === 2) {
-      if (!form.width || parseInt(form.width) < 1) return "عرض رسانه را وارد کنید.";
-      if (!form.height || parseInt(form.height) < 1) return "ارتفاع رسانه را وارد کنید.";
-      if (!form.price || parseInt(form.price) < 1) return "قیمت پایه ماهانه را وارد کنید.";
-    }
-    if (current === 3) {
-      if (photos.length === 0) return "حداقل یک تصویر از رسانه اضافه کنید.";
-    }
-    return null;
-  }
-
-  function goNext() {
-    const err = validateStep(step);
-    if (err) { setError(err); return; }
-    setError("");
-    setStep(s => s + 1);
-  }
-
-  const inp=(label:string,key:keyof typeof form,ph:string,type="text")=>(
-    <div style={{marginBottom:14}}>
-      <label htmlFor={`list-media-${key}`} style={{fontSize:"0.78rem",color:"var(--text-muted)",display:"block",marginBottom:5}}>{label}</label>
-      <input id={`list-media-${key}`} value={form[key]} onChange={e=>s(key,e.target.value)} type={type} placeholder={ph}
-        style={{width:"100%",background:"var(--bg-surface)",border:"1px solid var(--border)",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.88rem",padding:"10px 14px",borderRadius:9,outline:"none"}}/>
-    </div>
-  );
-  const sel=(label:string,key:keyof typeof form,opts:string[])=>(
-    <div style={{marginBottom:14}}>
-      <label htmlFor={`list-media-${key}`} style={{fontSize:"0.78rem",color:"var(--text-muted)",display:"block",marginBottom:5}}>{label}</label>
-      <select id={`list-media-${key}`} value={form[key]} onChange={e=>s(key,e.target.value)}
-        style={{width:"100%",background:"var(--bg-surface)",border:"1px solid var(--border)",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.88rem",padding:"10px 14px",borderRadius:9,outline:"none"}}>
-        {opts.map(o=><option key={o}>{o}</option>)}
-      </select>
-    </div>
-  );
-
-  const stepContent = [
-    <div key={0}>
-      {inp("نام رسانه","name","مثال: بیلبورد اتوبان همت")}
-      {inp("توضیحات","desc","درباره موقعیت و ویژگی‌های رسانه بنویسید...")}
-      {inp("شماره تماس","phone","09xxxxxxxxx")}
-    </div>,
-    <div key={1}>
-      {sel("نوع رسانه","type",["billboard","digital","bridge","station"])}
-      {sel("شهر","city",["تهران","اصفهان","زنجان","مشهد","شیراز","تبریز","اهواز"])}
-      {inp("منطقه / محله","region","مثال: منطقه ۳")}
-      {inp("آدرس دقیق","location","مثال: خیابان ولیعصر، نبش میرداماد")}
-    </div>,
-    <div key={2}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        {inp("عرض (متر)","width","مثال: 12")}
-        {inp("ارتفاع (متر)","height","مثال: 4")}
+    return (
+      <div className={styles.done}>
+        <div className={styles.doneIcon}><CircleCheckBig size={52} strokeWidth={1.5} /></div>
+        <div className={styles.doneTitle}>رسانهٔ شما با موفقیت ثبت شد!</div>
+        <p className={styles.doneText}>
+          {listing.plan === "featured"
+            ? <>آگهی شما ثبت شد و در وضعیت «در انتظار پرداخت» است.<br />برای هماهنگی واریز، پشتیبانی با شما تماس می‌گیرد.</>
+            : <>تیم رسامپ درخواست شما را بررسی می‌کند.<br />پس از تأیید، رسانهٔ شما در سایت نمایش داده می‌شود.</>}
+          <br />وضعیت آگهی را می‌توانید در داشبورد دنبال کنید.
+        </p>
+        <ButtonLink href="/dashboard" intent="primary">رفتن به داشبورد</ButtonLink>
       </div>
-      {sel("تعداد وجوه","faces",["1","2","4","6"])}
-      {inp("قیمت پایه ماهانه (میلیون تومان)","price","مثال: 85","number")}
-      {form.price && <div style={{background:"rgba(255,179,0,0.08)",border:"1px solid rgba(255,179,0,0.3)",borderRadius:8,padding:"10px 14px",fontSize:"0.8rem",color:"var(--accent-warm)",display:"flex",alignItems:"center",gap:7}}>
-        <Lightbulb size={14} style={{flexShrink:0}} /> قیمت هفتگی: ~{faNum(Math.round(+form.price/4))}M · سه‌ماهه (۱۰٪ تخفیف): ~{faNum(Math.round(+form.price*3*0.9))}M
-      </div>}
-    </div>,
-    <div key={3}>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        multiple
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
-      {photos.length < MAX_LISTING_IMAGES && (
-        // A button, not a clickable div: the real <input type="file"> above is
-        // hidden, so this was the only way to add a photograph — and a div with
-        // an onClick is in no tab order, which left the whole upload step
-        // unreachable without a mouse.
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={preparing}
-          style={{border:"2px dashed var(--border)",borderRadius:12,padding:"32px",textAlign:"center",color:"var(--text-muted)",marginBottom:14,cursor:preparing?"wait":"pointer",width:"100%",background:"none",fontFamily:"inherit",display:"block"}}
-        >
-          <ImagePlus size={32} style={{margin:"0 auto 10px",display:"block",color:"var(--accent)"}} />
-          <div style={{fontSize:"0.85rem",marginBottom:4}}>{preparing ? "در حال آماده‌سازی تصاویر…" : "برای انتخاب تصویر کلیک کنید"}</div>
-          <div style={{fontSize:"0.72rem"}}>(حداکثر {faNum(MAX_LISTING_IMAGES)} تصویر — JPG / PNG / WEBP، عکس گوشی هم مستقیم پذیرفته می‌شود)</div>
-        </button>
-      )}
-      {photos.length > 0 && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
-          {photos.map((p, i) => (
-            <div key={i} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"4/3"}}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.preview} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} />
-              <button
-                type="button"
-                onClick={() => removePhoto(i)}
-                aria-label={`حذف تصویر ${i + 1}`}
-                style={{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:0}}
-              >
-                <X size={12} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div style={{background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:8,padding:"10px 14px",fontSize:"0.78rem",color:"var(--green)",display:"flex",alignItems:"flex-start",gap:7}}>
-        <Check size={14} style={{flexShrink:0,marginTop:2}} /> تصاویر پس از بررسی و تأیید کارشناس رسامپ همراه با آگهی منتشر می‌شوند. عکس‌ها پیش از ارسال در همین مرورگر کوچک می‌شوند و اطلاعات مکانِ ذخیره‌شده در آن‌ها حذف می‌شود.
-      </div>
-    </div>,
-    <div key={4}>
-      <div style={{fontSize:"0.82rem",color:"var(--text-muted)",lineHeight:1.9,marginBottom:14}}>
-        درآمد رسامپ از ثبت آگهی است، نه از اجاره‌کننده. اجاره و قرارداد مستقیماً بین شما و آگهی‌دهنده انجام می‌شود.
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
-        {PLANS.map(p => {
-          const active = plan === p.key;
-          return (
-            <label key={p.key} style={{display:"block",padding:"14px 16px",background:active?"rgba(59,123,245,0.08)":"var(--bg-surface)",border:`1.5px solid ${active?"var(--accent)":"var(--border)"}`,borderRadius:10,cursor:"pointer"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-                <input type="radio" checked={active} onChange={()=>setPlan(p.key)} style={{accentColor:"var(--accent)"}} />
-                <span style={{fontSize:"0.92rem",fontWeight:700,flex:1}}>پلن {p.title}</span>
-                <span style={{fontSize:"0.82rem",fontWeight:700,color:active?"var(--accent)":"var(--text-muted)"}}>{p.price}</span>
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:4,paddingInlineStart:26}}>
-                {p.perks.map(perk => (
-                  <div key={perk} style={{fontSize:"0.75rem",color:"var(--text-muted)",display:"flex",alignItems:"center",gap:6}}>
-                    <Check size={12} style={{color:"var(--green)",flexShrink:0}} /> {perk}
-                  </div>
-                ))}
-              </div>
-            </label>
-          );
-        })}
-      </div>
-      {plan === "featured" && (
-        <div style={{background:"rgba(245,158,11,0.07)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:8,padding:"12px 14px",fontSize:"0.78rem",color:"var(--accent-warm)",lineHeight:1.9,display:"flex",alignItems:"flex-start",gap:7}}>
-          <Lightbulb size={14} style={{flexShrink:0,marginTop:3}} />
-          <span>
-            پرداخت آنلاین فعال نیست. پس از ثبت، آگهی شما در وضعیت «در انتظار پرداخت» قرار می‌گیرد و
-            شمارهٔ کارت از طریق پشتیبانی به شما اعلام می‌شود. با تأیید واریز توسط ادمین، آگهی منتشر
-            شده و نشان «ویژه» می‌گیرد.
-          </span>
-        </div>
-      )}
-    </div>,
-    <div key={5} style={{textAlign:"center",padding:"20px 0"}}>
-      <div style={{display:"flex",justifyContent:"center",marginBottom:16,color:"var(--green)"}}><CircleCheckBig size={52} strokeWidth={1.5} /></div>
-      <div style={{fontSize:"1.1rem",fontWeight:700,marginBottom:8}}>رسانه شما با موفقیت ثبت شد!</div>
-      <div style={{fontSize:"0.82rem",color:"var(--text-muted)",marginBottom:24,lineHeight:1.8}}>
-        {plan === "featured"
-          ? <>آگهی شما ثبت شد و در وضعیت «در انتظار پرداخت» است.<br/>برای هماهنگی واریز، پشتیبانی با شما تماس می‌گیرد.</>
-          : <>تیم رسامپ درخواست شما را بررسی می‌کند.<br/>پس از تأیید، رسانه‌ی شما در سایت نمایش داده می‌شود.</>}
-        <br/>وضعیت آگهی را می‌توانید در داشبورد دنبال کنید.
-      </div>
-      <Link href="/dashboard" style={{display:"inline-block",background:"var(--accent)",color:"#fff",padding:"11px 28px",borderRadius:9,textDecoration:"none",fontWeight:700,fontSize:"0.88rem"}}>رفتن به داشبورد</Link>
-    </div>,
-  ];
+    );
+  })();
 
   return (
-    <div style={{minHeight:"100vh",background:"var(--bg-deep)",fontFamily:"Vazirmatn Variable, Vazirmatn, sans-serif",direction:"rtl",color:"var(--text-main)"}}>
+    <div className={styles.page}>
       <Topbar />
-      <div style={{maxWidth:560,margin:"0 auto",padding:"86px 20px 40px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>
-          <Link href="/" style={{color:"var(--text-muted)",textDecoration:"none",fontSize:"0.85rem",display:"inline-flex",alignItems:"center",gap:4}}><ArrowRight size={13} /> رسامپ</Link>
-          <span style={{color:"var(--border)",display:"inline-flex"}}><ChevronLeft size={13} /></span>
-          <span style={{fontSize:"0.85rem",fontWeight:600}}>ثبت رسانه</span>
-        </div>
+      <main className={styles.main}>
+        <nav className={styles.crumbs} aria-label="مسیر">
+          <Link href="/"><ArrowRight size={13} /> رسامپ</Link>
+          <span className={styles.crumbSep}><ChevronLeft size={13} /></span>
+          <span>ثبت رسانه</span>
+        </nav>
 
-        {/* Steps */}
-        <div style={{display:"flex",gap:4,marginBottom:28}}>
-          {steps.map((l,i)=>(
-            <div key={l} style={{flex:1,textAlign:"center"}}>
-              <div style={{width:28,height:28,borderRadius:"50%",margin:"0 auto 4px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.72rem",fontWeight:700,background:step>i?"var(--green)":step===i?"var(--accent)":"var(--bg-surface)",color:step>=i?"#fff":"var(--text-muted)",border:`1px solid ${step>=i?"transparent":"var(--border)"}`}}>
-                {step>i?<Check size={14} />:i+1}
-              </div>
-              <div style={{fontSize:"0.6rem",color:step===i?"var(--accent)":"var(--text-muted)"}}>{l}</div>
-            </div>
+        <ol className={styles.steps}>
+          {STEPS.map((label, i) => (
+            <li key={label} className={`${styles.step} ${step > i ? styles.stepDone : step === i ? styles.stepNow : ""}`} aria-current={step === i ? "step" : undefined}>
+              <div className={styles.dot}>{step > i ? <Check size={14} /> : (i + 1).toLocaleString("fa-IR")}</div>
+              {label}
+            </li>
           ))}
-        </div>
+        </ol>
 
-        <div className="gradient-frame" style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}}>
-          <div style={{padding:"20px 22px 16px",borderBottom:"1px solid var(--border)"}}>
-            <div style={{fontSize:"1rem",fontWeight:700}}>{steps[step]}</div>
-          </div>
-          <div style={{padding:"18px 22px"}}>
-            {stepContent[step]}
-          </div>
+        <div className={`${styles.card} gradient-frame`}>
+          <h1 className={styles.cardHead}>{STEPS[step]}</h1>
+          <div className={styles.cardBody}>{body}</div>
           {step < DONE_STEP && (
-            <div style={{padding:"14px 22px",borderTop:"1px solid var(--border)"}}>
-              {notice && !error && (
-                <div role="status" style={{background:"rgba(59,130,246,0.08)",border:"1px solid rgba(59,130,246,0.3)",borderRadius:8,padding:"9px 14px",fontSize:"0.8rem",color:"#3b82f6",marginBottom:10}}>
-                  {notice}
-                </div>
-              )}
-              {error && (
-                <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"9px 14px",fontSize:"0.8rem",color:"#ef4444",marginBottom:10}}>
-                  {error}
-                </div>
-              )}
-              <div style={{display:"flex",gap:8}}>
-                {step>0 && <button onClick={()=>{setError("");setStep(s=>s-1);}} style={{border:"1px solid var(--border)",background:"none",color:"var(--text-main)",fontFamily:"inherit",fontSize:"0.82rem",padding:"9px 18px",borderRadius:8,cursor:"pointer",flex:1,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><ArrowRight size={14} /> قبلی</button>}
-                <button
+            <div className={styles.cardFoot}>
+              {notice && !error && <div role="status" className={styles.notice}>{notice}</div>}
+              {error && <div role="alert" className={form.error}>{error}</div>}
+              <div className={styles.actions}>
+                {step > 0 && (
+                  <Button className={styles.back} onClick={() => { setError(""); setStep(s => s - 1); }}>
+                    <ArrowRight size={14} /> قبلی
+                  </Button>
+                )}
+                <Button
                   data-testid="wizard-next"
-                  onClick={step===SUBMIT_STEP ? handleSubmit : goNext}
+                  intent="primary"
+                  className={`${styles.next} btn-sheen`}
+                  onClick={step === SUBMIT_STEP ? submit : goNext}
                   disabled={submitting}
-                  className="btn-sheen"
-                  style={{background:submitting?"var(--border)":"var(--accent)",border:"none",color:"#fff",fontFamily:"inherit",fontSize:"0.85rem",fontWeight:700,padding:"9px 24px",borderRadius:8,cursor:submitting?"not-allowed":"pointer",flex:2,opacity:submitting?0.7:1,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                  {submitting ? "در حال ارسال..." : step===SUBMIT_STEP ? <><Check size={15} /> ثبت نهایی</> : <>بعدی <ArrowLeft size={14} /></>}
-                </button>
+                >
+                  {submitting ? "در حال ارسال…" : step === SUBMIT_STEP ? <><Check size={15} /> ثبت نهایی</> : <>بعدی <ArrowLeft size={14} /></>}
+                </Button>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

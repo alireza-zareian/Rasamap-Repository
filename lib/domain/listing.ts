@@ -1,4 +1,6 @@
 import { z } from "zod";
+// With its extension, so Node can load this file on its own for the unit tests.
+import { IRAN_LAT, IRAN_LNG } from "./location.ts";
 
 /**
  * A listing is a media item a customer submitted through /list-media. It is a
@@ -82,6 +84,14 @@ export function decisionOutcome(decision: ListingDecision, plan: ListingPlan) {
  * The wizard validates each step with the same fields, so the browser and the
  * server cannot disagree about a minimum length.
  */
+/** An optional coordinate from a form, where "not given" arrives as an empty string. */
+function optionalCoordinate(min: number, max: number) {
+  return z.preprocess(
+    v => (v === "" || v === null ? undefined : v),
+    z.coerce.number().min(min, "موقعیت باید در ایران باشد").max(max, "موقعیت باید در ایران باشد").optional(),
+  );
+}
+
 export const ListingFieldsSchema = z.object({
   name:     z.string().trim().min(3, "نام رسانه باید حداقل ۳ کاراکتر باشد").max(100),
   desc:     z.string().max(1000).default(""),
@@ -89,12 +99,27 @@ export const ListingFieldsSchema = z.object({
   type:     z.enum(["billboard", "digital", "bridge", "station"]),
   city:     z.string().trim().min(1, "شهر الزامی است").max(50),
   region:   z.string().trim().max(100).default(""),
-  location: z.string().trim().max(200).default(""),
+  location: z.string().trim().min(3, "آدرس دقیق را وارد کنید (حداقل ۳ حرف)").max(200),
   width:    z.coerce.number().int().positive("عرض باید عدد مثبت باشد").max(200),
   height:   z.coerce.number().int().positive("ارتفاع باید عدد مثبت باشد").max(200),
   faces:    z.coerce.number().int().min(1).max(12),
   price:    z.coerce.number().int().positive("قیمت باید عدد مثبت باشد").max(10_000),
   plan:     z.enum(LISTING_PLANS).default("free"),
+  // Where the board stands, read out of a pasted map link in the browser
+  // (lib/geo/map-link.ts). Optional: without it the listing is simply not on
+  // the map, as a crawled row without coordinates is not.
+  lat:      optionalCoordinate(IRAN_LAT.min, IRAN_LAT.max),
+  lng:      optionalCoordinate(IRAN_LNG.min, IRAN_LNG.max),
 });
+
+/**
+ * Both coordinates or neither — half a point is not a location. Applied by
+ * the routes after they add the photo field, since a refined schema can no
+ * longer be extended.
+ */
+export function coordinatesTogether(f: { lat?: number; lng?: number }): boolean {
+  return (f.lat === undefined) === (f.lng === undefined);
+}
+export const COORDINATES_TOGETHER = { message: "موقعیت باید هر دو مختصات را داشته باشد", path: ["lat"] };
 
 export type ListingFields = z.infer<typeof ListingFieldsSchema>;

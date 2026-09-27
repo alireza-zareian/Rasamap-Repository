@@ -6,6 +6,7 @@ import { adminApiRateLimit } from "@/lib/rate-limit";
 import { getBillboardById, updateBillboard, deleteBillboard } from "@/lib/db/billboards";
 import { notFound } from "@/lib/domain/errors";
 import { FaceCount, MonthlyPrice, SizeMetres } from "@/lib/domain/billboard";
+import { IRAN_LAT, IRAN_LNG } from "@/lib/domain/location";
 import { AVAILABILITIES, BILLBOARD_TYPES } from "@/lib/types";
 
 // GET /api/admin/billboards/[id] — one record for the edit view (any staff).
@@ -33,8 +34,8 @@ export const PUT = defineRoute(
       city:        z.string().min(1).max(100).optional(),
       type:        z.enum(BILLBOARD_TYPES).optional(),
       availability: z.enum(AVAILABILITIES).optional(),
-      lat:         z.number().min(24).max(40).nullable().optional(),
-      lng:         z.number().min(44).max(64).nullable().optional(),
+      lat:         z.number().min(IRAN_LAT.min).max(IRAN_LAT.max).nullable().optional(),
+      lng:         z.number().min(IRAN_LNG.min).max(IRAN_LNG.max).nullable().optional(),
       price:       MonthlyPrice.optional(),
       description: z.string().max(2000).optional(),
       agency:      z.string().max(200).optional(),

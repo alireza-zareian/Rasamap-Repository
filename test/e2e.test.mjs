@@ -21,7 +21,8 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Browser } from "./browser.mjs";
 import { recoverOtpCode, randomPhone } from "./helpers.mjs";
@@ -32,6 +33,13 @@ mkdirSync(SHOTS, { recursive: true });
 
 /** Fixture accounts from test/seed.mjs. */
 const USER = { phone: "09120000000", password: "secret123", name: "Ali Tester" };
+
+/** A real PNG on disk, for the photo picker (DevTools sets files by path). */
+const PHOTO = join(tmpdir(), "rasamap-e2e-photo.png");
+writeFileSync(PHOTO, Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64",
+));
 
 /** The one sentence a refused sign-in is allowed to say — app/api/auth/login. */
 const DENIED = "شماره/ایمیل یا رمز عبور اشتباه است";
@@ -209,7 +217,7 @@ test("the contact number is behind a sign-in, and appears after one", async () =
 });
 
 // ── 4. submitting a listing, with a photo ─────────────────────────────────
-test("an owner can submit a listing and see it as pending", async () => {
+test("an owner can submit a listing with a photo and see it as pending", async () => {
   await withBrowser("submit-listing", async (b) => {
     await b.goto(`${BASE}/login`);
     await b.fill("input[type='tel']", USER.phone);
@@ -217,21 +225,44 @@ test("an owner can submit a listing and see it as pending", async () => {
     await b.click("button[type='submit']");
     await b.waitFor("!location.pathname.startsWith('/login')");
 
-    // The submission wizard is the least-tested surface in the app and the one
-    // a real owner meets first, which is exactly why it is here. It is a
+    // The submission wizard is the surface a real owner meets first. It is a
     // six-step wizard rather than a <form>, so wait for the step rail.
     await b.goto(`${BASE}/list-media`);
-    await b.waitFor("document.body.innerText.includes('اطلاعات اصلی')", {
-      label: "the submission wizard",
-    });
+    await b.waitForText("اطلاعات اصلی", { label: "the submission wizard" });
 
     // Step one refuses to advance until its required fields are filled — the
     // guard a real owner meets before anything reaches the database.
     await b.click("[data-testid='wizard-next']");
-    const stillOnStepOne = await b.evaluate(
-      "return document.body.innerText.includes('اطلاعات اصلی')",
-    );
-    assert.ok(stillOnStepOne, "the wizard advanced past step one with nothing filled in");
+    await b.waitFor("document.querySelector('[role=alert]')", { label: "the step-one refusal" });
+
+    const name = `بیلبورد مرورگر ${Date.now()}`;
+    await b.fill("input[name='name']", name);
+    await b.fill("input[name='phone']", "09120000000");
+    await b.click("[data-testid='wizard-next']");
+
+    await b.waitForSelector("input[name='location']");
+    await b.fill("input[name='location']", "خیابان ولیعصر، روبه‌روی پارک ملت");
+    await b.click("[data-testid='wizard-next']");
+
+    await b.waitForSelector("input[name='width']");
+    await b.fill("input[name='width']", "12");
+    await b.fill("input[name='height']", "4");
+    await b.fill("input[name='price']", "85");
+    await b.click("[data-testid='wizard-next']");
+
+    // A real photo through the real picker: the browser shrinks it on a canvas
+    // before upload (lib/client/photos.ts), which no API test can exercise.
+    await b.setFiles("input[type='file']", [PHOTO]);
+    await b.waitFor("document.querySelectorAll('img[src^=\"blob:\"]').length === 1", { label: "the prepared photo preview" });
+    await b.click("[data-testid='wizard-next']");
+
+    await b.waitForText("پلن رایگان", { label: "the plan step" });
+    await b.click("[data-testid='wizard-next']");
+    await b.waitForText("با موفقیت ثبت شد", { label: "the confirmation", timeout: 30_000 });
+
+    await b.goto(`${BASE}/dashboard`);
+    await b.waitForText(name, { label: "the new listing on the dashboard" });
+    assert.ok((await b.text()).includes("در انتظار تأیید"), "a new listing must be shown as pending");
   });
 });
 
