@@ -52,6 +52,12 @@ server {
 
     # The pre-built image variants (npm run images:variants). Same story.
     location /images/ {
+        # proxy.ts refuses a photo embedded by another site, but only when Node
+        # answers — and here it never does. This is the same rule in nginx: a
+        # missing Referer passes (direct opens, privacy modes), our own host
+        # passes, any other host gets 403.
+        valid_referers none server_names;
+        if ($invalid_referer) { return 403; }
         try_files $uri @app;
         access_log off;
         expires 30d;

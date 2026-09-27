@@ -88,7 +88,17 @@ const nextConfig: NextConfig = {
   // fails if either changes.)
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      // Files in public/ default to max-age=0, so a browser asked the server
+      // about every photo again on every page view — 20 to 40 requests each
+      // time, all answered 304. A photo's name is its media's slug, not a hash
+      // of its content, so a re-crawl can replace it: a week, not forever.
+      {
+        source: "/images/scraped/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" }],
+      },
+    ];
   },
   images: {
     // No /_next/image endpoint: every size is a file on disk, written once by
