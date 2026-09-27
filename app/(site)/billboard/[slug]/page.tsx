@@ -148,7 +148,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
   const links = at ? mapLinks(at) : null;
 
   return (
-    <div className={styles.page}>
+    <main className={styles.page}>
       {/* Escaping "<" is not decoration: without it a name containing
           "</script>" would end the tag early and turn catalogue data into
           markup. */}
@@ -356,6 +356,6 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
       </div>
 
       <RelatedBillboards items={related} />
-    </div>
+    </main>
   );
 }
