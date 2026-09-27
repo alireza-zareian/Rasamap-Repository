@@ -15,7 +15,7 @@
 //   -> writes scraper/data/unresolved-coords.csv
 // ============================================================
 
-import "dotenv/config";
+import "./load-env";
 import { writeFileSync } from "fs";
 import path from "path";
 import { PrismaClient } from "@prisma/client";

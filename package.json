@@ -2,14 +2,17 @@
   "name": "rasamap",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "node server.mjs",
-    "demo": "next build && node server.mjs",
+    "demo": "prisma generate && prisma migrate deploy && next build && node server.mjs",
     "lint": "eslint",
     "test": "node test/run.mjs",
-    "test:unit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/unit/",
+    "test:unit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/unit/*.test.mjs",
     "test:seed": "node test/seed.mjs",
     "test:reset": "node test/reset-db.mjs",
     "bench": "node test/bench.mjs",

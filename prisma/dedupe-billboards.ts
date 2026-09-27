@@ -22,7 +22,7 @@
 //   npm run db:dedupe -- --apply (actually deletes the duplicates)
 // ============================================================
 
-import "dotenv/config";
+import "./load-env";
 import path from "path";
 import { readFileSync } from "fs";
 import { createHash } from "crypto";

@@ -48,7 +48,7 @@
 //   npm run db:sync-scraped -- --feed=<path>    (read another export)
 // ============================================================
 
-import "dotenv/config";
+import "./load-env";
 import { readFileSync } from "fs";
 import path from "path";
 import {

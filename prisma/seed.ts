@@ -13,7 +13,7 @@
 //   npx prisma db seed                      (runs this script)
 // ============================================================
 
-import "dotenv/config";
+import "./load-env";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { everyBillboard } from "../lib/data";

@@ -27,7 +27,7 @@
 // uses — get a free key at https://platform.neshan.org).
 // ============================================================
 
-import "dotenv/config";
+import "./load-env";
 import path from "path";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PrismaClient } from "@prisma/client";

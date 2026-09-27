@@ -1,10 +1,15 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
 
-// `env("DATABASE_URL")` from prisma/config throws when the var is unset, which
-// breaks `postinstall: prisma generate` on a fresh clone (before .env exists).
-// `prisma generate` doesn't need a real URL; migrate/studio/push do, and those
-// are always run with DATABASE_URL set. Fall back to the local dev file.
+// The same files Next.js reads, in the same order of precedence: `.env.local`
+// first, then `.env`. Reading only `.env` (dotenv's default) meant a laptop set
+// up from .env.example — which says `.env.local` — ran migrate and seed against
+// the fallback database below, and the seed skipped the admin account without
+// an error. A variable already in the environment still wins over both files.
+config({ path: [".env.local", ".env"], quiet: true });
+
+// `prisma generate` (postinstall, on a fresh clone) needs no real URL, so a
+// missing DATABASE_URL falls back to the local file instead of throwing.
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {

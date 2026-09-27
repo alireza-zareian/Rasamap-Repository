@@ -141,15 +141,15 @@ impressions  = opportunity × visibility
 
 ## راه‌اندازی
 
-تنها پیش‌نیاز، `Node.js 20` یا بالاتر است. هیچ سرویس بیرونی، پایگاه دادهٔ جداگانه یا
+تنها پیش‌نیاز، `Node.js 22.18` یا بالاتر است (نسخه در `.nvmrc` آمده). هیچ سرویس بیرونی، پایگاه دادهٔ جداگانه یا
 کانتینری لازم نیست.
 
 ```bash
 npm install                    # postinstall خودش Prisma Client را می‌سازد
-cp .env.example .env           # مقادیر را پر کنید
+cp .env.example .env.local     # مقادیر را پر کنید
 npx prisma migrate deploy      # ساخت پایگاه داده و جدول‌ها
 npm run db:seed                # دادهٔ اولیه (~۳۵۰۰ رسانه)
-npm run demo                   # build + start → http://localhost:3000
+npm run demo                   # migrate + build + start → http://localhost:3000
 ```
 
 متغیرهای لازم (نام‌ها در `.env.example`): `DATABASE_URL`، `AUTH_SECRET` (دست‌کم ۳۲ نویسه)،

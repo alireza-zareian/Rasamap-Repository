@@ -34,6 +34,9 @@ jobs:
         run: |
           git config user.name "rasamap-bot"
           git config user.email "bot@rasamap.ir"
-          git add scraper/data public/images/scraped
+          # Only the data. public/images/scraped/ is git-ignored (third-party
+          # photos, not source), and naming an ignored path makes `git add`
+          # exit 1 — which failed this step every night before the commit.
+          git add scraper/data
           git diff --cached --quiet || git commit -m "chore: nightly auto-scrape $(date +%Y-%m-%d)"
           git push

@@ -1,0 +1,31 @@
+name: CI
+
+# Lint, type-check and the full test suite on every push and pull request.
+# Until this existed nothing ran them except a person remembering to.
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      # Unit tests, then a production build and the API and importer suites
+      # against it (test/run.mjs). Needs no secrets: the runner sets its own env.
+      - name: Test
+        run: npm test
