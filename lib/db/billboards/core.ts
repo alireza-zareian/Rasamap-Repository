@@ -5,6 +5,7 @@ import type { ZodType } from "zod";
 import type { Billboard, CatalogueItem, Moderation } from "../../types";
 import { NO_TRAFFIC, StringListSchema, TrafficSchema } from "@/lib/domain/billboard";
 import { logger } from "@/lib/logger";
+import { isPlottable } from "@/lib/geo/distance";
 
 /**
  * The vocabulary ./queries.ts and ./mutations.ts both speak: the row mapper,
@@ -106,6 +107,14 @@ export function fromRow(row: RowWithSource): Billboard {
 export function toPublicBillboard(b: Billboard): Billboard {
   const pub = { ...b };
   delete pub.phone;
+  // About one crawled point in six sits far from the city its row names — a
+  // Tabriz board geocoded to the centre of Tehran. The map already refused to
+  // draw those; the media page's map and its "nearby" link did not, and showed
+  // the wrong street. A point we know is wrong is not shown anywhere.
+  if (!isPlottable(b.city, b.lat, b.lng)) {
+    delete pub.lat;
+    delete pub.lng;
+  }
   return pub;
 }
 

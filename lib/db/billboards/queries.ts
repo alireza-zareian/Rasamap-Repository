@@ -2,7 +2,7 @@ import "server-only";
 import type { Billboard as Row, Prisma } from "@prisma/client";
 import { prisma } from "../client";
 import type { Availability, Billboard, BillboardType, Moderation } from "../../types";
-import { distanceKm } from "@/lib/geo/distance";
+import { distanceKm, isPlottable } from "@/lib/geo/distance";
 import { searchTokens } from "@/lib/domain/search";
 import { fromRow, published } from "./core";
 
@@ -155,11 +155,12 @@ export async function getFilteredBillboards(
     // caller asked for.
     const candidates = await prisma.billboard.findMany({
       where, orderBy, take: NEAR_SCAN_LIMIT,
-      select: { id: true, lat: true, lng: true },
+      select: { id: true, city: true, lat: true, lng: true },
     });
+    // A point far from its own city is a geocoding miss, not a board near here.
     const inside = candidates.filter(
       (r) =>
-        r.lat !== null &&
+        isPlottable(r.city, r.lat, r.lng) &&
         r.lng !== null &&
         distanceKm(p.near!.lat, p.near!.lng, r.lat, r.lng) <= p.near!.radiusKm,
     );
