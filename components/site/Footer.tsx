@@ -1,0 +1,43 @@
+import Link from "next/link";
+import { Logo } from "./Logo";
+import styles from "./chrome.module.css";
+
+const COLUMNS = [
+  { title: "پلتفرم", links: [["جستجوی رسانه", "/explore"], ["نقشهٔ رسانه‌ها", "/explore/map"], ["مقایسهٔ رسانه‌ها", "/compare"], ["تحلیل بازار", "/analytics"]] },
+  { title: "کاربران", links: [["ورود / ثبت‌نام", "/login"], ["داشبورد", "/dashboard"], ["ثبت رسانه", "/list-media"]] },
+  { title: "شرکت", links: [["درباره ما", "/about"], ["تماس با ما", "/contact"], ["قوانین و مقررات", "/terms"]] },
+];
+
+export default function Footer() {
+  return (
+    <footer className={styles.footer}>
+      <div className={styles.footerInner}>
+        <div className={styles.footerGrid}>
+          <div>
+            <Logo />
+            <p className={styles.blurb}>فهرست آنلاین رسانه‌های تبلیغاتی محیطی ایران — جستجو، مقایسه و تماس بدون واسطه</p>
+            <div className={styles.social}>
+              <a href="https://t.me/rasamap" target="_blank" rel="noopener noreferrer">تلگرام</a>
+              <a href="mailto:info@rasamap.ir">ایمیل</a>
+            </div>
+          </div>
+          {COLUMNS.map(col => (
+            <div key={col.title}>
+              <div className={styles.colTitle}>{col.title}</div>
+              <ul className={styles.colLinks}>
+                {col.links.map(([label, href]) => <li key={href}><Link href={href}>{label}</Link></li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className={styles.legal}>
+          <span>© ۱۴۰۵ رسامپ — تمامی حقوق محفوظ است</span>
+          <nav aria-label="حقوقی">
+            <Link href="/terms">قوانین</Link>
+            <Link href="/contact">تماس</Link>
+          </nav>
+        </div>
+      </div>
+    </footer>
+  );
+}

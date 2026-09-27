@@ -4,8 +4,6 @@ import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import Image from "next/image";
 import Link from "next/link";
 import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2, CheckCircle2, Plus, Menu, X as XIcon, Sparkles } from "lucide-react";
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import { moderationLabels, planLabels } from "@/lib/types";
 import EditListingModal from "@/components/EditListingModal";
 import UserAvatar from "@/components/UserAvatar";
@@ -124,7 +122,6 @@ export default function DashboardClient({ account, initialListings }: {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-      <Topbar />
 
       <div style={{ display: "flex", flexWrap: "wrap", maxWidth: 1200, margin: "0 auto", padding: "86px 20px 28px", gap: 24 }}>
         {/* Sidebar */}
@@ -311,7 +308,6 @@ export default function DashboardClient({ account, initialListings }: {
         />
       )}
 
-      <Footer />
     </div>
   );
 }

@@ -10,8 +10,6 @@ import RelatedBillboards from "@/components/RelatedBillboards";
 import ShareButton from "@/components/ShareButton";
 import ReviewsSection from "@/components/ReviewsSection";
 import TrafficMeter from "@/components/TrafficMeter";
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import BillboardContact from "@/components/BillboardContact";
 import { typeLabels, availabilityLabels, moderationLabels, type Billboard } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-url";
@@ -155,7 +153,6 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
           __html: JSON.stringify(mediaJsonLd(b, area, phoneAvailable)).replace(/</g, "\\u003c"),
         }}
       />
-      <Topbar />
 
       {/* Staff preview banner — only ever rendered for a staff session, because
           only a staff session can reach an unpublished row at all. */}
@@ -429,7 +426,6 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
 
       <RelatedBillboards items={related} />
 
-      <Footer />
     </div>
   );
 }

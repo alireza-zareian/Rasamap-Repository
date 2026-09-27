@@ -1,0 +1,115 @@
+/* The site's frame: the top bar, the phone tab bar and the footer.
+   --topbar-h and --bottomnav-h are declared in app/globals.css, where the
+   page padding that makes room for them lives too. */
+
+/* ── Logo ── */
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-main); }
+.mark {
+  width: 36px; height: 36px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff; border-radius: 9px;
+  font-weight: 900; font-size: 1.1rem;
+  box-shadow: 0 0 12px rgba(59, 123, 245, 0.4);
+}
+.name { display: block; font-size: 1.1rem; font-weight: 800; }
+.domain { display: block; font-size: 0.6rem; color: var(--text-muted); }
+
+/* ── Top bar ── */
+.topbar {
+  position: fixed; top: 0; right: 0; left: 0; z-index: 100;
+  height: var(--topbar-h);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 20px;
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  transition: background-color 0.35s ease, border-color 0.35s ease;
+}
+/* The landing page's hero shows through until the visitor scrolls. */
+.overlay { background: transparent; border-bottom-color: transparent; backdrop-filter: none; }
+
+.tabs { display: flex; gap: 4px; }
+.tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px;
+  font-size: 0.83rem; color: var(--text-muted); text-decoration: none;
+}
+.tab:hover { color: var(--text-main); }
+.tabActive { background: var(--bg-surface); color: var(--accent); font-weight: 600; }
+
+.actions { display: flex; gap: 8px; align-items: center; }
+.iconButton {
+  display: flex; align-items: center; justify-content: center;
+  padding: 7px 10px; border-radius: 8px;
+  background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main);
+  cursor: pointer;
+}
+.account {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px;
+  font-size: 0.8rem; font-weight: 600; text-decoration: none;
+  color: var(--accent);
+  border: 1px solid rgba(59, 123, 245, 0.25); background: rgba(59, 123, 245, 0.07);
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Keeps the bar from jumping when the "who is signed in?" answer arrives. */
+.accountSlot { min-width: 72px; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── Phone tab bar ── */
+.bottomNav { display: none; }
+
+@media (max-width: 768px) {
+  .topbar { padding: 0 12px; }
+  .tabs, .desktopOnly { display: none; }
+  /* The bar is 62px tall, so every control in it gets the 44px target Apple
+     and Google publish; the icons stay the size they are. */
+  .topbar a, .topbar button { min-height: 44px; }
+  .domain { display: none; }
+
+  .bottomNav {
+    position: fixed; right: 0; left: 0; bottom: 0; z-index: 100;
+    height: var(--bottomnav-h);
+    padding-bottom: env(safe-area-inset-bottom);
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    background: var(--topbar-bg);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+  }
+  .navItem {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-size: 0.66rem; color: var(--text-muted); text-decoration: none;
+  }
+  .navActive { color: var(--accent); font-weight: 700; }
+  .navCta { color: #fff; }
+  .navCta svg {
+    width: 36px; height: 36px; padding: 8px; border-radius: 12px;
+    background: var(--accent); box-shadow: var(--shadow-accent);
+  }
+  .navCta span { color: var(--text-main); }
+}
+
+/* ── Footer ── */
+.footer { border-top: 1px solid var(--border); background: var(--bg-card); padding: 48px 28px 28px; margin-top: 60px; }
+.footerInner { max-width: 1100px; margin: 0 auto; }
+.footerGrid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+.blurb { font-size: 0.8rem; color: var(--text-muted); line-height: 1.8; max-width: 220px; margin: 14px 0 0; }
+.social { margin-top: 18px; display: flex; gap: 8px; }
+.social a { font-size: 0.72rem; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-muted); text-decoration: none; }
+.colTitle { font-size: 0.75rem; font-weight: 700; margin-bottom: 14px; }
+.colLinks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.colLinks a, .legal a { font-size: 0.8rem; color: var(--text-muted); text-decoration: none; }
+.colLinks a:hover, .legal a:hover { color: var(--text-main); }
+.legal {
+  border-top: 1px solid var(--border); padding-top: 20px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  font-size: 0.72rem; color: var(--text-muted);
+}
+.legal nav { display: flex; gap: 16px; }
+.legal a { font-size: 0.72rem; }
+
+@media (max-width: 640px) {
+  .footer { padding: 36px 18px 24px; }
+  /* Brand on its own row, the three link columns side by side under it. */
+  .footerGrid { grid-template-columns: repeat(3, 1fr); gap: 26px 14px; }
+  .footerGrid > :first-child { grid-column: 1 / -1; }
+}

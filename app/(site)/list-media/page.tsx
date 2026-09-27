@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, CircleCheckBig, ArrowRight, ArrowLeft, ChevronLeft } from "lucide-react";
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import form from "@/components/ui/form.module.css";
 import { ListingFields } from "@/components/listing/ListingFields";
@@ -161,7 +159,6 @@ export default function ListMediaPage() {
 
   return (
     <div className={styles.page}>
-      <Topbar />
       <main className={styles.main}>
         <nav className={styles.crumbs} aria-label="مسیر">
           <Link href="/"><ArrowRight size={13} /> رسامپ</Link>
@@ -205,7 +202,6 @@ export default function ListMediaPage() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

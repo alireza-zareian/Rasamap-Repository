@@ -131,7 +131,7 @@ export default function StaffBar() {
       ref={barRef}
       className="staff-bar"
       style={{
-        position: "fixed", bottom: 0, right: 0, left: 0, zIndex: 200,
+        position: "fixed", bottom: "var(--bottomnav-offset, 0px)", right: 0, left: 0, zIndex: 200,
         background: "linear-gradient(90deg, #3B2E7E, #6247C4)",
         borderTop: "1px solid rgba(255,255,255,0.2)",
         display: "flex", alignItems: "center", gap: 9,

@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { SearchX, Map as MapIcon } from "lucide-react";
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import SnakeScroll from "@/components/SnakeScroll";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedShowcaseBillboards } from "@/lib/db/cached";
@@ -50,7 +48,6 @@ export default async function ExplorePage({
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg-deep)" }}>
       <SnakeScroll />
-      <Topbar />
 
       <main style={{ paddingTop: 62, flex: 1, display: "flex", flexDirection: "column" }}>
 
@@ -135,7 +132,6 @@ export default async function ExplorePage({
         )}
       </main>
 
-      <Footer />
     </div>
   );
 }

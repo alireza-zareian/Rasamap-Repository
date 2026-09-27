@@ -41,7 +41,7 @@ export function AdminShell({ user, children }: { user: { name: string; role: Sta
       // lib/client/use-current-user.tsx. A hung request must not strand someone
       // on a panel they asked to leave, with a dead button and no explanation.
     }
-    router.push("/admin/login");
+    router.push("/login?as=staff");
   };
 
   return (

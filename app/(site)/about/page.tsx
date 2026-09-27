@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { Search, Scale, MapPin, Shield, Zap, TrendingUp } from "lucide-react";
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import { getCachedSiteStats } from "@/lib/db/cached";
 import { logger } from "@/lib/logger";
 import { faNum } from "@/lib/format";
@@ -52,7 +50,6 @@ export default async function AboutPage() {
   }
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-      <Topbar />
 
       {/* Hero */}
       <section className="section-halo" style={{ maxWidth: 800, margin: "0 auto", padding: "100px 24px 60px", textAlign: "center" }}>
@@ -144,7 +141,6 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }

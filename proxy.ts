@@ -7,7 +7,8 @@ const HEALTH_PATH        = "/api/health";
 const ADMIN_API_PATTERN  = /^\/api\/admin(\/|$)/;
 const USER_PAGE_PATTERN  = /^\/(dashboard|list-media)(\/|$)/;
 const USER_API_PATTERN   = /^\/api\/listings(\/.*)?$/;
-const LOGIN_PATH         = "/admin/login";
+/** Forwards to /login?as=staff; left reachable for old links and bookmarks. */
+const LEGACY_STAFF_LOGIN = "/admin/login";
 const USER_LOGIN_PATH    = "/login";
 const FORBIDDEN_PATH     = "/forbidden";
 const LEGACY_ADMIN_TABS  = ["billboards", "listings", "leads", "quality", "scraper", "users", "audit"];
@@ -136,7 +137,7 @@ export async function proxy(req: NextRequest) {
   if (!isAdminPage && !isAdminApi && !isUserPage && !isUserApi) return NextResponse.next();
 
   // Always accessible: login pages and auth APIs
-  if (pathname === LOGIN_PATH || pathname === "/api/admin/auth/login") return adminHeaders(NextResponse.next());
+  if (pathname === LEGACY_STAFF_LOGIN || pathname === "/api/admin/auth/login") return adminHeaders(NextResponse.next());
   if (pathname.startsWith("/api/auth/")) return NextResponse.next();
 
   // Which kind of account the cookie claims — routing only. This is Next's
@@ -170,7 +171,9 @@ export async function proxy(req: NextRequest) {
         return adminHeaders(NextResponse.rewrite(forbidden, { status: 403 }));
       }
       const loginUrl = req.nextUrl.clone();
-      loginUrl.pathname = LOGIN_PATH;
+      loginUrl.pathname = USER_LOGIN_PATH;
+      loginUrl.search = "";
+      loginUrl.searchParams.set("as", "staff");
       loginUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(loginUrl);
     }

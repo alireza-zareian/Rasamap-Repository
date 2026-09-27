@@ -1,0 +1,12 @@
+/* Room for the phone tab bar, which is fixed over the bottom of the page.
+   --bottomnav-offset is read by the staff bar so it sits above the tab bar
+   rather than under it. */
+.site { min-height: 100vh; display: flex; flex-direction: column; }
+.site > :global(main) { flex: 1; }
+
+@media (max-width: 768px) {
+  .site {
+    --bottomnav-offset: calc(var(--bottomnav-h) + env(safe-area-inset-bottom));
+    padding-bottom: var(--bottomnav-offset);
+  }
+}

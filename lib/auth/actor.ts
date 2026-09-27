@@ -49,6 +49,6 @@ export async function endSession(res: NextResponse, req: NextRequest): Promise<N
  */
 export async function requireStaff(): Promise<StaffActor> {
   const actor = await getActor();
-  if (actor?.kind !== "staff") redirect("/admin/login");
+  if (actor?.kind !== "staff") redirect("/login?as=staff");
   return actor;
 }

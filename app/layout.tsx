@@ -5,7 +5,6 @@ import { SITE_URL } from "@/lib/site-url";
 import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/client/theme";
 import { CurrentUserProvider } from "@/lib/client/use-current-user";
 import BackgroundPattern from "@/components/BackgroundPattern";
-import StaffBar from "@/components/StaffBar";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -52,15 +51,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>
-          {/* Wraps everything so the "who is signed in?" answer is fetched once
-              per page load and shared, rather than once per component that
-              wants it — StaffBar below is on every page, and Topbar and
-              BillboardContact join it on a media page. */}
+          {/* Asks "who is signed in?" once per page load and shares the
+              answer — the top bar, the tab bar, the staff bar and a media
+              page's contact box all want it. */}
           <CurrentUserProvider>
             <BackgroundPattern />
             <div className="grain-overlay" aria-hidden="true" />
             {children}
-            <StaffBar />
           </CurrentUserProvider>
         </ThemeProvider>
       </body>

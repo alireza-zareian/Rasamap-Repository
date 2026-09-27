@@ -28,8 +28,8 @@ function LoginForm() {
    * here changes the field, the wording and the colour, so a member of the team
    * is not left typing an email into a box asking for 09…
    *
-   * It is not hidden, and hiding it would buy nothing: /admin/login is a public
-   * page already. Shopify and Zendesk put the same switch on the same screen.
+   * It is not hidden, and hiding it would buy nothing: the panel's address is
+   * public anyway (/admin/login forwards here with this tab chosen). Shopify and Zendesk put the same switch on the same screen.
    */
   const [mode, setMode] = useState<"customer" | "staff">(
     searchParams.get("as") === "staff" ? "staff" : "customer",

@@ -37,6 +37,11 @@
   --shadow-card:   0 4px 24px rgba(0,0,0,0.38);
   --shadow-accent: 0 4px 20px rgba(59,123,245,0.30);
 
+  /* The fixed bars (components/site) */
+  --topbar-h:    62px;
+  --bottomnav-h: 60px;
+  --topbar-bg:   rgba(10,14,26,0.95);
+
   /* Background orbs (theme-aware) */
   --orb-blue:  rgba(59,123,245,0.08);
   --orb-green: rgba(0,209,122,0.055);
@@ -254,6 +259,8 @@ input[type=range] { accent-color: var(--accent); }
   --shadow-card:   0 4px 28px rgba(30,60,140,0.12);
   --shadow-accent: 0 4px 18px rgba(59,123,245,0.25);
 
+  --topbar-bg: rgba(240,242,248,0.97);
+
   --orb-blue:  rgba(59,123,245,0.06);
   --orb-green: rgba(0,209,122,0.05);
   --scan-line: rgba(0,209,122,0.14);
@@ -286,36 +293,12 @@ button, a, input, select, label,
 
 /* ── Responsive helpers ─────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .landing-nav { display: none !important; }
-  .landing-cta-label { display: none; }
-
-  /* Footer: brand on its own row, then the three link columns stay side by side —
-     stacking all four was doubling the footer height and leaving a band of white space */
-  .site-footer { padding-left: 18px !important; padding-right: 18px !important; }
-  .footer-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 26px 14px !important; }
-  .footer-grid > :first-child { grid-column: 1 / -1; }
-
   /* About stats: single column */
   .about-stats-grid { grid-template-columns: 1fr !important; }
 
-  /* Landing stats: 2 columns on mobile */
-  .stats-bar-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
-
-  /* Landing testimonials: single column */
-  .testimonials-grid { grid-template-columns: 1fr !important; }
-
-  /* Landing types grid: single column */
-  .types-grid { grid-template-columns: 1fr !important; }
-
-  /* How-it-works: single column */
-  .how-grid { grid-template-columns: 1fr !important; }
-
-  /* BillboardCard action buttons, and the landing page's own fixed header —
-     both are discrete controls a thumb aims at, so both get the 44px.
-     Inline links inside running text are deliberately left alone: stretching a
-     sentence's link to 44px breaks the paragraph it lives in. */
+  /* BillboardCard action buttons are discrete controls a thumb aims at, so
+     they get the 44px Apple and Google publish. */
   .card-action-btn { min-height: 44px !important; }
-  .landing-header a, .landing-header button { min-height: 44px; }
 
   /* Gallery lightbox: the arrows float outside the image on desktop; on a phone
      that is off-screen, so bring them in over the edges. Swipe still works too. */
@@ -333,22 +316,6 @@ button, a, input, select, label,
   .dash-sidebar.sidebar-open { display: block; width: 100% !important; }
   /* Show hamburger button on tablet/mobile */
   .dash-hamburger { display: inline-flex !important; }
-
-  /* Topbar: too much content for a phone row — drop the nav tabs, the logo
-     sub-line and the "list media" CTA; tighten padding; icon-only logout. */
-  .topbar { padding: 0 12px !important; gap: 6px; }
-  /* Keep the nav (کاوش/تحلیل/مقایسه) but as icon-only buttons so it fits. */
-  .topbar-tabs { gap: 2px !important; }
-  .topbar-tabs a { padding: 7px 9px !important; }
-  .topbar-tab-label { display: none !important; }
-  /* Once the labels go, the nav is four 14px icons, and a 28px-tall tap target
-     is a miss waiting to happen. The bar is 62px, so every control in it gets
-     the 44px both Apple and Google publish — the icon does not change size,
-     only the box around it. */
-  .topbar a, .topbar button { min-height: 44px; }
-  .topbar-sub { display: none !important; }
-  .topbar-list-cta { display: none !important; }
-  .topbar-logout-label { display: none !important; }
 
   /* Explore hero: stack instead of side-by-side. Search on top, the auto-
      rotating showcase drops below it (and off the wide left rail a phone

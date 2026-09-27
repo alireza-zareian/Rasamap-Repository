@@ -1,5 +1,3 @@
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import { Mail, Send, Building2, Clock } from "lucide-react";
 
 const contacts = [
@@ -36,7 +34,6 @@ const contacts = [
 export default function ContactPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-      <Topbar />
 
       <main style={{ maxWidth: 680, margin: "0 auto", padding: "96px 20px 40px" }}>
         <div className="section-halo">
@@ -86,7 +83,6 @@ export default function ContactPage() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

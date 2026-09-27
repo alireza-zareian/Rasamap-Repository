@@ -1,5 +1,3 @@
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 
@@ -17,7 +15,6 @@ const sections = [
 export default function TermsPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-      <Topbar />
 
       <main style={{ maxWidth: 720, margin: "0 auto", padding: "96px 20px 40px" }}>
         <h1 style={{ fontSize: "2rem", fontWeight: 900, marginBottom: 8 }}>قوانین و مقررات</h1>
@@ -42,7 +39,6 @@ export default function TermsPage() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

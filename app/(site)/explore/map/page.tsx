@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import IranMap from "@/components/IranMap";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedMapPins, getCachedSiteStats } from "@/lib/db/cached";
@@ -51,7 +49,6 @@ export default async function MapPage({
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg-deep)" }}>
-      <Topbar />
 
       <main style={{ paddingTop: 62, flex: 1 }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 20px 40px" }}>
@@ -101,7 +98,6 @@ export default async function MapPage({
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

@@ -2,8 +2,6 @@
 import { useState, useEffect } from "react";
 import { useCompareList } from "@/lib/client/use-compare-list";
 import { fetchJson, FetchError } from "@/lib/client/fetch-json";
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import CompareModal from "@/components/CompareModal";
 import { TypeIcon } from "@/components/TypeIcon";
 import Image from "next/image";
@@ -45,7 +43,6 @@ export default function ComparePage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-      <Topbar />
 
       <main style={{ maxWidth: 800, margin: "0 auto", padding: "88px 20px 40px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
@@ -139,7 +136,6 @@ export default function ComparePage() {
         )}
       </main>
 
-      <Footer />
 
       {showModal && compareList.length >= 2 && (
         <CompareModal

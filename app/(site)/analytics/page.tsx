@@ -1,5 +1,3 @@
-import Topbar from "@/components/Topbar";
-import Footer from "@/components/Footer";
 import AnalyticsTab from "@/components/AnalyticsTab";
 import { BarChart2 } from "lucide-react";
 import { getCachedCatalogueAnalytics } from "@/lib/db/cached";
@@ -8,7 +6,6 @@ export default async function AnalyticsPage() {
   const initial = await getCachedCatalogueAnalytics();
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-      <Topbar />
 
       <main style={{ maxWidth: 860, margin: "0 auto", padding: "88px 20px 40px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
@@ -22,7 +19,6 @@ export default async function AnalyticsPage() {
         <AnalyticsTab initial={initial} />
       </main>
 
-      <Footer />
     </div>
   );
 }

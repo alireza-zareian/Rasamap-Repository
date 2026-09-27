@@ -2089,12 +2089,12 @@ test("an old ?tab= panel address still lands on its section", async () => {
 });
 
 test("a deactivated staff account is sent to sign in, not shown the panel", async () => {
-  // Its token is still validly signed, so proxy.ts lets it through; the panel's
+  // Its session row still exists, so proxy.ts lets it through; the panel's
   // own layout reads the account and refuses.
   const revoked = await mintSession({ role: "admin", userId: "9005" });
   const res = await api("/admin/leads", { token: revoked, redirect: "manual" });
   assert.ok(res.status === 307 || res.status === 303, `expected a redirect, got ${res.status}`);
-  assert.match(res.headers.get("location") ?? "", /\/admin\/login/);
+  assert.match(res.headers.get("location") ?? "", /\/login\?as=staff/);
 });
 
 test("guard: a write from the browser goes through fetchJson", () => {
@@ -2474,4 +2474,12 @@ test("a listing without an address is refused", async () => {
     form: { name: "بیلبورد بی‌نشانی", phone: "09120000000", type: "billboard", city: "تهران", width: 10, height: 3, faces: 1, price: 40 },
   });
   assert.equal(res.status, 400);
+});
+
+test("the old staff sign-in address forwards to the one sign-in page", async () => {
+  const res = await api("/admin/login?next=/admin/leads", { redirect: "manual" });
+  assert.ok([307, 308].includes(res.status), `status ${res.status}`);
+  assert.equal(res.headers.get("location"), "/login?as=staff&next=%2Fadmin%2Fleads");
+  const offsite = await api("/admin/login?next=//evil.example", { redirect: "manual" });
+  assert.equal(offsite.headers.get("location"), "/login?as=staff", "an off-site next must be dropped");
 });
