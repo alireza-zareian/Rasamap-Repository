@@ -1,4 +1,4 @@
-import Link from "next/link";
+import IntentLink from "@/components/ui/IntentLink";
 import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Phone, Monitor, Milestone, Train, Map } from "lucide-react";
 import { getCachedSiteStats, getCachedShowcaseBillboards } from "@/lib/db/cached";
 import type { BillboardType } from "@/lib/types";
@@ -78,8 +78,8 @@ export default async function LandingPage() {
             <span className={`${styles.headlineText} shimmer-heading`}>رسانه‌ات رو پیدا کن</span>
             <span className={styles.dash} aria-hidden="true">—</span>
             {HEADLINE_TYPES.map(item => (
-              <Link key={item.type} href={`/explore?type=${item.type}`} title={`دیدن همهٔ ${item.label}‌ها`}
-                className={styles.typeChip} style={cssVar("--chip", item.color)}>{item.label}</Link>
+              <IntentLink key={item.type} href={`/explore?type=${item.type}`} title={`دیدن همهٔ ${item.label}‌ها`}
+                className={styles.typeChip} style={cssVar("--chip", item.color)}>{item.label}</IntentLink>
             ))}
             <span className={styles.tagline}>— آنلاین، بدون واسطه</span>
           </h1>
@@ -87,7 +87,7 @@ export default async function LandingPage() {
           <LandingSearch cities={cities} />
 
           <div className={styles.quickChips}>
-            {QUICK_SEARCHES.map(q => <Link key={q} href={`/explore?search=${encodeURIComponent(q)}`}>{q}</Link>)}
+            {QUICK_SEARCHES.map(q => <IntentLink key={q} href={`/explore?search=${encodeURIComponent(q)}`}>{q}</IntentLink>)}
           </div>
 
           {featured.length > 0 && (
@@ -96,11 +96,11 @@ export default async function LandingPage() {
               <SwipeMarquee className={`${styles.tickerWindow} ticker-window`}>
                 <div className={`${styles.tickerStrip} ticker-strip`}>
                   {[...featured, ...featured].map((b, i) => (
-                    <Link key={i} href={`/billboard/${b.slug}`} className={styles.tickerItem} tabIndex={i >= featured.length ? -1 : undefined}>
+                    <IntentLink key={i} href={`/billboard/${b.slug}`} className={styles.tickerItem} tabIndex={i >= featured.length ? -1 : undefined}>
                       <span className={styles.tickerPrice}>{faNum(b.price)}M</span>
                       {b.name.substring(0, 22)}
                       <span className={styles.tickerSep}>·</span>
-                    </Link>
+                    </IntentLink>
                   ))}
                 </div>
               </SwipeMarquee>
@@ -145,14 +145,14 @@ export default async function LandingPage() {
           </div>
           <div className={styles.typesGrid}>
             {TYPES.map(t => (
-              <Link key={t.type} href={`/explore?type=${t.type}`} className={`${styles.typeCard} ${reveal.reveal}`}>
+              <IntentLink key={t.type} href={`/explore?type=${t.type}`} className={`${styles.typeCard} ${reveal.reveal}`}>
                 <div className={styles.typeIcon}><t.Icon size={26} /></div>
                 <div>
                   <div className={styles.typeName}>{t.label}</div>
                   <div className={styles.typeCount}>{faNum(stats.byType[t.type] ?? 0)} رسانه موجود</div>
                 </div>
                 <div className={styles.typeMore}>مشاهده ←</div>
-              </Link>
+              </IntentLink>
             ))}
           </div>
         </div>

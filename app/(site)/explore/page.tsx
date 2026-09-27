@@ -1,4 +1,4 @@
-import Link from "next/link";
+import IntentLink from "@/components/ui/IntentLink";
 import { SearchX, Map as MapIcon } from "lucide-react";
 import SnakeScroll from "@/components/SnakeScroll";
 import { ButtonLink } from "@/components/ui/Button";
@@ -108,7 +108,7 @@ function Pager({ filters, totalPages }: { filters: ExploreFilters; totalPages: n
   const link = (to: number, label: React.ReactNode, aria: string, disabled = false) =>
     disabled
       ? <span className={styles.pageLink} aria-disabled="true">{label}</span>
-      : <Link href={exploreHref({ ...filters, page: to })} scroll={false} className={styles.pageLink} aria-label={aria}>{label}</Link>;
+      : <IntentLink href={exploreHref({ ...filters, page: to })} scroll={false} className={styles.pageLink} aria-label={aria}>{label}</IntentLink>;
 
   return (
     <nav aria-label="صفحه‌بندی" className={styles.pager}>
@@ -118,7 +118,7 @@ function Pager({ filters, totalPages }: { filters: ExploreFilters; totalPages: n
           ? <span key={`gap-${i}`} className={styles.gap}>…</span>
           : p === filters.page
             ? <span key={p} className={styles.pageLink} aria-current="page">{faNum(p)}</span>
-            : <Link key={p} href={exploreHref({ ...filters, page: p })} scroll={false} className={styles.pageLink} aria-label={`صفحهٔ ${faNum(p)}`}>{faNum(p)}</Link>,
+            : <IntentLink key={p} href={exploreHref({ ...filters, page: p })} scroll={false} className={styles.pageLink} aria-label={`صفحهٔ ${faNum(p)}`}>{faNum(p)}</IntentLink>,
       )}
       {link(filters.page + 1, "بعدی ›", "صفحهٔ بعدی", filters.page >= totalPages)}
     </nav>

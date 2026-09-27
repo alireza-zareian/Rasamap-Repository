@@ -1,4 +1,4 @@
-import Link from "next/link";
+import IntentLink from "@/components/ui/IntentLink";
 import { Logo } from "./Logo";
 import styles from "./chrome.module.css";
 
@@ -25,7 +25,7 @@ export default function Footer() {
             <div key={col.title}>
               <div className={styles.colTitle}>{col.title}</div>
               <ul className={styles.colLinks}>
-                {col.links.map(([label, href]) => <li key={href}><Link href={href}>{label}</Link></li>)}
+                {col.links.map(([label, href]) => <li key={href}><IntentLink href={href}>{label}</IntentLink></li>)}
               </ul>
             </div>
           ))}
@@ -33,8 +33,8 @@ export default function Footer() {
         <div className={styles.legal}>
           <span>© ۱۴۰۵ رسامپ — تمامی حقوق محفوظ است</span>
           <nav aria-label="حقوقی">
-            <Link href="/terms">قوانین</Link>
-            <Link href="/contact">تماس</Link>
+            <IntentLink href="/terms">قوانین</IntentLink>
+            <IntentLink href="/contact">تماس</IntentLink>
           </nav>
         </div>
       </div>

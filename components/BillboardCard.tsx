@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import IntentLink from "@/components/ui/IntentLink";
 import { ViewTransition } from "react";
 import { Scale, Star, Sparkles } from "lucide-react";
 import MediaImage from "@/components/MediaImage";
@@ -35,7 +35,7 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
         aria-label={isCompared ? "حذف از مقایسه" : "افزودن به مقایسه"} aria-pressed={isCompared}>
         <Scale size={12} /> مقایسه
       </button>
-      <Link href={`/billboard/${b.slug}`} className={`${styles.action} ${listMode ? "" : styles.primary}`}>مشخصات</Link>
+      <IntentLink href={`/billboard/${b.slug}`} className={`${styles.action} ${listMode ? "" : styles.primary}`}>مشخصات</IntentLink>
     </div>
   );
 

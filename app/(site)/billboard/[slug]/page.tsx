@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
+import IntentLink from "@/components/ui/IntentLink";
 import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck, Crosshair } from "lucide-react";
 import { isPublished } from "@/lib/db/billboards";
 import { getCachedBillboardBySlug, getCachedRelatedBillboards } from "@/lib/db/cached";
@@ -342,9 +343,9 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                   <div className={styles.mapLinks}>
                     {/* A radial search that needs no geolocation permission and
                         no secure context — both missing on the LAN demo. */}
-                    <Link href={`/explore?lat=${at.lat.toFixed(6)}&lng=${at.lng.toFixed(6)}&radiusKm=${NEARBY_RADIUS_KM}`} className={styles.mapLink}>
+                    <IntentLink href={`/explore?lat=${at.lat.toFixed(6)}&lng=${at.lng.toFixed(6)}&radiusKm=${NEARBY_RADIUS_KM}`} className={styles.mapLink}>
                       <Crosshair size={10} /> رسانه‌های نزدیک این نقطه
-                    </Link>
+                    </IntentLink>
                     <a href={links.neshan} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>نشان <ExternalLink size={10} /></a>
                     <a href={links.balad} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>بلد <ExternalLink size={10} /></a>
                     <a href={links.google} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>گوگل مپ <ExternalLink size={10} /></a>

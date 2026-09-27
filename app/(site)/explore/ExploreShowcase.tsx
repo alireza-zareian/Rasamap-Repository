@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import IntentLink from "@/components/ui/IntentLink";
 import { MapPin, Building2 } from "lucide-react";
 import MediaImage from "@/components/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
@@ -49,7 +49,7 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
           <div className={styles.slidePlace}><MapPin size={11} /> {current.region} · {current.location}</div>
           <div className={styles.slideCta}>
             <strong>{faNum(current.price)}M تومان</strong>
-            <Link href={`/billboard/${current.slug}`}>مشاهدهٔ رسانه ←</Link>
+            <IntentLink href={`/billboard/${current.slug}`}>مشاهدهٔ رسانه ←</IntentLink>
           </div>
         </div>
         {/* gap 18: two 24px dot targets meet without overlapping — see .carousel-dot */}

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import IntentLink from "@/components/ui/IntentLink";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import MediaImage from "@/components/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
@@ -43,7 +43,7 @@ export default function FeaturedCarousel({ items }: { items: CatalogueItem[] }) 
       <div className={styles.viewport}>
         <div className={styles.track} style={{ transform: `translateX(calc(${index} * ${STEP}))` }}>
           {[...items, ...items.slice(0, 4)].map((b, i) => (
-            <Link key={i} href={`/billboard/${b.slug}`} className={styles.slide} tabIndex={i >= items.length ? -1 : undefined}>
+            <IntentLink key={i} href={`/billboard/${b.slug}`} className={styles.slide} tabIndex={i >= items.length ? -1 : undefined}>
               {/* Not lazy: these cards sit off-screen inside a translated strip,
                   where a lazy image is never requested (AGENTS.md rule 9). */}
               <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="280px" eager />
@@ -56,7 +56,7 @@ export default function FeaturedCarousel({ items }: { items: CatalogueItem[] }) 
                   <span>تومان/ماه</span>
                 </div>
               </div>
-            </Link>
+            </IntentLink>
           ))}
         </div>
       </div>

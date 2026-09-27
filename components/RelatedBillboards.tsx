@@ -1,4 +1,4 @@
-import Link from "next/link";
+import IntentLink from "@/components/ui/IntentLink";
 import { MapPin } from "lucide-react";
 import MediaImage from "@/components/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
@@ -39,7 +39,7 @@ export default function RelatedBillboards({ items }: { items: CatalogueItem[] })
           {loop.map((b, i) => {
             const clone = i >= items.length;
             return (
-              <Link
+              <IntentLink
                 key={`${b.id}-${i}`}
                 href={`/billboard/${b.slug}`}
                 className={styles.relatedCard}
@@ -61,7 +61,7 @@ export default function RelatedBillboards({ items }: { items: CatalogueItem[] })
                     <span>میلیون تومان / ماه</span>
                   </div>
                 </div>
-              </Link>
+              </IntentLink>
             );
           })}
         </div>
