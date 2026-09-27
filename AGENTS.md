@@ -224,7 +224,7 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 through `server.mjs`, the same server `npm run demo` runs, reseeding its own
 `prisma/test.db`. It finishes in about a minute: first the 18
 unit tests of the pure rules and the source guards in `test/unit/` (half a second,
-no build — also `npm run test:unit` on its own), then 180 API tests, then the 8 importer tests in
+no build — also `npm run test:unit` on its own), then 181 API tests, then the 8 importer tests in
 `test/sync.test.mjs` — run one after the other on purpose, because the importer
 writes rows the API tests count.
 
@@ -331,8 +331,9 @@ as published. Before a change ships, check that it publishes nothing more:
 - **Errors say what happened, never how the system is built** (§5): a Persian
   message and a reference id; the stack and the SQL go to the log.
 - **Bulk reads have a ceiling** that a person never meets and a copier always
-  does (§20 of `docs/engineering-decisions.md`) — and none of this may cost a
-  real visitor a click, a wait or a captcha.
+  does (§20 and §20b of `docs/engineering-decisions.md`: the JSON catalogue has
+  its own budget because no page calls it; the pages have none, on purpose) —
+  and none of this may cost a real visitor a click, a wait or a captcha.
 
 What this rule cannot do, and a comment should not claim: the look of a page
 and the JavaScript that draws it can always be imitated by anyone who opens it,

@@ -4,8 +4,14 @@ import { defineRoute } from "@/lib/http/route";
 import { getFilteredBillboards, toPublicBillboard } from "@/lib/db/billboards";
 import { ALLOWED_SORT, MIN_RADIUS_KM, MAX_RADIUS_KM, DEFAULT_RADIUS_KM } from "@/lib/explore-query";
 import { AVAILABILITIES, BILLBOARD_TYPES } from "@/lib/types";
-import { publicApiRateLimit } from "@/lib/rate-limit";
+import { catalogueApiRateLimit } from "@/lib/rate-limit";
 import { invalid } from "@/lib/domain/errors";
+import { faNum } from "@/lib/format";
+
+/** How deep one query may page, and how many rows a page may carry. The
+ *  site's own pages do not use this route. */
+const MAX_API_PAGE = 5;
+const MAX_API_LIMIT = 48;
 
 // Bot user agents are rejected in proxy.ts for every /api/* path, so the
 // per-route copies of that list are gone — one matcher, one place to update.
@@ -19,9 +25,11 @@ const querySchema = z.object({
   maxPrice: z.coerce.number().int().min(0).max(100_000).optional(),
   sortBy:   z.enum(ALLOWED_SORT).optional(),
   // Page and size ceilings are anti-scraping limits as much as validation ones:
-  // together they cap how much of the catalogue one request can carry off.
-  page:     z.coerce.number().int().min(1).max(200).optional(),
-  limit:    z.coerce.number().int().min(1).max(48).optional(),
+  // together they cap how much of the catalogue one query can carry off. Five
+  // pages deep is 240 rows of one filter; a program that wants more narrows the
+  // filter, and every narrower query spends the same per-address budget.
+  page:     z.coerce.number().int().min(1).max(MAX_API_PAGE).optional(),
+  limit:    z.coerce.number().int().min(1).max(MAX_API_LIMIT).optional(),
   // Radial search. The radius ceiling is the same anti-scraping limit as the
   // ones above: without it, one request with a huge radius is a way to ask for
   // the whole country and step past the page cap (§20).
@@ -34,8 +42,11 @@ export const GET = defineRoute(
   {
     name: "billboards",
     access: "public",
-    rateLimit: publicApiRateLimit,
+    rateLimit: catalogueApiRateLimit,
     query: querySchema,
+    messages: {
+      invalidQuery: `پارامترهای جستجو نامعتبر است — حداکثر ${faNum(MAX_API_PAGE)} صفحه و ${faNum(MAX_API_LIMIT)} مورد در هر صفحه؛ برای بیشتر، جستجو را محدودتر کنید`,
+    },
   },
   async ({ query }) => {
     const { cities: citiesRaw, lat, lng, radiusKm, ...rest } = query;

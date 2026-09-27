@@ -260,8 +260,29 @@ export function accountWriteRateLimit(kind: keyof typeof ACCOUNT_WRITES, account
 }
 
 /**
- * Public API rate limit — applied to /api/billboards to slow automated
- * crawling. Normal browser usage never comes close to this ceiling.
+ * The catalogue as JSON — GET /api/billboards. The site's own pages never call
+ * it (the catalogue is rendered on the server), so its only callers are
+ * programs, and the cleanest copy of the data a copier could ask for. Measured
+ * before this: one address read all ~3,500 rows in 80 requests, in seconds,
+ * under the 600-a-minute ceiling below. With this budget and the page-depth
+ * cap in the route, one address gets at most 60 × 48 rows per ten minutes.
+ *
+ * What it does not do: stop a crawler that spreads over many addresses, or one
+ * that reads the HTML pages instead — those carry no per-address budget on
+ * purpose (§20a). No lockout: the window alone bounds the cost.
+ */
+export function catalogueApiRateLimit(ip: string): Promise<RateLimitResult> {
+  return checkRateLimit(`catalogue_api:${ip}`, {
+    windowMs:    10 * 60 * 1000,
+    maxRequests: 60,
+    lockoutMs:   0,
+  });
+}
+
+/**
+ * Public API rate limit — the read endpoints the site's own pages call (a
+ * media item, the stats, analytics, who is signed in). Normal browser usage
+ * never comes close to this ceiling.
  */
 export function publicApiRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`public_api:${ip}`, {

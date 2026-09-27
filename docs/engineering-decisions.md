@@ -878,6 +878,21 @@ second reason appears.
 
 ---
 
+### 20b. Revision 2026-09-27 — the JSON list gets the budget the pages cannot
+
+Measured on a production build: one address read the whole catalogue from
+`GET /api/billboards` — 80 requests of 48 rows, in seconds, well under the
+600-a-minute ceiling it shared with every other read. The site's own pages
+never call that route (the catalogue is rendered on the server), so a budget
+there costs no visitor anything, which is exactly what §20a found a page
+budget could not promise. It now has its own: 60 requests per ten minutes per
+address, no lockout, and no query past page five. Rehearsed on `npm run demo`
+over the LAN address: the 61st request was refused, and 1,000 page views from
+the same address straight after all loaded. The pages keep no per-address
+budget, for the reason §20a gives; a crawler that reads them, or spreads over
+many addresses, still can. Guard test: "the catalogue API cannot be paged deep
+or read in bulk from one address".
+
 ## 21. Denormalising the two sort keys
 
 **Decision.** `Billboard.estimatedViews` and `Billboard.area` are stored
@@ -2155,7 +2170,7 @@ copied into the quality checks; the scraper page said rows arrive by `db:seed`.
 
 ### Verified
 
-18 unit tests (half a second), 180 API tests and 8 importer tests on a
+18 unit tests (half a second), 181 API tests and 8 importer tests on a
 production build, 11 browser flows; lint and the type-check clean. Every page
 was screenshotted on a phone and a desktop in both themes before and after,
 and each difference was looked at; the animations were checked in a real
@@ -2212,4 +2227,4 @@ browser with `document.getAnimations()`.
 | 2026-09-23 | **Demo verified over the LAN, not localhost** | `npm run demo` exercised from the network address a reviewer's phone would use: 19 public routes, user and admin sign-in, dashboard, contact reveal, RBAC (`admin` 403 / `super_admin` 200 on staff management), styled Persian 404, identical error text for a known and an unknown phone. Session cookie `HttpOnly; SameSite=Strict` and **no `Secure`** over plain HTTP; owner phone absent from public HTML. 240 concurrent requests: all 200, zero 429, zero logged errors, CPU back to 0% at idle. Anti-scraping confirmed live — a UA-less client gets 403 where a browser gets 200. |
 | 2026-09-25 | **Adversarial architecture review** | §35 — one route pipeline (`defineRoute`) for all 35 routes; `lib/db/` as the only door to the database (lint-enforced; 30 → 13 importers of the client); typed customer/staff sessions and real foreign keys; `status` split into `availability` + `moderation` with enums; crawler state moved to `billboard_sources`; JSON columns read through Zod; admin panel as server-checked nested routes; rate limits follow `REDIS_URL` with a memory fallback. Migration proved on a copy of the real DB first. 9 unit + 142 API + 6 importer tests, 10 browser flows. |
 | 2026-09-26 | **Second adversarial review, and a deep pass over the unreviewed parts** | Sessions made revocable (sessionVersion, revoked token ids, seven-day ceiling), device cookies against lockout abuse, bounded bodies, open redirect closed, per-account limits on phone reveals and writes, version-bound listing decisions, atomic idempotency, uploads served after boot and cleaned when orphaned, `server.mjs` for an unforgeable client address, Persian search folding (trigger-kept `searchText`), a validated nightly import that never overwrites a concurrent edit, paged admin lists, a compare selection that survives a reload, integer-only admin sizes. Two regressions of this work found and fixed by recounting: import cycles (now a guard test) and stale thesis numbers. 12 unit + 162 API + 7 importer tests, 11 browser flows. |
-| 2026-09-27 | **Third review — sessions, uploads, styles** | §36 — database sessions instead of a JWT; multipart uploads stored outside `public/`; `TRUSTED_PROXY_COUNT` defaults to 0; bounded page cache; take-down and review moderation; `unknown` availability for crawled rows, linked sources, Iranian map links; every dataset city known; readable slugs; one password rule and Persian digits read as Latin; CSS modules across the site with shared `Button`/`Dialog`/`StatusScreen`, and a test that an animation named in a module is defined there. 18 unit + 180 API + 8 importer + 11 browser tests. |
+| 2026-09-27 | **Third review — sessions, uploads, styles** | §36 — database sessions instead of a JWT; multipart uploads stored outside `public/`; `TRUSTED_PROXY_COUNT` defaults to 0; bounded page cache; take-down and review moderation; `unknown` availability for crawled rows, linked sources, Iranian map links; every dataset city known; readable slugs; one password rule and Persian digits read as Latin; CSS modules across the site with shared `Button`/`Dialog`/`StatusScreen`, and a test that an animation named in a module is defined there. 18 unit + 181 API + 8 importer + 11 browser tests; a stranger learns nothing of the internals (no framework banner, `/api-docs` staff-only) and the JSON catalogue has its own budget (§20b). |

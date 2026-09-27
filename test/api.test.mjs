@@ -1478,11 +1478,15 @@ test("a refused request returns 429 with a Retry-After header", async () => {
 test("reading is not rate limited the way writing is", async () => {
   // The catalogue used to refuse a visitor who reloaded too often, which no
   // ordinary site does and which a shared address made easy to hit. 120 reads
-  // from one address in a row must all succeed.
+  // of what a visitor's browser actually requests — the catalogue page and a
+  // media item — from one address in a row must all succeed. (The JSON list,
+  // which no page of the site calls, has its own budget: see "the catalogue
+  // API cannot be paged deep…".)
   const ip = uniqueIp();
   for (let i = 0; i < 120; i++) {
-    const res = await api("/api/billboards?limit=12", { ip });
-    assert.equal(res.status, 200, `read ${i + 1} was refused with ${res.status}`);
+    const path = i % 2 ? "/api/billboards/valiasr-tower" : `/explore?page=${(i % 5) + 1}`;
+    const res = await api(path, { ip });
+    assert.equal(res.status, 200, `read ${i + 1} (${path}) was refused with ${res.status}`);
   }
 });
 
@@ -2534,4 +2538,27 @@ test("no response names the framework, and no source map is built", async () => 
   const config = stripComments(readFileSync("next.config.ts", "utf8"));
   assert.doesNotMatch(config, /productionBrowserSourceMaps\s*:\s*true/);
   assert.match(config, /poweredByHeader\s*:\s*false/);
+});
+
+// The catalogue as JSON is the cleanest copy a copier can ask for, and the
+// site's own pages never call it. One address used to read every row in 80
+// requests, in seconds.
+test("the catalogue API cannot be paged deep or read in bulk from one address", async () => {
+  const deep = await api("/api/billboards?limit=48&page=6");
+  assert.equal(deep.status, 400);
+  assert.match(deep.json.error, /صفحه/, "the refusal is not explained in Persian");
+
+  const ip = uniqueIp();
+  let refusedAt = 0;
+  for (let n = 1; n <= 70 && !refusedAt; n++) {
+    const res = await api(`/api/billboards?limit=48&page=${((n - 1) % 5) + 1}`, { ip });
+    if (res.status === 429) refusedAt = n;
+    else assert.equal(res.status, 200);
+  }
+  assert.equal(refusedAt, 61, "one address was not stopped after its sixty requests");
+
+  // Everyone else — another phone on the same demo Wi-Fi — is untouched, and
+  // so are the routes the site's own pages call.
+  assert.equal((await api("/api/billboards?limit=48")).status, 200);
+  assert.equal((await api("/api/stats", { ip })).status, 200, "the budget spilled onto the site's own reads");
 });
