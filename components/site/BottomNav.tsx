@@ -19,21 +19,24 @@ export default function BottomNav() {
   const [explore, analytics, compare] = SECTIONS;
   const account = user?.isStaff ? "/admin" : user ? "/dashboard" : "/login";
 
-  const item = (href: string, label: string, icon: React.ReactNode, extra = "") => (
-    <Link href={href} className={`${styles.navItem} ${isCurrent(pathname, href) ? styles.navActive : ""} ${extra}`}
-      aria-current={isCurrent(pathname, href) ? "page" : undefined}>
-      {icon}
-      <span>{label}</span>
-    </Link>
-  );
+  const item = (section: { href: string; label: string; within?: readonly string[] }, icon: React.ReactNode, extra = "") => {
+    const current = isCurrent(pathname, section);
+    return (
+      <Link href={section.href} className={`${styles.navItem} ${current ? styles.navActive : ""} ${extra}`}
+        aria-current={current ? "page" : undefined}>
+        {icon}
+        <span>{section.label}</span>
+      </Link>
+    );
+  };
 
   return (
     <nav className={styles.bottomNav} aria-label="بخش‌های سایت">
-      {item(explore.href, explore.label, <explore.Icon size={20} />)}
-      {item(analytics.href, analytics.label, <analytics.Icon size={20} />)}
-      {item("/list-media", "ثبت رسانه", <Plus />, styles.navCta)}
-      {item(compare.href, compare.label, <compare.Icon size={20} />)}
-      {item(account, user ? "حساب من" : "ورود", <User size={20} />)}
+      {item(explore, <explore.Icon size={20} />)}
+      {item(analytics, <analytics.Icon size={20} />)}
+      {item({ href: "/list-media", label: "ثبت رسانه" }, <Plus />, styles.navCta)}
+      {item(compare, <compare.Icon size={20} />)}
+      {item({ href: account, label: user ? "حساب من" : "ورود" }, <User size={20} />)}
     </nav>
   );
 }

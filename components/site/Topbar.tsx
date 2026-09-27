@@ -9,15 +9,22 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { Logo } from "./Logo";
 import styles from "./chrome.module.css";
 
-export const SECTIONS = [
-  { href: "/explore",   label: "کاوش",   Icon: Map },
+/**
+ * The public sections. `within` names the pages that belong to a section
+ * without living under its address: a media page is opened from the
+ * catalogue, so the visitor is still "in" it there.
+ */
+export const SECTIONS: readonly { href: string; label: string; Icon: typeof Map; within?: readonly string[] }[] = [
+  { href: "/explore",   label: "کاوش",   Icon: Map, within: ["/billboard"] },
   { href: "/analytics", label: "تحلیل",  Icon: BarChart2 },
   { href: "/compare",   label: "مقایسه", Icon: Scale },
-] as const;
+];
 
-/** Whether `href` is the section the visitor is in. */
-export function isCurrent(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+const under = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
+
+/** Whether the visitor is in `section` (a SECTIONS entry, or any bare `{ href }`). */
+export function isCurrent(pathname: string, section: { href: string; within?: readonly string[] }): boolean {
+  return under(pathname, section.href) || (section.within ?? []).some(p => under(pathname, p));
 }
 
 /**
@@ -50,12 +57,16 @@ export default function Topbar() {
       <Logo sub />
 
       <nav className={styles.tabs} aria-label="بخش‌های سایت">
-        {SECTIONS.map(({ href, label, Icon }) => (
-          <Link key={href} href={href} className={`${styles.tab} ${isCurrent(pathname, href) ? styles.tabActive : ""}`}
-            aria-current={isCurrent(pathname, href) ? "page" : undefined}>
-            <Icon size={14} /> {label}
-          </Link>
-        ))}
+        {SECTIONS.map(section => {
+          const { href, label, Icon } = section;
+          const current = isCurrent(pathname, section);
+          return (
+            <Link key={href} href={href} className={`${styles.tab} ${current ? styles.tabActive : ""}`}
+              aria-current={current ? "page" : undefined}>
+              <Icon size={14} /> {label}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className={styles.actions}>
