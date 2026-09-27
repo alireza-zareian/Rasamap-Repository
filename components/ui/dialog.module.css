@@ -1,0 +1,29 @@
+/* Every modal in the app: a dimmed backdrop, a card, a head with the title and
+   a close button, a body and an optional row of actions. The backdrop scrolls,
+   so a tall form on a short phone screen is still reachable. */
+.backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 20px; overflow-y: auto;
+  background: rgba(6, 10, 18, 0.7);
+}
+.box {
+  width: min(var(--width), 100%); margin: auto 0;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+.sm { --width: 440px; }
+.md { --width: 620px; }
+.lg { --width: 860px; }
+
+.head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.title { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 700; margin: 0; }
+.close { background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; padding: 4px; }
+.body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; font-size: 0.85rem; }
+.foot { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
+.foot > * { flex: 1; }
+
+/* A line of text the dialog is about — the row being deleted, say. */
+.subject { background: var(--bg-surface); border-radius: 10px; padding: 10px 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.subject small { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; }
+.lead { color: var(--text-muted); line-height: 1.9; margin: 0; }

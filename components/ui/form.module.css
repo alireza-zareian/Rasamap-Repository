@@ -48,3 +48,6 @@ textarea.input { resize: vertical; line-height: 1.8; }
 
 .row { display: flex; gap: 8px; align-items: stretch; }
 .row > .input { flex: 1; }
+
+/* A form's fields, one under another. */
+.stack { display: flex; flex-direction: column; gap: 12px; }
