@@ -1,4 +1,6 @@
 import { User } from "lucide-react";
+import { cssVar } from "@/components/ui/css-var";
+import styles from "./UserAvatar.module.css";
 
 /**
  * The signed-in person's initial in a circle.
@@ -14,15 +16,7 @@ import { User } from "lucide-react";
 export default function UserAvatar({ name, size = 42 }: { name: string; size?: number }) {
   const letter = name.trim().charAt(0).toUpperCase();
   return (
-    <div
-      aria-hidden
-      style={{
-        width: size, height: size, borderRadius: "50%", flexShrink: 0,
-        background: "rgba(59,123,245,0.15)", border: "2px solid rgba(59,123,245,0.35)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontWeight: 800, fontSize: size * 0.42, color: "var(--accent)",
-      }}
-    >
+    <div aria-hidden className={styles.avatar} style={cssVar("--size", `${size}px`)}>
       {/* An account cannot be created without a name, but a blank circle would
           be the one state nobody notices was broken. */}
       {letter || <User size={size * 0.5} />}

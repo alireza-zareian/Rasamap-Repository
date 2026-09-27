@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import styles from "./SnakeScroll.module.css";
 
 interface Props {
   scrollContainerRef?: React.RefObject<HTMLElement | null>;
@@ -144,9 +145,6 @@ export default function SnakeScroll({ scrollContainerRef }: Props) {
   }, []);
 
   return (
-    <canvas ref={canvasRef} style={{
-      position: "absolute", top: 0, left: 0,
-      width: 44, pointerEvents: "none", zIndex: 40,
-    }} />
+    <canvas ref={canvasRef} className={styles.canvas} />
   );
 }

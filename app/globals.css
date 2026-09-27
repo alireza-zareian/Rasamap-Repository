@@ -292,22 +292,7 @@ button, a, input, select, label,
 }
 
 /* ── Responsive helpers ─────────────────────────────────────────── */
-@media (max-width: 640px) {
-  /* About stats: single column */
-  .about-stats-grid { grid-template-columns: 1fr !important; }
-
-  /* Dashboard sidebar: hidden by default, shown via .sidebar-open */
-  .dash-sidebar { display: none !important; }
-  .dash-sidebar.sidebar-open { display: block !important; }
-}
-
 @media (max-width: 768px) {
-  /* Dashboard sidebar hidden below tablet */
-  .dash-sidebar { display: none; }
-  .dash-sidebar.sidebar-open { display: block; width: 100% !important; }
-  /* Show hamburger button on tablet/mobile */
-  .dash-hamburger { display: inline-flex !important; }
-
   /* Admin: sidebar becomes a wrapping row of tab buttons above the content;
      the 3-column overview charts stack. Desktop (>768px) is untouched. */
   .admin-shell { flex-direction: column !important; }
@@ -332,11 +317,6 @@ button, a, input, select, label,
   /* Admin create/edit modals: the two-column field grid is too tight at
      phone width — collapse to a single column. */
   .admin-modal-grid { grid-template-columns: 1fr !important; }
-
-  /* Decorative animated-orb background: pure eye-candy and a real GPU cost on
-     phones (4 big blurred layers + a scroll-parallax transform). Drop it on
-     mobile — the body keeps its dot-grid texture. */
-  .bg-decor { display: none !important; }
 }
 
 /* ── Ambient polish — reusable decoration classes ──────────────── */
@@ -457,7 +437,6 @@ html.page-hidden .skeleton {
 .card-photo-zoom { transition: transform 0.4s ease; will-change: transform; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bg-orb { animation: none !important; }
   .btn-sheen::after { display: none !important; }
   /* A zoom is motion, so this drops the movement itself, not just its easing. */
   .card-photo-zoom { transition: none !important; transform: none !important; }

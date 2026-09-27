@@ -1,0 +1,20 @@
+/* The reference is docs/api.md rendered to HTML, so everything below the
+   wrapper is plain elements rather than classes. */
+.doc { max-width: 980px; margin: 0 auto; padding: 48px 20px 80px; line-height: 1.85; }
+.doc h1 { font-size: 1.7rem; font-weight: 800; margin: 0 0 4px; }
+.doc h2 { font-size: 1.2rem; font-weight: 700; margin: 40px 0 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+.doc h3 { font-size: 1rem; font-weight: 700; margin: 24px 0 8px; }
+.doc p { margin: 10px 0; color: var(--text-muted); }
+.doc code {
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px;
+  font-size: 0.82em; font-family: ui-monospace, monospace; direction: ltr; display: inline-block;
+}
+.doc pre { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; overflow-x: auto; direction: ltr; }
+.doc pre code { background: none; border: none; padding: 0; }
+.doc a { color: var(--accent); }
+.doc ul { margin: 10px 0; padding-inline-start: 22px; color: var(--text-muted); }
+.doc hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+.doc :global(.tw) { overflow-x: auto; margin: 14px 0; }
+.doc table { border-collapse: collapse; width: 100%; font-size: 0.84rem; }
+.doc th, .doc td { border: 1px solid var(--border); padding: 8px 10px; text-align: right; vertical-align: top; }
+.doc th { background: var(--bg-surface); font-weight: 700; }

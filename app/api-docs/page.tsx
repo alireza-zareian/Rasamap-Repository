@@ -7,6 +7,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
+import styles from "./api-docs.module.css";
 
 export const metadata: Metadata = {
   title: "مرجع API — رسامپ",
@@ -115,25 +116,6 @@ export default async function ApiDocsPage() {
   const html = await renderApiDocs();
 
   return (
-    <div style={{ direction: "rtl", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", background: "var(--bg-deep, #0b0f17)", color: "var(--text-main, #e6e9ef)", minHeight: "100vh" }}>
-      <style>{`
-        .apidoc { max-width: 980px; margin: 0 auto; padding: 48px 20px 80px; line-height: 1.85; }
-        .apidoc h1 { font-size: 1.7rem; font-weight: 800; margin: 0 0 4px; }
-        .apidoc h2 { font-size: 1.2rem; font-weight: 700; margin: 40px 0 10px; padding-top: 12px; border-top: 1px solid var(--border, #23293a); }
-        .apidoc h3 { font-size: 1rem; font-weight: 700; margin: 24px 0 8px; }
-        .apidoc p { margin: 10px 0; color: var(--text-muted, #a2acc0); }
-        .apidoc code { background: var(--bg-surface, #161c28); border: 1px solid var(--border, #23293a); border-radius: 5px; padding: 1px 6px; font-size: 0.82em; font-family: ui-monospace, monospace; direction: ltr; display: inline-block; }
-        .apidoc pre { background: var(--bg-surface, #161c28); border: 1px solid var(--border, #23293a); border-radius: 10px; padding: 14px 16px; overflow-x: auto; direction: ltr; }
-        .apidoc pre code { background: none; border: none; padding: 0; }
-        .apidoc a { color: var(--accent, #3b7bf5); }
-        .apidoc ul { margin: 10px 0; padding-inline-start: 22px; color: var(--text-muted, #a2acc0); }
-        .apidoc hr { border: none; border-top: 1px solid var(--border, #23293a); margin: 28px 0; }
-        .apidoc .tw { overflow-x: auto; margin: 14px 0; }
-        .apidoc table { border-collapse: collapse; width: 100%; font-size: 0.84rem; }
-        .apidoc th, .apidoc td { border: 1px solid var(--border, #23293a); padding: 8px 10px; text-align: right; vertical-align: top; }
-        .apidoc th { background: var(--bg-surface, #161c28); font-weight: 700; }
-      `}</style>
-      <div className="apidoc" dangerouslySetInnerHTML={{ __html: html }} />
-    </div>
+    <main className={styles.doc} dangerouslySetInnerHTML={{ __html: html }} />
   );
 }

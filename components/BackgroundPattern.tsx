@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import styles from "./BackgroundPattern.module.css";
 
 export default function BackgroundPattern() {
   const vine1Ref = useRef<SVGPathElement>(null);
@@ -49,46 +50,16 @@ export default function BackgroundPattern() {
   }, []);
 
   return (
-    <div className="bg-decor" aria-hidden="true" style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+    <div className={styles.decor} aria-hidden="true">
+      {/* Blue top-left, green bottom-right, mid-blue right, pink bottom-left. */}
+      {(["one", "two", "three", "four"] as const).map((pos, i) => (
+        <div key={pos} className={`${styles.anchor} ${styles[pos]}`}>
+          <div className={`${styles.orb} bg-orb-${i + 1}`} />
+        </div>
+      ))}
 
-      {/* Orb 1 — blue, top-left */}
-      <div style={{ position: "absolute", top: -180, left: "6%" }}>
-        <div className="bg-orb-1" style={{
-          width: 900, height: 900, borderRadius: "50%",
-          animation: "orb-drift-1 32s ease-in-out infinite",
-        }} />
-      </div>
-
-      {/* Orb 2 — green, bottom-right */}
-      <div style={{ position: "absolute", bottom: -160, right: "4%" }}>
-        <div className="bg-orb-2" style={{
-          width: 780, height: 780, borderRadius: "50%",
-          animation: "orb-drift-2 26s ease-in-out infinite",
-          animationDelay: "-10s",
-        }} />
-      </div>
-
-      {/* Orb 3 — mid-blue, right center */}
-      <div style={{ position: "absolute", top: "28%", right: -60 }}>
-        <div className="bg-orb-3" style={{
-          width: 560, height: 560, borderRadius: "50%",
-          animation: "orb-drift-3 20s ease-in-out infinite",
-          animationDelay: "-4s",
-        }} />
-      </div>
-
-      {/* Orb 4 — pink, bottom-left */}
-      <div style={{ position: "absolute", bottom: -80, left: "22%" }}>
-        <div className="bg-orb-4" style={{
-          width: 640, height: 640, borderRadius: "50%",
-          animation: "orb-drift-1 28s ease-in-out infinite",
-          animationDelay: "-16s",
-        }} />
-      </div>
-
-      {/* Vine — static container, drawn once on mount */}
-      <div style={{ position: "absolute", inset: "-15% 0 0 0" }}>
-        <svg viewBox="0 0 1440 1080" preserveAspectRatio="xMidYMid slice" style={{ position: "absolute", inset: 0, width: "100%", height: "130%" }}>
+      <div className={styles.vines}>
+        <svg viewBox="0 0 1440 1080" preserveAspectRatio="xMidYMid slice">
           <path ref={vine1Ref}
             d="M 1380,0 C 1160,160 1300,330 1060,470 C 820,610 1020,760 800,890 C 580,1020 660,1100 420,1080"
             fill="none" stroke="rgba(0,209,122,0.28)" strokeWidth="1.8" strokeLinecap="round" />

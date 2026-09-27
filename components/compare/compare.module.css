@@ -46,8 +46,10 @@
 .slot svg { flex-shrink: 0; color: var(--text-muted); }
 .emptySlot { justify-content: center; border: 1px dashed var(--border); color: var(--text-muted); font-size: 0.75rem; }
 .barActions { display: flex; gap: 8px; flex-shrink: 0; }
-.go { background: var(--accent-warm); color: #111; border: none; }
-.go:disabled { background: var(--border); color: var(--text-muted); }
+/* Nested, and repeated for hover, so the warm fill outranks the secondary
+   button's own rules whatever order the two sheets load in. */
+.barActions .go, .barActions .go:hover:not(:disabled) { background: var(--accent-warm); color: #111; border: none; }
+.barActions .go:disabled { background: var(--border); color: var(--text-muted); }
 
 @media (max-width: 768px) {
   .bar { padding: 10px 14px; gap: 8px; }

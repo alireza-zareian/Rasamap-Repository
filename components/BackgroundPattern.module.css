@@ -1,0 +1,32 @@
+/* The decorative backdrop: four slowly drifting blurred orbs and three vines
+   drawn once. The orbs' colours live in globals.css under .bg-orb-N, where the
+   light theme and the hidden-tab pause list also name them. */
+
+.decor { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.anchor { position: absolute; }
+.orb { border-radius: 50%; }
+
+.one   { top: -180px; left: 6%; }
+.two   { bottom: -160px; right: 4%; }
+.three { top: 28%; right: -60px; }
+.four  { bottom: -80px; left: 22%; }
+
+.one .orb   { width: 900px; height: 900px; animation: orb-drift-1 32s ease-in-out infinite; }
+.two .orb   { width: 780px; height: 780px; animation: orb-drift-2 26s ease-in-out infinite -10s; }
+.three .orb { width: 560px; height: 560px; animation: orb-drift-3 20s ease-in-out infinite -4s; }
+.four .orb  { width: 640px; height: 640px; animation: orb-drift-1 28s ease-in-out infinite -16s; }
+
+.vines { position: absolute; inset: -15% 0 0 0; }
+.vines svg { position: absolute; inset: 0; width: 100%; height: 130%; }
+
+/* Pure decoration, and four large blurred layers are a real GPU cost on a
+   phone — so a phone keeps only the body's dot grid. */
+@media (max-width: 768px) {
+  .decor { display: none; }
+}
+
+/* The rule in globals.css named a `.bg-orb` class nothing carried, so the orbs
+   kept drifting for a visitor who had asked for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .orb { animation: none !important; }
+}

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { ShieldCheck, LayoutDashboard, ClipboardCheck, Handshake, PencilLine, BarChart3, Users } from "lucide-react";
 import { useCurrentUser } from "@/lib/client/use-current-user";
+import styles from "./StaffBar.module.css";
 
 /**
  * A thin bar shown across the public site to whoever is signed in as staff —
@@ -118,34 +119,13 @@ export default function StaffBar() {
 
   const { where, actions } = actionsFor(pathname);
 
-  const link: React.CSSProperties = {
-    display: "inline-flex", alignItems: "center", gap: 5,
-    color: "rgba(255,255,255,0.94)", textDecoration: "none",
-    fontSize: "0.72rem", fontWeight: 600, whiteSpace: "nowrap",
-    padding: "4px 10px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.24)",
-    background: "rgba(255,255,255,0.08)",
-  };
-
   return (
-    <div
-      ref={barRef}
-      className="staff-bar"
-      style={{
-        position: "fixed", bottom: "var(--bottomnav-offset, 0px)", right: 0, left: 0, zIndex: 200,
-        background: "linear-gradient(90deg, #3B2E7E, #6247C4)",
-        borderTop: "1px solid rgba(255,255,255,0.2)",
-        display: "flex", alignItems: "center", gap: 9,
-        padding: "7px 14px", overflowX: "auto",
-        boxShadow: "0 -4px 18px rgba(0,0,0,0.28)",
-      }}
-    >
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#fff", fontSize: "0.72rem", fontWeight: 800, whiteSpace: "nowrap" }}>
-        <ShieldCheck size={13} /> {user.name}
-      </span>
-      <span style={{ fontSize: "0.66rem", color: "rgba(255,255,255,0.62)", whiteSpace: "nowrap" }}>{where}</span>
-      <div style={{ display: "flex", gap: 6, marginRight: "auto" }}>
+    <div ref={barRef} className={styles.bar} role="navigation" aria-label="میان‌بُرهای همکاران">
+      <span className={styles.who}><ShieldCheck size={13} /> {user.name}</span>
+      <span className={styles.where}>{where}</span>
+      <div className={styles.actions}>
         {actions.map(a => (
-          <Link key={a.href} href={a.href} style={link}><a.Icon size={11} /> {a.label}</Link>
+          <Link key={a.href} href={a.href} className={styles.action}><a.Icon size={11} /> {a.label}</Link>
         ))}
       </div>
     </div>

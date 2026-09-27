@@ -1,3 +1,5 @@
+import styles from "./PageSkeleton.module.css";
+
 /**
  * The shape a page holds while its server render is in flight.
  *
@@ -25,7 +27,7 @@
  * a guest and for a customer" catches it, which is how it was caught here.
  */
 
-/** A shimmering block. `w`/`h` are whatever CSS accepts. */
+/** A shimmering block. Its size is per call, so it stays an inline style. */
 function Bar({ w, h = 14, r = 7, mb = 0 }: { w: string | number; h?: number; r?: number; mb?: number }) {
   return (
     <div
@@ -45,40 +47,30 @@ function Bar({ w, h = 14, r = 7, mb = 0 }: { w: string | number; h?: number; r?:
  */
 export type SkeletonLayout = "detail" | "table" | "cards";
 
+const Block = ({ className }: { className: string }) => <div className={`skeleton ${className}`} aria-hidden="true" />;
+
 export default function PageSkeleton({
   layout,
   label,
+  inPanel = false,
 }: {
   layout: SkeletonLayout;
   /** Announced to a screen reader, which cannot see the shimmer. */
   label: string;
+  /** Inside the admin shell, which already has its own bar and frame. */
+  inPanel?: boolean;
 }) {
   return (
-    <div
-      role="status"
-      aria-busy="true"
-      aria-label={label}
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg-deep)",
-        fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif",
-        direction: "rtl",
-        paddingTop: 62,
-      }}
-    >
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 20px 60px" }}>
+    <div role="status" aria-busy="true" aria-label={label} className={`${styles.page} ${inPanel ? styles.panel : ""}`}>
+      <div className={styles.wrap}>
         {layout === "detail" && (
           <>
             {/* The photograph, at the aspect ratio the gallery really uses, so
                 the rest of the page does not jump when it arrives. */}
-            <div className="skeleton" style={{ width: "100%", aspectRatio: "16/9", borderRadius: 14, marginBottom: 22 }} aria-hidden="true" />
+            <Block className={styles.photo} />
             <Bar w="52%" h={26} r={9} mb={12} />
             <Bar w="34%" h={16} mb={26} />
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 26 }}>
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} className="skeleton" style={{ flex: "1 1 150px", height: 76, borderRadius: 11 }} aria-hidden="true" />
-              ))}
-            </div>
+            <div className={styles.chips}>{[0, 1, 2, 3].map(i => <Block key={i} className={styles.chip} />)}</div>
             <Bar w="100%" h={13} mb={9} />
             <Bar w="92%" h={13} mb={9} />
             <Bar w="68%" h={13} />
@@ -88,24 +80,18 @@ export default function PageSkeleton({
         {layout === "table" && (
           <>
             <Bar w="30%" h={24} r={9} mb={20} />
-            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-              {[0, 1, 2].map(i => (
-                <div key={i} className="skeleton" style={{ flex: 1, height: 38, borderRadius: 9 }} aria-hidden="true" />
-              ))}
-            </div>
-            {Array.from({ length: 8 }, (_, i) => (
-              <div key={i} className="skeleton" style={{ width: "100%", height: 46, borderRadius: 9, marginBottom: 8 }} aria-hidden="true" />
-            ))}
+            <div className={styles.filters}>{[0, 1, 2].map(i => <Block key={i} className={styles.filter} />)}</div>
+            {Array.from({ length: 8 }, (_, i) => <Block key={i} className={styles.row} />)}
           </>
         )}
 
         {layout === "cards" && (
           <>
             <Bar w="26%" h={24} r={9} mb={20} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16 }}>
+            <div className={styles.cards}>
               {Array.from({ length: 8 }, (_, i) => (
                 <div key={i}>
-                  <div className="skeleton" style={{ width: "100%", aspectRatio: "4/3", borderRadius: 12, marginBottom: 10 }} aria-hidden="true" />
+                  <Block className={styles.cardPhoto} />
                   <Bar w="80%" h={13} mb={7} />
                   <Bar w="50%" h={12} />
                 </div>
