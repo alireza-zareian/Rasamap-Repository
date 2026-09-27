@@ -1,0 +1,282 @@
+"use client";
+import { useState, Suspense } from "react";
+import { useCurrentUser } from "@/lib/client/use-current-user";
+import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
+import { safeNextPath } from "@/lib/client/next-path";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Eye, EyeOff, AlertTriangle, ArrowRight, User, ShieldCheck } from "lucide-react";
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/domain/password";
+import { latinDigits } from "@/lib/domain/digits";
+import { cssVar } from "@/components/ui/css-var";
+import field from "@/components/ui/form.module.css";
+import styles from "../auth.module.css";
+
+function LoginForm() {
+  const router = useRouter();
+  const { refresh } = useCurrentUser();
+  const searchParams = useSearchParams();
+  const requestedNext = safeNextPath(searchParams.get("next"));
+
+  /**
+   * Which kind of account the form is dressed for.
+   *
+   * A label only. The server decides from the shape of what was typed — an
+   * email goes to `admins`, a mobile number to `users` — and never reads a mode
+   * the browser claims, because a client-declared role is not a fact. Switching
+   * here changes the field, the wording and the colour, so a member of the team
+   * is not left typing an email into a box asking for 09…
+   *
+   * It is not hidden, and hiding it would buy nothing: the panel's address is
+   * public anyway (/admin/login forwards here with this tab chosen). Shopify and Zendesk put the same switch on the same screen.
+   */
+  const [mode, setMode] = useState<"customer" | "staff">(
+    searchParams.get("as") === "staff" ? "staff" : "customer",
+  );
+  const staff = mode === "staff";
+
+  const [tab, setTab] = useState<"login"|"register">("login");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ phone: "", pass: "", name: "", confirm: "", code: "" });
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const s = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  /**
+   * Sign-up is two steps, and this says which one is on screen.
+   *
+   * "phone" asks for the number and sends a code to it; "details" takes the
+   * code together with the name and password, and it is the *register* call
+   * that spends the code — there is no separate verify round-trip and so no
+   * window where a number is proven but no account exists yet.
+   */
+  const [signUpStep, setSignUpStep] = useState<"phone" | "details">("phone");
+  const [notice, setNotice] = useState("");
+
+  const switchTab = (next: "login" | "register") => {
+    setTab(next);
+    setError(""); setNotice("");
+    setSignUpStep("phone");
+  };
+
+  const switchMode = (next: "customer" | "staff") => {
+    setMode(next);
+    switchTab("login");         // staff accounts are created by an admin, never here
+    setForm(f => ({ ...f, phone: "" }));
+  };
+
+  // Step one of sign-up: ask for a code on the number that was typed.
+  const sendCode = async () => {
+    setError("");
+    if (!/^09\d{9}$/.test(form.phone)) { setError("شماره موبایل معتبر نیست"); return; }
+    setLoading(true);
+    try {
+      const data = await fetchJson<{ message?: string; devCode?: string }>("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone, purpose: "register" }),
+      });
+      setNotice(data.devCode
+        ? `${data.message} (کد تست: ${data.devCode})`
+        : data.message ?? "کد تأیید ارسال شد.");
+      setSignUpStep("details");
+    } catch (err) {
+      // Includes the 409 for a number that already has an account — the message
+      // the server sends tells them to sign in instead.
+      setError(errorMessage(err));
+    } finally { setLoading(false); }
+  };
+
+  const submit = async () => {
+    setError("");
+    if (tab === "register") {
+      if (!/^\d{6}$/.test(form.code)) { setError("کد تأیید باید ۶ رقم باشد"); return; }
+      if (!form.name.trim()) { setError("نام الزامی است"); return; }
+      if (form.pass !== form.confirm) { setError("رمز عبور و تکرار آن یکسان نیستند"); return; }
+      if (form.pass.length < MIN_PASSWORD_LENGTH) { setError(PASSWORD_TOO_SHORT); return; }
+    }
+    setLoading(true);
+    try {
+      const endpoint = tab === "login" ? "/api/auth/login" : "/api/auth/register";
+      // Signing in accepts a mobile number or a team email address — the server
+      // reads the shape of it to know which store to check. Registration is for
+      // customers only, so it stays a phone.
+      const body = tab === "login"
+        ? { identifier: form.phone.trim(), password: form.pass }
+        : { name: form.name.trim(), phone: form.phone, password: form.pass, code: form.code };
+      const data = await fetchJson<{ user?: { isStaff?: boolean } }>(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      // The session answer is cached for the whole page load (see
+      // CurrentUserProvider), and router.push below is a soft navigation that
+      // does not reload it. Without this the visitor would arrive signed in but
+      // be shown the signed-out header until they reloaded by hand.
+      await refresh();
+      // Back to wherever they were headed; with no destination, a team member
+      // wants the panel and a customer their dashboard.
+      router.push(requestedNext ?? (data.user?.isStaff ? "/admin" : "/dashboard"));
+    } catch (err) {
+      // Covers a refusal from the API (wrong password, rate limit) and a
+      // network failure alike — fetchJson has already turned both into the
+      // sentence to show.
+      setError(errorMessage(err)); setLoading(false);
+    }
+  };
+
+  // Sign-up in its customer form, and which of its two steps is on screen.
+  const signUp = tab === "register" && !staff;
+  const askingForCode = signUp && signUpStep === "phone";
+  const detailsStep  = signUp && signUpStep === "details";
+
+  // The six-digit code from the SMS — same shape as /reset-password's box.
+  const codeInp = () => (
+    <input
+      className={`${field.input} ${styles.input} ${styles.code}`}
+      value={form.code}
+      onChange={e => s("code", latinDigits(e.target.value).replace(/\D/g, "").slice(0, 6))}
+      inputMode="numeric" dir="ltr" autoComplete="one-time-code"
+      aria-label="کد تأیید پیامک‌شده"
+      placeholder="------"
+    />
+  );
+
+  const nameInp = () => (
+    <input className={`${field.input} ${styles.input}`} value={form.name} onChange={e => s("name", e.target.value)}
+      type="text" autoComplete="name" aria-label="نام و نام خانوادگی" placeholder="نام و نام خانوادگی" />
+  );
+
+  // The field is dressed for the mode: an email keyboard and no digit
+  // conversion for the team, a phone keypad for a customer. Either way the
+  // server reads the value's own shape, so a wrong guess here costs nothing
+  // but a keyboard.
+  const identifierInp = () => (
+    // Once a code has been sent, the number is what that code belongs to.
+    // Editing it would only produce "no code found for this number" a moment
+    // later, so the field goes read-only and the way back is the "wrong
+    // number" button under the form.
+    <input
+      className={`${field.input} ${field.ltr} ${styles.input}`}
+      value={form.phone}
+      onChange={e => s("phone", staff ? e.target.value : latinDigits(e.target.value))}
+      readOnly={detailsStep}
+      type={staff ? "email" : "tel"}
+      inputMode={staff ? "email" : "tel"}
+      dir="ltr" lang="en"
+      autoComplete={staff ? "email" : "tel"}
+      aria-label={staff ? "ایمیل سازمانی" : "شماره موبایل"}
+      placeholder={staff ? "name@rasamap.ir" : "09123456789"}
+    />
+  );
+
+  // A password box with a show/hide toggle. Persian digits are converted as
+  // they are typed so the field shows what will be sent; the server converts
+  // them too, so nothing depends on this.
+  const passInp = (
+    value: string,
+    onChange: (v: string) => void,
+    label: string,
+    show: boolean,
+    setShow: (b: boolean) => void,
+    autoComplete: "current-password" | "new-password",
+  ) => (
+    <div className={styles.password}>
+      <input
+        className={`${field.input} ${field.ltr} ${styles.input}`}
+        value={value}
+        onChange={e => onChange(latinDigits(e.target.value))}
+        type={show ? "text" : "password"}
+        dir="ltr" lang="en"
+        aria-label={label}
+        placeholder={label}
+        autoComplete={autoComplete}
+      />
+      <button type="button" className={styles.reveal} onClick={() => setShow(!show)}
+        aria-label={show ? "پنهان کردن رمز" : "نمایش رمز"} tabIndex={-1}>
+        {show ? <Eye size={16} /> : <EyeOff size={16} />}
+      </button>
+    </div>
+  );
+
+  const tabs = staff ? (["login"] as const) : (["login", "register"] as const);
+
+  return (
+    <div className={`${styles.column} ${staff ? styles.staff : ""}`}>
+      <div className={styles.brand}>
+        <div className={styles.mark}>{staff ? <ShieldCheck size={26} /> : "R"}</div>
+        <h1 className={`${styles.name} logo-shimmer`}>رسامپ</h1>
+        <div className={styles.tagline}>{staff ? "ورود همکاران — پنل مدیریت رسامپ" : "پلتفرم جامع رسانه‌های محیطی ایران"}</div>
+      </div>
+
+      <div className={styles.card}>
+        {/* Staff accounts are created by an administrator, never here, so the
+            sign-up tab does not exist in that mode. */}
+        <div className={styles.tabs} role="tablist">
+          {tabs.map(t => (
+            <button key={t} type="button" id={`tab-${t}`} role="tab" aria-selected={tab === t}
+              className={styles.tab} onClick={() => switchTab(t)}>
+              {t === "login" ? (staff ? "ورود همکاران" : "ورود") : "ثبت‌نام"}
+            </button>
+          ))}
+        </div>
+        {/* A real <form>, not inputs side by side: without one, Enter in the
+            password box does nothing and the button has to be clicked. */}
+        <form className={styles.form} role="tabpanel" aria-labelledby={`tab-${tab}`}
+          onSubmit={e => { e.preventDefault(); if (!loading) void (askingForCode ? sendCode() : submit()); }}>
+          {notice && detailsStep && <div role="status" className={styles.notice}>{notice}</div>}
+          {/* Step one asks for the number alone; everything else waits until a
+              code has been sent to it. */}
+          {identifierInp()}
+          {detailsStep && codeInp()}
+          {detailsStep && nameInp()}
+          {!askingForCode && passInp(form.pass, v => s("pass", v), "رمز عبور", showPass, setShowPass, signUp ? "new-password" : "current-password")}
+          {detailsStep && passInp(form.confirm, v => s("confirm", v), "تکرار رمز", showConfirm, setShowConfirm, "new-password")}
+          {error && <div role="alert" className={field.error}><AlertTriangle size={13} /> {error}</div>}
+          <button type="submit" className={styles.submit} disabled={loading}>
+            {loading ? "در حال پردازش..."
+              : staff ? "ورود به پنل مدیریت"
+              : tab === "login" ? "ورود به حساب"
+              : askingForCode ? "ارسال کد تأیید"
+              : "ایجاد حساب"}
+          </button>
+          {detailsStep && (
+            <button type="button" className={styles.textButton}
+              onClick={() => { setSignUpStep("phone"); setError(""); setNotice(""); s("code", ""); }}>
+              شماره را اشتباه وارد کردم
+            </button>
+          )}
+          {tab === "login" && !staff && (
+            <div className={styles.aside}><Link href="/reset-password">رمز عبور را فراموش کرده‌اید؟</Link></div>
+          )}
+          {staff && <div className={styles.aside}>بازیابی رمز همکاران از طریق سوپر ادمین انجام می‌شود</div>}
+        </form>
+      </div>
+
+      {/* The switch. It changes the form's clothes, not its rules. */}
+      <div className={styles.modes}>
+        {([
+          { key: "customer", label: "کاربر",   hint: "با شماره موبایل",  Icon: User,        color: "var(--accent)" },
+          { key: "staff",    label: "همکاران", hint: "با ایمیل سازمانی", Icon: ShieldCheck, color: "#6247C4" },
+        ] as const).map(opt => (
+          <button key={opt.key} type="button" className={styles.mode} style={cssVar("--mode", opt.color)}
+            onClick={() => switchMode(opt.key)} aria-pressed={mode === opt.key}>
+            <span className={styles.modeLabel}><opt.Icon size={14} /> {opt.label}</span>
+            <span className={styles.modeHint}>{opt.hint}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className={styles.back}><Link href="/"><ArrowRight size={13} /> بازگشت</Link></div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}

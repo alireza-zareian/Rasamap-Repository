@@ -1,0 +1,82 @@
+/* The sign-in and password-reset screens: a centred card on the page colour,
+   outside the site frame. Staff sign-in wears the panel's violet so someone
+   arriving by a stale link can tell at a glance which door they are at. */
+
+.frame { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.column { width: 100%; max-width: 420px; --tone: var(--accent); --tone-glow: rgba(59, 123, 245, 0.45); }
+.staff { --tone: #6247C4; --tone-glow: rgba(98, 71, 196, 0.45); }
+
+.brand { text-align: center; margin-bottom: 28px; }
+.mark {
+  width: 52px; height: 52px; margin: 0 auto 10px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--tone); color: #fff; font-size: 1.5rem; font-weight: 900;
+  box-shadow: 0 0 24px var(--tone-glow);
+}
+.name { font-size: 1.4rem; font-weight: 800; margin: 0; }
+.tagline { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+.tabs { display: flex; border-bottom: 1px solid var(--border); }
+.tab {
+  flex: 1; padding: 14px; border: none; background: none; cursor: pointer; font-family: inherit; font-size: 0.88rem;
+  color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.tab[aria-selected="true"] { color: var(--tone); font-weight: 700; border-bottom-color: var(--tone); }
+
+.form { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 0.78rem; color: var(--text-muted); }
+.form .input { font-size: 0.88rem; padding: 11px 14px; border-radius: 9px; }
+.form .input[readonly] { opacity: 0.6; cursor: default; }
+.form .code { text-align: center; letter-spacing: 6px; font-size: 1.1rem; }
+
+.password { position: relative; }
+.form .password .input { padding-left: 42px; }
+/* 44px so a thumb can hit it; the icon sits in the space the input's left
+   padding already reserves. */
+.reveal {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; padding: 0;
+  background: none; border: none; cursor: pointer; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.notice {
+  background: rgba(59, 123, 245, 0.08); border: 1px solid rgba(59, 123, 245, 0.25); border-radius: 8px;
+  padding: 9px 13px; font-size: 0.78rem; color: var(--text-muted); line-height: 1.7;
+}
+
+.submit {
+  width: 100%; padding: 13px; border: none; border-radius: 9px; cursor: pointer;
+  background: var(--tone); color: #fff; font-family: inherit; font-size: 0.9rem; font-weight: 700;
+  box-shadow: 0 4px 16px var(--tone-glow);
+}
+.submit:disabled { background: var(--border); box-shadow: none; cursor: default; }
+.textButton { background: none; border: none; padding: 0; cursor: pointer; color: var(--text-muted); font-family: inherit; font-size: 0.78rem; }
+.aside { text-align: center; font-size: 0.78rem; color: var(--text-muted); line-height: 1.9; }
+.aside a { color: var(--text-muted); text-decoration: none; }
+
+.modes { display: flex; gap: 4px; margin-top: 16px; padding: 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+.mode {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 6px; border-radius: 9px;
+  background: none; border: 1px solid transparent; color: var(--text-muted); font-family: inherit; cursor: pointer; transition: all 0.18s;
+}
+.mode[aria-pressed="true"] {
+  color: var(--mode); border-color: var(--mode); cursor: default;
+  background: color-mix(in srgb, var(--mode) 10%, transparent);
+}
+.modeLabel { display: inline-flex; align-items: center; gap: 5px; font-size: 0.83rem; font-weight: 500; }
+.mode[aria-pressed="true"] .modeLabel { font-weight: 700; }
+.modeHint { font-size: 0.66rem; opacity: 0.75; }
+
+.back { text-align: center; margin-top: 14px; }
+.back a { color: var(--text-muted); font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+
+.done { text-align: center; padding: 10px 0; }
+.done svg { color: var(--green); margin-bottom: 12px; }
+.done h2 { font-size: 0.95rem; font-weight: 700; margin: 0 0 6px; }
+.done p { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 18px; }
+.done .submit { width: auto; padding: 11px 28px; }
