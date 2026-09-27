@@ -1,43 +1,40 @@
 "use client";
-import { CatalogueItem } from "@/lib/types";
 import { Scale, X, ArrowLeft } from "lucide-react";
+import type { CatalogueItem } from "@/lib/types";
 import { TypeIcon } from "@/components/TypeIcon";
+import { Button } from "@/components/ui/Button";
+import { MAX_COMPARE } from "@/lib/client/use-compare-list";
+import styles from "@/components/compare/compare.module.css";
 
-interface Props {
+/** The strip that collects the media ticked for comparison, fixed to the bottom. */
+export default function CompareBar({ items, onRemove, onCompare, onClear }: {
   items: CatalogueItem[];
-  onRemove: (id:number)=>void;
-  onCompare: ()=>void;
-  onClear: ()=>void;
-}
-
-export default function CompareBar({ items, onRemove, onCompare, onClear }: Props) {
+  onRemove: (id: number) => void;
+  onCompare: () => void;
+  onClear: () => void;
+}) {
   if (items.length === 0) return null;
+  const slots = Array.from({ length: MAX_COMPARE }, (_, i) => items[i] ?? null);
 
   return (
-    <div className="compare-bar" style={{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"var(--bg-card)",borderTop:"2px solid var(--accent)",padding:"11px 22px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",animation:"slideUp 0.3s ease",boxShadow:"0 -4px 24px rgba(59,123,245,0.10)"}}>
-      <div style={{fontSize:"0.82rem",fontWeight:700,color:"var(--accent)",flexShrink:0,display:"flex",alignItems:"center",gap:5}}><Scale size={15}/> مقایسه</div>
-
-      <div className="compare-bar-chips" style={{display:"flex",gap:8,flex:1,minWidth:0}}>
-        {[items[0]||null, items[1]||null].map((b,i)=>
-          b ? (
-            <div key={b.id} style={{background:"var(--bg-surface)",border:"1px solid var(--accent-warm)",borderRadius:8,padding:"6px 12px",fontSize:"0.78rem",display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
-              <span style={{display:"flex",flexShrink:0,color:"var(--text-muted)"}}><TypeIcon type={b.type} size={14} /></span>
-              <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.name}</span>
-              <button type="button" onClick={()=>onRemove(b.id)} aria-label={`حذف ${b.name} از مقایسه`} style={{background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",padding:0,display:"flex",flexShrink:0}}><X size={13}/></button>
-            </div>
-          ) : (
-            <div key={i} style={{background:"var(--bg-surface)",border:"1px dashed var(--border)",borderRadius:8,padding:"6px 12px",fontSize:"0.75rem",color:"var(--text-muted)",display:"flex",alignItems:"center",justifyContent:"center",flex:1,minWidth:0}}>
-              + رسانه {i===0?"اول":"دوم"}
-            </div>
-          )
-        )}
+    <div className={styles.bar}>
+      <div className={styles.barTitle}><Scale size={15} /> مقایسه</div>
+      <div className={styles.slots}>
+        {slots.map((b, i) => b ? (
+          <div key={b.id} className={styles.slot}>
+            <TypeIcon type={b.type} size={14} />
+            <span>{b.name}</span>
+            <button type="button" className={styles.close} onClick={() => onRemove(b.id)} aria-label={`حذف ${b.name} از مقایسه`}><X size={13} /></button>
+          </div>
+        ) : (
+          <div key={i} className={`${styles.slot} ${styles.emptySlot}`}>+ رسانهٔ {i === 0 ? "اول" : "دوم"}</div>
+        ))}
       </div>
-
-      <div className="compare-bar-actions" style={{display:"flex",gap:8,flexShrink:0}}>
-        <button onClick={onClear} style={{border:"1px solid var(--border)",background:"none",color:"var(--text-muted)",fontFamily:"inherit",fontSize:"0.78rem",padding:"7px 14px",borderRadius:8,cursor:"pointer"}}>پاک</button>
-        <button onClick={onCompare} disabled={items.length<2} style={{background:items.length<2?"var(--border)":"var(--accent-warm)",border:"none",color:items.length<2?"var(--text-muted)":"#111",fontFamily:"inherit",fontSize:"0.82rem",fontWeight:700,padding:"8px 20px",borderRadius:8,cursor:items.length<2?"not-allowed":"pointer",transition:"all 0.2s",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}>
-          {items.length<2?"۱ رسانه دیگر":<>مقایسه کن <ArrowLeft size={14} /></>}
-        </button>
+      <div className={styles.barActions}>
+        <Button size="sm" intent="quiet" onClick={onClear}>پاک</Button>
+        <Button size="sm" className={styles.go} onClick={onCompare} disabled={items.length < MAX_COMPARE}>
+          {items.length < MAX_COMPARE ? "۱ رسانهٔ دیگر" : <>مقایسه کن <ArrowLeft size={14} /></>}
+        </Button>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import SwipeMarquee from "@/components/SwipeMarquee";
 import LandingSearch from "./_landing/LandingSearch";
 import FeaturedCarousel from "./_landing/FeaturedCarousel";
+import { cssVar } from "@/components/ui/css-var";
 import styles from "./_landing/landing.module.css";
 
 /**
@@ -68,9 +69,6 @@ function HeroArt() {
     </svg>
   );
 }
-
-/** A custom property for a CSS module rule, typed so React accepts it. */
-const cssVar = (name: string, value: string) => ({ [name]: value }) as React.CSSProperties;
 
 export default async function LandingPage() {
   const [stats, featured] = await Promise.all([

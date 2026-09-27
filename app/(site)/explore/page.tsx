@@ -1,27 +1,20 @@
 import Link from "next/link";
 import { SearchX, Map as MapIcon } from "lucide-react";
 import SnakeScroll from "@/components/SnakeScroll";
+import { ButtonLink } from "@/components/ui/Button";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedShowcaseBillboards } from "@/lib/db/cached";
-import { parseExploreParams, toFilterParams, exploreHref, PAGE_SIZE } from "@/lib/explore-query";
+import { parseExploreParams, toFilterParams, exploreHref, PAGE_SIZE, type ExploreFilters } from "@/lib/explore-query";
 import { ExploreControls, SortSelect } from "./ExploreControls";
 import ExploreShowcase from "./ExploreShowcase";
 import ExploreResults from "./ExploreResults";
+import styles from "./explore.module.css";
 
 /**
- * The catalogue — a Server Component since V1.
- *
- * It used to render an empty shell and let the browser fetch /api/billboards on
- * mount, which meant the page a search engine (or anyone reading the HTML) saw
- * was a frame with no media in it: thirty-three kilobytes without a single
- * price. The same Prisma query now runs while the page is being built, so the
- * catalogue is in the document, and the visit costs one request instead of two.
- *
- * The query goes through getCachedFilteredBillboards, so repeat visits to the
- * same filter do not reach the database at all — see lib/db/cached.ts.
- *
- * /api/billboards is untouched and still public: it is the interface for
- * anything that is not this page.
+ * The catalogue — a Server Component. The Prisma query runs while the page is
+ * built, so the catalogue is in the document a search engine reads, and repeat
+ * visits to the same filter are served from the cache (lib/db/cached.ts).
+ * /api/billboards is the same resource for anything that is not this page.
  */
 
 /** Slides in the hero carousel — a dozen photos is a minute of auto-advance. */
@@ -40,131 +33,94 @@ export default async function ExplorePage({
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  // A page number past the end is reachable by hand or by a crawler following a
-  // stale link, and it produces an empty grid for a reason that has nothing to
-  // do with the filters — so it must not be answered with "nothing matched".
+  // A page past the end is reachable by hand or from a stale link, and must
+  // not be answered with "nothing matched".
   const pastEnd = total > 0 && filters.page > totalPages;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg-deep)" }}>
+    <main className={styles.page}>
       <SnakeScroll />
+      <div className={styles.hero}>
+        <ExploreControls filters={filters} total={total} />
+        <ExploreShowcase items={showcase} />
+      </div>
 
-      <main style={{ paddingTop: 62, flex: 1, display: "flex", flexDirection: "column" }}>
-
-        {/* ── Hero: search (right) + showcase (left) ──────────── */}
-        <div className="explore-hero" style={{
-          display: "grid",
-          gridTemplateColumns: "1fr minmax(320px, 360px)",
-          borderBottom: "1px solid var(--border)",
-        }}>
-          <ExploreControls filters={filters} total={total} />
-          <ExploreShowcase items={showcase} />
+      <div className={styles.bar}>
+        <div className={styles.barCount}>
+          <strong>{faNum(total)}</strong> رسانه یافت شد
+          {/* A visitor who arrived from a media page's "nearby" link and is not
+              told the results are cut to a circle reads a short list as an
+              empty catalogue. */}
+          {filters.near && <span className={styles.barNear}> — در شعاع {faNum(filters.near.radiusKm)} کیلومتری</span>}
         </div>
-
-        {/* ── Results header ───────────────────────────────────── */}
-        <div style={{
-          padding: "10px 24px", display: "flex", alignItems: "center",
-          justifyContent: "space-between", borderBottom: "1px solid var(--border)",
-          background: "var(--bg-deep)", position: "sticky", top: 62, zIndex: 10,
-        }}>
-          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            <span style={{ color: "var(--accent)", fontWeight: 700 }}>{faNum(total)}</span> رسانه یافت شد
-            {/* Say why the count is small. Arriving from a media page's "nearby"
-                link, a visitor who is not told the results are cut to a circle
-                reads a short list as an empty catalogue. */}
-            {filters.near && (
-              <span style={{ color: "var(--accent-warm)" }}>
-                {" "}— در شعاع {faNum(filters.near.radiusKm)} کیلومتری
-              </span>
-            )}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* The map carries the filters across, so switching view keeps the
-                search the visitor already built rather than resetting it. */}
-            <Link
-              href={exploreHref(filters, "/explore/map")}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                background: "var(--bg-card)", border: "1px solid var(--border)",
-                color: "var(--text-main)", textDecoration: "none",
-                fontSize: "0.78rem", borderRadius: 8, padding: "7px 12px",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <MapIcon size={14} /> نمای نقشه
-            </Link>
-            <SortSelect filters={filters} />
-          </div>
+        <div className={styles.barActions}>
+          {/* The filters travel to the map, so switching view keeps the search. */}
+          <ButtonLink href={exploreHref(filters, "/explore/map")} size="sm"><MapIcon size={14} /> نمای نقشه</ButtonLink>
+          <SortSelect filters={filters} />
         </div>
+      </div>
 
-        {/* ── Results ──────────────────────────────────────────── */}
-        {items.length === 0 ? (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, color: "var(--text-muted)", padding: 60 }}>
-            <div style={{ display: "flex" }}><SearchX size={44} strokeWidth={1.5} /></div>
-            <div style={{ fontSize: "1rem", fontWeight: 600 }}>
-              {pastEnd
-                ? `این نتایج ${faNum(totalPages)} صفحه دارد — صفحهٔ ${faNum(filters.page)} وجود ندارد`
-                : filters.near
-                  ? `رسانه‌ای در شعاع ${faNum(filters.near.radiusKm)} کیلومتری این نقطه یافت نشد`
-                  : "رسانه‌ای با این فیلترها یافت نشد"}
-            </div>
-            <Link
-              href={pastEnd ? exploreHref({ ...filters, page: 1 }) : "/explore"}
-              style={{ padding: "8px 20px", borderRadius: 8, fontSize: "0.82rem", border: "1px solid var(--border)", color: "var(--accent)", textDecoration: "none" }}
-            >
-              {pastEnd ? "بازگشت به صفحهٔ اول" : "پاک کردن فیلترها"}
-            </Link>
+      {items.length === 0 ? (
+        <div className={styles.empty}>
+          <SearchX size={44} strokeWidth={1.5} />
+          <div className={styles.emptyTitle}>
+            {pastEnd
+              ? `این نتایج ${faNum(totalPages)} صفحه دارد — صفحهٔ ${faNum(filters.page)} وجود ندارد`
+              : filters.near
+                ? `رسانه‌ای در شعاع ${faNum(filters.near.radiusKm)} کیلومتری این نقطه یافت نشد`
+                : "رسانه‌ای با این فیلترها یافت نشد"}
           </div>
-        ) : (
-          <>
-            <ExploreResults items={items} view={filters.view} />
-
-            {totalPages > 1 && (
-              <nav aria-label="صفحه‌بندی" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "20px 20px 32px" }}>
-                <PageLink filters={filters} to={filters.page - 1} disabled={filters.page <= 1}>‹ قبلی</PageLink>
-                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", padding: "0 8px" }}>
-                  صفحه {faNum(filters.page)} از {faNum(totalPages)}
-                </span>
-                <PageLink filters={filters} to={filters.page + 1} disabled={filters.page >= totalPages}>بعدی ›</PageLink>
-              </nav>
-            )}
-          </>
-        )}
-      </main>
-
-    </div>
+          <ButtonLink href={pastEnd ? exploreHref({ ...filters, page: 1 }) : "/explore"} size="sm">
+            {pastEnd ? "بازگشت به صفحهٔ اول" : "پاک کردن فیلترها"}
+          </ButtonLink>
+        </div>
+      ) : (
+        <>
+          <ExploreResults items={items} view={filters.view} />
+          {totalPages > 1 && <Pager filters={filters} totalPages={totalPages} />}
+        </>
+      )}
+    </main>
   );
 }
 
 /**
- * One step of the pager.
- *
- * A real `<a href>` rather than a button, so each page of the catalogue has an
- * address a crawler can follow and a visitor can bookmark. Next still moves
- * between them without reloading the document.
+ * The page numbers to show: the first, the last, and two either side of the
+ * current one, with a gap marker where pages are skipped. With only
+ * "previous / next" the 148 pages of the full catalogue were 147 clicks apart.
  */
-function PageLink({
-  filters, to, disabled, children,
-}: {
-  filters: Parameters<typeof exploreHref>[0];
-  to: number;
-  disabled: boolean;
-  children: React.ReactNode;
-}) {
-  const style: React.CSSProperties = {
-    background: "var(--bg-card)",
-    border: "1px solid var(--border)",
-    color: "var(--text-main)",
-    fontFamily: "inherit",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    padding: "9px 20px",
-    borderRadius: 9,
-    textDecoration: "none",
-  };
+function pageWindow(current: number, last: number): (number | "gap")[] {
+  const pages = new Set([1, last, current - 2, current - 1, current, current + 1, current + 2]);
+  const sorted = [...pages].filter(p => p >= 1 && p <= last).sort((a, b) => a - b);
+  const out: (number | "gap")[] = [];
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push("gap");
+    out.push(p);
+  });
+  return out;
+}
 
-  if (disabled) {
-    return <span aria-disabled="true" style={{ ...style, opacity: 0.4, cursor: "not-allowed" }}>{children}</span>;
-  }
-  return <Link href={exploreHref({ ...filters, page: to })} scroll={false} style={style}>{children}</Link>;
+/**
+ * Real links rather than buttons, so every page of the catalogue has an address
+ * a crawler can follow and a visitor can bookmark.
+ */
+function Pager({ filters, totalPages }: { filters: ExploreFilters; totalPages: number }) {
+  const link = (to: number, label: React.ReactNode, aria: string, disabled = false) =>
+    disabled
+      ? <span className={styles.pageLink} aria-disabled="true">{label}</span>
+      : <Link href={exploreHref({ ...filters, page: to })} scroll={false} className={styles.pageLink} aria-label={aria}>{label}</Link>;
+
+  return (
+    <nav aria-label="صفحه‌بندی" className={styles.pager}>
+      {link(filters.page - 1, "‹ قبلی", "صفحهٔ قبلی", filters.page <= 1)}
+      {pageWindow(filters.page, totalPages).map((p, i) =>
+        p === "gap"
+          ? <span key={`gap-${i}`} className={styles.gap}>…</span>
+          : p === filters.page
+            ? <span key={p} className={styles.pageLink} aria-current="page">{faNum(p)}</span>
+            : <Link key={p} href={exploreHref({ ...filters, page: p })} scroll={false} className={styles.pageLink} aria-label={`صفحهٔ ${faNum(p)}`}>{faNum(p)}</Link>,
+      )}
+      {link(filters.page + 1, "بعدی ›", "صفحهٔ بعدی", filters.page >= totalPages)}
+    </nav>
+  );
 }

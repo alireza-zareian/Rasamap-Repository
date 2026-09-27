@@ -6,6 +6,7 @@ import CompareModal from "@/components/CompareModal";
 import CompareBar from "@/components/CompareBar";
 import Toast from "@/components/Toast";
 import { MAX_COMPARE, useCompareList } from "@/lib/client/use-compare-list";
+import styles from "./explore.module.css";
 
 /**
  * The results grid.
@@ -39,13 +40,7 @@ export default function ExploreResults({ items, view }: { items: CatalogueItem[]
 
   return (
     <>
-      <div style={{
-        padding: "16px 20px",
-        display: view === "grid" ? "grid" : "flex",
-        gridTemplateColumns: view === "grid" ? "repeat(auto-fill, minmax(320px, 1fr))" : undefined,
-        flexDirection: view === "list" ? "column" : undefined,
-        gap: view === "grid" ? 16 : 0,
-      }}>
+      <div className={view === "grid" ? styles.grid : styles.list}>
         {items.map(b => (
           <BillboardCard
             key={b.id}

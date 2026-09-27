@@ -1,0 +1,28 @@
+.main { max-width: 800px; margin: 0 auto; padding: calc(var(--topbar-h) + 26px) 20px 40px; }
+.title { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 800; margin: 0 0 6px; }
+.title svg { color: var(--accent); }
+.lede { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 32px; }
+.notice { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px; }
+
+.empty { text-align: center; padding: 80px 20px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; }
+.emptyIcon { display: flex; justify-content: center; margin-bottom: 16px; opacity: 0.3; }
+.emptyTitle { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+.emptyText { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 24px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.card { position: relative; overflow: hidden; background: var(--bg-surface); border: 1px solid var(--accent); border-radius: 12px; }
+.thumb { position: relative; height: 110px; background: var(--bg-card); }
+.cardBody { padding: 12px 14px 14px; }
+.remove { position: absolute; top: 8px; left: 8px; z-index: 1; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 6px; background: rgba(0, 0, 0, 0.55); color: #fff; cursor: pointer; }
+.cardName { font-size: 0.85rem; font-weight: 700; margin-bottom: 3px; }
+.cardRegion { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 8px; }
+.cardFoot { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); }
+.cardFoot strong { color: var(--accent-warm); }
+.add {
+  min-height: 110px; padding: 16px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  border: 2px dashed var(--border); color: var(--text-muted); text-decoration: none; font-size: 0.8rem;
+}
+.add svg { opacity: 0.4; }
+.tableCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 4px 16px 12px; }
+.more { margin-top: 16px; text-align: center; }

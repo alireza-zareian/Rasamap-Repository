@@ -1,0 +1,13 @@
+.toast {
+  position: fixed; left: 50%; z-index: 500; transform: translateX(-50%);
+  bottom: calc(var(--bottomnav-offset, 0px) + 80px);
+  max-width: min(400px, calc(100vw - 32px));
+  padding: 12px 22px; border-radius: 10px;
+  background: var(--bg-card); border: 1px solid var(--tone);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px color-mix(in srgb, var(--tone) 13%, transparent);
+  font-size: 0.85rem; line-height: 1.5; text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+.success { --tone: var(--green); }
+.error { --tone: var(--red); }
+.info { --tone: var(--accent); }

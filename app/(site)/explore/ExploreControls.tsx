@@ -9,20 +9,19 @@ import {
   type ExploreFilters, type SortKey, ALLOWED_SORT,
   MIN_PRICE, MAX_PRICE, exploreHref, hasActiveFilters,
 } from "@/lib/explore-query";
+import styles from "./explore.module.css";
 
 /**
  * The catalogue's interactive controls.
  *
- * The only client code left on /explore: the results themselves are rendered on
- * the server. Nothing here holds a copy of the filter state — every control
- * reads the `filters` prop and writes a new address, and the server sends back
- * a new page. The one exception is the search box, which needs to echo
- * keystrokes faster than a round-trip and so keeps the text locally until the
- * debounce fires.
+ * The results are rendered on the server. Nothing here holds a copy of the
+ * filter state — every control reads the `filters` prop and writes a new
+ * address, and the server sends back a new page. The exceptions are the search
+ * box and the price slider, which echo the visitor at once and navigate when
+ * the input settles.
  *
  * Navigation goes through a transition, so the current results stay on screen
- * (dimmed) while the next page is being built instead of collapsing into the
- * route's loading screen on every keystroke.
+ * while the next page is built instead of collapsing into the loading screen.
  */
 
 const TYPE_CHIPS: { label: string; value: BillboardType | "all"; Icon?: React.ComponentType<{ size?: number }> }[] = [
@@ -46,41 +45,30 @@ const SORT_LABELS: Record<SortKey, string> = {
 /** How long the search box waits after the last keystroke before navigating. */
 const SEARCH_DEBOUNCE_MS = 350;
 
+const SORTED_PROVINCES = [...provinces].sort((a, b) => a.name.localeCompare(b.name, "fa"));
+
 /**
- * Push a filter change to the URL.
- *
- * Any change except paging returns to page one: staying on page 7 of a result
- * set that just shrank to two pages shows an empty catalogue for no reason.
+ * Push a filter change to the URL. Any change except paging returns to page
+ * one: staying on page 7 of a result set that just shrank to two pages shows
+ * an empty catalogue for no reason.
  */
 function useFilterNavigation(filters: ExploreFilters) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-
   const apply = useCallback((patch: Partial<ExploreFilters>) => {
-    const next = { page: 1, ...patch };
-    startTransition(() => router.push(exploreHref({ ...filters, ...next }), { scroll: false }));
+    startTransition(() => router.push(exploreHref({ ...filters, page: 1, ...patch }), { scroll: false }));
   }, [filters, router]);
-
   return { apply, pending };
 }
 
 export function ExploreControls({ filters, total }: { filters: ExploreFilters; total: number }) {
   const { apply, pending } = useFilterNavigation(filters);
-  const [showFilters, setShowFilters] = useState(false);
-  // On a phone the location/type controls sit between the search box and the
-  // first result; collapsed by default they stop pushing the catalogue off
-  // screen. Desktop ignores this — the media query below keeps the body open.
+  const [showMore, setShowMore] = useState(false);
   const [locOpen, setLocOpen] = useState(false);
-  // Deliberately not `hasActiveFilters`: that answers "is anything filtered at
-  // all" and counts the search box and the price slider, which stay visible.
-  // The badge has to answer a narrower question — how many filters are hidden
-  // behind this toggle right now — so it counts only what the fold covers.
-  const activeCount = [filters.province, filters.city, filters.type !== "all" ? filters.type : "",
-    filters.availability].filter(Boolean).length;
+  // How many filters the phone's fold is hiding right now — not
+  // hasActiveFilters, which also counts the search box and the slider.
+  const folded = [filters.province, filters.city, filters.type !== "all" ? filters.type : "", filters.availability].filter(Boolean).length;
 
-  // The search box and the price slider are continuous inputs: they echo the
-  // user immediately and navigate once the input settles. Everything else is a
-  // discrete choice and navigates on the spot.
   const [text, setText] = useState(filters.search);
   const [price, setPrice] = useState(filters.maxPrice);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,244 +84,126 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => apply(patch), SEARCH_DEBOUNCE_MS);
   }, [apply]);
-
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
   const cities = filters.province ? (getProvince(filters.province)?.cities ?? []) : [];
-  const sortedProvinces = [...provinces].sort((a, b) => a.name.localeCompare(b.name, "fa"));
 
   return (
-    <div style={{
-      background: "linear-gradient(180deg, var(--bg-card) 0%, var(--bg-deep) 100%)",
-      borderLeft: "1px solid var(--border)",
-      padding: "20px 24px 16px",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+    <div className={styles.controls}>
+      <div className={styles.controlsHead}>
         <div>
-          <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-main)" }}>
-            جستجوی رسانه تبلیغاتی
-          </div>
-          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 2 }}>
-            {total > 0 ? `${faNum(total)} رسانه یافت شد` : "جستجو در پایگاه داده رسانه‌های ایران"}
-          </div>
+          <h1 className={styles.title}>جستجوی رسانهٔ تبلیغاتی</h1>
+          <div className={styles.subtitle}>{total > 0 ? `${faNum(total)} رسانه یافت شد` : "جستجو در پایگاه دادهٔ رسانه‌های ایران"}</div>
         </div>
-        <div style={{ display: "flex", gap: 4, background: "var(--bg-surface)", borderRadius: 8, padding: 3 }}>
+        <div className={styles.views}>
           {(["grid", "list"] as const).map(m => (
-            <button
-              key={m}
-              onClick={() => apply({ view: m, page: filters.page })}
-              aria-label={m === "grid" ? "نمایش شبکه‌ای" : "نمایش فهرستی"}
-              style={{
-                width: 30, height: 30, borderRadius: 6, border: "none", cursor: "pointer",
-                background: filters.view === m ? "var(--accent)" : "none",
-                color: filters.view === m ? "#fff" : "var(--text-muted)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.15s",
-              }}
-            >
+            <button key={m} type="button" className={styles.viewButton} aria-pressed={filters.view === m}
+              onClick={() => apply({ view: m, page: filters.page })} aria-label={m === "grid" ? "نمایش شبکه‌ای" : "نمایش فهرستی"}>
               {m === "grid" ? <LayoutGrid size={15} /> : <List size={15} />}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Search input */}
-      <div className="gradient-frame" style={{
-        display: "flex", alignItems: "center", gap: 10,
-        background: "var(--bg-surface)", border: "1px solid var(--border)",
-        borderRadius: 10, padding: "10px 14px", marginBottom: 12,
-      }}>
-        <Search size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+      <div className={`${styles.searchBox} gradient-frame`}>
+        <Search size={16} />
         <input
+          className={styles.searchInput}
           value={text}
           onChange={e => { setText(e.target.value); applyDebounced({ search: e.target.value }); }}
-          placeholder="جستجو — نام، منطقه، خیابان، شهر..."
-          style={{
-            background: "none", border: "none", flex: 1, fontFamily: "inherit",
-            fontSize: "0.9rem", color: "var(--text-main)", outline: "none",
-          }}
+          placeholder="جستجو — نام، منطقه، خیابان، شهر…"
+          aria-label="جستجو"
+          enterKeyHint="search"
         />
         {text && (
-          <button
-            onClick={() => { setText(""); apply({ search: "" }); }}
-            aria-label="پاک کردن جستجو"
-            style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex" }}
-          >
+          <button type="button" className={styles.bare} onClick={() => { setText(""); apply({ search: "" }); }} aria-label="پاک کردن جستجو">
             <X size={15} />
           </button>
         )}
       </div>
 
-      {/* Mobile-only: fold the location/type controls behind one tap so the
-          results start higher up the page. Hidden on desktop by the media query. */}
-      <button
-        className="explore-loc-toggle"
-        onClick={() => setLocOpen(o => !o)}
-        aria-expanded={locOpen}
-        style={{
-          display: "none", width: "100%", alignItems: "center", gap: 8, marginBottom: 12,
-          padding: "10px 14px", borderRadius: 10, fontFamily: "inherit", fontSize: "0.85rem",
-          border: `1px solid ${locOpen || activeCount ? "var(--accent)" : "var(--border)"}`,
-          background: locOpen || activeCount ? "rgba(59,123,245,0.08)" : "var(--bg-surface)",
-          color: locOpen || activeCount ? "var(--accent)" : "var(--text-muted)", cursor: "pointer",
-        }}
-      >
+      <button type="button" className={`${styles.locToggle} ${folded ? styles.locActive : ""}`}
+        onClick={() => setLocOpen(o => !o)} aria-expanded={locOpen}>
         <MapPin size={15} />
-        <span style={{ flex: 1, textAlign: "right" }}>فیلتر مکان و نوع رسانه</span>
-        {activeCount > 0 && (
-          <span style={{ fontSize: "0.72rem", fontWeight: 700, background: "var(--accent)", color: "#fff", borderRadius: 20, padding: "1px 8px" }}>{faNum(activeCount)}</span>
-        )}
-        <ChevronDown size={15} style={{ transform: locOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+        <span>فیلتر مکان و نوع رسانه</span>
+        {folded > 0 && <span className={styles.count}>{faNum(folded)}</span>}
+        <ChevronDown size={15} className={styles.chevron} />
       </button>
 
-      <div className={`explore-secondary${locOpen ? " is-open" : ""}`}>
-        {/* Province + City */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-          <select
-            value={filters.province}
-            onChange={e => apply({ province: e.target.value, city: "" })}
-            aria-label="استان"
-            style={selectStyle}
-          >
+      <div className={locOpen ? styles.secondaryOpen : styles.secondary}>
+        <div className={styles.pair}>
+          <select className={styles.select} value={filters.province} onChange={e => apply({ province: e.target.value, city: "" })} aria-label="استان">
             <option value="">همه استان‌ها</option>
-            {sortedProvinces.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
+            {SORTED_PROVINCES.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
           </select>
-          <select
-            value={filters.city}
-            onChange={e => apply({ city: e.target.value })}
-            disabled={!filters.province}
-            aria-label="شهر"
-            style={{ ...selectStyle, opacity: filters.province ? 1 : 0.5, cursor: filters.province ? "pointer" : "not-allowed" }}
-          >
+          <select className={styles.select} value={filters.city} onChange={e => apply({ city: e.target.value })} disabled={!filters.province} aria-label="شهر">
             <option value="">{filters.province ? "همه شهرها" : "ابتدا استان انتخاب کنید"}</option>
             {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
           </select>
         </div>
 
-        {/* Type chips */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+        <div className={styles.chips}>
           {TYPE_CHIPS.map(c => (
-            <button key={c.value} onClick={() => apply({ type: c.value })} style={{
-              padding: "5px 12px", borderRadius: 20, fontSize: "0.75rem", cursor: "pointer",
-              border: `1px solid ${filters.type === c.value ? "var(--accent)" : "var(--border)"}`,
-              background: filters.type === c.value ? "rgba(59,123,245,0.12)" : "none",
-              color: filters.type === c.value ? "var(--accent)" : "var(--text-muted)",
-              fontFamily: "inherit", transition: "all 0.15s", fontWeight: filters.type === c.value ? 600 : 400,
-              display: "flex", alignItems: "center", gap: 5,
-            }}>
+            <button key={c.value} type="button" className={styles.chip} aria-pressed={filters.type === c.value} onClick={() => apply({ type: c.value })}>
               {c.Icon && <c.Icon size={12} />}
               {c.label}
             </button>
           ))}
 
-          {/* A radial search is the one filter with no control of its own up
-              here: it is started from a media page ("others near this one") or
-              from the browser's own position, so this is where it becomes
-              visible and adjustable once it exists. */}
+          {/* A radial search has no control of its own up here: it is started
+              from a media page ("others near this one"), so this is where it
+              becomes visible and adjustable once it exists. */}
           {filters.near && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "4px 10px", borderRadius: 20,
-              border: "1px solid var(--accent)", background: "rgba(59,123,245,0.10)",
-              fontSize: "0.75rem", color: "var(--accent)", fontWeight: 600,
-            }}>
+            <div className={styles.near}>
               <Crosshair size={13} />
               <span>تا {faNum(filters.near.radiusKm)} کیلومتر از این نقطه</span>
-              <label htmlFor="explore-radius" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
-                شعاع جست‌وجو به کیلومتر
-              </label>
-              <select
-                id="explore-radius"
-                value={filters.near.radiusKm}
-                onChange={e => apply({
-                  near: { ...filters.near!, radiusKm: Number(e.target.value) },
-                  page: 1,
-                })}
-                style={{
-                  background: "var(--bg-surface)", border: "1px solid var(--border)",
-                  color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.72rem",
-                  borderRadius: 6, padding: "2px 4px", cursor: "pointer",
-                }}
-              >
-                {RADIUS_CHOICES.map(km => (
-                  <option key={km} value={km}>{faNum(km)} کیلومتر</option>
-                ))}
+              <select value={filters.near.radiusKm} aria-label="شعاع جست‌وجو به کیلومتر"
+                onChange={e => apply({ near: { ...filters.near!, radiusKm: Number(e.target.value) } })}>
+                {RADIUS_CHOICES.map(km => <option key={km} value={km}>{faNum(km)} کیلومتر</option>)}
               </select>
-              <button
-                type="button"
-                onClick={() => apply({ near: null, page: 1 })}
-                aria-label="برداشتن محدودهٔ مکانی"
-                style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", padding: 0, display: "flex" }}
-              >
+              <button type="button" className={styles.bare} onClick={() => apply({ near: null })} aria-label="برداشتن محدودهٔ مکانی">
                 <X size={13} />
               </button>
             </div>
           )}
 
-          <button onClick={() => setShowFilters(p => !p)} style={{
-            marginRight: "auto", padding: "5px 12px", borderRadius: 20, fontSize: "0.75rem", cursor: "pointer",
-            border: `1px solid ${showFilters ? "var(--accent)" : "var(--border)"}`,
-            background: showFilters ? "rgba(59,123,245,0.08)" : "none",
-            color: showFilters ? "var(--accent)" : "var(--text-muted)",
-            fontFamily: "inherit", transition: "all 0.15s",
-            display: "flex", alignItems: "center", gap: 5,
-          }}>
-            <SlidersHorizontal size={13} />
-            فیلترهای بیشتر
-            {hasActiveFilters(filters) && (
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
-            )}
+          <button type="button" className={`${styles.chip} ${styles.more}`} aria-pressed={showMore} aria-expanded={showMore} onClick={() => setShowMore(p => !p)}>
+            <SlidersHorizontal size={13} /> فیلترهای بیشتر
+            {hasActiveFilters(filters) && <span className={styles.dot} />}
           </button>
         </div>
 
-        {/* Expanded filters */}
-        {showFilters && (
-          <div style={{
-            background: "var(--bg-surface)", border: "1px solid var(--border)",
-            borderRadius: 10, padding: "14px", marginBottom: 4,
-            animation: "fadeIn 0.2s ease",
-          }}>
-            <div style={{ marginBottom: 12 }}>
-              <label htmlFor="explore-availability" style={labelStyle}>وضعیت</label>
-              <select
-                id="explore-availability"
-                value={filters.availability}
-                onChange={e => apply({ availability: e.target.value as ExploreFilters["availability"] })}
-                style={selectStyle}
-              >
+        {showMore && (
+          <div className={styles.extra}>
+            <div>
+              <label htmlFor="explore-availability" className={styles.label}>وضعیت</label>
+              <select id="explore-availability" className={styles.select} value={filters.availability}
+                onChange={e => apply({ availability: e.target.value as ExploreFilters["availability"] })}>
                 <option value="">همه وضعیت‌ها</option>
                 {AVAILABILITIES.map(a => <option key={a} value={a}>{availabilityLabels[a]}</option>)}
               </select>
             </div>
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <label htmlFor="explore-price" style={labelStyle}>حداکثر قیمت</label>
-                <span style={{ fontSize: "0.75rem", color: "var(--accent-warm)", fontWeight: 600 }}>{faNum(price)}M تومان/ماه</span>
+              <div className={styles.priceRow}>
+                <label htmlFor="explore-price" className={styles.label}>حداکثر قیمت</label>
+                <span className={styles.priceValue}>{faNum(price)}M تومان/ماه</span>
               </div>
-              <input
-                id="explore-price"
-                type="range" min={MIN_PRICE} max={MAX_PRICE} step={10} value={price}
-                onChange={e => { setPrice(+e.target.value); applyDebounced({ maxPrice: +e.target.value }); }}
-                style={{ width: "100%" }}
-              />
+              <input id="explore-price" className={styles.range} type="range" min={MIN_PRICE} max={MAX_PRICE} step={10} value={price}
+                onChange={e => { setPrice(+e.target.value); applyDebounced({ maxPrice: +e.target.value }); }} />
             </div>
             {hasActiveFilters(filters) && (
-              <button onClick={() => apply({ search: "", type: "all", availability: "", province: "", city: "", maxPrice: MAX_PRICE })} style={{
-                marginTop: 10, padding: "6px 14px", borderRadius: 7, fontSize: "0.75rem",
-                border: "1px solid var(--border)", background: "none", color: "var(--text-muted)",
-                fontFamily: "inherit", cursor: "pointer",
-              }}>
-                <RotateCcw size={13} style={{ display: "inline", marginLeft: 4, verticalAlign: "middle" }} />
-                پاک کردن همه فیلترها
-              </button>
+              <div>
+                <button type="button" className={styles.chip}
+                  onClick={() => apply({ search: "", type: "all", availability: "", province: "", city: "", maxPrice: MAX_PRICE, near: null })}>
+                  <RotateCcw size={13} /> پاک کردن همهٔ فیلترها
+                </button>
+              </div>
             )}
           </div>
         )}
       </div>
 
-      {pending && (
-        <div style={{ fontSize: "0.72rem", color: "var(--accent)", marginTop: 8 }}>در حال جستجو...</div>
-      )}
+      {pending && <div className={styles.pending} role="status">در حال جستجو…</div>}
     </div>
   );
 }
@@ -342,38 +212,9 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
 export function SortSelect({ filters }: { filters: ExploreFilters }) {
   const { apply, pending } = useFilterNavigation(filters);
   return (
-    <select
-      value={filters.sortBy}
-      disabled={pending}
-      onChange={e => apply({ sortBy: e.target.value as SortKey })}
-      aria-label="ترتیب نمایش"
-      style={{
-        background: "none", border: "none", color: "var(--text-muted)", fontFamily: "inherit",
-        fontSize: "0.78rem", cursor: pending ? "wait" : "pointer", outline: "none",
-      }}
-    >
+    <select className={styles.sort} value={filters.sortBy} disabled={pending} aria-label="ترتیب نمایش"
+      onChange={e => apply({ sortBy: e.target.value as SortKey })}>
       {ALLOWED_SORT.map(k => <option key={k} value={k}>{SORT_LABELS[k]}</option>)}
     </select>
   );
 }
-
-// ── Shared micro-styles ──────────────────────────────────────────
-const selectStyle: React.CSSProperties = {
-  width: "100%",
-  background: "var(--bg-card)",
-  border: "1px solid var(--border)",
-  color: "var(--text-main)",
-  fontFamily: "inherit",
-  fontSize: "0.82rem",
-  padding: "8px 12px",
-  borderRadius: 8,
-  outline: "none",
-  cursor: "pointer",
-};
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "0.72rem",
-  color: "var(--text-muted)",
-  marginBottom: 5,
-  fontWeight: 600,
-};

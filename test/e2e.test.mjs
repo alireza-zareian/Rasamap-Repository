@@ -320,16 +320,17 @@ test("a compare selection survives a reload and reaches /compare", async () => {
     await b.waitForSelector("button[aria-label='افزودن به مقایسه']");
     // Two different cards: after the first click that card's button is renamed.
     await b.click("button[aria-label='افزودن به مقایسه']");
-    await b.waitForSelector("button[aria-pressed='true']");
+    await b.waitForSelector("[data-testid='billboard-card'] button[aria-pressed='true']");
     await b.click("button[aria-label='افزودن به مقایسه']");
-    await b.waitFor("document.querySelectorAll(\"button[aria-pressed='true']\").length === 2", { label: "two cards ticked" });
+    await b.waitFor("document.querySelectorAll(\"[data-testid='billboard-card'] button[aria-pressed='true']\").length === 2", { label: "two cards ticked" });
 
     // /explore used to start from an empty list and save it on mount, so a
     // reload wiped the selection before anyone could compare it.
     await b.goto(`${BASE}/explore`);
-    await b.waitFor("document.querySelectorAll(\"button[aria-pressed='true']\").length === 2", { label: "the selection after a reload" });
+    await b.waitFor("document.querySelectorAll(\"[data-testid='billboard-card'] button[aria-pressed='true']\").length === 2", { label: "the selection after a reload" });
 
+    // With two chosen, /compare shows the table itself.
     await b.goto(`${BASE}/compare`);
-    await b.waitForText("مقایسه رسانه‌های انتخابی");
+    await b.waitForText("بهتر در این معیار", { label: "the comparison table" });
   });
 });
