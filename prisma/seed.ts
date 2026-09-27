@@ -17,6 +17,7 @@ import "./load-env";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { everyBillboard } from "../lib/data";
+import { canonicalCity } from "../lib/geo/iran-cities";
 
 type StaticBillboard = (typeof everyBillboard)[number];
 
@@ -38,7 +39,7 @@ function toRow(b: StaticBillboard) {
     slug: b.slug,
     location: b.location,
     region: b.region,
-    city: b.city,
+    city: canonicalCity(b.city),
     type: b.type,
     availability: b.status,
     width: b.width,

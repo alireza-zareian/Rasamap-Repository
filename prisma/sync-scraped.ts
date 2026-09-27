@@ -58,6 +58,7 @@ import {
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { z } from "zod";
 import { StringListSchema, TrafficSchema } from "../lib/domain/billboard";
+import { canonicalCity } from "../lib/geo/iran-cities";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -139,7 +140,7 @@ const FeedRowSchema = z.object({
   name:           z.string().min(1).max(200),
   location:       Text(500),
   region:         Text(300),
-  city:           z.string().min(1).max(100),
+  city:           z.string().min(1).max(100).transform(canonicalCity),
   type:           z.string(),
   width:          Size,
   height:         Size,
