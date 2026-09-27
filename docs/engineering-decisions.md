@@ -2176,6 +2176,47 @@ was screenshotted on a phone and a desktop in both themes before and after,
 and each difference was looked at; the animations were checked in a real
 browser with `document.getAnimations()`.
 
+## 37. Visual effects the browser draws itself
+
+**Context.** Asked for "the best current visual effects". The libraries that
+showcase them in 2026 — Aceternity UI, Magic UI — are built on Tailwind and
+Framer Motion, and this project allows neither in JSX (rule 5) and is demoed on
+a fanless laptop (§22). Their ideas are not their code: the three that carry the
+most are now things the browser does natively.
+
+**Decision.**
+
+| Effect | How | Main-thread cost |
+|--------|-----|------------------|
+| A card's photo morphs into the media page's gallery | React `<ViewTransition>` + `experimental.viewTransition`; names from `components/ui/transitions.ts` | none per frame — two snapshots animated by the compositor |
+| Sections ease in as they scroll into view | `animation-timeline: view()` in `components/ui/reveal.module.css` | none — opacity and transform on the compositor |
+| A light follows the mouse over a catalogue card | two custom properties written on `pointermove` | one card repaint; nothing on touch |
+
+Measured with Chrome's own counters (main-thread task time, median of three):
+landing load 651 → 690–716 ms, landing scroll 274 → 230–233 ms, catalogue load
+591 → 560–663 ms, catalogue scroll 371 → 347–356 ms — inside the spread between
+runs. A browser without either API navigates and scrolls exactly as before;
+`prefers-reduced-motion` turns all three off.
+
+**Not taken.** A number ticker (a counted-up figure is in CSS `content`, which
+a crawler and a screen reader do not read as the number), particle or WebGL
+backgrounds (a GPU cost on the demo laptop for nothing a visitor needs), and
+parallax (§22 removed the last one).
+
+**Found on the way.** A flaky browser test turned out to be three real faults
+in the compare selection, none caused by the effects — measured, not assumed:
+the first click that works lands at a median 444–489 ms with transitions and
+417–524 ms without. The stored selection overwrote a card ticked a moment after
+load; a state updater called `setToast`; and the test clicked before the
+catalogue's own Suspense pass had committed, when React drops a click without
+calling its handler. The results now carry `aria-busy` until they are listening.
+
+**Adding the next one.** Compositor properties only (`transform`, `opacity`,
+`filter` on a snapshot); visible without the feature; off under reduced motion;
+an infinite animation joins the `html.page-hidden` pause list; its keyframes
+live in its own module (the guard test enforces that); and a before/after
+measurement like the one above goes in the commit.
+
 ---
 
 ## Milestone log (outputs, not diffs)
@@ -2228,3 +2269,4 @@ browser with `document.getAnimations()`.
 | 2026-09-25 | **Adversarial architecture review** | §35 — one route pipeline (`defineRoute`) for all 35 routes; `lib/db/` as the only door to the database (lint-enforced; 30 → 13 importers of the client); typed customer/staff sessions and real foreign keys; `status` split into `availability` + `moderation` with enums; crawler state moved to `billboard_sources`; JSON columns read through Zod; admin panel as server-checked nested routes; rate limits follow `REDIS_URL` with a memory fallback. Migration proved on a copy of the real DB first. 9 unit + 142 API + 6 importer tests, 10 browser flows. |
 | 2026-09-26 | **Second adversarial review, and a deep pass over the unreviewed parts** | Sessions made revocable (sessionVersion, revoked token ids, seven-day ceiling), device cookies against lockout abuse, bounded bodies, open redirect closed, per-account limits on phone reveals and writes, version-bound listing decisions, atomic idempotency, uploads served after boot and cleaned when orphaned, `server.mjs` for an unforgeable client address, Persian search folding (trigger-kept `searchText`), a validated nightly import that never overwrites a concurrent edit, paged admin lists, a compare selection that survives a reload, integer-only admin sizes. Two regressions of this work found and fixed by recounting: import cycles (now a guard test) and stale thesis numbers. 12 unit + 162 API + 7 importer tests, 11 browser flows. |
 | 2026-09-27 | **Third review — sessions, uploads, styles** | §36 — database sessions instead of a JWT; multipart uploads stored outside `public/`; `TRUSTED_PROXY_COUNT` defaults to 0; bounded page cache; take-down and review moderation; `unknown` availability for crawled rows, linked sources, Iranian map links; every dataset city known; readable slugs; one password rule and Persian digits read as Latin; CSS modules across the site with shared `Button`/`Dialog`/`StatusScreen`, and a test that an animation named in a module is defined there. 18 unit + 181 API + 8 importer + 11 browser tests; a stranger learns nothing of the internals (no framework banner, `/api-docs` staff-only) and the JSON catalogue has its own budget (§20b). |
+| 2026-09-27 | **Native visual effects** | §37 — card-to-gallery morph (View Transitions), scroll reveals (view timelines), card spotlight; main-thread time unchanged within noise; three compare-selection faults behind a flaky test fixed. |

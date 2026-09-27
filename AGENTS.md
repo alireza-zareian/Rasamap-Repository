@@ -125,7 +125,10 @@ A colour that varies per row arrives as one custom property through `cssVar()`
 `color-mix()` — never `` `${color}18` ``, which is not a colour when the colour is
 a variable. Reach for the shared pieces before writing a class: `Button`/`ButtonLink`,
 `form.module.css` (`field`, `label`, `input`, `error`, `stack`, `row`), `Dialog`
-for every modal, `StatusScreen` for a status page, `admin.module.css` in the panel.
+for every modal, `StatusScreen` for a status page, `admin.module.css` in the panel,
+`reveal.module.css` for a section that eases in on scroll, and `transitions.ts` for a
+view-transition name that spans two pages. A new effect follows the checklist at the end
+of §37: compositor properties only, visible without the feature, off under reduced motion.
 `globals.css` holds tokens, resets and the few things that are truly global
 (the marquee window, `.skeleton`, the hidden-tab pause list) — no page overrides.
 
