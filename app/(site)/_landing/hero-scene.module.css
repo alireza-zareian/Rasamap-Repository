@@ -1,0 +1,89 @@
+/* The hero's 3D backdrop (HeroScene.tsx). Everything that moves here is a
+   transform or an opacity, so the compositor draws each frame and the main
+   thread does nothing (§37). Both motions are one-shot or tied to scrolling:
+   nothing loops, so nothing runs while the visitor is only reading. */
+
+/* `overflow: clip`, not `hidden`: a hidden box is a scroll container, and the
+   view timeline below would then measure against it instead of the page.
+
+   The eye sits at the horizon, 72% of the way down: below the search box, so
+   the street's vanishing point is never behind the text. */
+.scene {
+  position: absolute; inset: 0; overflow: clip; pointer-events: none;
+  perspective: 900px; perspective-origin: 50% 72%;
+}
+.world { position: absolute; inset: 0; transform-style: preserve-3d; }
+
+/* The street grid (StreetGrid in HeroScene.tsx): from the horizon down. */
+.floor {
+  position: absolute; left: 0; top: 72%; width: 100%; height: 28%;
+  stroke: color-mix(in srgb, var(--accent) 45%, transparent); stroke-width: 1;
+  mask-image: linear-gradient(to bottom, transparent, #000 70%);
+}
+.floor line { vector-effect: non-scaling-stroke; }
+
+/* Boards stand on the floor along both sides of the street. The side offset
+   is in viewport widths, so a phone keeps the same street, only narrower;
+   depth alone draws the far ones in towards the vanishing point. */
+.board {
+  --x: 0vw; --z: 0px; --ry: 0deg; --delay: 0s;
+  position: absolute; left: 50%; bottom: var(--pole);
+  --pole: 110px;
+  width: 220px; aspect-ratio: 16 / 9; margin-left: -110px;
+  transform: translate3d(var(--x), 0, var(--z)) rotateY(var(--ry));
+}
+.board:nth-child(2) { --x: -44vw; --z: -100px;  --ry: 30deg;  --delay: 0.05s; }
+.board:nth-child(3) { --x: 44vw;  --z: -100px;  --ry: -30deg; --delay: 0.15s; }
+.board:nth-child(4) { --x: -44vw; --z: -1000px; --ry: 30deg;  --delay: 0.3s; }
+.board:nth-child(5) { --x: 44vw;  --z: -1000px; --ry: -30deg; --delay: 0.4s; }
+.board:nth-child(6) { --x: -44vw; --z: -2100px; --ry: 30deg;  --delay: 0.55s; }
+.board:nth-child(7) { --x: 44vw;  --z: -2100px; --ry: -30deg; --delay: 0.65s; }
+
+.face {
+  position: absolute; inset: 0; overflow: hidden; border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+}
+/* The pole the board stands on, down to the floor. */
+.board::after {
+  content: ""; position: absolute; top: 100%; left: 50%; width: 5px; height: var(--pole); margin-left: -2.5px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--accent) 60%, transparent), color-mix(in srgb, var(--accent) 15%, transparent));
+}
+
+/* A phone has no margin beside the text, so the boards shrink with it. */
+@media (max-width: 640px) {
+  .board { width: 150px; margin-left: -75px; --pole: 80px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Once, on load: each board arrives from far down the street. `backwards`
+     holds it at the start through its delay, so none pops in early. */
+  .board { animation: arrive 1.6s cubic-bezier(0.16, 1, 0.3, 1) var(--delay) backwards; }
+
+  /* As the hero scrolls away, the street comes towards the visitor. Only where
+     view timelines exist; elsewhere the scene simply scrolls with the page.
+     The fade is on .scene and the movement on .world, never both on one box:
+     opacity below 1 is a grouping property, and on .world it flattened every
+     board onto one plane — measured, all six at the same spot. */
+  @supports (animation-timeline: view()) {
+    .scene, .world {
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+    }
+    .scene { animation-name: fade; }
+    .world { animation-name: approach; }
+  }
+}
+
+@keyframes arrive {
+  from { transform: translate3d(var(--x), 0, calc(var(--z) - 2600px)) rotateY(var(--ry)); opacity: 0; }
+}
+@keyframes approach {
+  to { transform: translateZ(520px); }
+}
+@keyframes fade {
+  to { opacity: 0; }
+}

@@ -1,10 +1,12 @@
 .page { color: var(--text-main); }
 
 /* ── Hero ── */
-.hero { position: relative; overflow: hidden; padding-top: var(--topbar-h); }
+/* clip, not hidden: see hero-scene.module.css for why a scroll container here
+   would break the scene. The min-height leaves room below the search box for
+   the street the scene draws. */
+.hero { position: relative; overflow: clip; padding-top: var(--topbar-h); min-height: calc(var(--topbar-h) + 470px); }
 .heroBg { position: absolute; inset: 0; background: linear-gradient(135deg, #0A0E1A 0%, #0f1829 50%, #0A0E1A 100%); }
 :global([data-theme="light"]) .heroBg { background: linear-gradient(135deg, #E8EBF4 0%, #F0F2F8 50%, #E8EBF4 100%); }
-.heroGrid { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.18; }
 .heroGlow {
   position: absolute; inset: 0;
   background:
@@ -138,6 +140,8 @@
 .ctaButtons .ctaButton { padding: 14px 36px; font-size: 1rem; border-radius: 10px; }
 
 @media (max-width: 640px) {
+  /* The headline wraps to three lines here, which eats the street's room. */
+  .hero { min-height: calc(var(--topbar-h) + 510px); }
   .section { padding: 56px 18px; }
   .sectionTitle { font-size: 1.6rem; }
   .statsGrid { grid-template-columns: repeat(2, 1fr); gap: 16px; }

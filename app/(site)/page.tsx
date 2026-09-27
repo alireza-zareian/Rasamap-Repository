@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import SwipeMarquee from "@/components/SwipeMarquee";
 import LandingSearch from "./_landing/LandingSearch";
 import FeaturedCarousel from "./_landing/FeaturedCarousel";
+import HeroScene from "./_landing/HeroScene";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "./_landing/landing.module.css";
 import reveal from "@/components/ui/reveal.module.css";
@@ -53,24 +54,6 @@ const TESTIMONIALS = [
 
 const BRANDS = ["دیجی‌کالا", "اسنپ‌فود", "آپارات", "همراه اول", "ایرانسل"];
 
-/** A billboard skyline drawn behind the hero: a grid and a few boards on poles. */
-function HeroArt() {
-  const boards = [[120, 200], [400, 100], [700, 250], [950, 150], [1200, 200], [250, 500], [600, 480], [850, 520], [1100, 460]];
-  return (
-    <svg className={styles.heroGrid} viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      {Array.from({ length: 12 }, (_, i) => <line key={`h${i}`} x1="0" y1={i * 80} x2="1400" y2={i * 80} stroke="#3B7BF5" strokeWidth="0.5" />)}
-      {Array.from({ length: 18 }, (_, i) => <line key={`v${i}`} x1={i * 80} y1="0" x2={i * 80} y2="900" stroke="#3B7BF5" strokeWidth="0.5" />)}
-      {boards.map(([x, y], i) => (
-        <g key={i}>
-          <rect x={x} y={y} width="80" height="50" rx="4" fill="none" stroke="#3B7BF5" strokeWidth="1" opacity="0.6" />
-          <rect x={x + 5} y={y + 5} width="70" height="40" rx="2" fill="#3B7BF5" opacity="0.08" />
-          <line x1={x + 40} y1={y + 50} x2={x + 40} y2={y + 90} stroke="#3B7BF5" strokeWidth="2" opacity="0.4" />
-        </g>
-      ))}
-    </svg>
-  );
-}
-
 export default async function LandingPage() {
   const [stats, featured] = await Promise.all([
     getCachedSiteStats(),
@@ -88,7 +71,7 @@ export default async function LandingPage() {
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
-        <div className={styles.heroBg}><HeroArt /></div>
+        <div className={styles.heroBg}><HeroScene items={featured} /></div>
         <div className={styles.heroGlow} />
         <div className={styles.heroInner}>
           <h1 className={styles.headline}>
