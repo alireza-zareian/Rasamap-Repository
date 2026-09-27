@@ -33,8 +33,8 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               سایت در بارگذاری این صفحه به مشکل خورد. لطفاً دوباره تلاش کنید؛ اگر باز هم تکرار شد، کد زیر را به پشتیبانی بدهید.
             </p>
             {error.digest && (
-              <p style={{ fontSize: "0.72rem", color: "#94A3B8", marginBottom: 28, fontFamily: "monospace", direction: "ltr" }}>
-                کد خطا: {error.digest}
+              <p style={{ fontSize: "0.72rem", color: "#94A3B8", marginBottom: 28 }}>
+                کد پیگیری: <code style={{ direction: "ltr", unicodeBidi: "isolate", fontFamily: "monospace" }}>{error.digest}</code>
               </p>
             )}
             <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
