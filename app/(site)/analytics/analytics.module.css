@@ -1,0 +1,4 @@
+.page { max-width: 860px; margin: 0 auto; padding: calc(var(--topbar-h) + 24px) 20px 40px; }
+.title { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 1.5rem; font-weight: 800; }
+.title svg { color: var(--accent); }
+.lede { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 28px; }

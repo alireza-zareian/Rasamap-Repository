@@ -2,7 +2,10 @@
    --bottomnav-offset is read by the staff bar so it sits above the tab bar
    rather than under it. */
 .site { min-height: 100vh; display: flex; flex-direction: column; }
-.site > :global(main) { flex: 1; }
+/* The width: a flex item with auto side margins shrinks to its content instead
+   of stretching, so a page that centres its <main> with a max-width would
+   collapse to the width of whatever is inside it. */
+.site > :global(main) { flex: 1; width: 100%; }
 
 @media (max-width: 768px) {
   .site {

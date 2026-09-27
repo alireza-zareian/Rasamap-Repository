@@ -1,24 +1,15 @@
 import AnalyticsTab from "@/components/AnalyticsTab";
 import { BarChart2 } from "lucide-react";
 import { getCachedCatalogueAnalytics } from "@/lib/db/cached";
+import styles from "./analytics.module.css";
 
 export default async function AnalyticsPage() {
   const initial = await getCachedCatalogueAnalytics();
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-
-      <main style={{ maxWidth: 860, margin: "0 auto", padding: "88px 20px 40px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <BarChart2 size={22} color="var(--accent)" />
-          <div style={{ fontSize: "1.5rem", fontWeight: 800 }}>تحلیل بازار</div>
-        </div>
-        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: 28 }}>
-          نمای کلی از وضعیت رسانه‌های تبلیغاتی فضای باز در ایران
-        </div>
-
-        <AnalyticsTab initial={initial} />
-      </main>
-
-    </div>
+    <main className={styles.page}>
+      <h1 className={styles.title}><BarChart2 size={22} /> تحلیل بازار</h1>
+      <p className={styles.lede}>نمای کلی از وضعیت رسانه‌های تبلیغاتی فضای باز در ایران</p>
+      <AnalyticsTab initial={initial} />
+    </main>
   );
 }

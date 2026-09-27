@@ -7,6 +7,8 @@ import { project, type Bounds } from "@/lib/geo/distance";
 import type { MapPin } from "@/lib/db/billboards";
 import { exploreHref, type ExploreFilters } from "@/lib/explore-query";
 import { faNum } from "@/lib/format";
+import { Button } from "@/components/ui/Button";
+import styles from "./IranMap.module.css";
 
 /**
  * The catalogue as a map, drawn from coordinates rather than embedded.
@@ -176,10 +178,10 @@ export default function IranMap({
   const hoveredCount = hoverProvince ? provinceCounts[hoverProvince] ?? 0 : 0;
 
   return (
-    <div style={{ position: "relative" }}>
+    <div className={styles.map}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        style={{ width: "100%", height: "auto", display: "block", touchAction: "manipulation" }}
+        className={styles.svg}
         role="img"
         aria-label={zoomed ? `نقشهٔ استان ${province}` : "نقشهٔ پراکندگی رسانه‌ها در ایران"}
       >
@@ -194,7 +196,7 @@ export default function IranMap({
               onMouseEnter={() => setHoverProvince(name)}
               onMouseLeave={() => setHoverProvince((p) => (p === name ? null : p))}
               onClick={() => router.push(hrefFor(isSelf ? "" : name))}
-              style={{ cursor: n || isSelf ? "pointer" : "default" }}
+              className={n || isSelf ? styles.clickable : undefined}
               fill="var(--accent)"
               fillOpacity={
                 zoomed
@@ -218,8 +220,7 @@ export default function IranMap({
             y={l.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            pointerEvents="none"
-            style={{ fontSize: 15, fontWeight: 700, fill: "var(--text-main)" }}
+            className={styles.label}
             // A halo, so a name stays readable over both the palest province
             // and the darkest one without needing two colours.
             stroke="var(--bg-card)"
@@ -239,7 +240,7 @@ export default function IranMap({
             fill="var(--accent-warm)"
             stroke="#fff"
             strokeWidth={1.4}
-            style={{ cursor: "pointer" }}
+            className={styles.clickable}
             onMouseEnter={() => setHoverPin(pin)}
             onMouseLeave={() => setHoverPin((p) => (p?.slug === pin.slug ? null : p))}
             onClick={() => router.push(`/billboard/${pin.slug}`)}
@@ -253,59 +254,35 @@ export default function IranMap({
           convenience on top of the <title> elements above, which are what a
           screen reader and a touch device actually get. */}
       {(hoverPin || hoverProvince) && (
-        <div style={{
-          position: "absolute", top: 10, insetInlineStart: 10, pointerEvents: "none",
-          background: "var(--bg-card)", border: "1px solid var(--border)",
-          borderRadius: 9, padding: "7px 12px", fontSize: "0.78rem",
-          boxShadow: "0 6px 20px rgba(0,0,0,0.28)", maxWidth: "60%",
-        }}>
+        <div className={styles.tip}>
           {hoverPin ? (
             <>
-              <div style={{ fontWeight: 700, marginBottom: 2 }}>{hoverPin.name}</div>
-              <div style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>
-                {hoverPin.city} · <span style={{ color: "var(--accent-warm)", fontWeight: 700 }}>
-                  {faNum(hoverPin.price)}M تومان/ماه
-                </span>
-              </div>
+              <strong>{hoverPin.name}</strong>
+              <div className={styles.tipMeta}>{hoverPin.city} · <b>{faNum(hoverPin.price)}M تومان/ماه</b></div>
             </>
           ) : (
-            <>
-              <span style={{ fontWeight: 700 }}>{hoverProvince}</span>
-              <span style={{ color: "var(--text-muted)" }}> — {faNum(hoveredCount)} رسانه</span>
-            </>
+            <><strong>{hoverProvince}</strong><span className={styles.tipMeta}> — {faNum(hoveredCount)} رسانه</span></>
           )}
         </div>
       )}
 
       {zoomed && (
-        <button
-          onClick={() => router.push(hrefFor(""))}
-          style={{
-            position: "absolute", top: 10, insetInlineEnd: 10,
-            display: "inline-flex", alignItems: "center", gap: 6,
-            background: "var(--bg-card)", border: "1px solid var(--border)",
-            color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.78rem",
-            borderRadius: 9, padding: "7px 12px", cursor: "pointer",
-          }}
-        >
+        <Button size="sm" className={styles.back} onClick={() => router.push(hrefFor(""))}>
           <ArrowRight size={13} /> کل کشور
-        </button>
+        </Button>
       )}
 
       {/* Saying the number out loud is the point. A map that quietly drops one
           row in six is a map that lies; one that says so is a map with a known
           edge (§5). */}
       {zoomed && unplottable > 0 && (
-        <div style={{
-          marginTop: 10, fontSize: "0.72rem", color: "var(--text-muted)",
-          display: "flex", alignItems: "flex-start", gap: 6, lineHeight: 1.8,
-        }}>
-          <PinIcon size={13} style={{ flexShrink: 0, marginTop: 3 }} />
+        <p className={styles.note}>
+          <PinIcon size={13} />
           <span>
             {faNum(unplottable)} رسانه در این محدوده مختصاتِ قابل‌اتکا ندارد و روی نقشه
             نیامده است؛ در فهرست هست و نشانیِ متنی‌اش درست است.
           </span>
-        </div>
+        </p>
       )}
     </div>
   );

@@ -1,0 +1,21 @@
+.tab { display: flex; flex-direction: column; gap: 14px; }
+
+.filter { display: flex; align-items: center; gap: 10px; }
+.filter label { font-size: 0.78rem; color: var(--text-muted); flex-shrink: 0; }
+.filter select { flex: 1; padding: 7px 10px; font-size: 0.82rem; }
+.pending { font-size: 0.72rem; color: var(--text-muted); }
+
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kpi { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+.kpi strong { display: block; font-size: 1.35rem; font-weight: 800; color: var(--tone); }
+.kpi span { display: block; font-size: 0.67rem; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
+
+.panel { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.panelTitle { display: flex; align-items: center; gap: 7px; margin: 0 0 12px; font-size: 0.82rem; font-weight: 600; }
+.panelNote { font-size: 0.68rem; color: var(--text-muted); margin: -8px 0 12px; }
+
+.bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.barLabel { width: 100px; flex-shrink: 0; font-size: 0.73rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.track { flex: 1; height: 8px; background: var(--bg-card); border-radius: 4px; overflow: hidden; }
+.fill { height: 100%; border-radius: 4px; background: var(--tone); transition: width 0.6s ease; }
+.barValue { width: 44px; font-size: 0.73rem; font-weight: 700; text-align: left; }

@@ -1,0 +1,20 @@
+.map { position: relative; }
+.svg { width: 100%; height: auto; display: block; touch-action: manipulation; }
+.clickable { cursor: pointer; }
+.label { font-size: 15px; font-weight: 700; fill: var(--text-main); pointer-events: none; }
+
+/* One floating label for whatever the pointer is on — a convenience over the
+   <title> elements, which are what a screen reader and a touch device get. */
+.tip {
+  position: absolute; top: 10px; inset-inline-start: 10px; pointer-events: none; max-width: 60%;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 9px;
+  padding: 7px 12px; font-size: 0.78rem; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+}
+.tip strong { font-weight: 700; }
+.tipMeta { color: var(--text-muted); font-size: 0.72rem; }
+.tipMeta b { color: var(--accent-warm); }
+/* Nested so it outranks the button module, whatever order the sheets load in. */
+.map .back { position: absolute; top: 10px; inset-inline-end: 10px; background: var(--bg-card); }
+
+.note { margin: 10px 0 0; font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: flex-start; gap: 6px; line-height: 1.8; }
+.note svg { flex-shrink: 0; margin-top: 3px; }

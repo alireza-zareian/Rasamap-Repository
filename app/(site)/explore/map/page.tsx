@@ -1,10 +1,11 @@
-import Link from "next/link";
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
 import IranMap from "@/components/IranMap";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedMapPins, getCachedSiteStats } from "@/lib/db/cached";
 import { parseExploreParams, toFilterParams, exploreHref } from "@/lib/explore-query";
 import { countByProvince, isPlottable } from "@/lib/geo/distance";
+import { ButtonLink } from "@/components/ui/Button";
+import styles from "./map.module.css";
 
 /**
  * The catalogue as a map.
@@ -48,56 +49,39 @@ export default async function MapPage({
   const listHref = exploreHref(filters);
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg-deep)" }}>
+    <main className={styles.page}>
+      <div className={styles.head}>
+        <h1 className={styles.title}>
+          <MapIcon size={20} />
+          {zoomed ? `رسانه‌های ${filters.province}` : "نقشهٔ رسانه‌ها"}
+        </h1>
+        <ButtonLink href={listHref} size="sm"><LayoutGrid size={14} /> نمای فهرستی</ButtonLink>
+      </div>
 
-      <main style={{ paddingTop: 62, flex: 1 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 20px 40px" }}>
+      <p className={styles.lede}>
+        {zoomed
+          ? <>هر نقطه یک رسانه است؛ روی آن بزنید تا صفحه‌اش باز شود. برای بازگشت به کل کشور، دکمهٔ بالای نقشه.</>
+          : <>هرچه استانی پررنگ‌تر باشد، رسانهٔ بیشتری در آن ثبت شده است. روی هر استان بزنید تا نقطه‌به‌نقطه ببینیدش.</>}
+      </p>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
-            <h1 style={{ fontSize: "1.4rem", fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 9 }}>
-              <MapIcon size={20} color="var(--accent)" />
-              {zoomed ? `رسانه‌های ${filters.province}` : "نقشهٔ رسانه‌ها"}
-            </h1>
-            <Link href={listHref} style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "var(--bg-card)", border: "1px solid var(--border)",
-              color: "var(--text-main)", textDecoration: "none",
-              fontSize: "0.8rem", borderRadius: 9, padding: "8px 14px",
-            }}>
-              <LayoutGrid size={14} /> نمای فهرستی
-            </Link>
-          </div>
+      <div className={styles.frame}>
+        <IranMap
+          provinceCounts={provinceCounts}
+          pins={pins}
+          unplottable={Math.max(0, total - pins.length)}
+          filters={filters}
+        />
+      </div>
 
-          <p style={{ fontSize: "0.83rem", color: "var(--text-muted)", lineHeight: 1.9, margin: "0 0 18px", maxWidth: "72ch" }}>
-            {zoomed
-              ? <>هر نقطه یک رسانه است؛ روی آن بزنید تا صفحه‌اش باز شود. برای بازگشت به کل کشور، دکمهٔ بالای نقشه.</>
-              : <>هرچه استانی پررنگ‌تر باشد، رسانهٔ بیشتری در آن ثبت شده است. روی هر استان بزنید تا نقطه‌به‌نقطه ببینیدش.</>}
-          </p>
-
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 16 }}>
-            <IranMap
-              provinceCounts={provinceCounts}
-              pins={pins}
-              unplottable={Math.max(0, total - pins.length)}
-              filters={filters}
-            />
-          </div>
-
-          <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              <span style={{ color: "var(--accent)", fontWeight: 700 }}>{faNum(total)}</span> رسانه در این محدوده
-              {zoomed && <> · <span style={{ color: "var(--accent-warm)", fontWeight: 700 }}>{faNum(pins.length)}</span> روی نقشه</>}
-            </div>
-            {/* geoBoundaries is CC BY 4.0, so the credit is a licence term, not
-                a courtesy — and it is the only outside thing this page uses. */}
-            <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
-              مرزها: geoBoundaries (CC BY 4.0)
-            </div>
-          </div>
-
+      <div className={styles.foot}>
+        <div>
+          <strong>{faNum(total)}</strong> رسانه در این محدوده
+          {zoomed && <> · <strong className={styles.onMap}>{faNum(pins.length)}</strong> روی نقشه</>}
         </div>
-      </main>
-
-    </div>
+        {/* geoBoundaries is CC BY 4.0, so the credit is a licence term, not
+            a courtesy — and it is the only outside thing this page uses. */}
+        <div className={styles.credit}>مرزها: geoBoundaries (CC BY 4.0)</div>
+      </div>
+    </main>
   );
 }
