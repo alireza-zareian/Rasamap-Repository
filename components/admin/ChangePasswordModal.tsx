@@ -4,6 +4,7 @@ import { X, KeyRound, AlertTriangle, Check } from "lucide-react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import { C } from "./constants";
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/domain/password";
 
 /**
  * A staff member changes their own password (PATCH /api/admin/auth/me).
@@ -27,7 +28,7 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     if (saving) return;
     if (!form.current) { setError("رمز فعلی را وارد کنید"); return; }
-    if (form.next.length < 8) { setError("رمز جدید باید حداقل ۸ نویسه باشد"); return; }
+    if (form.next.length < MIN_PASSWORD_LENGTH) { setError(PASSWORD_TOO_SHORT); return; }
     if (form.next !== form.confirm) { setError("رمز جدید و تکرار آن یکسان نیستند"); return; }
     setError(""); setSaving(true);
     try {

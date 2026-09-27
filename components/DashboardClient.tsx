@@ -10,6 +10,7 @@ import { moderationLabels, planLabels } from "@/lib/types";
 import EditListingModal, { type EditableListing } from "@/components/EditListingModal";
 import UserAvatar from "@/components/UserAvatar";
 import { faNum } from "@/lib/format";
+import { MIN_PASSWORD_LENGTH } from "@/lib/domain/password";
 
 // One of the user's own submissions, in whatever state the review left it.
 // The editable fields are carried too so a "needs_revision" listing can be
@@ -281,7 +282,7 @@ export default function DashboardClient({ account, initialListings }: {
                 <input type="password" value={editCurPass} onChange={e => setEditCurPass(e.target.value)} placeholder="••••••••" style={{ width: "100%", background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", padding: "10px 14px", borderRadius: 8, outline: "none" }} />
               </div>
               <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: 6 }}>رمز جدید (حداقل ۶ کاراکتر)</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: 6 }}>رمز جدید (حداقل {faNum(MIN_PASSWORD_LENGTH)} نویسه)</div>
                 <input type="password" value={editNewPass} onChange={e => setEditNewPass(e.target.value)} placeholder="••••••••" style={{ width: "100%", background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", padding: "10px 14px", borderRadius: 8, outline: "none" }} />
               </div>
               <button

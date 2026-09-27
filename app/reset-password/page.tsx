@@ -4,6 +4,8 @@ import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowRight, Check } from "lucide-react";
+import { faNum } from "@/lib/format";
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/domain/password";
 
 const toLatin = (v: string) =>
   v.replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 1776))
@@ -46,7 +48,7 @@ export default function ResetPasswordPage() {
   const verify = async () => {
     setError("");
     if (!/^\d{6}$/.test(code)) { setError("کد باید ۶ رقم باشد"); return; }
-    if (pass.length < 6) { setError("رمز عبور باید حداقل ۶ کاراکتر باشد"); return; }
+    if (pass.length < MIN_PASSWORD_LENGTH) { setError(PASSWORD_TOO_SHORT); return; }
     if (pass !== confirm) { setError("رمز عبور و تکرار آن یکسان نیستند"); return; }
     setLoading(true);
     try {
@@ -91,7 +93,7 @@ export default function ResetPasswordPage() {
               <label htmlFor="reset-code" style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginBottom: 6 }}>کد ۶ رقمی پیامک‌شده</label>
               <input id="reset-code" value={code} onChange={e => setCode(toLatin(e.target.value).replace(/\D/g, "").slice(0, 6))} inputMode="numeric" dir="ltr" placeholder="------" style={{ ...inp, textAlign: "center", letterSpacing: 6, fontSize: "1.1rem" }} />
               <label htmlFor="reset-pass" style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block", marginBottom: 6 }}>رمز عبور جدید</label>
-              <input id="reset-pass" value={pass} onChange={e => setPass(e.target.value)} type="password" placeholder="حداقل ۶ کاراکتر" style={inp} />
+              <input id="reset-pass" value={pass} onChange={e => setPass(e.target.value)} type="password" placeholder={`حداقل ${faNum(MIN_PASSWORD_LENGTH)} نویسه`} style={inp} />
               <input aria-label="تکرار رمز عبور جدید" value={confirm} onChange={e => setConfirm(e.target.value)} type="password" placeholder="تکرار رمز عبور جدید" style={inp} />
               <button type="submit" disabled={loading} style={{ width: "100%", background: loading ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 700, padding: "13px", borderRadius: 9, cursor: loading ? "default" : "pointer" }}>
                 {loading ? "در حال ثبت..." : "ثبت رمز جدید"}

@@ -8,6 +8,7 @@ import { Badge } from "./Badge";
 import { Users, ShieldCheck, Plus, X, AlertTriangle, Search } from "lucide-react";
 import { CustomerModal } from "./CustomerModal";
 import { faNum } from "@/lib/format";
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/domain/password";
 
 interface SessionUser { id: string; name: string; role: StaffRole; email: string; }
 
@@ -324,7 +325,7 @@ function AddAdminModal({ onClose, onCreated }: { onClose: () => void; onCreated:
   const submit = async () => {
     if (!form.name.trim()) { setError("نام الزامی است"); return; }
     if (!form.email.trim()) { setError("ایمیل الزامی است"); return; }
-    if (form.password.length < 8) { setError("رمز عبور حداقل ۸ نویسه"); return; }
+    if (form.password.length < MIN_PASSWORD_LENGTH) { setError(PASSWORD_TOO_SHORT); return; }
     setError(""); setSaving(true);
     try {
       const data = await fetchJson<{ admin: AdminRow }>("/api/admin/users", {

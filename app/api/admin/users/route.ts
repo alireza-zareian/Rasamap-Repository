@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { createStaff, listStaff } from "@/lib/db/staff";
 import { STAFF_ROLES } from "@/lib/domain/roles";
+import { NewPassword } from "@/lib/domain/password";
 
 const SUPER_ONLY = { forbidden: "فقط سوپر ادمین به مدیریت کاربران دسترسی دارد" };
 
@@ -23,7 +24,7 @@ export const POST = defineRoute(
       email:    z.string().email().max(254).toLowerCase().trim(),
       name:     z.string().min(1).max(120).trim(),
       role:     z.enum(STAFF_ROLES),
-      password: z.string().min(8).max(128),
+      password: NewPassword,
     }),
     messages: { forbidden: "فقط سوپر ادمین می‌تواند کاربر بسازد" },
   },

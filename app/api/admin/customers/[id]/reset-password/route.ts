@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { idParams } from "@/lib/http/params";
 import { adminApiRateLimit } from "@/lib/rate-limit";
 import { setCustomerPassword } from "@/lib/db/customers";
+import { NewPassword } from "@/lib/domain/password";
 
 // POST /api/admin/customers/[id]/reset-password (super_admin) — set the given
 // password, or a generated one, and return it once so it can be passed on.
@@ -15,9 +16,8 @@ export const POST = defineRoute(
     access: { staff: "super_admin" },
     rateLimit: adminApiRateLimit,
     params: idParams,
-    body: z.object({ password: z.string().min(8).max(128).optional() }).optional(),
+    body: z.object({ password: NewPassword.optional() }).optional(),
     messages: {
-      invalidBody: "رمز عبور باید حداقل ۸ نویسه باشد",
       forbidden:   "فقط سوپر ادمین می‌تواند رمز مشتری را بازنشانی کند",
     },
   },

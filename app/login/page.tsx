@@ -6,6 +6,7 @@ import { safeNextPath } from "@/lib/client/next-path";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, AlertTriangle, ArrowRight, User, ShieldCheck } from "lucide-react";
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/domain/password";
 
 // Persian/Arabic digits → Latin digits
 const toLatin = (v: string) =>
@@ -94,7 +95,7 @@ function LoginForm() {
       if (!/^\d{6}$/.test(form.code)) { setError("کد تأیید باید ۶ رقم باشد"); return; }
       if (!form.name.trim()) { setError("نام الزامی است"); return; }
       if (form.pass !== form.confirm) { setError("رمز عبور و تکرار آن یکسان نیستند"); return; }
-      if (form.pass.length < 6) { setError("رمز عبور باید حداقل ۶ کاراکتر باشد"); return; }
+      if (form.pass.length < MIN_PASSWORD_LENGTH) { setError(PASSWORD_TOO_SHORT); return; }
     }
     setLoading(true);
     try {

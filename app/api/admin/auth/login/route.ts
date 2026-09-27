@@ -18,7 +18,7 @@ export const POST = defineRoute(
     rateLimit: { afterBody: async (b, ip, req) => adminLoginAttempt(b.email, ip, await knownDevice(req, b.email)) },
     body: z.object({
       email:    z.string().email().max(254).toLowerCase().trim(),
-      password: z.string().min(8).max(128),
+      password: z.string().min(1).max(128),
     }),
     // Generic — never say which field was wrong.
     messages: { invalidBody: "ایمیل یا رمز عبور نادرست است" },

@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { startSession } from "@/lib/auth/actor";
 import { adminApiRateLimit, adminLoginAttempt, resetAccountAttempts } from "@/lib/rate-limit";
 import { changeOwnStaffPassword } from "@/lib/db/staff";
+import { NewPassword } from "@/lib/domain/password";
 
 // GET /api/admin/auth/me — the signed-in staff member, safe fields only.
 export const GET = defineRoute(
@@ -21,7 +22,7 @@ export const PATCH = defineRoute(
     rateLimit: adminApiRateLimit,
     body: z.object({
       currentPassword: z.string().min(1).max(128),
-      newPassword:     z.string().min(8, "رمز جدید باید حداقل ۸ نویسه باشد").max(128),
+      newPassword:     NewPassword,
     }),
   },
   async ({ req, ip, actor, body, tooMany, audit }) => {

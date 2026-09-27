@@ -5,6 +5,7 @@ import { startSession } from "@/lib/auth/actor";
 import { getSession, MAX_SESSION_LIFETIME_SECS } from "@/lib/auth/session";
 import { userApiRateLimit, publicApiRateLimit } from "@/lib/rate-limit";
 import { updateOwnProfile } from "@/lib/db/customers";
+import { NewPassword } from "@/lib/domain/password";
 
 const TWO_HOURS = 2 * 60 * 60; // seconds
 
@@ -55,7 +56,7 @@ export const PATCH = defineRoute(
     body: z.object({
       name:            z.string().min(2).max(100).trim().optional(),
       currentPassword: z.string().min(1).max(128).optional(),
-      newPassword:     z.string().min(6).max(128).optional(),
+      newPassword:     NewPassword.optional(),
     })
       .refine(d => !(d.newPassword && !d.currentPassword), { message: "برای تغییر رمز، رمز فعلی لازم است" })
       .refine(d => d.name || d.newPassword, { message: "هیچ تغییری ارائه نشده است" }),
