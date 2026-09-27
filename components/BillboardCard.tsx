@@ -17,19 +17,6 @@ interface BillboardCardProps {
   listMode?: boolean;
 }
 
-/**
- * Moves the card's spotlight to the pointer. It writes two custom properties
- * on the element and nothing else — no React state, so a pointer crossing the
- * grid re-renders nothing. A touch has no hover to light, so it is skipped.
- */
-function followPointer(e: React.PointerEvent<HTMLDivElement>) {
-  if (e.pointerType !== "mouse") return;
-  const card = e.currentTarget;
-  const box = card.getBoundingClientRect();
-  card.style.setProperty("--spot-x", `${e.clientX - box.left}px`);
-  card.style.setProperty("--spot-y", `${e.clientY - box.top}px`);
-}
-
 export default function BillboardCard({ billboard: b, isCompared, onCompare, listMode = false }: BillboardCardProps) {
   const tone = cssVar("--tone", availabilityTone(b.availability));
   const status = `● ${availabilityLabels[b.availability] ?? b.availability}`;
@@ -71,7 +58,7 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
   }
 
   return (
-    <div data-testid="billboard-card" style={tone} onPointerMove={followPointer}
+    <div data-testid="billboard-card" style={tone}
       className={`${styles.card} ${isCompared ? styles.compared : ""} ${b.featured ? "gradient-frame" : ""}`}>
       <div className={styles.photo}>
         {/* The same name as the media page's gallery: opening the card morphs
