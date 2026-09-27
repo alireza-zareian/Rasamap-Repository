@@ -22,25 +22,32 @@ import styles from "./explore.module.css";
 interface ToastState { msg: string; type: "success" | "error" | "info" }
 
 export default function ExploreResults({ items, view }: { items: CatalogueItem[]; view: "grid" | "list" }) {
-  const { items: compareList, setItems: setCompareList, remove, clear } = useCompareList();
+  const { items: compareList, setItems: setCompareList, remove, clear, ready } = useCompareList();
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
+  // The updater stays pure — it only computes the next list. It used to call
+  // setToast from inside it, which React does not allow: an updater may be
+  // run again or reordered when a click lands while the page is still
+  // hydrating, and the side effect then fired at the wrong time or not at all.
+  // The message is decided from the list as it is on screen.
   const handleCompare = useCallback((b: CatalogueItem) => {
-    setCompareList(prev => {
-      if (prev.some(x => x.id === b.id)) return prev.filter(x => x.id !== b.id);
-      if (prev.length >= MAX_COMPARE) {
-        setToast({ msg: `حداکثر ${MAX_COMPARE} رسانه را می‌توانید مقایسه کنید`, type: "error" });
-        return prev;
-      }
-      setToast({ msg: `${b.name.substring(0, 22)}... به مقایسه اضافه شد`, type: "info" });
-      return [...prev, b];
-    });
-  }, [setCompareList]);
+    const inList = compareList.some(x => x.id === b.id);
+    if (!inList && compareList.length >= MAX_COMPARE) {
+      setToast({ msg: `حداکثر ${MAX_COMPARE} رسانه را می‌توانید مقایسه کنید`, type: "error" });
+      return;
+    }
+    setCompareList(prev => prev.some(x => x.id === b.id)
+      ? prev.filter(x => x.id !== b.id)
+      : [...prev, b].slice(0, MAX_COMPARE));
+    if (!inList) setToast({ msg: `${b.name.substring(0, 22)}... به مقایسه اضافه شد`, type: "info" });
+  }, [compareList, setCompareList]);
 
   return (
     <>
-      <div className={view === "grid" ? styles.grid : styles.list}>
+      {/* Busy until the saved compare selection has been read: a tick made
+          before that is a tick on a page that is not listening yet. */}
+      <div className={view === "grid" ? styles.grid : styles.list} data-testid="results" aria-busy={!ready}>
         {items.map(b => (
           <BillboardCard
             key={b.id}

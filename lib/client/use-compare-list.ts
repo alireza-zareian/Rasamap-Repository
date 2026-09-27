@@ -43,9 +43,16 @@ export function useCompareList() {
 
   useEffect(() => {
     // Storage exists only in the browser, so the server render starts empty and
-    // this fills it once, after hydration.
+    // this fills it once, after hydration. It merges rather than replaces: the
+    // page is clickable a moment before this effect runs, and a card ticked in
+    // that moment used to be overwritten by the stored list — the browser test
+    // "a compare selection survives a reload" caught it once page transitions
+    // shifted the timing.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems(readStored());
+    setItems(picked => {
+      const stored = readStored();
+      return [...stored, ...picked.filter(p => !stored.some(s => s.id === p.id))].slice(0, MAX_COMPARE);
+    });
     setReady(true);
   }, []);
 

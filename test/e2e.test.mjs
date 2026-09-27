@@ -317,7 +317,11 @@ test("the catalogue is usable at phone width", async () => {
 test("a compare selection survives a reload and reaches /compare", async () => {
   await withBrowser("compare-persists", async (b) => {
     await b.goto(`${BASE}/explore`);
-    await b.waitForSelector("button[aria-label='افزودن به مقایسه']");
+    // Not the button merely existing, nor React having claimed it: the
+    // catalogue's content hydrates in its own pass (loading.tsx), and a click
+    // before that pass commits is silently lost — measured, the handler never
+    // ran, in 2–5 runs of 10. The results say when they are listening.
+    await b.waitForSelector("[data-testid='results'][aria-busy='false']");
     // Two different cards: after the first click that card's button is renamed.
     await b.click("button[aria-label='افزودن به مقایسه']");
     await b.waitForSelector("[data-testid='billboard-card'] button[aria-pressed='true']");
