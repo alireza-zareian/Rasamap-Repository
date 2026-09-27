@@ -385,9 +385,9 @@ details.fold > summary .tag{
         <tr><td>چارچوب</td><td><code>Next.js 16</code> + <code>React 19</code></td><td>هم صفحه‌های سایت را می‌سازد، هم سرور API را. یک برنامه، نه دو تا.</td></tr>
         <tr><td>زبان</td><td><code>TypeScript 5</code> (strict)</td><td>جاوااسکریپت با «نوع». اگر جایی رشته را جای عدد بگذاری، قبل از اجرا خطا می‌دهد.</td></tr>
         <tr><td>دیتابیس</td><td><code>SQLite</code> + <code>Prisma 7</code></td><td>دیتابیس در یک فایل؛ Prisma واسطه‌ای است که به‌جای نوشتن SQL خام، با کد تایپ‌دار پرس‌وجو می‌کنی.</td></tr>
-        <tr><td>احراز هویت</td><td><code>JWT</code> (jose) + کوکی HttpOnly</td><td>یک بلیت امضاشده در کوکی‌ای که جاوااسکریپت مرورگر نمی‌تواند بخواند.</td></tr>
+        <tr><td>احراز هویت</td><td>نشستِ دیتابیسی + کوکی HttpOnly</td><td>یک ردیف در جدول <code>sessions</code>؛ کوکی فقط یک توکنِ تصادفی دارد که جاوااسکریپت مرورگر نمی‌تواند بخواند، و جدول فقط هشِ آن را.</td></tr>
         <tr><td>اعتبارسنجی</td><td><code>Zod</code></td><td>نگهبان درِ ورودی: هر داده‌ای که از بیرون می‌آید اول باید شکل درست را داشته باشد.</td></tr>
-        <tr><td>ظاهر</td><td>استایل inline + متغیرهای CSS</td><td>رنگ و اندازه کنار خودِ عنصر نوشته می‌شود؛ پالت مشترک در <code>globals.css</code>.</td></tr>
+        <tr><td>ظاهر</td><td>CSS Modules + متغیرهای CSS</td><td>هر کامپوننت یک فایل استایلِ کنار خودش دارد؛ پالت و اندازه‌های مشترک در <code>globals.css</code>.</td></tr>
         <tr><td>خزنده</td><td><code>Python</code> + Pillow</td><td>بخش جدا: داده و عکسِ رسانه‌ها را از پنج سایت جمع می‌کند و بهینه می‌سازد.</td></tr>
       </tbody>
     </table>
@@ -636,8 +636,8 @@ erDiagram
     <div class="foldbody">
       <p>
         ورود با شمارهٔ موبایل و رمز. رمز با bcrypt (هزینهٔ ۱۲) هش می‌شود و نشست یک
-        <b>JWT امضاشده</b> در کوکی HttpOnly است — یعنی جاوااسکریپت صفحه اصلاً نمی‌تواند آن را بخواند،
-        پس یک حملهٔ XSS هم نمی‌تواند بلیت ورود را بدزدد.
+        <b>ردیف در پایگاه داده</b> است که فقط توکنِ تصادفی‌اش در کوکی HttpOnly می‌نشیند — یعنی جاوااسکریپت
+        صفحه اصلاً نمی‌تواند آن را بخواند، پس یک حملهٔ XSS هم نمی‌تواند بلیت ورود را بدزدد؛ و خروج یعنی حذفِ همان ردیف.
       </p>
       <div class="note warn">
         <span class="t">جزئیاتی که ارزش گفتن در دفاع را دارد</span>
@@ -665,7 +665,7 @@ sequenceDiagram
     else کاربر وجود ندارد
         A->>A: مقایسه با هش ساختگی<br/>تا زمان پاسخ یکسان بماند
     end
-    A-->>B: 200 + کوکی HttpOnly (JWT)
+    A-->>B: 200 + کوکی HttpOnly (توکنِ نشست)
     B-->>U: ورود موفق
   </div><div class="cap">نمودار ۴ — ورود؛ شاخهٔ «کاربر وجود ندارد» عمداً همان‌قدر وقت می‌گیرد</div></div>
     </div>
@@ -890,7 +890,7 @@ sequenceDiagram
     <table class="tbl">
       <thead><tr><th>لایه</th><th>چه کاری می‌کند</th><th>جلوی چه چیزی را می‌گیرد</th></tr></thead>
       <tbody>
-        <tr><td>نشست</td><td>JWT امضاشده در کوکی HttpOnly + SameSite=Strict + Secure</td><td>دزدیده شدن بلیت ورود با XSS؛ ارسال درخواست از سایت دیگر (CSRF)</td></tr>
+        <tr><td>نشست</td><td>ردیفِ <code>sessions</code> با توکنِ تصادفی در کوکی HttpOnly + SameSite=Lax (+ Secure روی HTTPS)</td><td>دزدیده شدن بلیت ورود با XSS؛ ارسال درخواست از سایت دیگر (CSRF)</td></tr>
         <tr><td>رمز عبور</td><td>bcrypt با هزینهٔ ۱۲</td><td>اگر دیتابیس لو برود، رمزها قابل بازیابی نیستند</td></tr>
         <tr><td>شمارش کاربر</td><td>پاسخ و <b>زمان پاسخ</b> برای شمارهٔ ناموجود و رمز غلط یکسان است</td><td>فهمیدن اینکه چه شماره‌هایی در سیستم ثبت‌اند</td></tr>
         <tr><td>سقف درخواست</td><td>پنجرهٔ لغزان روی IP، با کلید جدا برای ثبت‌نام و ورود</td><td>حملهٔ حدس رمز؛ اسپم ثبت‌نام که ورودِ بقیه را قفل کند</td></tr>
@@ -4256,6 +4256,26 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">AUDIT4</div>
+      <div class="ph-title"><h3>بازبینی از نگاهِ داور — نشست، آپلود، داده، و CSS Modules</h3><p>۵ مهر ۱۴۰۵ · §۳۶ در سندِ تصمیم‌ها؛ هر تغییر با آزمون یا اسکرین‌شاتِ قبل/بعد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نشست = ردیفِ دیتابیس</strong> — JWT که به‌هرحال هر درخواست دو بار دیتابیس را می‌خواند کنار رفت؛ خروج یعنی حذفِ ردیف، تغییر رمز یعنی حذفِ همهٔ ردیف‌های حساب</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>آپلود = فایلِ multipart</strong> — بیرون از <code>public/</code> (عکسِ تازه دیگر تا ری‌استارت ۴۰۴ نمی‌دهد)، و کوچک‌شده در مرورگر همراهِ حذفِ EXIF</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>امنیتِ دمو</strong> — <code>TRUSTED_PROXY_COUNT</code> پیش‌فرض ۰ (جعلِ IP با هدر بسته شد)، کشِ صفحه برای نشانیِ ساختگی بسته شد، توقفِ انتشار و حذفِ نظر توسط ویرایشگر</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>داده</strong> — ردیفِ خزنده «استعلام از مالک» به‌جای «خالی»، منبع با نام و لینک، نشان و بلد کنارِ گوگل، همهٔ ۶۱ شهرِ جامانده، slugِ خوانا</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>رمز با ارقامِ فارسی</strong> — رمزی که با «۱۲۳۴» بازیابی می‌شد دیگر هرگز واردشدنی نبود؛ حالا سرور همهٔ شماره‌ها و رمزها را لاتین می‌خواند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>CSS Modules در کل سایت</strong> — قابِ مشترکِ <code>(site)</code>، صفحه‌های ورود در <code>(auth)</code>، <code>Button</code>/<code>Dialog</code>/<code>StatusScreen</code> مشترک؛ همهٔ overrideهای <code>!important</code> از <code>globals.css</code> رفتند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>انیمیشن‌هایی که بی‌صدا ایستاده بودند</strong> — تیکر، نوار رسانه‌های مرتبط و گوی‌های پس‌زمینه؛ آزمونِ تازه روی کدِ قبلی شکست می‌خورد و حالا پاس است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>پنل ادمین</strong> — دیالوگ‌های تأیید با Escape و قفلِ فوکوس، رنگِ نشان‌هایی که اصلاً نمایش داده نمی‌شد، فیلدِ «وجه» در ویرایش، شدتِ لاگ به فارسی</div></div>
+      </div>
+      <div class="proof">ESLint و <code>tsc</code> تمیز؛ <strong>۱۸ آزمون واحد + ۱۷۸ آزمون API + ۸ آزمون واردکننده</strong> و <strong>۱۱ جریانِ مرورگر</strong> موفق. همهٔ صفحه‌ها پیش و پس از تغییر در دو پهنا و دو تم اسکرین‌شات شدند و هر تفاوت نگاه شد؛ اجرای انیمیشن‌ها در مرورگرِ واقعی با <code>document.getAnimations()</code> دیده شد. پس از pull، <code>npm run demo</code> خودش migration را اجرا می‌کند و کسانی که وارد بودند یک بار دوباره وارد می‌شوند.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">AUDIT3</div>
       <div class="ph-title"><h3>دور سوم — مستندات هم‌تراز، و بخش‌هایی که هنوز خوانده نشده بود</h3><p>۴ مهر ۱۴۰۵ · هر عدد از خودِ مخزن بازشمرده شد؛ دو پس‌رفتِ کارِ خودم پیدا و بسته شد</p></div>
       <div class="ph-badge done">✓ تموم شده</div>
@@ -5287,7 +5307,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۴ مهر ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۵ مهر ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>

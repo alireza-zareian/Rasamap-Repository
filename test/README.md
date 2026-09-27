@@ -8,11 +8,11 @@ isolated SQLite database (`prisma/test.db`, git-ignored, never `dev.db`).
 
 ```bash
 npm test          # unit tests -> reset test db -> seed -> next build -> next start :3100 -> API + importer tests -> stop
-npm run test:unit # only the pure rules in lib/domain: no build, no server, ~0.5 s
+npm run test:unit # the pure rules in lib/domain and the source guards: no build, no server, ~0.5 s
 ```
 
-157 tests — 9 unit tests of the pure rules (`test/unit/`), 142 API tests, 6
-covering the nightly importer — in about a minute end to end. `npm test` is fully self-contained. It sets its own env (`AUTH_SECRET`,
+204 tests — 18 unit tests of the pure rules and the source guards (`test/unit/`),
+178 API tests, 8 covering the nightly importer — in about a minute end to end. `npm test` is fully self-contained. It sets its own env (`AUTH_SECRET`,
 `DATABASE_URL=file:./prisma/test.db`, dummy admin/Neshan vars) which override
 any `.env*` file, so it never reads or writes the development database.
 
@@ -41,7 +41,10 @@ npm run test:seed    # load fixtures: 3 billboards, 2 users (password "secret123
 the TypeScript types on load. That works because `lib/domain` has no I/O by
 construction — ESLint refuses any database, framework or `node:` import there —
 so a rule of the product (a listing's state transitions, a derived price, a
-JSON column's shape) is tested without building anything.
+JSON column's shape) is tested without building anything. Two files read source
+rather than rules: `cities.test.mjs` checks that every city the dataset names is
+one the catalogue knows, and `css-modules.test.mjs` that every animation a CSS
+module names is defined in that module.
 
 ## What is covered
 

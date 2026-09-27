@@ -27,6 +27,13 @@
 > خواننده تأکید کن. عدد ۹۷ برابر قابل‌استناد است و در `docs/engineering-decisions.md`
 > §۲۲ مستند شده.
 
+> 🧭 **۵ مهر ۱۴۰۵ — بازبینی سوم (§۳۶ در `engineering-decisions.md`).**
+> نشست‌ها حالا ردیف دیتابیس‌اند (نه JWT)، عکس‌ها فایل multipart و بیرون از `public/`
+> ذخیره می‌شوند، `TRUSTED_PROXY_COUNT` پیش‌فرض ۰ است، ردیف‌های خزنده «استعلام از مالک»
+> نشان داده می‌شوند و منبعشان با لینک آمده، و کل سایت روی CSS Modules است.
+> **پس از pull:** `npm run demo` خودش migration را اجرا می‌کند؛ هر کس از قبل وارد
+> شده بود یک بار دوباره وارد می‌شود.
+
 > 🧱 **۳ مهر ۱۴۰۵ — بازبینی بدبینانهٔ معماری (§۳۵ در `engineering-decisions.md`).**
 > هر ۳۵ مسیر API حالا از یک خط لوله (`defineRoute` در `lib/http/route.ts`) می‌گذرند؛
 > `lib/db/` تنها لایه‌ای است که به پایگاه داده دسترسی دارد (ESLint بقیه را رد می‌کند)؛
@@ -49,7 +56,7 @@
 ### اطلاعات پایه
 
 - **پروژه:** فهرست آنلاین رسانه‌های تبلیغاتی محیطی (بیلبورد) با ثبتِ آگهیِ پولی — thesis دانشگاهی
-- **Stack:** Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite + Prisma 7 · JWT HttpOnly · Inline CSS (بدون Tailwind class در JSX)
+- **Stack:** Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite + Prisma 7 · نشستِ دیتابیسی در کوکی HttpOnly · CSS Modules (بدون Tailwind class و بدون استایل inline ثابت در JSX)
 - **DB:** 3532 بیلبورد · 2009 با تصویر (۵۷٪) · 3020 geocoded
 - **ارزیابی کد:** A− برای thesis — security غیرمعمول قوی
 
@@ -58,10 +65,10 @@
 ### قوانین غیرقابل نقض (هرگز نقض نکن)
 
 1. Zod `.safeParse()` — هرگز `.parse()` یا `JSON.parse(userInput)`
-2. Admin route order: `session → rate limit → Zod → business logic`
-3. DB reads: همیشه از `lib/db/billboards/` — هرگز از `lib/data.ts`
+2. هر route با `defineRoute()`: `session → rate limit → role → Zod → business logic`
+3. فقط `lib/db/` با دیتابیس حرف می‌زند — هرگز `lib/data.ts` بیرون از seed
 4. همه رشته‌های user-visible به فارسی
-5. Styling: فقط `style={{}}` inline — هیچ Tailwind class در JSX
+5. Styling: یک CSS Module برای هر کامپوننت با توکن‌های `globals.css` — هیچ Tailwind class در JSX (قانون ۵ در `AGENTS.md`)
 6. بعد از هر تسک: این فایل را آپدیت کن (تیک بزن)
 7. Proxy (نه middleware): فایل `proxy.ts` در root
 
@@ -333,50 +340,38 @@
 
 ```
 app/
-  page.tsx                    لندینگ
-  explore/page.tsx            جستجو + فیلتر
-  explore/map/page.tsx        نقشه
-  billboard/[slug]/page.tsx   جزئیات بیلبورد
-  compare/page.tsx            مقایسه
-  dashboard/page.tsx          داشبورد کاربر
-  admin/page.tsx              پنل ادمین
-  login/page.tsx              ورود/ثبت‌نام
-  about/page.tsx              درباره ما
-  contact/page.tsx            تماس
-  list-media/page.tsx         ثبت رسانه (wizard 5-step)
-  api/
-    billboards/route.ts       GET (فیلتر + pagination)
-    listings/route.ts         POST ثبت آگهی (با آپلود عکس) + GET آگهی‌های کاربر جاری
-    admin/listings/route.ts   GET صف تأیید
-    admin/listings/[id]/decision/route.ts  POST تأیید/رد
-    reviews/route.ts          GET + POST نظرات
-    listings/route.ts         POST ثبت رسانه (pending)
-    stats/route.ts            GET آمار کلی
-    auth/*/route.ts           register/login/logout/me
-    admin/billboards/*/       PUT + DELETE + images
+  (site)/layout.tsx           قاب مشترک صفحه‌های عمومی: Topbar، Footer، نوار پایین موبایل، StaffBar
+  (site)/page.tsx             لندینگ (Server Component؛ فقط جستجو و کاروسل کلاینت‌اند)
+  (site)/explore/page.tsx     جستجو + فیلتر (آدرس = تنها منبع حالت فیلتر)
+  (site)/explore/map/page.tsx نقشه (بدون ارائه‌دهنده، §۳۲)
+  (site)/billboard/[slug]/    جزئیات رسانه: منبع با لینک، نقشه با نشان/بلد/گوگل
+  (site)/compare/page.tsx     مقایسه
+  (site)/dashboard/page.tsx   داشبورد کاربر
+  (site)/list-media/page.tsx  ثبت رسانه (wizard)
+  (auth)/login, reset-password  ورود یکپارچه (مشتری + همکار) و بازیابی رمز
+  admin/(panel)/*             هر بخش پنل یک آدرس جدا، با بررسی سمت سرور
+  uploads/[...path]/route.ts  سرو عکس‌های آپلودی از UPLOAD_DIR (بیرون از public/)
+  api/**/route.ts             همه با defineRoute (lib/http/route.ts)
 
 lib/
-  db/billboards/queries.ts    getFilteredBillboards, getBillboardBySlug, getMapPins, ...
-  db/billboards/mutations.ts  createListing, resubmitListing, updateBillboard, ...
-  db/billboards/core.ts       toPublicBillboard, publishedOnly, revalidateCatalogue
-  db/client.ts                Prisma singleton با driver adapter
-  data.ts                     ⚠️ دست نزن — فقط type definitions
-  auth/useCurrentUser.ts      hook کاربر جاری
-  theme.ts                    dark/light toggle
+  db/                         تنها لایه‌ای که با دیتابیس حرف می‌زند (lint-enforced)
+  db/sessions.ts              نشست = یک ردیف؛ کوکی = توکن تصادفی، ردیف = SHA-256 آن
+  db/billboards/              queries.ts (خواندن) · mutations.ts (نوشتن) · core.ts (مشترک)
+  domain/                     قواعد بدون I/O (رمز، شماره، ارقام، مکان، slug، …) + تست واحد
+  http/route.ts, form.ts      خط لولهٔ هر مسیر، و فرم multipart برای آپلود
+  uploads.ts                  بررسی بایت‌های اول فایل، نوشتن در UPLOAD_DIR، خواندن
+  client/photos.ts            کوچک‌کردن عکس در مرورگر پیش از ارسال (EXIF هم حذف می‌شود)
+  types.ts                    نوع‌ها و برچسب‌ها + DATA_SOURCES / sourceLabel
+  data.ts                     ⚠️ فقط seed آن را می‌خواند
 
 components/
-  BillboardCard.tsx
-  BillboardContact.tsx
-  CompareBar.tsx
-  CompareModal.tsx
-  BillboardGallery.tsx
-  ShareButton.tsx
-  TrafficMeter.tsx
-  ReviewsSection.tsx
-  Footer.tsx
-  admin/                      EditModal, ImageManager, BillboardRow, ...
+  ui/                         Button، Dialog، StatusScreen، form.module.css، css-var، availability
+  site/                       Topbar، BottomNav، Footer، Logo
+  listing/                    فیلدهای مشترک wizard و فرم ویرایش
+  admin/                      پنل‌ها روی admin.module.css و Dialog
+  *.module.css                استایل هر کامپوننت کنار خودش (قانون ۵ در AGENTS.md)
 
-proxy.ts                      Next.js 16 Proxy (نه middleware!)
+proxy.ts                      Next.js 16 Proxy (نه middleware!) — فقط بررسی خوش‌بینانه
 prisma/schema.prisma
 ```
 
@@ -389,7 +384,7 @@ npm run demo             # ساخت + اجرا روی localhost:3000 — برا�
 npm run dev              # فقط هنگام کدنویسی (۹۷ برابر CPU بیشتر — §۲۲)
 npm run build            # باید بدون خطا پاس شود
 npm run lint
-npm test                 # ۱۸۱ آزمون روی یک ساخت تولیدی
+npm test                 # ۲۰۴ آزمون روی یک ساخت تولیدی
 npm run bench            # بنچمارک بار (سرور dev باید بالا باشد)
 npm run db:migrate
 npm run db:seed          # 3545 رکورد
@@ -473,7 +468,7 @@ directly. Media owners submit their own listings (with photos) on a free or paid
 admins review, approve and publish them through a separate RBAC-gated panel.
 
 - **Stack:** Next.js 16.2.11 App Router, React 19, TS strict, SQLite + Prisma 7
-  (`better-sqlite3`, WAL), JWT HttpOnly cookies (jose), inline-CSS. The map view is
+  (`better-sqlite3`, WAL), database sessions in HttpOnly cookies, CSS Modules. The map view is
   drawn from vendored outlines — no map library and no provider (§۳۲).
 - **Scale:** read-heavy, single SQLite file, single instance, a few concurrent users at
   the demo. Data comes from a Python scraper → `seed.ts` → `dev.db`.
@@ -506,7 +501,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 | F4 | `project-ai.zip` (265 KB) tracked at repo root; `.DS_Store` scattered. → **fixed** — `.gitignore` updated and neither is tracked. | Low |
 | F5 | No `PRE_DEPLOY_CHECKLIST.md` / `RUNBOOK.md`. → **fixed** | Med |
 | F6 | No `LICENSE`. → **fixed** — MIT. | Low |
-| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 181 tests (`npm test`, on a production build) plus 11 browser flows (`npm run test:e2e`). | Med |
+| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 204 tests (`npm test`, on a production build) plus 11 browser flows (`npm run test:e2e`). | Med |
 | F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. → **fixed** — every live count now reads the same (3,536 rows, 3,532 published, 101 cities, 3,020 geocoded, verified against `dev.db`); older figures survive only in dated history entries. The module split is stated in `AGENTS.md` rule 1 and F15: `lib/types.ts` is data-free, `lib/data.ts` holds the dataset and is imported only by `prisma/seed.ts`. | Low |
 | F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |
@@ -772,10 +767,10 @@ migration or touches product behaviour.
 
 | # | Layer | Has today | Missing | Verdict | Justification |
 |---|-------|-----------|---------|---------|---------------|
-| 1 | Front-end foundations | Next 16 App Router, React 19, RTL Persian, inline-CSS design system, `error.tsx` + `not-found.tsx`, loading states on some routes | Consistent empty/error/retry states on every list; mobile passes; some UX-breaking stubs (contact form, list-media file input) | **Required** (bug fixes + unhappy-path), **Worth it** (mobile) | It is the whole demo surface. Fix what visibly breaks; full redesign is out of scope. |
+| 1 | Front-end foundations | Next 16 App Router, React 19, RTL Persian, CSS Modules on shared tokens with shared `Button`/`Dialog`/`StatusScreen`, `error.tsx` + `not-found.tsx`, loading states on some routes | Consistent empty/error/retry states on every list; mobile passes; some UX-breaking stubs (contact form, list-media file input) | **Required** (bug fixes + unhappy-path), **Worth it** (mobile) | It is the whole demo surface. Fix what visibly breaks; full redesign is out of scope. |
 | 2 | APIs & backend logic | ~20 route handlers, Zod `.safeParse()` everywhere, allowlists for sort/filter, consistent Persian error payloads, rate-limit + auth ordering enforced | Structured request logging; a couple of stub endpoints | **Required** (keep the discipline), **Worth it** (logging) | Already strong. Logging is the main gap professors probe. |
 | 3 | Database & storage | Prisma 7 schema, FKs, unique constraints (`slug`, `phone`, `review`), composite indexes matching query patterns, WAL mode, seed vs demo seed separated | Automated backup + tested restore; denormalised sort keys (`area`, `estimatedViews`) indexed | **Required** (backup + restore doc), **Worth it** (sort correctness) | "Do you have backups?" is a guaranteed question. SQLite `.backup` is one command. |
-| 4 | Auth & permissions | JWT HttpOnly + SameSite=Lax cookies, revocable sessions, bcrypt cost 12, timing-safe dummy hash, no user enumeration, `proxy.ts` guard, RBAC `viewer<editor<admin<super_admin` | Object-level authz spot-check; password reset flow (none exists) | **Required** (authz check), **Worth it** (reset), **Overkill** (email verification) | Being logged in ≠ authorised for a given row — must verify. No email service in Iran → reset is a stretch. |
+| 4 | Auth & permissions | Database sessions (random token, SHA-256 row, 8 h idle / 7 d absolute) in HttpOnly + SameSite=Lax cookies, bcrypt cost 12, timing-safe dummy hash, no user enumeration, `proxy.ts` guard, RBAC `viewer<editor<admin<super_admin` | Object-level authz spot-check; password reset flow (none exists) | **Required** (authz check), **Worth it** (reset), **Overkill** (email verification) | Being logged in ≠ authorised for a given row — must verify. No email service in Iran → reset is a stretch. |
 | 5 | Hosting & deployment | Runs with `npm run build && npm start`; security headers + HSTS in `next.config.ts` | Deterministic documented deploy steps; env separation doc | **Required** | `PRE_DEPLOY_CHECKLIST.md` + `RUNBOOK.md` cover this. Cheap, expected. |
 | 6 | Cloud & compute | Single Node process, single SQLite file | Nothing | **Overkill** | Capstone demo. No cloud compute needed; say so. |
 | 7 | CI/CD & version control | Git repo, 150+ commits on `main`, one behaviour change per commit; `.github/workflows/scrape.yml` runs the crawler | A tag for the presentation; a CI job that runs `npm test` | **Required = already met** (git), **Worth it** (tag), **Overkill** (full CI) | History and rollback exist. There is a suite to run now, but wiring CI for a single-author capstone buys little over running `npm test` before a commit. |

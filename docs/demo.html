@@ -259,7 +259,7 @@ body {
           <div class="step-num">4</div>
           <div class="step-content">
             <div class="step-title">ثبت‌نام کاربر</div>
-            <div class="step-sub">موبایل ۰۹xxx ← «ارسال کد» ← کدِ ۶ رقمی روی خودِ صفحه نوشته می‌شود («کد تست: …»)، چون خطِ پیامک وصل نیست ← نام و رمز. کدِ ثبت‌نام روی هر دستگاهِ همان Wi-Fi دیده می‌شود؛ کدِ «فراموشی رمز» فقط روی خودِ لپ‌تاپ، تا کسی در جلسه نتواند رمزِ حسابِ دمو را عوض کند. bcrypt cost=12. JWT در HttpOnly cookie</div>
+            <div class="step-sub">موبایل ۰۹xxx ← «ارسال کد» ← کدِ ۶ رقمی روی خودِ صفحه نوشته می‌شود («کد تست: …»)، چون خطِ پیامک وصل نیست ← نام و رمز. کدِ ثبت‌نام روی هر دستگاهِ همان Wi-Fi دیده می‌شود؛ کدِ «فراموشی رمز» فقط روی خودِ لپ‌تاپ، تا کسی در جلسه نتواند رمزِ حسابِ دمو را عوض کند. bcrypt cost=12. یک ردیفِ نشست در دیتابیس، توکنش در HttpOnly cookie</div>
             <div class="step-badge"><span class="chip chip-blue">/login ← تب ثبت‌نام</span><span class="chip chip-yellow">یا کاربر دمو آماده ↓</span></div>
           </div>
         </div>
@@ -286,8 +286,8 @@ body {
           <div class="step-num">7</div>
           <div class="step-content">
             <div class="step-title">پنل ادمین — ورود</div>
-            <div class="step-sub">bcrypt hash از env var. rate-limit: ۵ تلاش/۱۵دقیقه. JWT + cookie</div>
-            <div class="step-badge"><span class="chip chip-blue">/admin/login</span><span class="chip chip-orange">email از ADMIN_EMAIL</span></div>
+            <div class="step-sub">همان فرم ورود، زبانهٔ «همکاران». حساب در جدول admins است (seed از ADMIN_EMAIL می‌سازد). rate-limit: ۵ تلاش/۱۵ دقیقه. هر ورود یک ردیف در sessions</div>
+            <div class="step-badge"><span class="chip chip-blue">/login?as=staff</span><span class="chip chip-orange">email از ADMIN_EMAIL</span></div>
           </div>
         </div>
 
@@ -320,7 +320,7 @@ body {
         <div style="font-size:0.7rem;color:var(--muted);font-weight:700;margin-top:4px;margin-bottom:2px">🛡 ادمین سیستم</div>
         <div class="creds">
           <div class="cred-row"><span class="cred-label">ایمیل</span><span class="cred-val">از .env.local</span></div>
-          <div class="cred-row"><span class="cred-label">آدرس</span><span class="cred-val">/admin/login</span></div>
+          <div class="cred-row"><span class="cred-label">آدرس</span><span class="cred-val">/login?as=staff</span></div>
           <div class="cred-row"><span class="cred-label">نقش</span><span class="cred-val" style="color:var(--accent)">super_admin</span></div>
         </div>
         <div style="font-size:0.68rem;color:var(--muted);line-height:1.6;margin-top:4px">
@@ -342,7 +342,7 @@ body {
 
           <div class="q-item sec">
             <div class="q-text">امنیت چطوره؟ XSS؟ CSRF؟</div>
-            <div class="a-text"><strong>JWT در HttpOnly cookie</strong> — JS دسترسی نداره. <strong>SameSite=Lax</strong> جلوی CSRF رو می‌گیره، و هر درخواست توکن رو با حساب می‌سنجه: تغییر رمز نشست‌های قبلی رو می‌بنده و خروج همون توکن رو باطل می‌کنه. Zod روی همه ورودی‌ها. Rate-limit sliding-window. Generic error message در auth — no user enumeration.</div>
+            <div class="a-text"><strong>نشست در دیتابیس، توکنِ تصادفی در HttpOnly cookie</strong> — JS دسترسی نداره و جدول فقط هش SHA-256 توکن رو داره. <strong>SameSite=Lax</strong> جلوی CSRF رو می‌گیره. خروج ردیف همون نشست رو پاک می‌کنه و تغییر رمز همهٔ ردیف‌های اون حساب رو. Zod روی همه ورودی‌ها. Rate-limit sliding-window. Generic error message در auth — no user enumeration.</div>
           </div>
 
           <div class="q-item tech">
@@ -457,8 +457,8 @@ body {
             </tr>
             <tr>
               <td class="layer">Auth</td>
-              <td class="tech-name">JWT · jose · bcrypt cost=12</td>
-              <td class="why">Signed sessions checked against the account on every request (revocable). HttpOnly+SameSite=Lax ← XSS/CSRF safe. RBAC چهارسطحی. Timing-safe dummy hash.</td>
+              <td class="tech-name">Database sessions · bcrypt cost=12</td>
+              <td class="why">A random token in the cookie, its SHA-256 as the row key; signing out deletes the row (8 h idle, 7 days max). HttpOnly+SameSite=Lax ← XSS/CSRF safe. RBAC چهارسطحی. Timing-safe dummy hash.</td>
             </tr>
             <tr>
               <td class="layer">Maps</td>
@@ -815,7 +815,7 @@ body {
         <li><span class="icon">✅</span><span><b>/list-media</b> — پنج مرحله: اطلاعات، موقعیت، قیمت، آپلود عکس، انتخاب پلن. ثبت کنید و به <b>/dashboard</b> بروید — آگهی با وضعیت «در انتظار تأیید» در لیست است</span></li>
         <li><span class="icon">📋</span><span>آگهی‌های demo در وضعیت‌های دیگر (در انتظار پرداخت / منتشر شده / رد شده) هم نمایش داده می‌شوند</span></li>
       </ul>
-      <div class="tip">💡 نکته امنیتی: JWT HttpOnly cookie — XSS نمی‌تواند token را بدزدد.</div>
+      <div class="tip">💡 نکته امنیتی: توکنِ نشست در HttpOnly cookie است — XSS نمی‌تواند آن را بدزدد، و دیتابیس فقط هشِ آن را دارد.</div>
     </div>
   </div>
 
@@ -891,7 +891,7 @@ body {
     <div class="qa-a">
       <b>لایه‌های امنیتی:</b>
       <ul style="margin-top:8px;padding-right:16px;line-height:2">
-        <li><code>JWT</code> در HttpOnly cookie — XSS نمی‌تواند token بدزدد</li>
+        <li>نشستِ دیتابیسی با توکنِ تصادفی در HttpOnly cookie — XSS نمی‌تواند token بدزدد</li>
         <li><code>bcrypt</code> با cost 12 — brute force مقاوم</li>
         <li>Rate limit جداگانه برای login کاربر (۱۰ تلاش/۱۵ دقیقه) و admin</li>
         <li><code>Zod</code> روی همه input‌ها — injection غیرممکن</li>

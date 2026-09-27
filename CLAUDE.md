@@ -6,7 +6,7 @@ Iranian outdoor-media (billboard) marketplace. Persian UI, RTL (`dir="rtl"`), Va
 
 ## Stack (one-liner per layer)
 
-Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Prisma 7 + better-sqlite3 · JWT (jose) HttpOnly cookies · Inline CSS + Tailwind v4 (no Tailwind classes in JSX — inline style objects only) · Zod on all API inputs
+Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Prisma 7 + better-sqlite3 · database sessions (random token, SHA-256 row) in HttpOnly cookies · CSS Modules + tokens in `globals.css` (no Tailwind classes in JSX, no static inline styles) · Zod on all API inputs
 
 ## Critical Breaking Change: Next.js 16 Proxy
 
@@ -40,10 +40,10 @@ Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Pris
 ## Dev Commands
 
 ```bash
-npm run demo    # ← build + start. USE THIS to view or demo the site.
+npm run demo    # ← migrate + build + start. USE THIS to view or demo the site.
 npm run dev     # ONLY while writing code (hot-reload). 97× more CPU.
 npm run build | lint
-npm test          # 12 unit + 162 API + 7 importer tests on a production build (~1 min)
+npm test          # 18 unit + 178 API + 8 importer tests on a production build (~1 min)
 npm run test:unit # the pure rules in lib/domain only — no build, ~0.5 s
 npm run test:e2e  # 11 browser flows over the installed Chrome; screenshots on failure
 npm run db:migrate | db:seed | db:studio | db:dedupe | db:backfill-coords
@@ -69,6 +69,7 @@ npm run db:to-postgres -- <url>   # move to PostgreSQL (§27) · db:to-sqlite to
 
 Required env: `DATABASE_URL` · `AUTH_SECRET` · `ADMIN_EMAIL` · `ADMIN_PASSWORD_HASH` · `ADMIN_NAME`
 (`NESHAN_API_KEY` is optional — only `prisma/backfill-coordinates.ts` reads it, §29)
+(`UPLOAD_DIR` is optional — photos default to `storage/uploads`, outside `public/`; `TRUSTED_PROXY_COUNT` defaults to 0 — set it only behind a real reverse proxy)
 
 ## Roadmap Tracking (always do this)
 
@@ -150,7 +151,7 @@ The documentation was consolidated: what used to be 24 files is now these.
 | File | What it carries |
 |---|---|
 | `docs/architecture.md` | the two data paths, kitchen analogy, perf comparison, why it differs from a headless DRF API |
-| `docs/engineering-decisions.md` | 35 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected, §28 = the deployment surface, §29 = CSP tightening and why script-src keeps 'unsafe-inline', §30 = findability and what Persian breaks in an OG card, §31 = browser tests and the four races behind a flaky suite, §33 = the nightly import and why it cannot undo a person, §34 = why the billboards data layer is split by direction and the two graph properties that are measured rather than claimed, §35 = the adversarial architecture review: the route pipeline, the data layer as the only door to the database, the split of `status`, typed sessions, and where every moved file went) |
+| `docs/engineering-decisions.md` | 36 decision records + milestone log — the "what we built and why" spine (§7a = why no Docker/ELK yet, §14 = SQLite, §16 = SMS built-but-dormant, §17 = why there is no booking flow, §18 = monetisation without a gateway, §19 = upload hardening, §20 = anti-scraping, §21 = denormalised sort keys, §22 = why `npm run demo`, §23 = the CRM question, §24 = the "works on the developer's machine" bug class, §25 = where the cache lives / why Redis is dormant, §22c = next/image without an image server, §26 = Cache Components measured and reverted, §27 = PostgreSQL ready but not connected, §28 = the deployment surface, §29 = CSP tightening and why script-src keeps 'unsafe-inline', §30 = findability and what Persian breaks in an OG card, §31 = browser tests and the four races behind a flaky suite, §33 = the nightly import and why it cannot undo a person, §34 = why the billboards data layer is split by direction and the two graph properties that are measured rather than claimed, §35 = the adversarial architecture review: the route pipeline, the data layer as the only door to the database, the split of `status`, typed sessions, and where every moved file went, §36 = the third review: database sessions, multipart uploads outside public/, CSS modules and the four traps they walked into) |
 | `docs/api.md` | full HTTP API reference **+ the route-writing pattern (`defineRoute`)** (was `api-patterns.md`) |
 | `docs/codemap.html` | interactive file map generated from the real import graph — supersedes the old hand-written `project-reference.md` |
 | `docs/STATUS.md` | project state, production-readiness triage, 13-layer assessment, remaining work, security audit (was `STATUS.md` + `PLAN.md` + `AUDIT.md` + `next-tasks.md` + `security-audit.md`) |

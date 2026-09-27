@@ -58,6 +58,13 @@ single process, single DB file.
    - Do **not** re-seed against the live DB in a panic. Restore from backup (below) into
      a copy first, compare, then decide.
 
+### After pulling a new version
+
+`npm run demo` applies pending migrations and regenerates the Prisma client before
+it builds, so a pull needs no extra step. The migration of 2026-09-27 moved
+sessions into the database: anyone signed in before it — on the laptop or a
+phone — is signed out once and simply signs in again.
+
 ### Rollback (target: under 2 minutes)
 
 Precondition: repo is under git and each demo version is tagged.
@@ -108,6 +115,17 @@ sqlite3 /tmp/restore-test.db "PRAGMA integrity_check; SELECT count(*) FROM billb
 ```
 Last run: row counts matched the source (3532 billboards / users / listings),
 `integrity_check` returned `ok`.
+
+**Photos are not in the database.** Every photo an owner or an admin uploaded
+lives in `UPLOAD_DIR` (default `storage/uploads/`, outside `public/`), and the
+database only holds their addresses. A backup that is to restore listings with
+their photos copies that folder alongside the `.db` file:
+```bash
+tar -czf backups/uploads-<timestamp>.tar.gz storage/uploads
+```
+Restored without it, those listings show the "no photo" placeholder rather than a
+broken image. Photos written by versions before 2026-09-27 are still read from
+`public/uploads/` — copy that folder too if it exists.
 
 ### First deployment to a real host
 
@@ -363,7 +381,7 @@ real admin row untouched.
 | `09120000107` | لیلا صادقی | featured listing, payment confirmed — shows the «ویژه» badge |
 | `09120000108` | بابک تهرانی | also an owner, with pending listings awaiting approval |
 
-### Admins — sign in at `/admin/login` with the email
+### Admins — sign in at `/login?as=staff` with the email (`/admin/login` forwards there)
 
 | Email | Role | Can |
 |-------|------|-----|

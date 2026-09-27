@@ -43,7 +43,7 @@ state, the 13-layer production assessment and the security audit, all in one fil
 | API | `app/api/**/route.ts` | Every route: session check → rate limit → Zod `.safeParse()` → business logic |
 | Data access | `lib/db/billboards/` (`queries.ts` reads, `mutations.ts` writes, `core.ts` shared), `lib/db/client.ts` | The only path to billboard/reservation reads and writes |
 | Types | `lib/types.ts` | Domain types + label maps, **data-free** |
-| Auth internals | `lib/auth/{session,users,rate-limit,audit,client-ip}.ts` | JWT, RBAC, sliding-window limits, audit, trusted-proxy IP |
+| Auth internals | `lib/auth/{session,actor,sign-in,device,client-ip}.ts`, `lib/db/sessions.ts` | Database sessions (random token, SHA-256 row), RBAC, audit, trusted-proxy IP |
 | Observability | `lib/logger.ts`, `lib/api-error.ts` | JSON-line logs, user-facing error reference ids |
 | Config safety | `lib/env.ts`, `instrumentation.ts` | Fail-closed env validation at boot |
 | Recovery | `scripts/backup-db.sh` | Online SQLite backup + tested restore |
@@ -103,8 +103,9 @@ unknown `type`, 401-before-anything on admin routes, RBAC 403.
 
 ## 3. Authentication & authorisation
 
-**Decision.** JWT (jose, HS256) in an HttpOnly `SameSite=Lax` cookie
-(Strict until 2026-09-25 — see the revision at the end of this section);
+**Decision.** A session row per signed-in browser, named by a random token in
+an HttpOnly `SameSite=Lax` cookie (a JWT until 2026-09-27, Strict until
+2026-09-25 — see the revisions at the end of this section);
 role hierarchy `viewer < editor < admin < super_admin` plus `user`; the
 endpoint — not the UI — is the security boundary.
 
@@ -161,6 +162,20 @@ write itself.
 - *Admin could reset a customer's password and read it back, or move their number
   and reset through it* — an account takeover visible only in the audit log. Both
   are super admin only now.
+
+**Revised 2026-09-27 — the session is a row, not a token.** After the revision
+above, every request that carried the JWT read the database twice anyway (the
+revocation list and the account's `sessionVersion`), so the token kept none of a
+JWT's advantages and all of its machinery. The cookie now carries 32 random bytes;
+`sessions` holds their SHA-256 with the account and two deadlines (8 hours idle,
+sliding; 7 days absolute — `lib/domain/session.ts`). One primary-key read answers
+who is asking. Signing out deletes the row; a new password, a reset or a
+deactivation deletes the account's rows inside the same transaction as the change.
+`revoked_sessions` and `sessionVersion` are gone. The `s.`/`c.` prefix lets
+`proxy.ts` send a request to the right sign-in page without a read — a hint only,
+since it is hashed with the rest. Every sign-in attempt, successful or not, goes to
+the durable audit table. Cost: everyone signed in before the migration signs in
+once more. §36 has the rest of this review.
 ---
 - *Without a proxy the client address is a header the client writes.* True
   under `next start`, which fills X-Forwarded-For only when it is absent.
@@ -737,6 +752,18 @@ that a human approves the listing before anyone else sees it.
 
 `lib/uploads.ts` holds this once; both the public listing route and the admin
 image manager call it, so the two cannot drift apart.
+
+**Revised 2026-09-27.** Photos travel as files in a multipart form, not as
+base64 inside JSON (a third larger, and parsed whole as one string);
+`defineRoute` parses the form from bytes already counted against the route's
+cap, and `proxyClientMaxBodySize` matches the largest upload, because the proxy
+otherwise hands a route only the first 10 MB. They are written to `UPLOAD_DIR`
+(`storage/uploads` by default) and served by `app/uploads/[...path]/route.ts`:
+under `public/` they belonged to the static folder that `next start` lists once
+at boot, so a photo written later answered 404 until a restart. The browser
+redraws each photo at 1600 px as JPEG before sending it (`lib/client/photos.ts`),
+which lets a phone's 5 MB photo through and drops its EXIF, GPS position
+included.
 
 ---
 
@@ -2054,6 +2081,88 @@ browser flows — including a reviewer signing in and moving between panel
 sections by their links. The import graph: 195 files, 497 edges, zero cycles,
 zero upward edges.
 
+## 36. A review from the examiner's chair, and what it changed
+
+**Context.** A third adversarial review, asked to question the architecture
+first and to ignore every comment. The brief set two limits: nothing about
+deployment infrastructure counts as a finding, and nothing may make the
+laptop demo harder to start or to reach from a phone.
+
+### Kept, after being questioned
+
+- **Next.js, not Django or an API-first split.** The review asked whether a
+  headless API with a separate client would be the cleaner design. It would
+  add a second deployable and a second auth story for no gain on a directory
+  whose pages are read far more than written. The two data paths of §1 stay:
+  Server Components read `lib/db` directly, the browser writes through
+  `/api/*`, and both go through the same data layer. `docs/architecture.md`
+  has the full argument.
+- **SQLite** (§14), and no paid or region-blocked service anywhere.
+- **Demo content on the landing page** was left as it is, by the author's
+  decision.
+
+### What changed
+
+| Area | Before | After | Why |
+|------|--------|-------|-----|
+| Sessions | a JWT checked against two tables on every request | a row per browser, named by a random token | §3, revised 2026-09-27 |
+| Uploads | base64 in JSON, written under `public/` | multipart files under `UPLOAD_DIR`, served by a route, shrunk in the browser | §19, revised 2026-09-27 |
+| Client address | `TRUSTED_PROXY_COUNT` defaulted to 1 | defaults to 0 | with no proxy in front, the per-address limit read a header the caller wrote; 40 requests with a fresh header each went straight through against `npm run demo` |
+| Page cache | every `/billboard/<anything>` cached, "not found" included | a slug must exist before the cache is asked; the catalogue caches its first five pages only | forty invented slugs wrote forty cache files, unbounded |
+| Moderation | an approved row could not be re-decided, and one with a review could not be deleted | take a row down and put it back; an editor may remove any review | an abusive listing otherwise stayed public for good |
+| Availability | every crawled board shown as «خالی» and as InStock | a fifth state, `unknown` («استعلام از مالک») | the sources never say whether a board is let; «available» meant "listed" |
+| Sources | a crawled row's source printed as its key | named and linked (`DATA_SOURCES`, `sourceLabel()`), with Neshan and Balad beside Google on the map card | credit owed to the source, and a way for the visitor to check it; Google's embed is often unreachable in Iran |
+| Cities | 61 cities (~380 rows) unknown to the filter and the map | all known; a point far from its own city is not drawn | a unit test fails if the dataset names an unknown city |
+| Slugs | `listing-<timestamp>`, colliding within a millisecond | Finglish from the name plus six random characters | readable, and no collision |
+| Passwords | six characters for customers, eight for staff, in five schemas; Persian digits compared as other characters | one rule (8), and every phone number and password read in Latin digits on the server | a password reset to «رمز۱۲۳۴۵۶» could never be typed back in (API test) |
+| Front end | inline style objects plus `!important` overrides in `globals.css` | a CSS module per component, shared `Button`, `form`, `Dialog`, `StatusScreen`, one site frame in `app/(site)`, sign-in pages in `app/(auth)` | below |
+
+### The front end, and four traps it walked into
+
+Styles moved from inline objects into CSS modules, one per component, reading
+the tokens in `globals.css`. The page-specific `!important` overrides that had
+collected in `globals.css` (`.detail-*`, `.explore-*`, `.admin-*`, `.dash-*`…)
+are gone; each module carries its own `@media` rules. Four things broke on the
+way, each silently, and each is worth knowing before writing the next module:
+
+1. **Animations named in a module are renamed.** `animation: fadeIn` inside a
+   module asks for a hashed `fadeIn` of that module; the `@keyframes` in
+   `globals.css` never matches and the browser drops the animation without a
+   word. The landing ticker, the related-media strip, the background orbs and
+   four fades stopped, and no screenshot could show it. Each keyframe now lives
+   in the module that runs it; `test/unit/css-modules.test.mjs` fails otherwise,
+   and fails on the commit before the fix.
+2. **A flex item with auto side margins shrinks to its content.** The site
+   frame is a flex column, so a page that centred its `<main>` with a max-width
+   collapsed to the width of its heading (the map page). The frame gives
+   `<main>` its full width once.
+3. **Two sheets of equal specificity win by load order.** An override of a
+   shared button class must be nested to outrank it, or it works on one page
+   and not the next.
+4. **`${color}18` is not a colour when the colour is a variable.** The idiom
+   built tints by appending an alpha to a hex string; with `var(--accent)` it
+   produced nothing, so the admin role badge, every «available» badge, the
+   customer option on the sign-in page and a lead button had no background. A tone now arrives as
+   one custom property and tints are mixed with `color-mix()`.
+
+Found while moving the markup, and fixed with it: a failed city request in the
+analytics tab removed the city filter with it, leaving no way back; the admin
+confirm dialogs had no Escape, no focus trap and no focus return (every modal is
+a `Dialog` now); the edit dialog saved a face count it had no field for; a
+customer's details opened only from a clickable table row; the audit log's
+severities and the admin role badge read in English; Iran's coordinate box was
+copied into the quality checks; the scraper page said rows arrive by `db:seed`.
+
+### Verified
+
+18 unit tests (half a second), 178 API tests and 8 importer tests on a
+production build, 11 browser flows; lint and the type-check clean. Every page
+was screenshotted on a phone and a desktop in both themes before and after,
+and each difference was looked at; the animations were checked in a real
+browser with `document.getAnimations()`.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -2103,3 +2212,4 @@ zero upward edges.
 | 2026-09-23 | **Demo verified over the LAN, not localhost** | `npm run demo` exercised from the network address a reviewer's phone would use: 19 public routes, user and admin sign-in, dashboard, contact reveal, RBAC (`admin` 403 / `super_admin` 200 on staff management), styled Persian 404, identical error text for a known and an unknown phone. Session cookie `HttpOnly; SameSite=Strict` and **no `Secure`** over plain HTTP; owner phone absent from public HTML. 240 concurrent requests: all 200, zero 429, zero logged errors, CPU back to 0% at idle. Anti-scraping confirmed live — a UA-less client gets 403 where a browser gets 200. |
 | 2026-09-25 | **Adversarial architecture review** | §35 — one route pipeline (`defineRoute`) for all 35 routes; `lib/db/` as the only door to the database (lint-enforced; 30 → 13 importers of the client); typed customer/staff sessions and real foreign keys; `status` split into `availability` + `moderation` with enums; crawler state moved to `billboard_sources`; JSON columns read through Zod; admin panel as server-checked nested routes; rate limits follow `REDIS_URL` with a memory fallback. Migration proved on a copy of the real DB first. 9 unit + 142 API + 6 importer tests, 10 browser flows. |
 | 2026-09-26 | **Second adversarial review, and a deep pass over the unreviewed parts** | Sessions made revocable (sessionVersion, revoked token ids, seven-day ceiling), device cookies against lockout abuse, bounded bodies, open redirect closed, per-account limits on phone reveals and writes, version-bound listing decisions, atomic idempotency, uploads served after boot and cleaned when orphaned, `server.mjs` for an unforgeable client address, Persian search folding (trigger-kept `searchText`), a validated nightly import that never overwrites a concurrent edit, paged admin lists, a compare selection that survives a reload, integer-only admin sizes. Two regressions of this work found and fixed by recounting: import cycles (now a guard test) and stale thesis numbers. 12 unit + 162 API + 7 importer tests, 11 browser flows. |
+| 2026-09-27 | **Third review — sessions, uploads, styles** | §36 — database sessions instead of a JWT; multipart uploads stored outside `public/`; `TRUSTED_PROXY_COUNT` defaults to 0; bounded page cache; take-down and review moderation; `unknown` availability for crawled rows, linked sources, Iranian map links; every dataset city known; readable slugs; one password rule and Persian digits read as Latin; CSS modules across the site with shared `Button`/`Dialog`/`StatusScreen`, and a test that an animation named in a module is defined there. 18 unit + 178 API + 8 importer + 11 browser tests. |

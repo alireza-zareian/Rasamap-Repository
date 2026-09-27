@@ -118,7 +118,7 @@ From the `import` data `docs/thesis/build.py` extracts (195 TypeScript files,
 - **13 files import the database client, all of them inside `lib/db/`.** Before
   the data layer was made the only door (§35), 30 did, including the route
   handlers themselves.
-- **One route pipeline.** All 35 route files declare themselves through
+- **One route pipeline.** All 36 route files declare themselves through
   `defineRoute()`; the order of the security checks is written once.
 
 What remains is tuning, not redesign — Partial Prerendering on `/explore`,

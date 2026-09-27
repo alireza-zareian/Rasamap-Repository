@@ -108,14 +108,40 @@ Applies to: API error payloads, toast messages, button labels, status badges, em
 
 ---
 
-**5. Styling is inline `style={{}}` — no Tailwind classes in JSX**
+**5. Styling is a CSS module per component — no Tailwind classes, no static inline styles (enforced in part)**
 
 ```
-✅  <div style={{ display: "flex", gap: 12, borderRadius: 8 }}>
-❌  <div className="flex gap-3 rounded-lg">
+✅  import styles from "./BillboardCard.module.css";   <div className={styles.card}>
+✅  <div className={styles.badge} style={cssVar("--tone", availabilityTone(b.availability))}>
+✅  <div className={styles.fill} style={{ width: `${share}%` }}>       // a value only known per render
+❌  <div style={{ display: "flex", gap: 12, borderRadius: 8 }}>         // static look, inline
+❌  <div className="flex gap-3 rounded-lg">                              // Tailwind utilities
 ```
 
-Tailwind v4 is present only for CSS custom properties (declared in `globals.css`). Adding utility classes silently breaks the design system because the purge config doesn't cover component files.
+Colours, radii and sizes come from the tokens in `globals.css` (`var(--accent)`,
+`var(--border)`, `--topbar-h` …), so both themes follow with no rule of their own.
+A colour that varies per row arrives as one custom property through `cssVar()`
+(`components/ui/css-var.ts`) and the module mixes tints from it with
+`color-mix()` — never `` `${color}18` ``, which is not a colour when the colour is
+a variable. Reach for the shared pieces before writing a class: `Button`/`ButtonLink`,
+`form.module.css` (`field`, `label`, `input`, `error`, `stack`, `row`), `Dialog`
+for every modal, `StatusScreen` for a status page, `admin.module.css` in the panel.
+`globals.css` holds tokens, resets and the few things that are truly global
+(the marquee window, `.skeleton`, the hidden-tab pause list) — no page overrides.
+
+Two traps, both of which shipped once:
+
+- **An animation named in a module must be defined in that module.** A CSS module
+  renames every animation it names, so a `@keyframes` in `globals.css` never
+  matches and the browser drops the animation silently. `test/unit/css-modules.test.mjs`
+  enforces it.
+- **A module class that overrides a shared one must outrank it.** Two sheets of
+  equal specificity win by load order, which is not yours to choose — nest the
+  override (`.barActions .go`) instead.
+
+Inline styles stay only where the renderer has no stylesheet: `app/opengraph-image.tsx`
+(the image renderer takes inline styles only) and `app/global-error.tsx` (it replaces
+the root layout and cannot count on any CSS having loaded).
 
 ---
 
@@ -196,9 +222,9 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 
 `npm test` builds and serves a *production* server on :3100 (into `.next-test/`)
 through `server.mjs`, the same server `npm run demo` runs, reseeding its own
-`prisma/test.db`. It finishes in about a minute: first the 12
-unit tests of the pure rules in `test/unit/` (half a second, no build — also
-`npm run test:unit` on its own), then 162 API tests, then the 7 importer tests in
+`prisma/test.db`. It finishes in about a minute: first the 18
+unit tests of the pure rules and the source guards in `test/unit/` (half a second,
+no build — also `npm run test:unit` on its own), then 178 API tests, then the 8 importer tests in
 `test/sync.test.mjs` — run one after the other on purpose, because the importer
 writes rows the API tests count.
 
