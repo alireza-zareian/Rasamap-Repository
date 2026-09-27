@@ -1,4 +1,8 @@
-// Self-hosted API reference — renders docs/api.md as HTML at request time.
+// Self-hosted API reference — renders docs/api.md as HTML at request time,
+// for signed-in staff only. The reference names every limit, lockout and
+// defence the API has — including how a patient scraper gets past them — so
+// to anyone else the address does not exist (404, not 403: a 403 would
+// confirm there is something here).
 // No external CDN, no markdown dependency: a small, escaped-first renderer that
 // covers exactly the constructs api.md uses (headings, tables, code, bold,
 // links, rules, lists, paragraphs).
@@ -7,6 +11,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getActor } from "@/lib/auth/actor";
 import styles from "./api-docs.module.css";
 
 export const metadata: Metadata = {
@@ -113,6 +119,7 @@ const renderApiDocs = unstable_cache(
 );
 
 export default async function ApiDocsPage() {
+  if ((await getActor())?.kind !== "staff") notFound();
   const html = await renderApiDocs();
 
   return (

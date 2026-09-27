@@ -224,7 +224,7 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 through `server.mjs`, the same server `npm run demo` runs, reseeding its own
 `prisma/test.db`. It finishes in about a minute: first the 18
 unit tests of the pure rules and the source guards in `test/unit/` (half a second,
-no build — also `npm run test:unit` on its own), then 178 API tests, then the 8 importer tests in
+no build — also `npm run test:unit` on its own), then 180 API tests, then the 8 importer tests in
 `test/sync.test.mjs` — run one after the other on purpose, because the importer
 writes rows the API tests count.
 
@@ -307,3 +307,35 @@ praise, no softening.
 where, and what it does not cover ("assumes a proxy appends X-Forwarded-For").
 No verdicts such as "this is safe", "cannot happen" or "the correct
 architecture" unless a test enforces it; then name the test.
+
+---
+
+**12. Whatever reaches the browser is public for ever — and the code is not the valuable part**
+
+The server code, the database and the data layer never leave the server; the
+site's value is in them. Everything the browser receives — HTML, the RSC
+payload, `/_next/static/*.js`, response headers, error bodies — should be read
+as published. Before a change ships, check that it publishes nothing more:
+
+- **No source maps in production.** `productionBrowserSourceMaps` stays at its
+  default (off); a production map hands out every client component's original
+  source, comments included. Guard test: "no response names the framework, and
+  no source map is built".
+- **No framework banner.** `poweredByHeader: false` in `next.config.ts`, same test.
+- **A client component or a page payload gets the fields it draws, no more** —
+  `toPublicBillboard()`, `CatalogueItem`, the `select` in `lib/db`. Never pass a
+  whole row to a client component; never put a secret in a `NEXT_PUBLIC_*` var.
+- **Internal documents are not pages for visitors.** `/api-docs` answers 404 to
+  anyone who is not staff; `docs/` is never served. Guard test: "the internal API
+  reference exists only for staff".
+- **Errors say what happened, never how the system is built** (§5): a Persian
+  message and a reference id; the stack and the SQL go to the log.
+- **Bulk reads have a ceiling** that a person never meets and a copier always
+  does (§20 of `docs/engineering-decisions.md`) — and none of this may cost a
+  real visitor a click, a wait or a captcha.
+
+What this rule cannot do, and a comment should not claim: the look of a page
+and the JavaScript that draws it can always be imitated by anyone who opens it,
+and a patient crawler on many addresses can still read public listings. The
+aim is that copying costs far more than building, and that nothing it yields
+opens the server.

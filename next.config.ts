@@ -81,6 +81,12 @@ const nextConfig: NextConfig = {
   // The test suite builds into its own directory (test/run.mjs sets this), so
   // `npm test` never clobbers the .next that `npm run demo` is serving.
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  // No "X-Powered-By: Next.js" on every response: naming the framework and
+  // its version family tells a stranger which advisories to try first, and
+  // tells a visitor nothing. (Source maps are already off in production —
+  // productionBrowserSourceMaps is left at its default, false; a guard test
+  // fails if either changes.)
+  poweredByHeader: false,
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

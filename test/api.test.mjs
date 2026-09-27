@@ -2512,3 +2512,26 @@ test("the old staff sign-in address forwards to the one sign-in page", async () 
   const offsite = await api("/admin/login?next=//evil.example", { redirect: "manual" });
   assert.equal(offsite.headers.get("location"), "/login?as=staff", "an off-site next must be dropped");
 });
+
+// What a stranger can learn about the system from the outside. Each of these
+// was either true once or is the usual way a site's internals leak.
+test("the internal API reference exists only for staff", async () => {
+  // It names every limit and defence, including how a scraper gets past
+  // them. To anyone else the address does not exist — 404, not 403.
+  assert.equal((await api("/api-docs")).status, 404, "a visitor can read the API reference");
+  assert.equal((await api("/api-docs", { token: await mintSession({ role: "user" }) })).status, 404, "a customer can read the API reference");
+  const staff = await api("/api-docs", { token: await mintSession({ role: "viewer" }) });
+  assert.equal(staff.status, 200);
+  assert.match(String(staff.json), /defineRoute/);
+});
+
+test("no response names the framework, and no source map is built", async () => {
+  for (const path of ["/", "/api/health", "/nope-page"]) {
+    assert.equal((await api(path)).headers.get("x-powered-by"), null, `${path} sends X-Powered-By`);
+  }
+  // A production source map hands out the original source of every client
+  // component, comments included. It is off by default; this keeps it off.
+  const config = stripComments(readFileSync("next.config.ts", "utf8"));
+  assert.doesNotMatch(config, /productionBrowserSourceMaps\s*:\s*true/);
+  assert.match(config, /poweredByHeader\s*:\s*false/);
+});
