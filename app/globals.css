@@ -390,3 +390,24 @@ html.page-hidden .skeleton {
   /* A zoom is motion, so this drops the movement itself, not just its easing. */
   .card-photo-zoom { transition: none !important; transform: none !important; }
 }
+
+/* ── Page transitions ──────────────────────────────────────────────
+   Navigations run as view transitions (next.config.ts). The page itself
+   crossfades — the browser's default, shortened — and a catalogue card's
+   photo morphs into the media page's gallery (components/ui/transitions.ts).
+   All of it is drawn by the compositor from two snapshots; nothing runs per
+   frame on the main thread. The blur mid-flight hides the stretch between a
+   square card photo and a wide gallery frame. */
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 180ms; }
+::view-transition-group(.media-morph) {
+  animation-duration: 380ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-image-pair(.media-morph) { animation-name: media-morph-blur; }
+@keyframes media-morph-blur { 35% { filter: blur(4px); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

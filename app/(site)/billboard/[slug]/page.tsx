@@ -18,6 +18,7 @@ import { mapLinks } from "@/lib/domain/location";
 import { availabilityTone } from "@/components/ui/availability";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "./detail.module.css";
+import reveal from "@/components/ui/reveal.module.css";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
 
@@ -192,7 +193,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               </div>
               <div className={styles.address}>{b.location}</div>
 
-              <BillboardGallery images={allImgs} name={b.name} type={b.type} />
+              <BillboardGallery images={allImgs} name={b.name} type={b.type} slug={b.slug} />
 
               <div className={styles.specs}>
                 {[
@@ -241,14 +242,14 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               )}
 
               {b.description && (
-                <section className={styles.panel}>
+                <section className={`${styles.panel} ${reveal.reveal}`}>
                   <h2 className={styles.panelTitle}>توضیحات</h2>
                   <p>{b.description}</p>
                 </section>
               )}
 
               {b.features?.length > 0 && (
-                <section className={styles.panel}>
+                <section className={`${styles.panel} ${reveal.reveal}`}>
                   <h2 className={styles.panelTitle}>ویژگی‌ها</h2>
                   <ul className={styles.tags}>
                     {b.features.map((f, i) => <li key={i} className={`${styles.tag} ${styles.feature}`}><Check size={12} /> {f}</li>)}
@@ -257,7 +258,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
               )}
 
               {b.nearbyLandmarks?.length > 0 && (
-                <section className={styles.panel}>
+                <section className={`${styles.panel} ${reveal.reveal}`}>
                   <h2 className={styles.panelTitle}>مکان‌های اطراف</h2>
                   <ul className={styles.tags}>
                     {b.nearbyLandmarks.map((lm, i) => <li key={i} className={styles.tag}><MapPin size={12} /> {lm}</li>)}

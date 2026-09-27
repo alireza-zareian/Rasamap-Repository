@@ -115,6 +115,11 @@ const nextConfig: NextConfig = {
     // reached the route cut short and failed as "not a valid form". The limit
     // is the largest body any route accepts: the admin's photo list.
     proxyClientMaxBodySize: maxUploadBodyBytes(MAX_BILLBOARD_IMAGES),
+    // Route navigations run as view transitions, so a card's photo can morph
+    // into the media page's gallery (components/BillboardCard.tsx). The browser
+    // does the animation on the compositor; one without the API navigates as
+    // before, with no animation and nothing broken.
+    viewTransition: true,
   },
   // /api-docs renders docs/api.md at runtime — make sure the standalone/prod
   // build ships that file (it lives outside app/ and public/).

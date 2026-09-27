@@ -1,9 +1,10 @@
 "use client";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, ViewTransition } from "react";
 import Image from "next/image";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import { NoImagePlaceholder } from "@/components/MediaImage";
+import { mediaPhotoTransition } from "@/components/ui/transitions";
 import styles from "./detail.module.css";
 
 interface Props {
@@ -11,12 +12,14 @@ interface Props {
   name: string;
   /** The media type, for the placeholder drawn when there is no photo. */
   type: string;
+  /** The media's slug — names the morph from its catalogue card. */
+  slug: string;
 }
 
 // Below this, a horizontal drag counts as a swipe rather than a stray touch.
 const SWIPE_PX = 45;
 
-export default function BillboardGallery({ images, name, type }: Props) {
+export default function BillboardGallery({ images, name, type, slug }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   // Crawled photos live on the sources' servers and some of them are gone.
@@ -49,21 +52,27 @@ export default function BillboardGallery({ images, name, type }: Props) {
   const openLightbox = () => { if (Date.now() - swipedAt.current > 250) setLightbox(true); };
 
   if (!images.length) {
-    return <div className={styles.empty}><NoImagePlaceholder type={type} iconSize={48} /></div>;
+    return (
+      <ViewTransition name={mediaPhotoTransition(slug)} share="media-morph">
+        <div className={styles.empty}><NoImagePlaceholder type={type} iconSize={48} /></div>
+      </ViewTransition>
+    );
   }
 
   return (
     <>
       {/* A real <button>, so a keyboard can open the photographs too. */}
-      <button type="button" className={styles.stage} onClick={openLightbox} aria-label={`بزرگ‌نمایی تصویر ${name}`}
-        onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        {broken.has(active)
-          ? <NoImagePlaceholder type={type} iconSize={48} />
-          : <Image key={active} src={images[active]} alt={name} fill sizes="(max-width: 900px) 100vw, 640px"
-              decoding="async" loading="eager" fetchPriority="high" onError={() => markBroken(active)} />}
-        {images.length > 1 && <span className={`${styles.pill} ${styles.counter}`}>{active + 1} / {images.length}</span>}
-        <span className={`${styles.pill} ${styles.zoom}`}><Search size={12} /> بزرگ‌نمایی</span>
-      </button>
+      <ViewTransition name={mediaPhotoTransition(slug)} share="media-morph">
+        <button type="button" className={styles.stage} onClick={openLightbox} aria-label={`بزرگ‌نمایی تصویر ${name}`}
+          onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          {broken.has(active)
+            ? <NoImagePlaceholder type={type} iconSize={48} />
+            : <Image key={active} src={images[active]} alt={name} fill sizes="(max-width: 900px) 100vw, 640px"
+                decoding="async" loading="eager" fetchPriority="high" onError={() => markBroken(active)} />}
+          {images.length > 1 && <span className={`${styles.pill} ${styles.counter}`}>{active + 1} / {images.length}</span>}
+          <span className={`${styles.pill} ${styles.zoom}`}><Search size={12} /> بزرگ‌نمایی</span>
+        </button>
+      </ViewTransition>
 
       {images.length > 1 && (
         <div className={styles.thumbs}>

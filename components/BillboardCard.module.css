@@ -15,6 +15,22 @@
     }
 .compared, .compared:hover { border-color: var(--accent-warm); }
 
+/* A soft light under the pointer (followPointer in BillboardCard.tsx). It is
+   one gradient on a pseudo-element, faded in on hover, so it costs a repaint
+   of this card only and nothing on a touch screen. */
+@media (hover: hover) {
+  .card::after {
+    content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
+    background: radial-gradient(360px circle at var(--spot-x, 50%) var(--spot-y, 0%),
+      color-mix(in srgb, var(--accent) 16%, transparent), transparent 55%);
+    opacity: 0; transition: opacity 0.25s ease;
+  }
+  .card:hover::after { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card::after { display: none; }
+}
+
 .photo { position: relative; aspect-ratio: 1 / 1; background: var(--bg-card); overflow: hidden; }
 /* The photo drifts in while the badges stay put, so the wrapper moves.
    .card-photo-zoom in globals.css carries the transition, which

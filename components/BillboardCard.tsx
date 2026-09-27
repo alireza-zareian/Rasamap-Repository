@@ -1,11 +1,13 @@
 "use client";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { Scale, Star, Sparkles } from "lucide-react";
 import MediaImage from "@/components/MediaImage";
 import { type CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
 import { faNum, faCompact } from "@/lib/format";
 import { availabilityTone } from "@/components/ui/availability";
 import { cssVar } from "@/components/ui/css-var";
+import { mediaPhotoTransition } from "@/components/ui/transitions";
 import styles from "./BillboardCard.module.css";
 
 interface BillboardCardProps {
@@ -13,6 +15,19 @@ interface BillboardCardProps {
   isCompared: boolean;
   onCompare: () => void;
   listMode?: boolean;
+}
+
+/**
+ * Moves the card's spotlight to the pointer. It writes two custom properties
+ * on the element and nothing else — no React state, so a pointer crossing the
+ * grid re-renders nothing. A touch has no hover to light, so it is skipped.
+ */
+function followPointer(e: React.PointerEvent<HTMLDivElement>) {
+  if (e.pointerType !== "mouse") return;
+  const card = e.currentTarget;
+  const box = card.getBoundingClientRect();
+  card.style.setProperty("--spot-x", `${e.clientX - box.left}px`);
+  card.style.setProperty("--spot-y", `${e.clientY - box.top}px`);
 }
 
 export default function BillboardCard({ billboard: b, isCompared, onCompare, listMode = false }: BillboardCardProps) {
@@ -56,14 +71,19 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
   }
 
   return (
-    <div data-testid="billboard-card" style={tone}
+    <div data-testid="billboard-card" style={tone} onPointerMove={followPointer}
       className={`${styles.card} ${isCompared ? styles.compared : ""} ${b.featured ? "gradient-frame" : ""}`}>
       <div className={styles.photo}>
-        <div className={`${styles.zoom} card-photo-zoom`}>
-          {/* A grid card is 320–400 CSS px wide: the 384 variant at 1x, the
-              500-wide source at 2x. */}
-          <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="(max-width: 700px) 100vw, 384px" />
-        </div>
+        {/* The same name as the media page's gallery: opening the card morphs
+            this photo into the page's large one. One card per slug on the
+            catalogue, so the name is unique there. */}
+        <ViewTransition name={mediaPhotoTransition(b.slug)} share="media-morph">
+          <div className={`${styles.zoom} card-photo-zoom`}>
+            {/* A grid card is 320–400 CSS px wide: the 384 variant at 1x, the
+                500-wide source at 2x. */}
+            <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="(max-width: 700px) 100vw, 384px" />
+          </div>
+        </ViewTransition>
         <div className={`${styles.badge} ${styles.glass} ${styles.type}`}>{typeLabels[b.type]}</div>
         <div className={`${styles.badge} ${styles.status}`}>{status}</div>
         {/* The only thing a paid promotion buys: this and the top of the results. */}

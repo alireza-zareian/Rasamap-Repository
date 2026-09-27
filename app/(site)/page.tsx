@@ -9,6 +9,7 @@ import LandingSearch from "./_landing/LandingSearch";
 import FeaturedCarousel from "./_landing/FeaturedCarousel";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "./_landing/landing.module.css";
+import reveal from "@/components/ui/reveal.module.css";
 
 /**
  * The landing page — a Server Component. Its statistics and featured media are
@@ -144,7 +145,7 @@ export default async function LandingPage() {
       <section className={`${styles.stats} ${styles.band}`}>
         <div className={styles.statsGrid}>
           {figures.map(s => (
-            <div key={s.label} className={styles.stat} style={cssVar("--tone", s.tone)}>
+            <div key={s.label} className={`${styles.stat} ${reveal.reveal}`} style={cssVar("--tone", s.tone)}>
               <div className={styles.statIcon}><s.Icon size={22} /></div>
               <div className={styles.statNum}>{s.num}</div>
               <div className={styles.statLabel}>{s.label}</div>
@@ -155,13 +156,13 @@ export default async function LandingPage() {
 
       <section className={styles.section} id="types">
         <div className={styles.sectionInner}>
-          <div className={`${styles.sectionHead} section-halo`}>
+          <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
             <div className={styles.eyebrow}>انواع رسانه</div>
             <h2 className={styles.sectionTitle}>هر نوع رسانه‌ای که نیاز داری</h2>
           </div>
           <div className={styles.typesGrid}>
             {TYPES.map(t => (
-              <Link key={t.type} href={`/explore?type=${t.type}`} className={styles.typeCard}>
+              <Link key={t.type} href={`/explore?type=${t.type}`} className={`${styles.typeCard} ${reveal.reveal}`}>
                 <div className={styles.typeIcon}><t.Icon size={26} /></div>
                 <div>
                   <div className={styles.typeName}>{t.label}</div>
@@ -175,13 +176,13 @@ export default async function LandingPage() {
       </section>
 
       <section className={`${styles.section} ${styles.band}`} id="how">
-        <div className={`${styles.sectionHead} section-halo`}>
+        <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
           <div className={styles.eyebrow}>چطور کار می‌کنه؟</div>
           <h2 className={styles.sectionTitle}>سه قدم تا اکران تبلیغ</h2>
         </div>
         <ol className={styles.howGrid}>
           {STEPS.map((s, i) => (
-            <li key={s.title} className={styles.how}>
+            <li key={s.title} className={`${styles.how} ${reveal.reveal}`}>
               <div className={styles.howIcon}><s.Icon size={26} /><span className={styles.howStep}>{faNum(i + 1)}</span></div>
               <div className={styles.howTitle}>{s.title}</div>
               <div className={styles.howText}>{s.text}</div>
@@ -192,13 +193,13 @@ export default async function LandingPage() {
 
       <section className={styles.section}>
         <div className={styles.sectionInner}>
-          <div className={`${styles.sectionHead} section-halo`}>
+          <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
             <div className={styles.eyebrow}>تجربه مشتریان</div>
             <h2 className={styles.sectionTitle}>آن‌ها از رسامپ استفاده کردند</h2>
           </div>
           <div className={styles.quotes}>
             {TESTIMONIALS.map(t => (
-              <figure key={t.name} className={styles.quote} style={cssVar("--tone", t.color)}>
+              <figure key={t.name} className={`${styles.quote} ${reveal.reveal}`} style={cssVar("--tone", t.color)}>
                 <div className={styles.quoteMark} aria-hidden="true">&ldquo;</div>
                 <blockquote>{t.text}</blockquote>
                 <figcaption>
@@ -219,7 +220,7 @@ export default async function LandingPage() {
         <div className={styles.brandList}>{BRANDS.map(b => <span key={b}>{b}</span>)}</div>
       </section>
 
-      <section className={`${styles.cta} section-halo`}>
+      <section className={`${styles.cta} section-halo ${reveal.reveal}`}>
         <h2 className={styles.ctaTitle}>آماده‌ای شروع کنی؟</h2>
         <p className={styles.ctaText}>بیش از {faNum(stats.total)} رسانه منتظرته — رایگان شروع کن</p>
         <div className={styles.ctaButtons}>

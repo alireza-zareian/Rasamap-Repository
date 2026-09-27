@@ -10,6 +10,7 @@ import { hasRole, isStaffRole } from "@/lib/domain/roles";
 import { Button } from "@/components/ui/Button";
 import form from "@/components/ui/form.module.css";
 import styles from "./ReviewsSection.module.css";
+import reveal from "@/components/ui/reveal.module.css";
 
 interface Reply {
   id: number;
@@ -211,7 +212,7 @@ export default function ReviewsSection({ billboardId }: Props) {
   const date = (iso: string) => new Date(iso).toLocaleDateString("fa-IR");
 
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} ${reveal.reveal}`}>
       <div className={styles.head}>
         <h2 className={styles.title}><MessageSquare size={16} /> نظرات و امتیاز</h2>
         {avg !== null && (

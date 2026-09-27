@@ -5,6 +5,7 @@ import { faNum } from "@/lib/format";
 import { ButtonLink } from "@/components/ui/Button";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "../info-pages.module.css";
+import reveal from "@/components/ui/reveal.module.css";
 
 const advantages = [
   {
@@ -92,7 +93,7 @@ export default async function AboutPage() {
             { num: `${faNum(cityCount)}+`, label: "شهر پوشش‌داده", color: "var(--green-accent)" },
             { num: "۱۰۰٪", label: "آنلاین و رایگان", color: "var(--accent-warm)" },
           ].map(s => (
-            <div key={s.label} className={styles.stat} style={cssVar("--tone", s.color)}>
+            <div key={s.label} className={`${styles.stat} ${reveal.reveal}`} style={cssVar("--tone", s.color)}>
               <strong>{s.num}</strong>
               <span>{s.label}</span>
             </div>
@@ -108,7 +109,7 @@ export default async function AboutPage() {
           </div>
           <ul className={styles.grid3}>
             {advantages.map(a => (
-              <li key={a.title} className={styles.feature}>
+              <li key={a.title} className={`${styles.feature} ${reveal.reveal}`}>
                 <div className={styles.featureIcon}><a.Icon size={20} /></div>
                 <h3 className={styles.featureTitle}>{a.title}</h3>
                 <p className={styles.featureText}>{a.desc}</p>
@@ -119,7 +120,7 @@ export default async function AboutPage() {
       </section>
 
       <section className={styles.band}>
-        <div className={styles.closing}>
+        <div className={`${styles.closing} ${reveal.reveal}`}>
           <h2 className={styles.h2}>ارزش‌های ما</h2>
           <p>رسامپ یک پروژه دانشگاهی با اهداف واقعی است. ما به شفافیت، صداقت، و ساده‌سازی فرآیندهای پیچیده اعتقاد داریم.</p>
           <div className={`${styles.actions} ${styles.center}`}>
