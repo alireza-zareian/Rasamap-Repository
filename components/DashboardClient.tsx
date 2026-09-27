@@ -3,12 +3,16 @@ import { useState } from "react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import Image from "next/image";
 import Link from "next/link";
-import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2, CheckCircle2, Plus, Menu, X as XIcon, Sparkles } from "lucide-react";
+import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2, CheckCircle2, Plus, Sparkles, ArrowLeft } from "lucide-react";
 import { moderationLabels, planLabels } from "@/lib/types";
 import EditListingModal from "@/components/EditListingModal";
 import UserAvatar from "@/components/UserAvatar";
 import { faNum } from "@/lib/format";
 import { MIN_PASSWORD_LENGTH } from "@/lib/domain/password";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { cssVar } from "@/components/ui/css-var";
+import form from "@/components/ui/form.module.css";
+import styles from "./DashboardClient.module.css";
 
 // One of the user's own submissions, in whatever state the review left it.
 // The editable fields are carried too so a "needs_revision" listing can be
@@ -38,13 +42,13 @@ export interface Listing {
   lng: number | null;
 }
 
-const STATUS_COLOR: Record<string, [string, string]> = {
-  pending:          ["#f59e0b", "rgba(245,158,11,0.12)"],
-  awaiting_payment: ["#f59e0b", "rgba(245,158,11,0.12)"],
-  approved:         ["var(--green)", "rgba(34,197,94,0.12)"],
-  rejected:         ["#ef4444", "rgba(239,68,68,0.12)"],
-  needs_revision:   ["#f97316", "rgba(249,115,22,0.12)"],
-  suspended:        ["var(--text-muted)", "rgba(148,163,184,0.16)"],
+const STATUS_TONE: Record<string, string> = {
+  pending:          "#f59e0b",
+  awaiting_payment: "#f59e0b",
+  approved:         "var(--green)",
+  rejected:         "var(--red)",
+  needs_revision:   "#f97316",
+  suspended:        "var(--text-muted)",
 };
 // What the submitter should do next, per state — a status badge alone doesn't
 // tell someone whether the ball is in their court.
@@ -61,14 +65,10 @@ const TYPE_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
 };
 
 type Tab = "listings" | "settings";
-const navItems: [string, Tab, React.ComponentType<{ size?: number }>][] = [
+const TABS: [string, Tab, React.ComponentType<{ size?: number }>][] = [
   ["آگهی‌های من", "listings", LayoutList],
   ["ویرایش پروفایل", "settings", Settings2],
 ];
-
-function Badge({ text, color, bg }: { text: string; color: string; bg: string }) {
-  return <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 20, background: bg, color, fontWeight: 600, whiteSpace: "nowrap" }}>{text}</span>;
-}
 
 /**
  * The customer's own dashboard: their listings and their profile. The page
@@ -81,7 +81,6 @@ export default function DashboardClient({ account, initialListings }: {
   initialListings: Listing[];
 }) {
   const [tab, setTab] = useState<Tab>("listings");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(account);
   const [listings, setListings] = useState<Listing[]>(initialListings);
   // The "needs_revision" listing currently open in the edit-and-resubmit modal.
@@ -95,7 +94,9 @@ export default function DashboardClient({ account, initialListings }: {
   const [profileSuccess, setProfileSuccess]   = useState("");
   const [profileError, setProfileError]       = useState("");
 
-  const handleProfileSave = async () => {
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (profileSaving) return;
     setProfileError(""); setProfileSuccess(""); setProfileSaving(true);
     const body: Record<string, string> = {};
     if (editName.trim() && editName.trim() !== user.name) body.name = editName.trim();
@@ -115,186 +116,138 @@ export default function DashboardClient({ account, initialListings }: {
     finally { setProfileSaving(false); }
   };
 
-  const card: React.CSSProperties = { background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 18 };
-
   const underReview = listings.filter(l => l.moderation === "pending" || l.moderation === "awaiting_payment").length;
   const published   = listings.filter(l => l.moderation === "approved").length;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-deep)", fontFamily: "Vazirmatn Variable, Vazirmatn, sans-serif", direction: "rtl", color: "var(--text-main)" }}>
-
-      <div style={{ display: "flex", flexWrap: "wrap", maxWidth: 1200, margin: "0 auto", padding: "86px 20px 28px", gap: 24 }}>
-        {/* Sidebar */}
-        <div className={`dash-sidebar${sidebarOpen ? " sidebar-open" : ""}`} style={{ width: 200, flexShrink: 0, minWidth: 0 }}>
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "16px 14px", marginBottom: 10, display: "flex", alignItems: "center", gap: 12 }}>
-            <UserAvatar name={user.name} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: "0.82rem", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name.split(" ")[0]}</div>
-              <div style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>کاربر</div>
-            </div>
-          </div>
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 8 }}>
-            {navItems.map(([label, key, Icon]) => (
-              <button key={key} onClick={() => setTab(key)} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "right", padding: "10px 14px", borderRadius: 8, fontSize: "0.83rem", fontWeight: tab === key ? 600 : 400, color: tab === key ? "var(--accent)" : "var(--text-muted)", background: tab === key ? "rgba(59,123,245,0.08)" : "none", border: "none", fontFamily: "inherit", cursor: "pointer", marginBottom: 2 }}>
-                <Icon size={14} /> {label}
-              </button>
-            ))}
-            <div style={{ margin: "10px 8px 4px", borderTop: "1px solid var(--border)", paddingTop: 10 }}>
-              <Link href="/explore" style={{ display: "block", textAlign: "right", padding: "8px 6px", fontSize: "0.78rem", color: "var(--text-muted)", textDecoration: "none" }}>← جستجوی رسانه</Link>
-            </div>
-          </div>
+    <main className={styles.page}>
+      <div className={styles.head}>
+        <UserAvatar name={user.name} size={44} />
+        <div className={styles.who}>
+          <h1 className={styles.greeting}>خوش آمدید، {user.name}</h1>
+          <div className={styles.phone}>{user.phone}</div>
         </div>
+      </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(o => !o)}
-              aria-label="باز و بستن منو"
-              aria-expanded={sidebarOpen}
-              style={{ display: "none", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", cursor: "pointer", color: "var(--text-main)", alignItems: "center" }}
-              className="dash-hamburger"
-            >
-              {sidebarOpen ? <XIcon size={18} /> : <Menu size={18} />}
-            </button>
-            {/* On a phone the sidebar is behind the hamburger, so this is the
-                only place the account is identified. */}
-            <UserAvatar name={user.name} size={40} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>خوش آمدید، {user.name}</div>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{user.phone}</div>
-            </div>
-          </div>
+      {/* Two sections. They used to sit in a sidebar that became a hamburger
+          menu on a phone — a menu to reach one of two buttons. */}
+      <div className={styles.tabs} role="tablist" aria-label="بخش‌های داشبورد">
+        {TABS.map(([label, key, Icon]) => (
+          <button key={key} type="button" role="tab" id={`dash-${key}`} aria-selected={tab === key} className={styles.tab} onClick={() => setTab(key)}>
+            <Icon size={14} /> {label}
+          </button>
+        ))}
+      </div>
 
-          {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 24 }}>
+      {tab === "listings" && (
+        <div role="tabpanel" aria-labelledby="dash-listings">
+          <div className={styles.stats}>
             {[
               { Icon: LayoutList, label: "کل آگهی‌ها", val: listings.length, color: "var(--accent)" },
               { Icon: Clock, label: "در انتظار بررسی", val: underReview, color: "#f59e0b" },
               { Icon: CheckCircle2, label: "منتشر شده", val: published, color: "var(--green)" },
             ].map(s => (
-              <div key={s.label} style={{ ...card, textAlign: "center", padding: 16 }}>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 8, color: s.color }}><s.Icon size={22} /></div>
-                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: s.color }}>{s.val}</div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: 3 }}>{s.label}</div>
+              <div key={s.label} className={styles.stat} style={cssVar("--tone", s.color)}>
+                <s.Icon size={22} />
+                <strong>{faNum(s.val)}</strong>
+                <span>{s.label}</span>
               </div>
             ))}
           </div>
 
-          {tab === "listings" && (
-            <div style={card}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
-                <div style={{ fontSize: "0.9rem", fontWeight: 700 }}>آگهی‌های من</div>
-                <Link href="/list-media" style={{ background: "var(--accent)", color: "#fff", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontSize: "0.8rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <Plus size={14} /> ثبت رسانه جدید
-                </Link>
+          <section className={styles.card}>
+            <div className={styles.cardHead}>
+              <h2 className={styles.cardTitle}>آگهی‌های من</h2>
+              <ButtonLink href="/list-media" intent="primary" size="sm"><Plus size={14} /> ثبت رسانه جدید</ButtonLink>
+            </div>
+            {listings.length === 0 ? (
+              <div className={styles.empty}>
+                <div className={styles.emptyIcon}><LayoutList size={26} /></div>
+                <h3>هنوز آگهی ثبت نکرده‌اید</h3>
+                <p>رسانه تبلیغاتی خود را ثبت کنید<br />تا در جستجوی رسامپ دیده شود</p>
+                <ButtonLink href="/list-media" intent="primary"><Plus size={14} /> ثبت رسانه</ButtonLink>
               </div>
-              {listings.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "48px 20px" }}>
-                  <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--bg-surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--text-muted)" }}>
-                    <LayoutList size={26} />
-                  </div>
-                  <div style={{ fontSize: "0.92rem", fontWeight: 600, marginBottom: 6 }}>هنوز آگهی ثبت نکرده‌اید</div>
-                  <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 20, lineHeight: 1.7 }}>رسانه تبلیغاتی خود را ثبت کنید<br />تا در جستجوی رسامپ دیده شود</div>
-                  <Link href="/list-media" style={{ background: "var(--accent)", color: "#fff", textDecoration: "none", padding: "11px 24px", borderRadius: 9, fontSize: "0.85rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 8 }}><Plus size={14} /> ثبت رسانه</Link>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {listings.map(l => {
-                    const [sc, sbg] = STATUS_COLOR[l.moderation] ?? ["var(--text-muted)", "transparent"];
-                    const published = l.moderation === "approved";
-                    const created = new Date(l.createdAt).toLocaleDateString("fa-IR");
-                    return (
-                      <div key={l.id} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                          {/* Thumbnail */}
-                          <div style={{ width: 64, height: 64, flexShrink: 0, position: "relative", background: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", borderLeft: "1px solid var(--border)" }}>
-                            {l.image ? (
-                              <Image src={l.image} alt="" fill sizes="64px" loading="lazy" decoding="async" style={{ objectFit: "cover" }} />
-                            ) : (
-                              (() => { const Icon = TYPE_ICON[l.type] ?? Megaphone; return <Icon size={20} />; })()
-                            )}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0, padding: "12px 14px" }}>
-                            {/* Only a published listing has a page to link to. */}
-                            {published ? (
-                              <Link href={`/billboard/${l.slug}`} style={{ fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block", color: "var(--text-main)", textDecoration: "none" }}>{l.name}</Link>
-                            ) : (
-                              <div style={{ fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.name}</div>
-                            )}
-                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>{l.city} · {faNum(l.price)}M تومان/ماه · {created}</div>
-                          </div>
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, padding: "12px 14px", flexShrink: 0 }}>
-                            <Badge text={moderationLabels[l.moderation] ?? l.moderation} color={sc} bg={sbg} />
-                            {l.featured
-                              ? <span style={{ fontSize: "0.66rem", color: "#f59e0b", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 3 }}><Sparkles size={10} /> ویژه</span>
-                              : <span style={{ fontSize: "0.66rem", color: "var(--text-muted)" }}>پلن {planLabels[l.plan] ?? l.plan}</span>}
-                          </div>
+            ) : (
+              <ul className={styles.listings}>
+                {listings.map(l => {
+                  const isPublished = l.moderation === "approved";
+                  const Icon = TYPE_ICON[l.type] ?? Megaphone;
+                  return (
+                    <li key={l.id} className={styles.listing}>
+                      <div className={styles.listingRow}>
+                        <div className={styles.thumb}>
+                          {l.image
+                            ? <Image src={l.image} alt="" fill sizes="64px" loading="lazy" decoding="async" />
+                            : <Icon size={20} />}
                         </div>
-                        {STATUS_HINT[l.moderation] && (
-                          <div style={{ borderTop: "1px solid var(--border)", padding: "8px 14px", fontSize: "0.72rem", color: "var(--text-muted)", lineHeight: 1.7 }}>
-                            {STATUS_HINT[l.moderation]}
-                          </div>
-                        )}
-                        {l.reviewNote && (l.moderation === "needs_revision" || l.moderation === "rejected") && (
-                          <div style={{ borderTop: "1px solid var(--border)", padding: "10px 14px", fontSize: "0.74rem", color: "#f97316", lineHeight: 1.8, background: "rgba(249,115,22,0.06)" }}>
-                            <span style={{ fontWeight: 700 }}>پیام کارشناس رسامپ:</span> {l.reviewNote}
-                          </div>
-                        )}
-                        {l.moderation === "needs_revision" && (
-                          <div style={{ borderTop: "1px solid var(--border)", padding: "10px 14px" }}>
-                            <button
-                              onClick={() => setEditing(l)}
-                              style={{ background: "var(--accent)", color: "#fff", border: "none", fontFamily: "inherit", fontSize: "0.78rem", fontWeight: 700, padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}
-                            >
-                              ویرایش و ارسال مجدد
-                            </button>
-                          </div>
-                        )}
+                        <div className={styles.info}>
+                          {/* Only a published listing has a page to link to. */}
+                          {isPublished
+                            ? <Link href={`/billboard/${l.slug}`} className={styles.name}>{l.name}</Link>
+                            : <div className={styles.name}>{l.name}</div>}
+                          <div className={styles.meta}>{l.city} · {faNum(l.price)}M تومان/ماه · {new Date(l.createdAt).toLocaleDateString("fa-IR")}</div>
+                        </div>
+                        <div className={styles.state}>
+                          <span className={styles.badge} style={cssVar("--tone", STATUS_TONE[l.moderation] ?? "var(--text-muted)")}>
+                            {moderationLabels[l.moderation] ?? l.moderation}
+                          </span>
+                          {l.featured
+                            ? <span className={styles.featured}><Sparkles size={10} /> ویژه</span>
+                            : <span className={styles.plan}>پلن {planLabels[l.plan] ?? l.plan}</span>}
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === "settings" && (
-            <div style={card}>
-              <div style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: 20 }}>ویرایش پروفایل</div>
-              {profileSuccess && (
-                <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 8, padding: "10px 14px", fontSize: "0.82rem", color: "var(--green)", marginBottom: 14 }}>{profileSuccess}</div>
-              )}
-              {profileError && (
-                <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "10px 14px", fontSize: "0.82rem", color: "#ef4444", marginBottom: 14 }}>{profileError}</div>
-              )}
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: 6 }}>نام و نام خانوادگی</div>
-                <input value={editName} onChange={e => setEditName(e.target.value)} style={{ width: "100%", background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", padding: "10px 14px", borderRadius: 8, outline: "none" }} />
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: 6 }}>شماره موبایل (غیرقابل تغییر)</div>
-                <input value={user.phone} readOnly dir="ltr" style={{ width: "100%", background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", padding: "10px 14px", borderRadius: 8, outline: "none", textAlign: "right", opacity: 0.6 }} />
-              </div>
-              <div style={{ margin: "20px 0 14px", borderTop: "1px solid var(--border)", paddingTop: 18, fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>تغییر رمز عبور (اختیاری)</div>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: 6 }}>رمز فعلی</div>
-                <input type="password" value={editCurPass} onChange={e => setEditCurPass(e.target.value)} placeholder="••••••••" style={{ width: "100%", background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", padding: "10px 14px", borderRadius: 8, outline: "none" }} />
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: 6 }}>رمز جدید (حداقل {faNum(MIN_PASSWORD_LENGTH)} نویسه)</div>
-                <input type="password" value={editNewPass} onChange={e => setEditNewPass(e.target.value)} placeholder="••••••••" style={{ width: "100%", background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-main)", fontFamily: "inherit", fontSize: "0.85rem", padding: "10px 14px", borderRadius: 8, outline: "none" }} />
-              </div>
-              <button
-                onClick={handleProfileSave}
-                disabled={profileSaving}
-                style={{ background: profileSaving ? "var(--border)" : "var(--accent)", border: "none", color: "#fff", fontFamily: "inherit", fontWeight: 700, fontSize: "0.88rem", padding: "11px 24px", borderRadius: 9, cursor: profileSaving ? "default" : "pointer" }}>
-                {profileSaving ? "در حال ذخیره..." : "ذخیره تغییرات"}
-              </button>
-            </div>
-          )}
+                      {STATUS_HINT[l.moderation] && <div className={styles.strip}>{STATUS_HINT[l.moderation]}</div>}
+                      {l.reviewNote && (l.moderation === "needs_revision" || l.moderation === "rejected") && (
+                        <div className={`${styles.strip} ${styles.note}`}><b>پیام کارشناس رسامپ:</b> {l.reviewNote}</div>
+                      )}
+                      {l.moderation === "needs_revision" && (
+                        <div className={styles.strip}>
+                          <Button intent="primary" size="sm" onClick={() => setEditing(l)}>ویرایش و ارسال مجدد</Button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
         </div>
+      )}
+
+      {tab === "settings" && (
+        <section className={styles.card} role="tabpanel" aria-labelledby="dash-settings">
+          <h2 className={`${styles.cardTitle} ${styles.settingsTitle}`}>ویرایش پروفایل</h2>
+          <form className={styles.form} onSubmit={handleProfileSave}>
+            {profileSuccess && <div role="status" className={form.success}>{profileSuccess}</div>}
+            {profileError && <div role="alert" className={form.error}>{profileError}</div>}
+            <div className={form.field}>
+              <label htmlFor="profile-name" className={form.label}>نام و نام خانوادگی</label>
+              <input id="profile-name" className={form.input} value={editName} onChange={e => setEditName(e.target.value)} autoComplete="name" />
+            </div>
+            <div className={form.field}>
+              <label htmlFor="profile-phone" className={form.label}>شماره موبایل (غیرقابل تغییر)</label>
+              <input id="profile-phone" className={`${form.input} ${form.ltr}`} value={user.phone} readOnly dir="ltr" />
+            </div>
+            <div className={styles.divider}>تغییر رمز عبور (اختیاری)</div>
+            <div className={form.field}>
+              <label htmlFor="profile-current" className={form.label}>رمز فعلی</label>
+              <input id="profile-current" className={form.input} type="password" autoComplete="current-password"
+                value={editCurPass} onChange={e => setEditCurPass(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div className={form.field}>
+              <label htmlFor="profile-new" className={form.label}>رمز جدید (حداقل {faNum(MIN_PASSWORD_LENGTH)} نویسه)</label>
+              <input id="profile-new" className={form.input} type="password" autoComplete="new-password"
+                value={editNewPass} onChange={e => setEditNewPass(e.target.value)} placeholder="••••••••" />
+            </div>
+            <Button type="submit" intent="primary" className={styles.save} disabled={profileSaving}>
+              {profileSaving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+            </Button>
+          </form>
+        </section>
+      )}
+
+      <div className={styles.more}>
+        <Link href="/explore" className={styles.moreLink}><ArrowLeft size={13} /> جستجوی رسانه</Link>
       </div>
 
       {editing && (
@@ -307,7 +260,6 @@ export default function DashboardClient({ account, initialListings }: {
           }}
         />
       )}
-
-    </div>
+    </main>
   );
 }
