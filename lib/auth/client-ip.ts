@@ -9,8 +9,13 @@ import type { NextRequest } from "next/server";
  * `TRUSTED_PROXY_COUNT` positions from the right.
  *
  * TRUSTED_PROXY_COUNT — reverse proxies in front of the app (nginx = 1,
- * Cloudflare + nginx = 2). Default 1. 0 means `next start` is reached directly,
- * which is the demo laptop.
+ * Cloudflare + nginx = 2). Default 0: `next start` reached directly, which is
+ * the demo laptop. The default used to be 1, and a machine set up from
+ * .env.example without a proxy then read a header the caller writes: rotating
+ * X-Forwarded-For escaped every per-address limit (reproduced against
+ * `npm run demo`). Wrong in that direction, the setting hands out budgets;
+ * wrong the other way — 0 behind a proxy — every visitor shares the proxy's
+ * address, which is loud and safe. So the unsafe reading must be asked for.
  *
  * With 0, the address is the TCP peer. `npm run demo` runs server.mjs, which
  * writes it into `x-rasamap-peer` on every request and overwrites any value a
@@ -27,7 +32,7 @@ import type { NextRequest } from "next/server";
  */
 const TRUSTED_PROXIES = Math.max(
   0,
-  Number.parseInt(process.env.TRUSTED_PROXY_COUNT ?? "1", 10) || 0,
+  Number.parseInt(process.env.TRUSTED_PROXY_COUNT ?? "0", 10) || 0,
 );
 
 /**
