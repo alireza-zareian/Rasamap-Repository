@@ -1,31 +1,14 @@
-// ============================================================
-// RASAMAP — Coordinate backfill script (Phase 5, DB cleanup)
+// Geocode rows already in the database that have no coordinates, and so no
+// pin on the map. Same path as scraper.py: Neshan v6 with v5 as fallback, a
+// per-city bias, and the scraper's geocode cache, so a resolved address costs
+// nothing.
 //
-// Why this exists: rows with lat/lng = null get placed on the map via
-// a "city center + jitter" fallback at render time (see architecture
-// doc). That's why some billboards look like they're floating in the
-// wrong spot even though every other field about them is correct —
-// they were never actually geocoded, or were geocoded before Neshan
-// was set up / before an address correction.
-//
-// This script re-uses the exact same geocoding path scraper.py already
-// has (Neshan v6, v5 emergency fallback, per-city bias, geocode_cache
-// shared with the scraper so addresses already resolved cost nothing)
-// but points it at rows already sitting in the DB instead of freshly
-// scraped items.
-//
-// Two modes:
 //   npm run db:backfill-coords
-//     -> only fills rows where lat or lng is NULL. Non-destructive.
+//     fills only rows where lat or lng is NULL
 //   npm run db:backfill-coords -- --recheck-implausible
-//     -> ALSO re-geocodes rows that already have lat/lng but land more
-//        than ~150km from their city's center (the same plausibility
-//        check scraper.py uses) — the likely case of "everything about
-//        this billboard is right except the pin on the map".
+//     also re-geocodes rows more than ~150 km from their city's centre
 //
-// Requires NESHAN_API_KEY in .env.local (same variable the scraper
-// uses — get a free key at https://platform.neshan.org).
-// ============================================================
+// Needs NESHAN_API_KEY (§29; a free key from https://platform.neshan.org).
 
 import "./load-env";
 import path from "path";

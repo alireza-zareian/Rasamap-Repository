@@ -1,30 +1,12 @@
-// ============================================================
-// RASAMAP — Coordinate reset script
+// Clear lat/lng on every row, so db:backfill-coords re-geocodes them all. A
+// removed map fallback ("city centre + jitter") may have left random points in
+// some rows, and those cannot be told from real geocodes afterwards.
 //
-// Why this exists: some rows may have had their lat/lng overwritten by
-// an older, now-removed random "city center + jitter" fallback that
-// used to live in components/RealMap.tsx. Those values look like real
-// coordinates (they're valid numbers, "plausible" distance-wise) but
-// aren't real geocodes — there's no reliable way to tell them apart
-// from genuinely-geocoded rows after the fact.
+//   npm run db:reset-coords             dry run — prints the count
+//   npm run db:reset-coords -- --apply  clears lat/lng
 //
-// Rather than guessing which rows are contaminated, this script just
-// resets lat/lng to NULL for every row, so a full re-run of
-// `npm run db:backfill-coords` re-geocodes everything from scratch
-// against the real Neshan API. Slower, but zero ambiguity.
-//
-// SAFE BY DEFAULT: running with no flags only PRINTS how many rows
-// would be reset — it changes nothing.
-//
-// Usage:
-//   npm run db:reset-coords            (dry run — just shows the count)
-//   npm run db:reset-coords -- --apply (actually clears lat/lng)
-//
-// After running with --apply, also clear the geocode cache so stale
-// cached results (from before the jitter incident) don't get reused:
-//   echo '{}' > scraper/data/geocode_cache.json
-// Then run: npm run db:backfill-coords
-// ============================================================
+// Then empty the geocode cache and backfill:
+//   echo '{}' > scraper/data/geocode_cache.json && npm run db:backfill-coords
 
 import "./load-env";
 import { PrismaClient } from "@prisma/client";

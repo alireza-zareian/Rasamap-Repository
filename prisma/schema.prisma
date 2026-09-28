@@ -1,15 +1,10 @@
-// RASAMAP — Prisma Schema
-//
-// Notes on deliberate choices:
-// - Billboard.id: explicit Int PK so seeded numeric ids are preserved —
-//   CompareBar and the detail routes depend on stable ids.
-// - Arrays (images, allImages, features, nearbyLandmarks) and TrafficData
-//   are stored as Json — SQLite has no native array type. What they may hold
-//   is validated on the way out, in lib/db/billboards/core.ts.
-// - Enums on SQLite are TEXT columns whose values the Prisma client refuses
-//   to write or read outside the list below. The list is also what the
-//   TypeScript types are checked against (lib/db/billboards/core.ts), so a
-//   value added here and forgotten in the UI's label maps fails the build.
+// - Billboard.id is an explicit Int so seeded ids stay stable in URLs and the
+//   compare tray.
+// - Lists and traffic are Json (SQLite has no arrays), validated on the way
+//   out in lib/db/billboards/core.ts.
+// - Enums are TEXT on SQLite, enforced by the Prisma client. The UI's label
+//   maps are typed against them, so a value added here without a label fails
+//   the build.
 
 generator client {
   provider = "prisma-client-js"
@@ -149,11 +144,9 @@ model Billboard {
   city     String
   type     BillboardType
 
-  // Two independent questions, once one `status` column that answered both:
-  // whether the board is free to book, and whether the listing has passed
-  // review. Mixed together, an admin editing "availability" could set a row to
-  // `pending` and skip the review state machine entirely, and every public
-  // query had to remember a list of four statuses to exclude.
+  // Two questions that were once one `status` column: is the board free, and
+  // has the listing passed review. Together, editing availability could skip
+  // review.
   availability Availability @default(available)
   moderation   Moderation   @default(approved)
 
@@ -174,20 +167,16 @@ model Billboard {
   // TrafficData object ({ daily, peakHour, congestionLevel, pedestrian, estimatedViews, viewabilityScore })
   traffic Json
 
-  // Denormalised copy of traffic.estimatedViews. SQLite can read a JSON path
-  // (json_extract) but Prisma cannot ORDER BY one and an index cannot cover it,
-  // so the single field the catalogue sorts on ("بیشترین بازدید") is kept in its
-  // own indexed column.
+  // Copy of traffic.estimatedViews, the one JSON field the catalogue sorts on:
+  // Prisma cannot ORDER BY a JSON path, nor an index cover one.
   estimatedViews Int @default(0)
 
   lat Float?
   lng Float?
 
-  // Folded copy of name, city, location and agency that catalogue search reads
-  // (lib/domain/search.ts). SQLite triggers keep it current on every insert and
-  // on every change to those four columns — migration
-  // 20260925160000_add_search_text; Prisma cannot declare a trigger. No code
-  // writes it.
+  // Folded name, city, location and agency for catalogue search
+  // (lib/domain/search.ts). Written only by the triggers in migration
+  // 20260925160000_add_search_text; Prisma cannot declare a trigger.
   searchText String?
 
   hasImages       Boolean @default(false)
@@ -253,11 +242,8 @@ model Billboard {
 }
 
 // ── BillboardSource ────────────────────────────────────────────
-// A crawled row's bookkeeping: where it was read from, and what the nightly
-// import (prisma/sync-scraped.ts) needs to merge the feed into it safely. It
-// describes the row's provenance, not the media item, so it lives beside the
-// billboard instead of in it — and a listing or an admin-created row simply has
-// none.
+// A crawled row's provenance and what prisma/sync-scraped.ts needs to merge
+// the feed into it. Listings and admin-created rows have none.
 model BillboardSource {
   billboardId Int       @id
   billboard   Billboard @relation(fields: [billboardId], references: [id], onDelete: Cascade)
@@ -266,10 +252,9 @@ model BillboardSource {
   structureCode String?
   scrapedAt     String?
 
-  // What the source last said about this row, field by field. It is the third
-  // side of a three-way merge: a column whose current value still equals its
-  // snapshot is the source's to update, and one that has drifted from it was
-  // edited by an admin and is never overwritten. Null until the first sync.
+  // What the source last said, field by field: a column still equal to it is
+  // the source's to update; one that drifted was edited by an admin. Null
+  // until the first sync.
   snapshot Json?
 
   // When the row stopped appearing in the source feed. A vanished listing is
@@ -281,12 +266,8 @@ model BillboardSource {
 }
 
 // ── SourceTombstone ────────────────────────────────────────────
-// A crawler row this database deliberately does not have.
-//
-// The nightly import inserts anything the feed has and the database does not —
-// which, without this table, would resurrect every duplicate `db:dedupe`
-// merged away and every scraped row an admin deleted, one night after the
-// decision. A tombstone is that decision, written down.
+// A crawler row this database deliberately does not have (merged by
+// db:dedupe, deleted by an admin), so the import never re-inserts it.
 model SourceTombstone {
   slug      String          @id
   reason    TombstoneReason
@@ -338,12 +319,8 @@ model Review {
 }
 
 // ── ReviewReply ────────────────────────────────────────────────
-// A reply under a review, the way a comment thread works: other customers can
-// answer, and so can the team. One level deep only.
-//
-// Its author is exactly one of a customer (`userId`) or a staff member
-// (`staffId`) — each a real foreign key into its own table. `authorName` is the
-// name as it was when the reply was written, which is what a thread shows.
+// A reply under a review, one level deep. Its author is a customer (`userId`)
+// or a staff member (`staffId`); `authorName` is their name when it was written.
 model ReviewReply {
   id       Int    @id @default(autoincrement())
   reviewId Int
@@ -367,16 +344,10 @@ model ReviewReply {
 }
 
 // ── ContactRequest ─────────────────────────────────────────────
-// A lead. When a signed-in customer asks for the owner's phone on a media
-// page, this row is created. Rasamap does not process the deal (see §17 of
-// docs/engineering-decisions.md), so the reveal is the last thing the platform
-// can observe — without this table the product has no record that demand
-// happened at all.
-//
-// One row per (media, account): a second reveal by the same person is the same
-// lead, not a new one. `count` and `lastRequestedAt` keep the repeat visible
-// without the table growing per click, and the unique index below is what makes
-// the get-or-create safe under concurrent clicks.
+// A lead: a signed-in customer revealed an owner's phone — the last step the
+// platform sees, since the deal happens off it (§17). One row per (media,
+// account); a repeat bumps `count`, and the unique index makes the
+// get-or-create safe under concurrent clicks.
 model ContactRequest {
   id          Int       @id @default(autoincrement())
   billboardId Int
@@ -447,16 +418,11 @@ model AuditLog {
 }
 
 // ── Session ────────────────────────────────────────────────────
-// One signed-in browser. The cookie holds a random token; this row holds its
+// One signed-in browser. The cookie holds a random token, this row its
 // SHA-256, so a copy of the database is not a set of working sessions.
-//
-// Signing out deletes the row, and signing an account out everywhere (a new
-// password, a reset, a deactivation) deletes all of its rows — the session is
-// the row, so there is nothing to revoke and nothing to compare a version
-// against. See lib/db/sessions.ts for the two lifetimes.
-//
-// Exactly one of `userId` (a customer) and `adminId` (staff) is set, matching
-// `kind`; each is a real foreign key, so deleting an account ends its sessions.
+// Signing out deletes the row; a new password, a reset or a deactivation
+// deletes all of an account's rows. One of `userId`/`adminId` is set, per
+// `kind`. Lifetimes: lib/db/sessions.ts.
 model Session {
   id        String      @id
   kind      SessionKind

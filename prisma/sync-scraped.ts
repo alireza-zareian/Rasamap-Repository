@@ -1,52 +1,23 @@
-// ============================================================
-// RASAMAP — Scraped-data sync
+// Bring the crawler's scraper/data/billboards.json into a live database
+// without undoing what a person decided (§33). The seed is a full rebuild and
+// would drop every edit, review and listing.
 //
-// The crawler writes scraper/data/billboards.json; this brings that file into
-// the database. Until now the only path from one to the other was the seed,
-// which is a full rebuild: it cannot run on a live database without throwing
-// away every admin edit, every review and every submitted listing along with
-// the stale rows. So in practice the data was collected once and then frozen,
-// while the product claims to be a single up-to-date view.
+// A row has two authors, the feed and the admin, so each field is decided
+// against a snapshot of what the feed last said (billboard_sources.snapshot):
 //
-// The hard part is not the schedule. It is that a row has two authors — the
-// feed and the admin who corrected it — and a nightly import that simply writes
-// the feed's values would silently undo the corrections, which is worse than
-// stale data because nobody sees it happen.
+//   row == snapshot   → untouched since the last sync; the feed may write
+//   row != snapshot   → an admin edited it; the feed never overwrites it
 //
-// So each row keeps a snapshot of what the feed last said (its
-// billboard_sources row's `snapshot`), and every field is decided by three
-// values rather than two:
+// A row with no snapshot yet is adopted: the snapshot is recorded and nothing
+// is written. A row gone from the feed gets `missingSince` and turns busy; it
+// is never deleted, since reviews and leads point at it. A slug in
+// `source_tombstones` (merged by db:dedupe, deleted by an admin) is never
+// re-inserted; on the first sync of an existing database every absence is
+// adopted as a tombstone unless `--insert-absent` is given.
 //
-//   row == snapshot   → nobody has touched it since the last sync; the feed
-//                       may write, and only if it actually changed something
-//   row != snapshot   → an admin edited this field; the feed never overwrites
-//                       it again
-//
-// A row with no snapshot yet (everything seeded before this script existed) is
-// *adopted*: the snapshot is recorded and nothing is written. Without a
-// snapshot there is no way to tell an admin's correction from the feed's own
-// value, and guessing wrong would erase the correction.
-//
-// Rows that stop appearing in the feed are marked with `missingSince` (on the
-// same billboard_sources row) and shown as busy, never deleted — reviews,
-// contact requests and submitted listings reference them.
-//
-// The same argument applies in the other direction. A row the feed has and the
-// database does not may be new, or it may be one somebody removed on purpose —
-// a duplicate `db:dedupe` merged away, a scraped row an admin deleted. Those
-// decisions are written down in `source_tombstones`, and a tombstoned slug is
-// never re-inserted. On the very first sync of an existing database there is no
-// such record to read, so an absence found then is adopted as a tombstone
-// rather than guessed at: the run reports how many, and `--insert-absent` adds
-// them instead if that database really is just behind.
-//
-// SAFE BY DEFAULT: with no flags it only reports what it would do.
-//
-// Usage:
-//   npm run db:sync-scraped                     (dry run — changes nothing)
-//   npm run db:sync-scraped -- --apply          (write)
-//   npm run db:sync-scraped -- --feed=<path>    (read another export)
-// ============================================================
+//   npm run db:sync-scraped                     dry run — changes nothing
+//   npm run db:sync-scraped -- --apply          write
+//   npm run db:sync-scraped -- --feed=<path>    read another export
 
 import "./load-env";
 import { readFileSync } from "fs";
@@ -73,27 +44,14 @@ const FEED = FEED_FLAG
   : path.join(process.cwd(), "scraper", "data", "billboards.json");
 
 /**
- * The columns the feed owns.
- *
- * Deliberately absent:
- *   slug          — the key rows are matched on; changing it would orphan them
- *   rating,
- *   reviewCount   — recomputed from the reviews table since the 2026-09-02
- *                   review. The crawler still invents both for a brand-new
- *                   row, but once the row exists the database is the authority
- *                   and a sync must not push invented numbers over real ones
- *   status        — the feed's status is an availability, and moves under its
- *                   own rule: see availabilityWrite below
- *   moderation    — review state is the database's alone; a crawled row is
- *                   approved when it is inserted and the feed never touches it
- *   scrapedAt     — it changes on every crawl by definition, so treating it as
- *                   a field would mark all 3.5k rows changed every night. It
- *                   rides along only on rows that changed for another reason
- *   plan,
- *   featured      — monetisation state, owned by the admin panel alone
- *
- * The feed still carries `icon`, `mapX` and `mapY`; those columns are gone
- * (migration 20260925090000) and the fields are ignored.
+ * The columns the feed owns. Left out on purpose:
+ *   slug                 the match key
+ *   rating, reviewCount  computed from the reviews table
+ *   availability         moves under its own rule (availabilityWrite)
+ *   moderation           the database's alone
+ *   scrapedAt            changes every crawl; written only with a real change
+ *   plan, featured       owned by the admin panel
+ * The feed's `icon`, `mapX` and `mapY` have no column any more and are ignored.
  */
 const BILLBOARD_FIELDS = [
   "name", "location", "region", "city", "type",
@@ -114,18 +72,11 @@ type SyncedField = (typeof SYNCED_FIELDS)[number];
 type Row = Billboard & { sourceRecord: BillboardSource | null };
 
 /**
- * What a feed row must look like before any of it is written.
- *
- * The feed is another program's output, and it was read with a bare cast: a
- * value of the wrong type reached Prisma, which threw, and a run with no
- * transaction stopped half-way. It already happens in the real export — ten
- * rows carry a fractional width or height (10.8 × 2.6) for an integer column,
- * one claims 2 040 × 310 metres. Now each row is checked: sizes are rounded to
- * the metre the column holds and bounded like a listing's, coordinates must
- * fall inside Iran, and a photo must be one of the site's own files under
- * /images/ — the admin and listing paths refuse outside addresses, and so does
- * this one. A row that fails is skipped, reported, and still counts as present,
- * so a crawler bug cannot make the importer mark real rows missing.
+ * What a feed row must look like before any of it is written: sizes rounded to
+ * whole metres and bounded like a listing's (the real export has fractional and
+ * absurd ones), coordinates inside Iran, photos only under /images/. A row that
+ * fails is skipped and reported, and still counts as present, so a crawler bug
+ * cannot mark real rows missing.
  */
 const Size = z.number().positive().max(200).transform(Math.round).pipe(z.number().int().min(1));
 const Money = z.number().int().nonnegative();
@@ -169,14 +120,8 @@ const FeedRowSchema = z.object({
 type FeedRow = z.infer<typeof FeedRowSchema> & { [field: string]: unknown };
 
 /**
- * Availability is the one field where "the admin edited it" is not the only
- * reason the database may be ahead of the feed.
- *
- * A board an admin took off the site (`inactive`) or marked `reserved` must
- * not be quietly put back because the feed still reports it as available.
- * Those states are decisions about the row, not descriptions of it, so the
- * feed cannot move a row out of one — while `available` ⇄ `busy`, which is a
- * description, it can.
+ * `inactive` and `reserved` are a person's decisions, which the feed never
+ * reverses; `available` ⇄ `busy` describes the board, which the feed may move.
  */
 const DECIDED_AVAILABILITY: Availability[] = ["inactive", "reserved"];
 
@@ -295,17 +240,9 @@ async function main() {
   }
   const bySlug = new Map(feedRows.map(r => [r.slug, r]));
 
-  // Which rows this run is allowed to touch: the ones whose source appears in
-  // the feed itself.
-  //
-  // Naming the crawler's sources here would have been the obvious thing and the
-  // wrong one. A row created in the admin panel carries source "manual" and a
-  // submitted listing carries "listing"; neither is ever in a feed, so an
-  // "everything except listing" rule quietly adopted every admin-created row
-  // and marked it missing on the first run — which is how this test suite found
-  // it. Reading the sources out of the feed also means a crawl that returns
-  // nothing for one site cannot mark that site's whole inventory as vanished:
-  // the source is simply not managed that night.
+  // Only rows whose source appears in this feed are managed: "manual" and
+  // "listing" rows never are, and a crawl that returned nothing for one site
+  // cannot mark that site's inventory missing.
   const feedSources = [...new Set(feedRows.map(r => r.source).filter((s): s is string => Boolean(s)))];
   if (feedSources.length === 0) {
     throw new Error("the feed names no source — refusing to run rather than guess which rows it covers");
@@ -320,11 +257,8 @@ async function main() {
     (await prisma.sourceTombstone.findMany({ select: { slug: true } })).map(t => t.slug),
   );
 
-  // A database that already holds crawler rows but has no snapshot on any of
-  // them has never been through this script, so the rows it is missing are its
-  // own history rather than the feed's news. A database with no crawler rows at
-  // all — a fresh install, a restored-from-empty — has no history to protect
-  // and takes the whole feed.
+  // Crawler rows with no snapshot at all: never synced, so what it lacks is
+  // its own history, not news. An empty database takes the whole feed.
   const firstSync = existing.length > 0 && existing.every(r => r.sourceRecord?.snapshot == null);
 
   const counts = { adopted: 0, updated: 0, unchanged: 0, inserted: 0, marked: 0, returned: 0, refused: 0, entombed: 0, raced: 0 };
@@ -373,16 +307,9 @@ async function main() {
     if (returning) counts.returned += 1;
 
     if (Object.keys(writes).length === 0 && !nextAvailability && !returning) {
-      // Nothing to write, so the row is not touched at all — not even to
-      // advance its snapshot. Prisma stamps `updatedAt` on any update, and a
-      // nightly run that stamped 3.5k rows would invalidate the catalogue cache
-      // every night for no change anybody could see.
-      //
-      // A row whose only difference is an admin's correction therefore keeps
-      // its old snapshot and is reported again on the next run. That is the
-      // more useful behaviour: the "fields an admin owns" line below is then a
-      // standing list of where this site and its source disagree, rather than a
-      // one-night notice that scrolls past.
+      // Not touched at all, not even the snapshot: any update stamps
+      // `updatedAt` and would drop the catalogue cache nightly. An admin's
+      // correction therefore stays in the "fields an admin owns" report.
       counts.unchanged += 1;
       continue;
     }
@@ -396,11 +323,8 @@ async function main() {
       missingSince: null,
       snapshot: snapshotOf(feed) as Prisma.InputJsonValue,
     };
-    // The merge above decided from the row as it was read at the start of the
-    // run. An admin who saves the same row a moment later must not be
-    // overwritten by that stale decision, so the write carries the row's
-    // updatedAt as a condition and lands only if nobody wrote in between; a
-    // row that lost the race is left for the next run to decide again.
+    // Conditional on the updatedAt the merge read: an admin who saved the row
+    // since is not overwritten, and the next run decides again.
     const landed = await prisma.$transaction(async tx => {
       const { count } = await tx.billboard.updateMany({
         where: { id: row.id, updatedAt: row.updatedAt },
@@ -442,16 +366,9 @@ async function main() {
     });
   }
 
-  // Gone from the feed. Marked once, on the run that first misses it.
-  //
-  // It also stops being offered as free. A listing the source took down has
-  // most often been let, so leaving it "available" kept inviting calls about a
-  // board that was gone, with the old number. It becomes `busy`: still on the
-  // site, with its reviews and leads, but no longer presented as bookable.
-  // Only an `available` or `unknown` row moves — `busy` already says it, and
-  // `inactive` / `reserved` are a person's decisions (DECIDED_AVAILABILITY).
-  // When the row returns to the feed, the feed's status applies again
-  // (availabilityWrite).
+  // Gone from the feed: marked once, and an `available`/`unknown` row turns
+  // `busy` — a board the source took down has most often been let. It stays on
+  // the site with its reviews; the feed's status applies again if it returns.
   const vanished = existing.filter(r => !presentSlugs.has(r.slug) && r.sourceRecord?.missingSince == null);
   counts.marked = vanished.length;
   if (APPLY && vanished.length > 0) {

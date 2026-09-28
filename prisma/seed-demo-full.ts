@@ -2,7 +2,7 @@
  * Full demo dataset — a broad, realistic set of accounts and records for a
  * live presentation and for manual API testing.
  *
- *   npm run db:seed:demo:full
+ *   npm run db:seed:demo
  *
  * Idempotent: every record is upserted on a natural key (phone / email / a
  * scoped delete-then-recreate for the demo listings), so re-running it does not
@@ -84,35 +84,15 @@ async function main() {
   ];
 
   // ── Listings — one per state of the submission pipeline ─────────────
-  // Wipe previous demo listings, then recreate (idempotent).
-  //
-  // Reviews are matched by their own tag rather than by the billboard they hang
-  // on. Matching by billboard looks equivalent and is not: an earlier run wrote
-  // its reviews before these demo listings existed, so three of them landed on
-  // two *crawled* catalogue rows, where a cleanup keyed on the listing name can
-  // never reach them — and "[DEMO] موقعیت عالی" sat on a live billboard page for
-  // anyone who opened it. The tag marks what this script owns, wherever it ended
-  // up, so that is what the tag is matched on.
-  //
-  // Nothing is recomputed for those crawled rows on purpose: their `rating` and
-  // `reviewCount` come from the crawler and were never derived from these rows
-  // (they read 4.1/11 next to two actual review rows). Recomputing would zero a
-  // number the crawler owns; the stray comments are what has to go.
+  // Wipe previous demo listings, then recreate (idempotent). Reviews are
+  // matched by their tag, not their billboard: an earlier run left some on
+  // crawled rows, which a cleanup by listing never reaches.
   await prisma.review.deleteMany({ where: { comment: { startsWith: TAG } } });
   await prisma.billboard.deleteMany({ where: { name: { startsWith: TAG } } });
 
   /**
-   * Traffic per listing, not one number copied eight times.
-   *
-   * These used to share a single hardcoded block (40 000 daily / 6 000 views /
-   * score 60 for every row), which made the demo listings the only media on the
-   * site whose audience did not depend on where they stand — and put a visibly
-   * flat set of figures next to 3 500 rows that all differ. Each row below is
-   * the output of `scraper/traffic_formula.py::estimate_traffic(city, name,
-   * type, 12, 4)` — the same function that produced the numbers for the crawled
-   * catalogue — so a bridge over Hemmat outranks a bus shelter in Vanak for the
-   * same reason it does in the real data, and nothing here is invented
-   * separately from the model the thesis documents.
+   * Traffic per listing from `scraper/traffic_formula.py::estimate_traffic(city,
+   * name, type, 12, 4)` — the model behind the crawled catalogue's figures.
    */
   type L = {
     user: string; owner: number; name: string; city: string; type: BillboardType;
@@ -161,11 +141,8 @@ async function main() {
     .filter(l => l.moderation === "approved")
     .map(l => listingIds[l.name]);
 
-  // publishedIds[2] is the one listing with `featured: true`, which the
-  // catalogue sort puts above every other row (§18 — it is how the paid plan
-  // is demonstrated). It had no reviews, so the first card a visitor ever sees
-  // was the only one on the page with an empty rating slot. It is reviewed here
-  // for the same reason it is featured: it is the row everyone looks at.
+  // publishedIds[2] is the featured listing, first in every sort (§18), so it
+  // gets reviews too.
   const reviews = [
     { user: "reviewer",  billboardId: publishedIds[0], rating: 5, comment: `${TAG} موقعیت عالی، بازدید بالا. راضی بودیم.` },
     { user: "publisher", billboardId: publishedIds[1], rating: 4, comment: `${TAG} خوب بود، نصب کمی طول کشید.` },

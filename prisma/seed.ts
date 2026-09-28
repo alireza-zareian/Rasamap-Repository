@@ -1,17 +1,10 @@
-// ============================================================
-// RASAMAP — Seed script (Phase 3)
+// Load lib/data.ts's `everyBillboard` (curated + scraped) into the Billboard
+// table with its numeric ids unchanged, and create the admin account.
 //
-// Migrates the current static + scraped billboard data into the
-// Billboard table, preserving existing numeric ids exactly
-// (RealMap.tsx COORDS, CompareBar and detail routes depend on them).
+//   npm run db:seed        after `npm run db:migrate`
 //
-// Source of truth for "how many rows should exist after seeding":
-// lib/data.ts::everyBillboard = [...billboards, ...extraBillboards, ...scrapedBillboards]
-//
-// Usage:
-//   npx prisma migrate dev --name init      (creates the SQLite db + tables)
-//   npx prisma db seed                      (runs this script)
-// ============================================================
+// A full rebuild of the crawled rows; on a live database use
+// `npm run db:sync-scraped` instead (§33).
 
 import "./load-env";
 import { PrismaClient, Prisma } from "@prisma/client";
@@ -97,12 +90,8 @@ async function main() {
     seenIds.add(b.id);
   }
 
-  // Remove stale records — rows in DB that no longer exist in the source data.
-  // Uses raw SQL because SQLite's bound-variable limit (~999) blocks large notIn lists.
-  //
-  // Rows submitted by users through /list-media are exempt: they were never in
-  // lib/data.ts and never will be, so a plain "delete what isn't in the source"
-  // would wipe every customer listing on the next re-seed.
+  // Remove rows the source no longer has, except customer listings, which were
+  // never in it. Raw SQL: a notIn this long passes SQLite's bound-variable limit.
   const newIds = everyBillboard.map(b => b.id).join(",");
   const staleFilter = `id NOT IN (${newIds}) AND (source IS NULL OR source != 'listing')`;
   const stale: Array<{ count: bigint }> =

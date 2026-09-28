@@ -1,26 +1,10 @@
-// ============================================================
-// RASAMAP — Existing-data dedupe script (Phase 5, DB cleanup)
+// Remove cross-source duplicates already in the database, with the matching
+// scraper.py's cross_source_dedup() applies to new crawls: same city, plus an
+// identical photo, a near-identical address or a near-identical name. Only
+// crawled rows (non-null `source`) are considered.
 //
-// scraper.py's cross_source_dedup() only prevents *new* cross-source
-// duplicates going forward. Rows that were already seeded into the
-// Billboard table before that fix existed are untouched by it. This
-// script applies the same matching logic — same city, plus one of
-// (identical photo / near-identical address / near-identical name) —
-// directly against what's already in the DB, and removes the losers.
-//
-// Only rows with a non-null `source` are considered (i.e. actually
-// scraped listings — source is null for the static/curated billboards
-// from lib/data.ts, seeded by prisma/seed.ts, which this script never
-// touches).
-//
-// SAFE BY DEFAULT: running with no flags only PRINTS the duplicate
-// groups it found and what it would delete — it changes nothing.
-// Pass --apply to actually delete the losing rows.
-//
-// Usage:
-//   npm run db:dedupe            (dry run — just shows what it found)
-//   npm run db:dedupe -- --apply (actually deletes the duplicates)
-// ============================================================
+//   npm run db:dedupe             dry run — prints the groups, changes nothing
+//   npm run db:dedupe -- --apply  deletes the losers
 
 import "./load-env";
 import path from "path";
@@ -185,10 +169,8 @@ async function main() {
   console.log(`\n--apply passed — deleting ${toDelete.length} row(s)...`);
   const ids = toDelete.map((d) => d.row.id);
 
-  // Deleting the loser is only half of it: the losing listing is still in the
-  // source feed, so the nightly import would recreate it and the duplicate
-  // would be back by morning (prisma/sync-scraped.ts). The tombstone records
-  // that this row was merged away on purpose, and names the row it merged into.
+  // The loser is still in the feed; the tombstone keeps prisma/sync-scraped.ts
+  // from recreating it, and names the row it merged into.
   const result = await prisma.$transaction(async (tx) => {
     const deleted = await tx.billboard.deleteMany({ where: { id: { in: ids } } });
     for (const d of toDelete) {

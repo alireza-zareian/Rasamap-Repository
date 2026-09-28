@@ -1,19 +1,7 @@
-// ============================================================
-// RASAMAP — Export unresolved-coordinates rows for manual review
+// Write the rows db:backfill-coords could not place to a CSV for review by
+// hand: their address is too vague for Neshan, and they have no map pin.
 //
-// After db:backfill-coords stabilizes (re-running it barely changes
-// the unresolved count anymore — i.e. it's no longer a quota/rate-limit
-// issue), the remaining rows are ones whose `location` text alone isn't
-// specific enough for Neshan to geocode. This dumps them to a CSV
-// (id, name, city, location, source) so they can be reviewed by hand —
-// some just need a more complete address typed in, others are
-// genuinely too vague (e.g. just a neighborhood name) and will stay
-// on the "city center + no marker" fallback in RealMap.tsx.
-//
-// Usage:
-//   npm run db:export-unresolved
-//   -> writes scraper/data/unresolved-coords.csv
-// ============================================================
+//   npm run db:export-unresolved   → scraper/data/unresolved-coords.csv
 
 import "./load-env";
 import { writeFileSync } from "fs";
@@ -56,10 +44,7 @@ async function main() {
 
   console.log(`Wrote ${rows.length} unresolved row(s) to ${outPath}`);
 
-  // Quick breakdown by city so you can see where the bulk of the problem is.
-  // Raw counts are misleading on their own (Tehran has the most billboards
-  // overall, so it'll always have the most unresolved too) — the useful
-  // signal is the unresolved RATE per city, so also fetch each city's total.
+  // Per city as a rate, not a count: Tehran has the most rows of every kind.
   const totalsByCity = await prisma.billboard.groupBy({
     by: ["city"],
     _count: { _all: true },
