@@ -93,7 +93,7 @@ CDN; anyone else gets a 404, because it describes every limit and defence). Demo
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| POST | `/api/listings` | user | An owner submits their media, as a **multipart form**. Fields (Zod, `ListingFieldsSchema`): `name` (3–100), `phone` (a mobile number), `type`, `city`, `region?`, `location` (3–200), `width`, `height`, `faces`, `price`, `plan` (`free\|featured`, default `free`), `desc?`, `lat?`/`lng?` (both or neither, inside Iran), and `photos` (≤5 files, ≤2 MB each). Starts as `pending`, or `awaiting_payment` for the featured plan. Photos are validated by **magic bytes** and written under an unguessable `/uploads/listings/<uuid>/` path. Body capped before it is read (413). 201. Optional `Idempotency-Key` header (see below). |
+| POST | `/api/listings` | user | An owner submits their media, as a **multipart form**. Fields (Zod, `ListingFieldsSchema`): `name` (3–100), `phone` (a mobile number), `type`, `city`, `region?`, `location` (3–200), `width`, `height`, `faces`, `price`, `plan` (`free\|featured`, default `free`), `desc?`, `lat?`/`lng?` (both or neither, inside Iran), and `photos` (≤5 files, ≤2 MB each). Starts as `pending`, or `awaiting_payment` for the featured plan. Photos are validated by **magic bytes**, and by the dimensions their header declares (at most 8000 px a side and 40 MP, so a small file cannot decode to gigabytes), and written under an unguessable `/uploads/listings/<uuid>/` path. Body capped before it is read (413). 201. Optional `Idempotency-Key` header (see below). |
 | GET | `/api/listings` | user | The signed-in user's own submissions and their state (latest 50). Scoped by `session.userId` — a user cannot see another user's rows. Carries the full editable field set plus `reviewNote`, so a listing sent back for revision can be fixed in place on the dashboard without a second request. `no-store`. |
 | PATCH | `/api/listings/[id]` | user | The submitter edits a listing an admin sent back and resubmits it. Same field set as the create. Only the owning account, and only while the row is still `needs_revision` (409 otherwise; 404 when the row is not the caller's — no enumeration). `photos` is the whole new list in order, each entry either the address of a photo the listing already has (kept) or a new file; a kept address must be one of **this listing's own** current photos, never an arbitrary string. On success the row re-enters the queue at its plan's initial status, `featured` drops to false and `reviewNote` is cleared. Body capped (413). Writes `listing_resubmitted`. |
 
@@ -243,7 +243,8 @@ export const POST = defineRoute(
 ```
 
 `many()` and `UploadedFile` are in `lib/http/form.ts`; writing the files is
-`saveImages()` in `lib/uploads.ts`, which checks each one's first bytes.
+`saveImages()` in `lib/uploads.ts`, which checks each one's first bytes and
+the dimensions its header declares.
 
 Rules the pipeline cannot enforce, and the reviewer should:
 
