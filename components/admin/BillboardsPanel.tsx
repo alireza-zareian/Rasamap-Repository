@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus, Trash2, AlertTriangle, ChevronRight, ChevronLeft } from "lucide-react";
 import type { Billboard } from "@/lib/types";
-import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
+import { fetchJson, errorMessage, isAborted } from "@/lib/client/fetch-json";
 import { faNum } from "@/lib/format";
 import { TypeIcon } from "@/components/TypeIcon";
 import { Button } from "@/components/ui/Button";
@@ -16,6 +16,9 @@ import { ImageManager } from "./ImageManager";
 import { usePermissionNotice } from "./PermissionNotice";
 import styles from "./admin.module.css";
 import own from "./BillboardsPanel.module.css";
+
+/** How long the search box waits after the last keystroke. */
+const SEARCH_DEBOUNCE_MS = 300;
 
 /**
  * The media table: search, filters, paging, create, edit, photos, delete.
@@ -49,28 +52,45 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
   const [showCreate, setShowCreate] = useState(false);
   const { notice, deny } = usePermissionNotice();
 
-  const load = useCallback(async () => {
+  // What the box shows at once, and what is searched once typing pauses: a
+  // request per keystroke, answering out of order, could leave the table on
+  // the rows for «ت» after «تهران».
+  const [searchInput, setSearchInput] = useState(initialQuery);
+  useEffect(() => {
+    if (searchInput === search) return;
+    const id = setTimeout(() => { setSearch(searchInput); setPage(1); }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [searchInput, search]);
+
+  const load = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
     const params = new URLSearchParams({
       q: search, type: filterType, availability: filterAvailability, moderation: filterModeration,
       page: page.toString(), limit: "20", sort,
     });
     try {
-      const data = await fetchJson<{ items: Billboard[]; total: number; pages: number }>(`/api/admin/billboards?${params}`);
+      const data = await fetchJson<{ items: Billboard[]; total: number; pages: number }>(`/api/admin/billboards?${params}`, { signal });
       setBillboards(data.items);
       setTotal(data.total);
       setPages(data.pages);
       setLoadError("");
     } catch (err) {
+      // Overtaken by a newer filter: its own request owns the table now.
+      if (isAborted(err)) return;
       setBillboards([]);
       setLoadError(errorMessage(err));
     }
     setLoading(false);
   }, [search, filterType, filterAvailability, filterModeration, page, sort]);
 
-  // Data-fetch effect: load() sets loading/list state, as expected.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { load(); }, [load]);
+  // Data-fetch effect: load() sets loading/list state, as expected. A newer
+  // filter aborts the older request, so answers cannot land out of order.
+  useEffect(() => {
+    const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -118,7 +138,7 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
         {canEdit && <Button intent="success" onClick={() => setShowCreate(true)}><Plus size={15} /> بیلبورد جدید</Button>}
       </div>
       <div className={styles.toolbar}>
-        <input className={`${styles.control} ${styles.search}`} placeholder="جستجو..." aria-label="جستجو" value={search} onChange={e => resetPage(setSearch)(e.target.value)} />
+        <input className={`${styles.control} ${styles.search}`} placeholder="جستجو..." aria-label="جستجو" value={searchInput} onChange={e => setSearchInput(e.target.value)} />
         <select className={styles.control} aria-label="نوع رسانه" value={filterType} onChange={e => resetPage(setFilterType)(e.target.value)}>
           <option value="">همه انواع</option>
           {Object.entries(TYPE_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}

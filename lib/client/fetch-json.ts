@@ -34,16 +34,28 @@ const PARSE_ERROR   = "پاسخ سرور قابل خواندن نبود.";
 interface Options extends Omit<RequestInit, "signal"> {
   /** Milliseconds before the request is abandoned. Defaults to TIMEOUT_MS.read. */
   timeoutMs?: number;
+  /**
+   * The caller's own cancel, for a request a newer one has made pointless (a
+   * filter changed again). Aborting rejects with an error isAborted() recognises.
+   */
+  signal?: AbortSignal;
+}
+
+/** Whether a fetchJson rejection was the caller's own abort: not a failure to show. */
+export function isAborted(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
 }
 
 /** Parsed JSON, or a FetchError whose `message` is a Persian sentence to show. */
 export async function fetchJson<T = unknown>(url: string, options: Options = {}): Promise<T> {
-  const { timeoutMs = TIMEOUT_MS.read, ...init } = options;
+  const { timeoutMs = TIMEOUT_MS.read, signal, ...init } = options;
+  const timeout = AbortSignal.timeout(timeoutMs);
 
   let res: Response;
   try {
-    res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+    res = await fetch(url, { ...init, signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
   } catch (err) {
+    if (signal?.aborted) throw signal.reason;
     // A timeout (slow server) and a network failure get different sentences.
     const timedOut = err instanceof DOMException && err.name === "TimeoutError";
     throw new FetchError(timedOut ? TIMEOUT_ERROR : NETWORK_ERROR, 0);
