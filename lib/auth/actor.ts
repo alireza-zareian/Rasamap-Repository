@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { clearedSessionCookieHeader, readSessionToken, sessionCookieHeader } from "./session";
 import { createSession, deleteSession, findSessionActor, type AccountRef } from "@/lib/db/sessions";
 import type { Actor, CustomerActor, StaffActor } from "@/lib/domain/actor";
+import type { CurrentUser } from "@/lib/types";
 
 // The types live in lib/domain/actor.ts; re-exported so callers keep one import.
 export type { Actor, CustomerActor, StaffActor };
@@ -38,4 +39,17 @@ export async function requireStaff(): Promise<StaffActor> {
   const actor = await getActor();
   if (actor?.kind !== "staff") redirect("/login?as=staff");
   return actor;
+}
+
+/** An actor as the browser may see it: GET /api/auth/me and /api/auth/session answer with this. */
+export function toCurrentUser(actor: Actor): CurrentUser {
+  const isStaff = actor.kind === "staff";
+  return {
+    id:    actor.id,
+    name:  actor.name,
+    phone: isStaff ? "" : actor.phone,
+    email: isStaff ? actor.email : "",
+    role:  isStaff ? actor.role : "user",
+    isStaff,
+  };
 }

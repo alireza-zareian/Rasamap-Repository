@@ -24,9 +24,9 @@ const Ctx = createContext<CurrentUserValue>({
 /** Shared by the mount effect and refresh(), so the two cannot drift. */
 async function fetchCurrentUser(): Promise<CurrentUser | null> {
   try {
-    return (await fetchJson<{ user: CurrentUser }>("/api/auth/me")).user;
+    return (await fetchJson<{ user: CurrentUser | null }>("/api/auth/session")).user;
   } catch {
-    // Signed out, offline or timed out: "signed out", not a loading state for ever.
+    // Offline or timed out: "signed out", not a loading state for ever.
     return null;
   }
 }

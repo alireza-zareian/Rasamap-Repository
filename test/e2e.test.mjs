@@ -91,7 +91,7 @@ test("a visitor can sign in and lands signed in", async () => {
 
     // The session survives a fresh load — what a wrong Secure/SameSite breaks
     // (§24). waitForText: /dashboard shows a checking state until
-    // /api/auth/me answers (§31).
+    // /api/auth/session answers (§31).
     await b.goto(`${BASE}/dashboard`);
     await b.waitForText(USER.name.split(" ")[0], {
       label: "the dashboard greeting — the session did not survive a reload",

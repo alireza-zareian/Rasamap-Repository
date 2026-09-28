@@ -107,6 +107,7 @@ CDN; anyone else gets a 404, because it describes every limit and defence). Demo
 | POST | `/api/auth/otp/verify` | public | Password reset only (`purpose: "password_reset"`): verify the 6-digit code and set a new password in one step. A sign-up code lives under a different purpose and cannot be spent here. Codes are HMAC-hashed, 5-minute TTL, single-use, 5 attempts. Writes `password_reset_self`. |
 | POST | `/api/auth/logout` | public | Deletes this session's row and clears the cookie. Other devices stay signed in. |
 | GET | `/api/auth/me` | user / staff | The signed-in account `{ id, name, phone, email, role, isStaff }` (a customer's role reads `"user"`). Like every request with a session, it pushes the idle deadline forward. |
+| GET | `/api/auth/session` | public | `{ user }` — the same account as `/api/auth/me`, or `null` when signed out. What every page asks on load: a guest gets an answer, not a 401 (§40). `private, no-store`. |
 | PATCH | `/api/auth/me` | user | Update `name` and/or `password` (`currentPassword` + `newPassword` ≥8). A new password ends every other session of the account. |
 
 ### Admin — auth

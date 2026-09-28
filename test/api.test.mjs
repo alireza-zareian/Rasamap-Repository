@@ -349,6 +349,15 @@ test("the pre-paint theme script names the key the toggle writes", async () => {
     "the theme script must read the stored theme by its real key");
 });
 
+test("GET /api/auth/session answers a guest with null, not a 401", async () => {
+  const guest = await api("/api/auth/session");
+  assert.equal(guest.status, 200);
+  assert.equal(guest.json.user, null);
+  const customer = await api("/api/auth/session", { token: await mintSession({ userId: "1", role: "user" }) });
+  assert.equal(customer.json.user.id, 1);
+  assert.equal(customer.json.user.isStaff, false);
+});
+
 test("admin search finds a row by its slug", async () => {
   const staff = await mintSession({ role: "editor" });
   const { status, json } = await api("/api/admin/billboards?q=valiasr-tower&limit=20", { token: staff });

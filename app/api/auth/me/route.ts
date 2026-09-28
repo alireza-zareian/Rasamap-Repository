@@ -4,7 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { userApiRateLimit, publicApiRateLimit } from "@/lib/rate-limit";
 import { updateOwnProfile } from "@/lib/db/customers";
 import { GivenPassword, NewPassword } from "@/lib/domain/password";
-import type { CurrentUser } from "@/lib/types";
+import { toCurrentUser } from "@/lib/auth/actor";
 
 /**
  * GET /api/auth/me — who is signed in, staff included, so the public site
@@ -12,18 +12,7 @@ import type { CurrentUser } from "@/lib/types";
  */
 export const GET = defineRoute(
   { name: "auth/me", access: "signed-in", rateLimit: publicApiRateLimit },
-  async ({ actor }) => {
-    const isStaff = actor.kind === "staff";
-    const user: CurrentUser = {
-      id:    actor.id,
-      name:  actor.name,
-      phone: isStaff ? "" : actor.phone,
-      email: isStaff ? actor.email : "",
-      role:  isStaff ? actor.role : "user",
-      isStaff,
-    };
-    return NextResponse.json({ user });
-  },
+  async ({ actor }) => NextResponse.json({ user: toCurrentUser(actor) }),
 );
 
 // PATCH /api/auth/me — a customer updates their name and/or password. A new
