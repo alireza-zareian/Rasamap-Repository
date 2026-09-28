@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import Toast from "@/components/Toast";
+import Toast from "@/components/ui/Toast";
 
 /**
  * A brief "your role cannot do that" toast. The server refuses anyway; this

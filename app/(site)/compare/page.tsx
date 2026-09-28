@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Scale, X, ArrowLeft } from "lucide-react";
 import { MAX_COMPARE, useCompareList } from "@/lib/client/use-compare-list";
 import { fetchJson, FetchError } from "@/lib/client/fetch-json";
-import MediaImage from "@/components/MediaImage";
+import MediaImage from "@/components/media/MediaImage";
 import CompareTable from "@/components/compare/CompareTable";
 import { ButtonLink } from "@/components/ui/Button";
 import type { CatalogueItem } from "@/lib/types";

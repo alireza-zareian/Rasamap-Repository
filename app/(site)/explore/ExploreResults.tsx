@@ -1,10 +1,10 @@
 "use client";
 import { useState, useCallback } from "react";
 import type { CatalogueItem } from "@/lib/types";
-import BillboardCard from "@/components/BillboardCard";
-import CompareModal from "@/components/CompareModal";
-import CompareBar from "@/components/CompareBar";
-import Toast from "@/components/Toast";
+import BillboardCard from "@/components/media/BillboardCard";
+import CompareModal from "@/components/compare/CompareModal";
+import CompareBar from "@/components/compare/CompareBar";
+import Toast from "@/components/ui/Toast";
 import { MAX_COMPARE, useCompareList } from "@/lib/client/use-compare-list";
 import styles from "./explore.module.css";
 

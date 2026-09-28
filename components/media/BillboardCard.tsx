@@ -2,7 +2,7 @@
 import IntentLink from "@/components/ui/IntentLink";
 import { ViewTransition } from "react";
 import { Scale, Star, Sparkles } from "lucide-react";
-import MediaImage from "@/components/MediaImage";
+import MediaImage from "@/components/media/MediaImage";
 import { type CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
 import { faNum, faCompact } from "@/lib/format";
 import { availabilityTone } from "@/components/ui/availability";

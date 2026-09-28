@@ -5,7 +5,7 @@ import type { Billboard } from "@/lib/types";
 import { TYPE_LABEL, AVAILABILITY_LABEL } from "./constants";
 import { Image as ImageIcon, AlertTriangle } from "lucide-react";
 import type { LatLng } from "@/lib/domain/location";
-import { LocationInput } from "@/components/LocationInput";
+import { LocationInput } from "@/components/listing/LocationInput";
 import { CitySelect } from "@/components/listing/CitySelect";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";

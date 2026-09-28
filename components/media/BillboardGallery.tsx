@@ -3,9 +3,9 @@ import { useState, useCallback, useRef, ViewTransition } from "react";
 import Image from "next/image";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useModalA11y } from "@/lib/client/use-modal-a11y";
-import { NoImagePlaceholder } from "@/components/MediaImage";
+import { NoImagePlaceholder } from "@/components/media/MediaImage";
 import { mediaPhotoTransition } from "@/components/ui/transitions";
-import styles from "./detail.module.css";
+import styles from "./media.module.css";
 
 interface Props {
   images: string[];

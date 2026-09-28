@@ -1,7 +1,7 @@
 import { sourceLabel, type Billboard } from "@/lib/types";
 import { Check, AlertTriangle } from "lucide-react";
 import { faNum } from "@/lib/format";
-import { TypeIcon } from "@/components/TypeIcon";
+import { TypeIcon } from "@/components/media/TypeIcon";
 import { Button } from "@/components/ui/Button";
 import { availabilityTone } from "@/components/ui/availability";
 import { AVAILABILITY_LABEL, MODERATION_LABEL, TYPE_LABEL, moderationTone } from "./constants";

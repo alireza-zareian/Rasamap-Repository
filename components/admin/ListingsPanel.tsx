@@ -4,7 +4,7 @@ import { fetchJson, FetchError, errorMessage } from "@/lib/client/fetch-json";
 import { Lightbox } from "./Lightbox";
 import { MODERATION_LABEL, moderationTone } from "./constants";
 import { Badge } from "./Badge";
-import { TypeIcon } from "@/components/TypeIcon";
+import { TypeIcon } from "@/components/media/TypeIcon";
 import { planLabels } from "@/lib/types";
 import { ClipboardCheck, Check, X, Sparkles, ImageOff, PencilLine } from "lucide-react";
 import { faNum } from "@/lib/format";

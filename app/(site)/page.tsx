@@ -5,7 +5,7 @@ import { getCachedSiteStats, getCachedShowcaseBillboards } from "@/lib/db/cached
 import type { BillboardType } from "@/lib/types";
 import { faNum } from "@/lib/format";
 import { ButtonLink } from "@/components/ui/Button";
-import SwipeMarquee from "@/components/SwipeMarquee";
+import SwipeMarquee from "@/components/ui/SwipeMarquee";
 import LandingSearch from "./_landing/LandingSearch";
 import FeaturedCarousel from "./_landing/FeaturedCarousel";
 import HeroScene from "./_landing/HeroScene";

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { type CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
-import { TypeIcon } from "@/components/TypeIcon";
+import { TypeIcon } from "@/components/media/TypeIcon";
 import { faNum } from "@/lib/format";
 import styles from "./compare.module.css";
 

@@ -2,7 +2,7 @@ import { BarChart2, Car, Footprints, Clock, Info } from "lucide-react";
 import type { TrafficData } from "@/lib/types";
 import { faCompact, faNum } from "@/lib/format";
 import { cssVar } from "@/components/ui/css-var";
-import styles from "./detail.module.css";
+import styles from "./media.module.css";
 
 /** Circumference of the gauge's r=32 circle, for the dash that draws the score. */
 const GAUGE_LENGTH = 2 * Math.PI * 32;

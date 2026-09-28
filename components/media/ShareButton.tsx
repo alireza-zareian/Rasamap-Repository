@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Check, Share2, X } from "lucide-react";
 import { copyText } from "@/lib/client/clipboard";
-import styles from "./detail.module.css";
+import styles from "./media.module.css";
 
 type State = "idle" | "copied" | "failed";
 

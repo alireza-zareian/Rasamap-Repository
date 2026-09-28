@@ -5,7 +5,7 @@ import "./globals.css";
 import { SITE_URL } from "@/lib/site-url";
 import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/client/theme";
 import { CurrentUserProvider } from "@/lib/client/use-current-user";
-import BackgroundPattern from "@/components/BackgroundPattern";
+import BackgroundPattern from "@/components/site/BackgroundPattern";
 
 export const viewport: Viewport = {
   width: "device-width",

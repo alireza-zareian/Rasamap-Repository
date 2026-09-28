@@ -1,7 +1,7 @@
 import Topbar from "@/components/site/Topbar";
 import BottomNav from "@/components/site/BottomNav";
 import Footer from "@/components/site/Footer";
-import StaffBar from "@/components/StaffBar";
+import StaffBar from "@/components/site/StaffBar";
 import styles from "./site.module.css";
 
 /**

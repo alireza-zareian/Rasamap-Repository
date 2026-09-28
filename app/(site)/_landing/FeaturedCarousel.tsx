@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import IntentLink from "@/components/ui/IntentLink";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
-import MediaImage from "@/components/MediaImage";
+import MediaImage from "@/components/media/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
 import { faNum } from "@/lib/format";
 import styles from "./landing.module.css";

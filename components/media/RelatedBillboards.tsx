@@ -1,12 +1,12 @@
 import IntentLink from "@/components/ui/IntentLink";
 import { MapPin } from "lucide-react";
-import MediaImage from "@/components/MediaImage";
+import MediaImage from "@/components/media/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
 import { typeLabels } from "@/lib/types";
-import SwipeMarquee from "@/components/SwipeMarquee";
+import SwipeMarquee from "@/components/ui/SwipeMarquee";
 import { faNum } from "@/lib/format";
 import { cssVar } from "@/components/ui/css-var";
-import styles from "./detail.module.css";
+import styles from "./media.module.css";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
 

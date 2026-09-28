@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { Badge } from "./Badge";
-import { TypeIcon } from "@/components/TypeIcon";
+import { TypeIcon } from "@/components/media/TypeIcon";
 import { leadStatusLabels, LEAD_STATUSES } from "@/lib/types";
 import { Handshake, Inbox, Repeat, Save } from "lucide-react";
 import { faNum } from "@/lib/format";

@@ -1,7 +1,7 @@
 "use client";
 import { Scale, X, ArrowLeft } from "lucide-react";
 import type { CatalogueItem } from "@/lib/types";
-import { TypeIcon } from "@/components/TypeIcon";
+import { TypeIcon } from "@/components/media/TypeIcon";
 import { Button } from "@/components/ui/Button";
 import { MAX_COMPARE } from "@/lib/client/use-compare-list";
 import styles from "@/components/compare/compare.module.css";

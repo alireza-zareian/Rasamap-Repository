@@ -1,5 +1,5 @@
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
-import IranMap from "@/components/IranMap";
+import IranMap from "@/components/map/IranMap";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedMapPins, getCachedSiteStats } from "@/lib/db/cached";
 import { parseExploreParams, toFilterParams, exploreHref } from "@/lib/explore-query";

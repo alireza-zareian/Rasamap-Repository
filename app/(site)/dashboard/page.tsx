@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getActor } from "@/lib/auth/actor";
 import { listOwnListings } from "@/lib/db/listings";
-import DashboardClient from "@/components/DashboardClient";
+import DashboardClient from "@/components/account/DashboardClient";
 
 export const metadata: Metadata = {
   title: "داشبورد من | رسامپ",

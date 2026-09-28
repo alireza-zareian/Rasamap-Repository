@@ -4,7 +4,7 @@ import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import Link from "next/link";
 import { Phone } from "lucide-react";
 import { useCurrentUser } from "@/lib/client/use-current-user";
-import styles from "./detail.module.css";
+import styles from "./media.module.css";
 
 interface Props {
   hasPhone: boolean;

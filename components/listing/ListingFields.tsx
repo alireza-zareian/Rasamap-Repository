@@ -4,7 +4,7 @@ import { Lightbulb } from "lucide-react";
 import { typeLabels } from "@/lib/types";
 import { derivedPrices } from "@/lib/domain/pricing";
 import { faNum } from "@/lib/format";
-import { LocationInput } from "@/components/LocationInput";
+import { LocationInput } from "@/components/listing/LocationInput";
 import form from "@/components/ui/form.module.css";
 import { CitySelect } from "./CitySelect";
 import type { FieldGroup, ListingDraft, ListingForm } from "./use-listing-form";

@@ -4,7 +4,7 @@ import { Plus, Trash2, AlertTriangle, ChevronRight, ChevronLeft } from "lucide-r
 import type { Billboard } from "@/lib/types";
 import { fetchJson, errorMessage, isAborted } from "@/lib/client/fetch-json";
 import { faNum } from "@/lib/format";
-import { TypeIcon } from "@/components/TypeIcon";
+import { TypeIcon } from "@/components/media/TypeIcon";
 import { Button } from "@/components/ui/Button";
 import { Dialog, dialogStyles } from "@/components/ui/Dialog";
 import form from "@/components/ui/form.module.css";

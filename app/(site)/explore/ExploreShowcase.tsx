@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import IntentLink from "@/components/ui/IntentLink";
 import { MapPin, Building2 } from "lucide-react";
-import MediaImage from "@/components/MediaImage";
+import MediaImage from "@/components/media/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
 import { faNum } from "@/lib/format";
 import styles from "./explore.module.css";

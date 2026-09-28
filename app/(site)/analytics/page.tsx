@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import AnalyticsTab from "@/components/AnalyticsTab";
+import AnalyticsTab from "@/components/analytics/AnalyticsTab";
 import { BarChart2 } from "lucide-react";
 import { getCachedCatalogueAnalytics } from "@/lib/db/cached";
 import styles from "./analytics.module.css";
