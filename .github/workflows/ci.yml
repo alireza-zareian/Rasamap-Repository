@@ -29,3 +29,18 @@ jobs:
       # against it (test/run.mjs). Needs no secrets: the runner sets its own env.
       - name: Test
         run: npm test
+
+      # The 11 browser flows (test/e2e.test.mjs) against their own production
+      # build on :3200. GitHub's Ubuntu runners ship Google Chrome; the suite
+      # drives it over DevTools, with no Playwright download. Screenshots of a
+      # failure are kept as an artifact.
+      - name: Browser tests
+        run: CHROME_PATH="$(command -v google-chrome)" npm run test:e2e
+
+      - name: Keep failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: test/screenshots/
+          if-no-files-found: ignore
