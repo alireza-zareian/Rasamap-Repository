@@ -5,13 +5,9 @@
 #   sh scripts/backup-db.sh path.db   # explicit SQLite source
 #   BACKUP_DIR=/mnt/backups npm run db:backup
 #
-# Keeps the 10 most recent backups. Restore procedure: see RUNBOOK.md.
-#
-# Since §27 the engine can be PostgreSQL, and a backup script that quietly
-# copied a SQLite file that is no longer the database would be worse than no
-# backup at all — it would look like one. So the engine is read from
-# DATABASE_URL, the same single source lib/db/engine.ts uses, and an
-# unrecognised scheme stops the run instead of guessing.
+# Keeps the 10 most recent (BACKUP_KEEP). Restore procedure: see RUNBOOK.md.
+# The engine is read from DATABASE_URL, as lib/db/engine.ts does (§27); an
+# unrecognised scheme stops the run rather than back up the wrong database.
 
 set -eu
 

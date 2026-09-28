@@ -1,13 +1,11 @@
 /**
- * geocode-billboards.mjs
+ * Geocode billboards in dev.db that have no coordinates, through Neshan v4,
+ * trying a few spellings of each address. `npm run db:backfill-coords` is the
+ * maintained path; this one is kept for a quick run on one city.
  *
- * برای بیلبوردهایی که lat/lng ندارند،
- * از Neshan Geocoding API مختصات می‌گیرد و در DB ذخیره می‌کند.
- *
- * اجرا:
- *   node scripts/geocode-billboards.mjs --city زنجان   ← فقط یک شهر
- *   node scripts/geocode-billboards.mjs --all            ← همه شهرها
- *   node scripts/geocode-billboards.mjs --dry-run --city زنجان  ← پرینت بدون ذخیره
+ *   node --env-file=.env.local scripts/geocode-billboards.mjs --city زنجان
+ *   node --env-file=.env.local scripts/geocode-billboards.mjs --all
+ *   add --dry-run to print without saving
  */
 
 import Database from "better-sqlite3";
@@ -16,7 +14,7 @@ import https from "https";
 // ── Config ──────────────────────────────────────────────────────────
 const DB_PATH   = new URL("../dev.db", import.meta.url).pathname;
 const API_KEY   = process.env.NESHAN_API_KEY;
-const DELAY_MS  = 700; // کمتر از 2 درخواست در ثانیه
+const DELAY_MS  = 700; // under two requests a second
 
 // ── CLI args ────────────────────────────────────────────────────────
 const args    = process.argv.slice(2);
@@ -72,7 +70,7 @@ function distKm(lat1, lng1, lat2, lng2) {
 async function main() {
   const db = new Database(DB_PATH);
 
-  // مرکز هر شهر را از بیلبوردهایی که مختصات دارند حساب می‌کنیم
+  // Each city's centre, averaged from its rows that already have coordinates.
   const cityCenters = {};
   const centerRows = db.prepare(
     `SELECT city, AVG(lat) as lat, AVG(lng) as lng, COUNT(*) as cnt
@@ -96,16 +94,16 @@ async function main() {
   const update = db.prepare(`UPDATE billboards SET lat = ?, lng = ? WHERE id = ?`);
 
   let ok = 0, fail = 0, rejected = 0;
-  const MAX_DIST_KM = 60; // حداکثر فاصله قابل قبول از مرکز شهر
+  const MAX_DIST_KM = 60; // farthest accepted distance from the city centre
 
   for (const row of rows) {
     const locShort = (row.location || "").split("،")[0].trim();
-    // چند فرمت آدرس رو امتحان می‌کنیم
+    // Several spellings of the address, most specific first.
     const addressCandidates = [
-      [locShort, row.city].filter(Boolean).join(" "),                 // "میدان انقلاب زنجان"
-      [locShort.replace(/^بیلبورد\s+/, ""), row.city].filter(Boolean).join(" "), // بدون "بیلبورد"
-      row.city,                                                         // فقط شهر — fallback
-    ].filter((a, i, arr) => a && arr.indexOf(a) === i);  // deduplicate
+      [locShort, row.city].filter(Boolean).join(" "),
+      [locShort.replace(/^بیلبورد\s+/, ""), row.city].filter(Boolean).join(" "), // without "بیلبورد"
+      row.city,                                                         // the city alone
+    ].filter((a, i, arr) => a && arr.indexOf(a) === i);
 
     process.stdout.write(`[${row.id}] ${row.name.slice(0, 38).padEnd(38)} → `);
 

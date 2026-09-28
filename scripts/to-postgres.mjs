@@ -1,47 +1,21 @@
 #!/usr/bin/env node
-// ============================================================================
-// RASAMAP — move the database from SQLite to PostgreSQL (and back)
+// Move the database from SQLite to PostgreSQL, and back (§27).
 //
 //   npm run db:to-postgres -- postgresql://user:pass@host:5432/rasamap
 //   npm run db:to-postgres -- --dry-run postgresql://…    read and plan only
 //   npm run db:to-sqlite                                   switch back
 //
-// The project runs on SQLite and §14 explains why that is right for one process
-// on one laptop. This exists so the day that stops being true, moving is one
-// command rather than a project. Nothing here runs on its own.
+//   1. read every table out of SQLite into a temporary dump
+//   2. point prisma/schema.prisma at postgresql, create the tables, regenerate
+//   3. (child) copy every table, parents before children, in batches
+//   4. (child) move each id sequence past the highest copied id — ids were
+//      copied, and a sequence left at 1 collides on the next insert
+//   5. (child) count both sides; fail unless every table matches
 //
-// ── Why it is two processes ─────────────────────────────────────────────────
-// The generated Prisma client is built for one provider. Once `@prisma/client`
-// has been imported, regenerating it on disk does not change the copy already
-// in memory — so a single process cannot read SQLite and then write PostgreSQL.
-// It gets as far as the copy and fails with "adapter based on postgres is not
-// compatible with the provider sqlite".
-//
-// So the parent reads SQLite into a dump file and re-points the schema; a child
-// process, started afterwards, imports the freshly generated client and writes.
-//
-// ── What it does, in order ──────────────────────────────────────────────────
-//   1. reads every table out of SQLite, into a temporary dump
-//   2. points prisma/schema.prisma at postgresql, creates the tables, regenerates
-//   3. (child) copies every table, parents before children, in batches
-//   4. (child) advances each id sequence past the highest copied id
-//   5. (child) counts both sides and fails unless every table matches
-//
-// Step 4 is easy to forget and impossible to miss afterwards. SQLite ids came
-// from the seed and were preserved on purpose; PostgreSQL keeps its own counter
-// per table, and a counter still sitting at 1 makes the next insert collide
-// with row number one — a unique-constraint error on a table with plenty of room.
-//
-// Any failure puts the schema file back on sqlite before exiting, so a half-run
-// never leaves the project pointing at an engine it has no data in. The SQLite
-// database itself is only ever read.
-//
-// ── If you are an AI agent ──────────────────────────────────────────────────
-// `prisma db push` refuses to run for you without explicit human consent, which
-// is correct: it can destroy a database. Ask, and pass the answer through
-// PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION. A person running this by hand
-// sees no such prompt.
-// ============================================================================
+// Two processes, because a Prisma client already imported stays bound to its
+// provider after regeneration. Any failure puts the schema back on sqlite;
+// the SQLite database is only read. `prisma db push` asks an AI agent for
+// consent through PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from "node:fs";
@@ -99,29 +73,17 @@ const TABLE_NAMES = {
 const BATCH = 500;
 
 /**
- * Everything the schema file cannot express, and which `db push` therefore does
- * not create.
- *
- * Right now that is one partial unique index. Prisma cannot put a WHERE clause
- * on an index, so it lives in migration SQL — and a database built from
- * schema.prisma alone silently lacks it. It is the floor under double-submitted
- * listings (§8), so "silently lacks it" means duplicate rows nobody notices
- * until someone looks. test/reset-db.mjs runs `migrate deploy` rather than
- * `db push` for exactly this reason.
- *
- * If another such index is ever added to prisma/migrations, add it here too.
+ * What migrations hold and schema.prisma cannot, so `db push` would skip: the
+ * partial unique index under double-submitted listings (§8), and searchText.
+ * A new migration of this kind must be added here too.
  */
 const EXTRA_INDEXES = [
   `CREATE UNIQUE INDEX IF NOT EXISTS "listings_submitter_name_city_key"
      ON "billboards" ("submittedById", "name", "city")
      WHERE "source" = 'listing' AND "submittedById" IS NOT NULL`,
-  // billboards.searchText is filled by SQLite triggers (migration
-  // 20260925160000_add_search_text); db push makes it a plain column that
-  // nothing would ever fill. PostgreSQL can generate it instead, which is
-  // simpler than porting the triggers. This is the same fold as SEARCH_FOLD in
-  // lib/domain/search.ts, in PostgreSQL's translate(): each character of the
-  // first string becomes the one at its position in the second, and the
-  // trailing tatweel, with no counterpart, is deleted. Change both together.
+  // searchText is filled by SQLite triggers; PostgreSQL generates it instead.
+  // The same fold as SEARCH_FOLD in lib/domain/search.ts, through translate():
+  // the trailing tatweel has no counterpart, so it is deleted. Change both.
   `ALTER TABLE "billboards" DROP COLUMN IF EXISTS "searchText"`,
   `ALTER TABLE "billboards" ADD COLUMN "searchText" text GENERATED ALWAYS AS (lower(translate(
      "name" || ' ' || "city" || ' ' || "location" || ' ' || "agency",

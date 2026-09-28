@@ -1,10 +1,7 @@
 #!/usr/bin/env node
-// Walks the public pages, pulls every image the HTML asks for — src and every
-// srcset candidate — and checks each one actually resolves. Prints the weight
-// a visitor downloads per page.
-//
-// This is the safety net for any change to how images are referenced: a broken
-// path is invisible in a build and obvious here.
+// Walks the public pages, fetches every image the HTML asks for — src and every
+// srcset candidate — and fails on any that does not resolve, which a build
+// never shows. Prints the image weight per page.
 //
 //   node scripts/check-images.mjs [baseUrl]
 

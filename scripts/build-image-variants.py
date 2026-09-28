@@ -44,11 +44,8 @@ SOURCE = os.path.join(ROOT, "public", "images", "scraped")
 # image-loader.js — those three decide, together, which file a browser asks for.
 WIDTHS = (256, 384)
 
-# PNGs get one more, at the source resolution. Not a resize — a re-container.
-# A 500-wide PNG here averages 298 KB and the same picture as WebP averages 26,
-# with the transparency intact: 91% off, measured over a sample of 25. It is the
-# largest single saving in the project's image weight, and unlike the smaller
-# widths it helps a high-density phone too, which already asks for 500.
+# PNGs also get a WebP at the source width: 298 KB → 26 KB on average over a
+# sample of 25, transparency intact.
 PNG_FULL_WIDTH = 500
 JPEG_QUALITY = 82
 WEBP_QUALITY = 80

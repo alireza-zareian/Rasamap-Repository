@@ -1,14 +1,7 @@
-// What the browser actually downloads, per route — without adding a dependency.
+// The JavaScript each route downloads, gzipped, read from the build manifest
+// (Next 16's build output no longer prints sizes). Run `npm run build` first.
 //
 //   npm run bundle
-//
-// `@next/bundle-analyzer` would answer the same question, but it pulls in
-// webpack-bundle-analyzer and this project has a standing preference for a
-// small script over a large tool (§31). Next 16 dropped the size column from
-// its build output, so the numbers have to come from the manifest either way.
-//
-// Sizes are gzipped, because that is what crosses the wire. Run `npm run build`
-// first; this reads what that produced.
 
 import { readFileSync, statSync, existsSync, readdirSync } from "node:fs";
 import { gzipSync } from "node:zlib";
