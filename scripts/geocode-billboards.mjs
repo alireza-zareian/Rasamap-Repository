@@ -15,7 +15,7 @@ import https from "https";
 
 // ── Config ──────────────────────────────────────────────────────────
 const DB_PATH   = new URL("../dev.db", import.meta.url).pathname;
-const API_KEY   = "service.b0ae1188ad124aca863eeadca082c6ef";
+const API_KEY   = process.env.NESHAN_API_KEY;
 const DELAY_MS  = 700; // کمتر از 2 درخواست در ثانیه
 
 // ── CLI args ────────────────────────────────────────────────────────
@@ -25,6 +25,10 @@ const ALL     = args.includes("--all");
 const cityIdx = args.indexOf("--city");
 const CITY    = cityIdx !== -1 ? args[cityIdx + 1] : null;
 
+if (!API_KEY) {
+  console.error("❌ NESHAN_API_KEY تنظیم نشده است");
+  process.exit(1);
+}
 if (!ALL && !CITY) {
   console.error("❌ باید --city <شهر> یا --all بدهید");
   process.exit(1);
