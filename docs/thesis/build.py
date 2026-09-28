@@ -28,7 +28,7 @@ import http.server, io, json, os, re, shutil, socketserver, subprocess, sys, tem
 HERE  = os.path.dirname(os.path.abspath(__file__))
 DOCS  = os.path.dirname(HERE)
 ROOT  = os.path.dirname(DOCS)
-CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+CHROME = os.environ.get("CHROME_PATH", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 PORT   = 8879
 
 FA = "۰۱۲۳۴۵۶۷۸۹"
