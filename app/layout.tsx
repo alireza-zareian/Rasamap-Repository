@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/vazirmatn";
+import "./reset.css";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site-url";
 import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/client/theme";
