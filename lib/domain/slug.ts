@@ -1,12 +1,7 @@
 /**
- * A media item's address, from its name.
- *
- * Slugs are ASCII because GET /api/billboards/[slug] accepts `^[a-z0-9-]+$`,
- * and a Persian name used to contribute nothing to one: every submitted
- * listing became `listing-<timestamp>`, an address that says nothing to a
- * person or a search engine. Persian letters are written in Latin here the way
- * Iranians type Finglish — consonants as they sound, و and ی as the vowels they
- * most often carry — which is readable ("bilbord-otoban-hmt"), if not exact.
+ * A media item's address from its name. Slugs are ASCII (slugParams accepts
+ * `^[a-z0-9-]+$`), so Persian is written the way people type Finglish —
+ * readable ("bilbord-otoban-hmt"), if not exact.
  */
 
 const LATIN: Record<string, string> = {
@@ -22,11 +17,7 @@ const LATIN: Record<string, string> = {
 
 const MAX_BASE = 60;
 
-/**
- * `name` in Latin letters, lower-case, words joined by dashes, then `suffix`
- * — which keeps two listings of the same name apart. A name with nothing
- * transliterable falls back to "listing".
- */
+/** `name` in Latin letters joined by dashes, then `suffix`; "listing" if nothing transliterates. */
 export function slugify(name: string, suffix: string): string {
   const latin = [...name.toLowerCase()].map(ch => LATIN[ch] ?? ch).join("");
   const base = latin

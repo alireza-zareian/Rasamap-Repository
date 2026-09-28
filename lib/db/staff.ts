@@ -7,14 +7,9 @@ import { isStaffRole, type StaffRole } from "@/lib/domain/roles";
 import type { StaffActor } from "@/lib/domain/actor";
 
 /**
- * Staff accounts — the `admins` table. Customers are in ./customers.ts.
- *
- * The two are kept apart on purpose, the way most products separate workforce
- * accounts from customer accounts: they sign in with different identifiers
- * (email vs mobile), carry different authority, and a customer can never be
- * promoted into the panel by editing a column. What was wrong was never the two
- * tables — it was a session that did not say which one it pointed into. A
- * session row now names its table in `kind` (lib/db/sessions.ts).
+ * Staff accounts (`admins`); customers are in ./customers.ts. Kept apart on
+ * purpose: they sign in differently (email vs mobile), and no column edit can
+ * promote a customer into the panel. A session names its table in `kind`.
  */
 
 export interface StaffAccount {
@@ -35,19 +30,14 @@ function toAccount(row: { id: number; email: string; name: string; role: string;
     id:        row.id,
     email:     row.email,
     name:      row.name,
-    // The column is free text in SQLite; a value outside the ladder is treated
-    // as the least authority rather than trusted, so a hand-edited row cannot
-    // grant more than it names.
+    // An enum to Prisma, unchecked text to SQLite: a hand-edited value gets the least authority.
     role:      isStaffRole(row.role) ? row.role : "viewer",
     active:    row.active,
     createdAt: row.createdAt,
   };
 }
 
-/**
- * The staff account these credentials open, or null. Costs the same bcrypt
- * comparison whether or not the email exists (see passwordMatches).
- */
+/** The staff account these credentials open, or null — one bcrypt comparison either way. */
 export async function verifyStaffCredentials(email: string, password: string): Promise<StaffAccount | null> {
   const row = await prisma.admin.findUnique({
     where: { email: email.toLowerCase().trim() },
@@ -55,8 +45,7 @@ export async function verifyStaffCredentials(email: string, password: string): P
   });
   const usable = row?.active ? row : null;
   if (!usable || !(await passwordMatches(password, usable.passwordHash))) {
-    // Still pay for a comparison when there is no usable account, so the two
-    // refusals cost the same.
+    // No usable account still pays for a comparison, so both refusals take as long.
     if (!usable) await passwordMatches(password, null);
     return null;
   }
@@ -87,13 +76,9 @@ export async function createStaff(input: {
 }
 
 /**
- * Change another staff member's role or active flag.
- *
- * Refused on the caller's own account: a super admin who demotes or
- * deactivates themselves can leave the panel with nobody able to undo it.
- * Deactivating also ends the account's sessions, so reactivating it later does
- * not bring a browser signed in before the deactivation back to life.
- * Returns the account as it was and as it is, for the audit record.
+ * Change another staff member's role or active flag — never one's own, which
+ * could leave nobody able to undo it. Deactivating ends the account's sessions,
+ * so reactivating does not revive them. Returns before and after for the audit.
  */
 export async function updateStaff(
   actorId: number,
@@ -113,11 +98,7 @@ export async function updateStaff(
   return { before: toAccount(existing), after: toAccount(updated) };
 }
 
-/**
- * A staff member changes their own password. Every other session of the
- * account ends; this one stays. There was no way to do this at all before — a
- * leaked staff password could only be answered by deactivating the account.
- */
+/** A staff member changes their own password; every other session of the account ends. */
 export async function changeOwnStaffPassword(
   self: StaffActor,
   currentPassword: string,

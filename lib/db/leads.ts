@@ -5,10 +5,8 @@ import { LEAD_STATUSES, type LeadStatus } from "@/lib/types";
 import { logger } from "@/lib/logger";
 
 /**
- * Leads — one ContactRequest per (media, customer) that asked for the owner's
- * number. Rasamap does not process the deal (§17), so the reveal is the last
- * thing the platform can observe, and this table is the only record that
- * demand happened at all.
+ * Leads: one ContactRequest per (media, customer) that asked for the owner's
+ * number. The deal happens elsewhere (§17), so this is the only record of demand.
  */
 
 const LEAD_FIELDS = {
@@ -19,16 +17,9 @@ const LEAD_FIELDS = {
 } as const;
 
 /**
- * Get-or-create the lead for this (media, customer) pair.
- *
- * A second reveal by the same person is the same lead, so the unique index on
- * (billboardId, userId) is what defines a duplicate, and the repeat is kept as
- * an atomic `count` increment rather than a second row — `increment` is a
- * single UPDATE, so two simultaneous clicks cannot both read 1 and both write 2.
- *
- * A failure here must not cost the customer the phone number they asked for:
- * the lead is bookkeeping, the number is the product. So this logs and returns
- * instead of throwing — but it logs, it does not swallow.
+ * Get-or-create the lead for this pair; the unique index on (billboardId,
+ * userId) defines a duplicate, and a repeat is an atomic `count` increment.
+ * Logs rather than throws: bookkeeping must not cost the customer the number.
  */
 export async function recordLead(billboardId: number, customerId: number): Promise<void> {
   const bump = { count: { increment: 1 }, lastRequestedAt: new Date() };
@@ -36,8 +27,7 @@ export async function recordLead(billboardId: number, customerId: number): Promi
   try {
     await prisma.contactRequest.upsert({ where, update: bump, create: { billboardId, userId: customerId } });
   } catch (err) {
-    // Two first-ever clicks raced and both tried to insert. The row the other
-    // one created is the right answer, so count this click against it.
+    // Two first clicks raced to insert: count this one against the other's row.
     if (isUniqueViolation(err)) {
       try {
         await prisma.contactRequest.update({ where, data: bump });
@@ -72,8 +62,7 @@ export async function listLeads(filter: { status?: LeadStatus; page: number; lim
     prisma.contactRequest.groupBy({ by: ["status"], _count: { _all: true } }),
   ]);
 
-  // Seed every known state with 0 so the panel's filter never hides a state
-  // just because nothing is in it yet.
+  // Every state starts at 0, so an empty one still shows in the filter.
   const counts: Record<string, number> = Object.fromEntries(LEAD_STATUSES.map(s => [s, 0]));
   for (const g of grouped) counts[g.status] = g._count._all;
 
@@ -81,10 +70,8 @@ export async function listLeads(filter: { status?: LeadStatus; page: number; lim
 }
 
 /**
- * Move a lead through its follow-up states and keep an internal memo on it.
- * Only these two fields are writable: who asked for which number and when is a
- * record of something that happened — staff annotate it, never edit it.
- * An empty note clears the memo.
+ * Set a lead's follow-up state and internal note (empty clears it). Only these
+ * two: who asked for which number, and when, is a record staff annotate, never edit.
  */
 export async function updateLead(id: number, patch: { status?: LeadStatus; note?: string }) {
   const existing = await prisma.contactRequest.findUnique({ where: { id }, select: { status: true, billboardId: true } });

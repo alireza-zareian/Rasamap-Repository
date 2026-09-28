@@ -11,9 +11,8 @@ import { slugify } from "@/lib/domain/slug";
 import { randomBytes } from "node:crypto";
 
 /**
- * Every write to the billboards table. Each one that changes what a visitor
- * would see ends by dropping the catalogue cache tag, which is why the write
- * path — and not the read path — is the side that knows about invalidation.
+ * Every admin write to the billboards table. Each one that changes what a
+ * visitor sees ends by dropping the catalogue cache tag.
  */
 
 export interface BillboardCreateInput {
@@ -33,20 +32,15 @@ export interface BillboardCreateInput {
 }
 
 /**
- * The columns a new row needs but its creator does not set: a slug, a zeroed
- * traffic block and empty lists. Shared by an admin create here and a
- * customer's submission in ../listings.ts, so the two cannot disagree about
- * what a blank media item looks like.
+ * The columns a new row needs but its creator does not set. Shared with a
+ * customer's submission (../listings.ts) so both make the same blank record.
  */
 export function blankBillboardFields(name: string) {
   return {
-    // Six random base-36 characters: the timestamp this used to be collided
-    // for two listings made in the same millisecond, and the unique index then
-    // reported the second as a duplicate of the first.
+    // Six random base-36 characters; a timestamp collided for two listings in one millisecond.
     slug: slugify(name, randomBytes(4).readUInt32BE(0).toString(36).padStart(6, "0").slice(-6)),
     age: 0,
-    // No traffic survey exists for a hand-entered or user-submitted media item,
-    // so the block stays zeroed — and estimatedViews mirrors it.
+    // No traffic survey exists for a hand-entered or submitted item.
     traffic: NO_TRAFFIC,
     estimatedViews: 0,
     images: [] as string[],
@@ -54,8 +48,7 @@ export function blankBillboardFields(name: string) {
     nearbyLandmarks: [] as string[],
     rating: 0,
     reviewCount: 0,
-    // Checked against the table: a spread is exempt from excess-property
-    // checks, so without this a dropped column survives here unnoticed.
+    // A spread skips excess-property checks; `satisfies` catches a dropped column.
   } satisfies Partial<Prisma.BillboardUncheckedCreateInput>;
 }
 
@@ -108,8 +101,7 @@ function isMissingRow(err: unknown): boolean {
 }
 
 export async function updateBillboard(id: number, data: BillboardUpdateInput): Promise<Billboard> {
-  // `area` is denormalised from width x height, so a size edit has to carry it
-  // along. The patch is partial, so read whichever side is not being changed.
+  // `area` is stored (§21): a size edit recomputes it, reading the side not being changed.
   let area: number | undefined;
   if (data.width !== undefined || data.height !== undefined) {
     const current = await prisma.billboard.findUnique({
@@ -138,19 +130,12 @@ export async function updateBillboard(id: number, data: BillboardUpdateInput): P
 }
 
 /**
- * Delete a media item, and say what went with it.
+ * Delete a media item. Refused while it has reviews, which do not cascade —
+ * suspending is the answer there. Leads do cascade, so their count is returned
+ * for the audit row (§23).
  *
- * Refused while it has reviews: they reference the row with no cascade, and
- * losing a customer's written review to an admin's cleanup is not a side
- * effect anyone would choose. Leads, unlike reviews, cascade — a lead that
- * predates the removal has nowhere left to point — so their number is counted
- * first and returned, for the audit row, so the loss is visible after the fact
- * (the "one number worth knowing", §23).
- *
- * A crawler row deleted here is still in tomorrow's feed, and the nightly
- * import would put it straight back (prisma/sync-scraped.ts). The tombstone is
- * the record that this absence was a decision. Rows the crawler does not own —
- * a submitted listing — cannot come back and need none.
+ * A crawled row would come back with tomorrow's feed (prisma/sync-scraped.ts),
+ * so deleting one leaves a tombstone; a submitted listing needs none (§33).
  */
 export async function deleteBillboard(id: number): Promise<{ slug: string; name: string; deletedLeads: number }> {
   const row = await prisma.billboard.findUnique({
@@ -180,17 +165,10 @@ export async function deleteBillboard(id: number): Promise<{ slug: string; name:
 }
 
 /**
- * Take a published media item down, or put a taken-down one back.
- *
- * Before this there was no way to do either: review state moved only through
- * the listing decision, which refuses an approved row, and deleting was refused
- * once a row had a review. An abusive listing with one review stayed public for
- * good. Taking it down keeps the row, its reviews and its leads; the public
- * reads simply stop seeing it (see `published`).
- *
- * Conditional on the state it expects, like every review transition, so a
- * double click cannot flip it twice. `note` is written where the submitter's
- * dashboard shows feedback.
+ * Take a published media item down, or put it back. The row, its reviews and
+ * its leads stay; public reads stop seeing it. The update is conditional on
+ * the expected state, so a double click cannot flip it twice. `note` shows on
+ * the submitter's dashboard.
  */
 export async function setBillboardVisibility(id: number, visible: boolean, note: string | null): Promise<{ name: string }> {
   const [from, to] = visible ? ["suspended", "approved"] as const : ["approved", "suspended"] as const;
@@ -209,17 +187,10 @@ export async function setBillboardVisibility(id: number, visible: boolean, note:
 }
 
 /**
- * Replace a media item's photos, in the order given.
- *
- * An entry is either a photo the record already has, kept as it is, or a newly
- * uploaded file. A kept photo must be one the record already has — this used
- * to keep any string starting with "/" or "http", so an arbitrary external
- * address could be stored and shown on the public page; the customer's
- * resubmission applies the same rule (../listings.ts).
- *
- * New files go through saveImages(), the same path a customer's listing takes:
- * every file is checked before any is written, and the folder is removed again
- * if the row cannot be updated.
+ * Replace a media item's photos, in order. Each entry is a photo the record
+ * already has, or a new file. Any other string is refused, so no outside
+ * address can reach the public page (../listings.ts applies the same rule).
+ * New files go through saveImages(); the folder is removed if the update fails.
  */
 export async function replaceBillboardImages(id: number, entries: (string | File)[], max: number): Promise<string[]> {
   const existing = await prisma.billboard.findUnique({ where: { id }, select: { images: true, allImages: true } });
@@ -240,9 +211,7 @@ export async function replaceBillboardImages(id: number, entries: (string | File
   const images = entries.map(e => (typeof e === "string" ? e : fresh.next().value as string));
 
   try {
-    // `hasImages` is a denormalised flag: it is the first key of the default
-    // ordering on every public listing and drives the analytics coverage count,
-    // so it has to move with `images` or the two drift apart.
+    // `hasImages` is stored: it orders the catalogue and counts photo coverage.
     await prisma.billboard.update({ where: { id }, data: { images, hasImages: images.length > 0 } });
   } catch (err) {
     await discardImages(saved.dir);

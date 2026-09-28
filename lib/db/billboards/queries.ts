@@ -23,17 +23,10 @@ export interface BillboardFilterParams {
 }
 
 /**
- * The box that contains a circle, in degrees.
- *
- * A radial search runs in two passes because SQL cannot filter on a distance
- * this schema does not store: this box narrows the table in the query, and the
- * exact circle is cut from what comes back. The box is generous — its corners
- * reach out to 1.41 radii — which is the point: it may not drop a row the
- * circle would have kept.
- *
- * Longitude degrees shrink towards the poles, so the east-west half-width is
- * divided by the cosine of the latitude. At Tehran that makes it about a fifth
- * wider than the north-south one.
+ * The box around a circle, in degrees. SQL cannot filter on a distance the
+ * schema does not store, so a radial search narrows the table with this box and
+ * cuts the exact circle from what comes back. The box may be too wide, never
+ * too narrow. A degree of longitude shrinks with latitude, hence the cosine.
  */
 function boundingBox(lat: number, lng: number, radiusKm: number) {
   const dLat = radiusKm / 111;
@@ -46,31 +39,19 @@ function boundingBox(lat: number, lng: number, radiusKm: number) {
 }
 
 /**
- * A ceiling on the box a radial search reads before cutting the circle.
- *
- * The radius cap already bounds this — the widest allowed box holds a few
- * hundred rows on this dataset — so the limit is a backstop against a denser
- * dataset later, not a working constraint. It sits well above the largest box
- * anyone can currently ask for, so no real search is truncated by it.
+ * Rows a radial search may read before cutting the circle. The radius cap
+ * already keeps the widest box to a few hundred rows; this is a backstop for a
+ * denser dataset.
  */
 const NEAR_SCAN_LIMIT = 3000;
 
-// Every entry leads with `featured` (a paid, admin-granted promotion) and then
-// `hasImages`, so paid listings sit at the top and photographed ones above bare
-// records. `traffic_desc` and `area_desc` sort on the denormalised
-// `estimatedViews` and `area` columns: both are derived values (one from the
-// traffic JSON, one from width x height) and Prisma cannot ORDER BY an
-// expression or a JSON path.
+// Paid promotions first, then photographed records. `estimatedViews` and `area`
+// are stored columns because Prisma cannot ORDER BY a JSON path or an
+// expression (§21).
 //
-// Every entry ends with `id`, which is not decoration: without a unique last
-// term the order *within* a group of equal keys is whatever the engine happens
-// to produce, and paging is LIMIT/OFFSET over that order. On this dataset the
-// 3,532 published rows fall into 717 distinct (featured, hasImages, price)
-// groups and the largest holds 153 rows — six pages of identical sort keys.
-// SQLite answers them consistently today, so nothing is visibly wrong; Postgres
-// makes no such promise, and the migration path in §27 is meant to be a change
-// of engine, not a change of behaviour. One indexed integer closes it, and it
-// measured the same 2 ms with and without.
+// `id` last makes the order total: paging is LIMIT/OFFSET, and the largest
+// group of equal keys is 153 rows. SQLite happens to keep ties stable,
+// PostgreSQL does not promise to (§27). Measured at the same 2 ms either way.
 const SORT_MAP: Record<string, Prisma.BillboardOrderByWithRelationInput[]> = {
   price_asc:    [{ featured: "desc" }, { hasImages: "desc" }, { price: "asc" },  { id: "asc" }],
   price_desc:   [{ featured: "desc" }, { hasImages: "desc" }, { price: "desc" }, { id: "asc" }],
@@ -79,18 +60,15 @@ const SORT_MAP: Record<string, Prisma.BillboardOrderByWithRelationInput[]> = {
 };
 
 /**
- * Each word of a search must appear in the row's folded `searchText` (name,
- * city, location, agency — see lib/domain/search.ts for what folding does and
- * why). Both sides are folded and lower-cased, so the comparison is the same
- * on SQLite and PostgreSQL without asking either for case-insensitive LIKE.
+ * Each word must appear in the row's folded `searchText` (lib/domain/search.ts).
+ * Both sides are folded and lower-cased, so SQLite and PostgreSQL compare alike.
  */
 function searchWhere(query: string): Prisma.BillboardWhereInput[] {
   return searchTokens(query).map(token => ({ searchText: { contains: token } }));
 }
 
 function buildWhere(p: BillboardFilterParams): Prisma.BillboardWhereInput {
-  // Published first and unconditionally: no filter a caller passes can widen
-  // a public read to a listing still in review.
+  // Published first, so no filter can widen a public read to a listing in review.
   const where: Prisma.BillboardWhereInput = { ...published };
   if (p.type)         where.type         = p.type;
   if (p.availability) where.availability = p.availability;
@@ -113,31 +91,18 @@ export async function getFilteredBillboards(
   p: BillboardFilterParams,
 ): Promise<{ items: Billboard[]; total: number }> {
   const page  = Math.max(1, p.page  ?? 1);
-  // 48 is two screens of results. The ceiling is deliberately low: a bigger
-  // page size buys a real visitor nothing and only makes bulk copying cheaper.
+  // Two screens of results; a bigger page helps only bulk copying (§20).
   const limit = Math.min(48, Math.max(1, p.limit ?? 24));
   const orderBy = SORT_MAP[p.sortBy ?? ""] ?? SORT_MAP.price_asc;
   const where = buildWhere(p);
 
-  // A radial search cannot be paged by the database, because the circle is cut
-  // after the rows come back: asking for rows 25-48 of the *box* and then
-  // dropping the corners would leave a short page and a wrong total. So the box
-  // is read whole, the circle is cut, and the page is taken from what is left.
-  //
-  // That is affordable only because the radius is capped (MAX_RADIUS_KM) and
-  // the box is therefore small. Measured on this dataset: a 10 km box is 340
-  // rows and the whole two-pass search costs about 0.9 ms — roughly a seventh
-  // of what the ordinary catalogue query already spends on every page view.
+  // The circle is cut after the rows come back, so the database cannot page a
+  // radial search: the box is read whole and the page taken from what is left.
+  // The radius cap (MAX_RADIUS_KM) keeps that small — a 10 km box is 340 rows.
   if (p.near) {
-    // Two queries, and the split is the point: the first asks only for what the
-    // circle needs to judge a row — an id and a coordinate — so the box can be
-    // read wide without dragging every record's JSON columns along with it. The
-    // second fetches whole rows for the one page being shown.
-    //
-    // Reading full rows in the first pass instead cost 37 ms at the 50 km
-    // ceiling against 23 ms for an ordinary catalogue page; this shape brings it
-    // back under that. `orderBy` is repeated so the page keeps the sort the
-    // caller asked for.
+    // First pass: only ids and coordinates, so a wide box does not drag every
+    // row's JSON along (full rows cost 37 ms at the 50 km cap). Second pass:
+    // whole rows for the one page shown, in the caller's order.
     const candidates = await prisma.billboard.findMany({
       where, orderBy, take: NEAR_SCAN_LIMIT,
       select: { id: true, city: true, lat: true, lng: true },
@@ -165,14 +130,7 @@ export async function getFilteredBillboards(
   return { items: rows.map(fromRow), total };
 }
 
-/**
- * The photographed, busiest media items behind the landing gallery and the
- * catalogue's hero carousel.
- *
- * `hasImages` is filtered in the query rather than by fetching a wider page and
- * dropping the imageless rows in JS: the carousels show photos and nothing
- * else, so a record without one is not a near-miss, it is not a candidate.
- */
+/** The busiest photographed media, for the landing and catalogue carousels. */
 export async function getShowcaseBillboards(limit: number): Promise<Billboard[]> {
   const rows = await prisma.billboard.findMany({
     where:   { ...published, hasImages: true },
@@ -194,23 +152,14 @@ export interface MapPin {
 }
 
 /**
- * A ceiling, not a page size. The map has no "next page", so an unbounded
- * query is the one shape that could hand a crawler the whole coordinate set in
- * a single request — which is exactly what §20 keeps the catalogue from doing.
- * No single city comes close to it.
+ * A ceiling, not a page size: the map has no next page, and without one a
+ * single request could return every coordinate (§20). No city comes close.
  */
 const MAP_PIN_LIMIT = 1200;
 
 /**
- * Coordinates for the pins under the current filter.
- *
- * Selects seven columns instead of the row, because a pin is a dot with a
- * label: pulling `images`, `traffic` and `features` for a thousand rows would
- * cost more than everything else the map does put together.
- *
- * `buildWhere` is shared with the catalogue on purpose — the map is another
- * view of the same result set, so a filter that narrows one must narrow the
- * other identically, including the published-only rule.
+ * Pins under the current filter: seven columns, not whole rows. `buildWhere`
+ * is the catalogue's, so the map and the list always show the same set.
  */
 export async function getMapPins(p: BillboardFilterParams): Promise<MapPin[]> {
   const rows = await prisma.billboard.findMany({
@@ -222,15 +171,13 @@ export async function getMapPins(p: BillboardFilterParams): Promise<MapPin[]> {
     orderBy: { estimatedViews: "desc" },
     take: MAP_PIN_LIMIT,
   });
-  // `lat: { not: null }` already excludes the nulls; this narrows the type
-  // without a cast, and costs one pass over rows that are already in memory.
+  // The query already excludes nulls; this narrows the type without a cast.
   return rows.flatMap((r) =>
     r.lat === null || r.lng === null ? [] : [{ ...r, lat: r.lat, lng: r.lng }],
   );
 }
 
-// Admin table listing — filter, sort and paginate in the DB (not by loading
-// every row and slicing in JS).
+// The admin table: filtered, sorted and paged in the database.
 export interface AdminBillboardQuery {
   q?: string;
   city?: string;
@@ -255,14 +202,12 @@ export async function getAdminBillboardPage(
     const words = searchWhere(p.q);
     where.OR = [
       ...(words.length ? [{ AND: words }] : []),
-      // A slug, so pasting the tail of a public URL finds the row — which is
-      // what "edit this listing" on the staff bar does.
+      // Pasting the tail of a public URL finds the row (the staff bar's "edit" link).
       { slug: { contains: p.q.trim().toLowerCase() } },
     ];
   }
 
-  // `id` breaks ties for the same reason the public sort does — sorting the
-  // admin table by city puts hundreds of rows on one key.
+  // `id` breaks ties, as in SORT_MAP: sorting by city puts hundreds of rows on one key.
   const orderBy: Prisma.BillboardOrderByWithRelationInput[] =
     p.sortKey === "id" ? [{ id: p.sortDir }] : [{ [p.sortKey]: p.sortDir }, { id: "asc" }];
 
@@ -280,17 +225,9 @@ export async function getBillboardById(id: number): Promise<Billboard | null> {
 }
 
 /**
- * One media item by its slug.
- *
- * Unpublished rows are invisible: a submission awaiting review must not be
- * reachable by guessing its address, the same way it is kept out of search, the
- * statistics and the sitemap.
- *
- * `includeUnpublished` lifts that for a reviewer looking at a submission on the
- * real page instead of in a form. It is a parameter and not a lookup inside
- * this function on purpose — a data-access function that decides for itself who
- * is asking is a function whose callers stop thinking about it. The only caller
- * that passes true does so after checking the session on the server.
+ * One media item by slug. A listing in review is invisible unless
+ * `includeUnpublished` is passed, which the media page does only after
+ * checking on the server that the visitor is staff.
  */
 export async function getBillboardBySlug(
   slug: string,
@@ -306,27 +243,18 @@ export async function getBillboardBySlug(
 }
 
 /**
- * Whether any row — published or not — has this slug. One read of the unique
- * index, and it is what stands between an address a visitor typed and the
- * cache, which keeps an entry for every distinct slug it is asked about.
+ * Whether any row, published or not, has this slug. Checked before the cache,
+ * which would otherwise keep an entry for every slug a visitor makes up.
  */
 export async function slugExists(slug: string): Promise<boolean> {
   return (await prisma.billboard.count({ where: { slug } })) > 0;
 }
 
 /**
- * Suggestions for the foot of a media page.
- *
- * Three widening rings: the same city and the same kind of media first, then
- * anything else in that city, then the same kind anywhere. Each ring only fills
- * what the ones before it left empty, and nothing repeats.
- *
- * `region` is deliberately not part of this. In this dataset it is a free-text
- * neighbourhood label — "مرکز شهر", "منطقه ۵", sometimes a whole sentence — so
- * it is close to unique per row (Zanjan: 58 records, 58 distinct regions) and it
- * repeats across cities that have nothing to do with each other. Matching on it
- * found nothing, every page fell through to one national list, and the same
- * dozen Tehran billboards were suggested under every listing in the country.
+ * Suggestions under a media page, in widening rings: same city and type, then
+ * same city, then same type anywhere. `region` is not used: it is free text,
+ * nearly unique per row (Zanjan: 58 rows, 58 regions), so matching on it found
+ * nothing and every page showed the same Tehran dozen.
  */
 export async function getRelatedBillboards(
   ref: Pick<Billboard, "id" | "city" | "type">,

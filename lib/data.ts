@@ -1,11 +1,5 @@
-// ============================================================
-// RASAMAP — Static / scraped billboard dataset
-//
-// Domain types and small display maps now live in lib/types.ts. This file
-// keeps the hand-written + scraped billboard arrays and is imported ONLY by
-// prisma/seed.ts at build time — never by client code, so the scraper JSON
-// below never reaches the browser bundle.
-// ============================================================
+// The seed dataset: hand-written and crawled rows. Imported only by
+// prisma/seed.ts (lint enforces it), so the crawler's JSON never reaches a bundle.
 
 import type { Availability, Billboard, TrafficData } from "./types";
 
@@ -30,11 +24,11 @@ export interface SeedBillboard
   structureCode?: string;
 }
 
-// Traffic calculation helper
+// A modelled traffic block for the hand-written rows — estimates, not surveys.
 function calcTraffic(dailyVehicles: number, congestion: number, pedestrian: number): TrafficData {
   const peakHours = ["۸-۹ صبح", "۵-۶ عصر", "۱۲-۱ ظهر"];
   const peakHour = peakHours[Math.floor(congestion / 4)];
-  // Viewability: each vehicle ~ 1.4 occupants, 40% notice rate + pedestrians 60% notice
+  // Assumed, not measured: ~1.4 people per vehicle, 40% of them notice; 60% of pedestrians do.
   const estimatedViews = Math.round(dailyVehicles * 1.4 * 0.4 + pedestrian * 0.6);
   const viewabilityScore = Math.min(100, Math.round(30 + congestion * 5 + (pedestrian > 10000 ? 15 : 0)));
   return { daily: dailyVehicles, peakHour, congestionLevel: congestion, pedestrian, estimatedViews, viewabilityScore };

@@ -2,13 +2,9 @@ import { z, ZodIssueCode, type ZodErrorMap } from "zod";
 import { faNum } from "@/lib/format";
 
 /**
- * Persian defaults for every Zod refusal.
- *
- * A route answers a bad body with the first issue's message, and a schema that
- * gave no message of its own used to answer in Zod's English ("String must
- * contain at least 8 character(s)") — straight onto a Persian form, against
- * AGENTS.md rule 4. A schema's own message still wins; this is only the
- * fallback, so no refusal can reach a user in the wrong language.
+ * Persian defaults for every Zod refusal. A route answers with the first
+ * issue's message; without this, a schema with no message of its own answered
+ * in English (rule 4). A schema's own message still wins.
  */
 const persianErrors: ZodErrorMap = (issue, ctx) => {
   switch (issue.code) {

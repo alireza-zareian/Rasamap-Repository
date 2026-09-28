@@ -1,9 +1,6 @@
 /**
- * RASAMAP — the session cookie.
- *
- * The cookie carries an opaque token; what it means is a row in `sessions`
- * (lib/db/sessions.ts). This file only reads and writes the cookie. HttpOnly,
- * SameSite=Lax, and Secure whenever the connection is HTTPS (isSecureRequest).
+ * The session cookie: an opaque token whose meaning is a row in `sessions`
+ * (lib/db/sessions.ts). HttpOnly, SameSite=Lax, Secure over HTTPS.
  */
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
@@ -20,11 +17,9 @@ export async function readSessionToken(): Promise<string | null> {
 }
 
 /**
- * Which kind of account the cookie claims to be, for proxy.ts's routing only —
- * whether to send a visitor to the sign-in page or answer 403. It is read from
- * the token's prefix without a database lookup (Next's guidance: proxy does
- * optimistic checks, and runs on every request including prefetches), so it
- * proves nothing. Every page and route resolves the real session itself.
+ * The kind of account the cookie claims, from its prefix, for proxy.ts's
+ * routing only (sign-in page or 403). No database read, so it proves nothing;
+ * every page and route resolves the real session.
  */
 export function sessionHint(req: NextRequest): "customer" | "staff" | null {
   const value = req.cookies.get(SESSION_COOKIE)?.value ?? "";
@@ -32,15 +27,10 @@ export function sessionHint(req: NextRequest): "customer" | "staff" | null {
 }
 
 /**
- * Is this request actually travelling over HTTPS?
- *
- * `Secure` used to be attached whenever NODE_ENV was "production" — which
- * `next start` sets, including for `npm run demo` on the laptop. A browser
- * refuses to store a `Secure` cookie received over plain HTTP, so a phone
- * opening the demo at `http://<lan-ip>` signed in and was signed straight out
- * again. Chrome treats `http://localhost` as trustworthy and keeps the cookie
- * there, which is why it went unnoticed. The flag follows the transport:
- * HTTPS directly, or as the terminating proxy reports it.
+ * Whether this request travels over HTTPS, directly or as the proxy reports.
+ * Never from NODE_ENV: the demo runs production over plain HTTP, and a phone
+ * at `http://<lan-ip>` drops a Secure cookie (rule 9, §24). Without a request
+ * there is nothing to read, and NODE_ENV is the only guess left.
  */
 export function isSecureRequest(req?: NextRequest): boolean {
   if (!req) return process.env.NODE_ENV === "production";
@@ -55,11 +45,8 @@ function cookieHeader(value: string, maxAge: number, req?: NextRequest): string 
     `Max-Age=${maxAge}`,
     "Path=/",
     "HttpOnly",
-    // Lax, not Strict: Strict withholds the cookie from any navigation that
-    // starts on another site, so a signed-in person who opened their dashboard
-    // from a messaging app was sent to the sign-in form. Lax still withholds it
-    // from every cross-site POST, PATCH and DELETE, and no GET here changes
-    // anything.
+    // Lax: Strict dropped the cookie on a link from a messaging app. Lax still
+    // withholds it from cross-site writes, and no GET here changes anything.
     "SameSite=Lax",
     ...(isSecureRequest(req) ? ["Secure"] : []),
   ].join("; ");

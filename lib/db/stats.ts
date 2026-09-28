@@ -9,25 +9,15 @@ export interface SiteStats {
   total: number;
   cityCount: number;
   byType: Record<string, number>;
-  /** Published rows per city. The groupBy already ran for `cityCount`; keeping
-   *  its rows is what lets the map colour provinces without a second query. */
+  /** Published rows per city — the `cityCount` groupBy's rows, which colour the map. */
   byCity: Record<string, number>;
   totalDailyReach: number;
 }
 
 /**
- * The four headline numbers on the landing page.
- *
- * Lifted out of GET /api/stats when the landing page became a Server Component
- * in V1: the page reads it directly and the route still answers with it, but
- * the four aggregate queries are written once.
- *
- * `totalDailyReach` is raw SQL because the daily footfall lives inside the
- * `traffic` JSON column and Prisma cannot sum through a JSON path. Reading
- * inside JSON is the one thing the two engines spell differently, so the
- * fragment — and only the fragment — is chosen by engine.
+ * SUM of traffic.daily over published rows. Raw SQL because Prisma cannot sum
+ * through a JSON path, and the one fragment the two engines spell differently.
  */
-/** SUM of traffic.daily across published rows — the only engine-specific SQL. */
 function dailyReachQuery(): Prisma.Sql {
   const daily = isPostgres()
     ? Prisma.sql`(traffic ->> 'daily')::bigint`
@@ -39,6 +29,7 @@ function dailyReachQuery(): Prisma.Sql {
   `;
 }
 
+/** The landing page's headline numbers; also what GET /api/stats answers. */
 export async function getSiteStats(): Promise<SiteStats> {
   const [total, typeCounts, cityCounts, trafficRows] = await Promise.all([
     prisma.billboard.count({ where: published }),
@@ -71,22 +62,10 @@ export async function getSiteStats(): Promise<SiteStats> {
 }
 
 /**
- * The admin dashboard's counters.
- *
- * They read the columns — and only the columns — they need. The other twenty
- * include `traffic`, `features`, `nearbyLandmarks`, `allImages` and
- * `description`, several megabytes of JSON across the table; measured on the
- * real table, 95 ms for the whole row against 8.3 ms for these eight.
- *
- * It stays a row read rather than a set of GROUP BYs because one of the figures
- * — the ~50 m grid that estimates how many boards sit on top of each other —
- * needs every coordinate anyway, and two floats per row is cheap. The rest is
- * counted in one pass over what that read already has.
- *
- * `images` is read rather than the denormalised `hasImages`, even though the
- * two agree on every row today, so that the "missing a photo" figure keeps
- * answering the question it claims to answer and cannot quietly start tracking
- * a flag instead.
+ * The admin dashboard's counters, from eight columns only: whole rows cost
+ * 95 ms, these 8.3 ms. A row read rather than GROUP BYs because the overlap
+ * grid below needs every coordinate anyway. `images` rather than `hasImages`,
+ * so "missing a photo" counts photos, not a flag.
  */
 async function getAdminStatsRows() {
   return prisma.billboard.findMany({
@@ -95,9 +74,7 @@ async function getAdminStatsRows() {
       lat: true, lng: true, images: true,
       sourceRecord: { select: { scrapedAt: true } },
     },
-    // Nothing here depends on the order arithmetically — but `bySource`,
-    // `byCity` and `byType` are built by walking these rows, so it decides the
-    // order of their keys, which the panel renders as it receives them.
+    // The row order becomes the key order of bySource/byCity/byType, which the panel renders as is.
     orderBy: [{ hasImages: "desc" }, { id: "asc" }],
   });
 }
@@ -124,10 +101,8 @@ export async function getAdminStats(): Promise<AdminStats> {
     if (scrapedAt && now - new Date(scrapedAt).getTime() < week) recentlyImported++;
   }
 
-  // Rough count of "boards sitting on top of each other": bucket coordinates
-  // into a ~50 m grid and count cells holding two or more. O(n) instead of the
-  // O(n²) pairwise scan — for ~3.5k rows that's the difference between a few
-  // million ops and a few thousand. It's only a heuristic either way.
+  // Boards on top of each other, roughly: cells of a ~50 m grid holding two or
+  // more. O(n), where a pairwise scan was O(n²). A heuristic.
   const GRID = 0.00045; // ≈ 50 m in latitude degrees
   const cell = new Map<string, number>();
   for (const b of all) {

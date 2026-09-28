@@ -18,39 +18,22 @@ import { getCatalogueAnalytics } from "./analytics";
 import type { Billboard, CatalogueItem } from "../types";
 
 /**
- * Catalogue reads, cached across requests.
+ * Catalogue reads, cached across requests: the catalogue changes a few times a
+ * day, so two visitors asking the same question should not both reach SQLite.
  *
- * This is the half of V1 that makes the server cooler rather than merely
- * better-indexed. Rendering /explore on the server removes one HTTP round-trip
- * and one JSON serialisation per visit, but the Prisma query is the same query
- * either way — it only moved. Caching is what removes the database from the
- * repeat visit entirely: the catalogue changes a few times a day, not a few
- * times a second, so two visitors a minute apart looking at the same filter
- * have no business asking SQLite the same question twice.
- *
- * `unstable_cache` and not the `use cache` directive that supersedes it in
- * Next.js 16. That was tried and measured, not assumed: enabling Cache
- * Components and caching the rendered output as well as the query moved
- * /explore from 10.24 to 10.32 ms and the media page from 14.3 to 14.7 — no
- * gain, because what remains is React turning the tree into HTML bytes, which
- * happens on every request whether the tree was cached or not. It would also
- * have cost the shared cache: `use cache` reads a different handler interface
- * (`cacheHandlers`, plural) than cache-handler.js implements. §26 of
- * docs/engineering-decisions.md has the numbers.
+ * `unstable_cache` rather than `use cache`: Cache Components were measured and
+ * gained nothing (/explore 10.24 → 10.32 ms), and `use cache` needs a different
+ * handler interface than cache-handler.js implements (§26).
  */
 
-/** Five minutes: far finer than the catalogue actually changes, and a write
- *  does not wait for it — the mutations in ./billboards.ts drop the tag. */
+/** A write does not wait for this: ./billboards/mutations.ts drops the tag. */
 const CATALOGUE_TTL = 300;
 
 const cacheOptions = { revalidate: CATALOGUE_TTL, tags: [CATALOGUE_TAG] };
 
 /**
- * A filtered page of the catalogue, narrowed to what a card draws.
- *
- * The projection happens inside the cached function on purpose: what is stored
- * is then exactly what may be sent to a browser, so no caller can forget — and
- * the cache holds the smaller object rather than the record it came from.
+ * A filtered page, narrowed to what a card draws inside the cached function, so
+ * what is stored is exactly what may reach a browser.
  */
 async function filteredCataloguePage(p: BillboardFilterParams): Promise<{ items: CatalogueItem[]; total: number }> {
   const { items, total } = await getFilteredBillboards(p);
@@ -59,22 +42,13 @@ async function filteredCataloguePage(p: BillboardFilterParams): Promise<{ items:
 
 const cachedCataloguePage = unstable_cache(filteredCataloguePage, ["catalogue-page"], cacheOptions);
 
-/**
- * The first pages of a filter are what people open; page 150 of "billboards
- * under 37 million" is what a crawler walking every combination opens. Every
- * other filter is allowlisted, but the cross product of all of them — prices,
- * pages, cities, sorts — was still a few billion possible entries, each a file.
- * Past these pages, and on any price ceiling, the query runs uncached: about
- * 2 ms against an indexed table.
- */
+/** People open the first pages of a filter; deeper ones run uncached (about 2 ms). */
 const CACHED_PAGES = 5;
 
 /**
- * Whether a filter is one of too many values to cache. The cache is a directory
- * of files with one entry per distinct argument, so caching free search text or
- * a map centre let a loop over `?search=` fill the disk — and a query nobody
- * else will ever repeat gains nothing from it anyway. Deep pages and price
- * ceilings are the same case: see CACHED_PAGES.
+ * Whether a filter has too many possible values to cache. Each distinct
+ * argument is a file, so free text, a map centre, a price ceiling or a deep
+ * page would let a loop fill the disk — and nobody repeats those queries.
  */
 function isOpenEnded(p: BillboardFilterParams): boolean {
   return !!p.search || !!p.near || p.maxPrice !== undefined || (p.page ?? 1) > CACHED_PAGES;
@@ -84,13 +58,7 @@ export function getCachedFilteredBillboards(p: BillboardFilterParams) {
   return isOpenEnded(p) ? filteredCataloguePage(p) : cachedCataloguePage(p);
 }
 
-/**
- * The photographed, busiest media items behind the carousels.
- *
- * Cached separately from a catalogue page because it is the same list whatever
- * the visitor filtered by — folding it in would re-run one query per filter
- * combination for an identical answer.
- */
+/** The carousels' list — the same whatever the filter, so cached on its own. */
 export const getCachedShowcaseBillboards = unstable_cache(
   async (limit: number): Promise<CatalogueItem[]> =>
     (await getShowcaseBillboards(limit)).map(toCatalogueItem),
@@ -98,14 +66,7 @@ export const getCachedShowcaseBillboards = unstable_cache(
   cacheOptions,
 );
 
-/**
- * Pins for the map view, under the same filter the catalogue uses.
- *
- * Cached like everything else here, so panning back to a province already
- * looked at costs nothing. Held separate from the catalogue page because the
- * two answer different questions about one filter — the catalogue wants 24 rows
- * with photographs, the map wants every coordinate and no photograph at all.
- */
+/** Map pins under the catalogue's filter: every coordinate, no photographs. */
 const cachedMapPins = unstable_cache(getMapPins, ["map-pins"], cacheOptions);
 
 export function getCachedMapPins(p: BillboardFilterParams) {
@@ -121,14 +82,10 @@ const cachedAnalytics = unstable_cache(
 );
 
 /**
- * The market figures on /analytics, country-wide or for one city.
- *
- * Twelve queries a call. The city version used to run them on every request
- * of GET /api/analytics — about 11 ms of CPU each, 600 a minute allowed from
- * one address. It is cached like the rest of the catalogue, and only for a
- * city that has published media, so the entries are bounded by the cities in
- * the catalogue rather than by whatever a caller types; any other name is
- * answered with the empty figures it would have produced, without a query.
+ * The /analytics figures, country-wide or for one city (twelve queries, about
+ * 11 ms). Cached only for a city that has published media, so entries are
+ * bounded by the catalogue, not by what a caller types; any other name gets the
+ * empty figures without a query.
  */
 export async function getCachedCatalogueAnalytics(city?: string) {
   if (!city) return cachedAnalytics(null);
@@ -138,14 +95,9 @@ export async function getCachedCatalogueAnalytics(city?: string) {
 }
 
 /**
- * One media item by slug, for its own page.
- *
- * Whether a contact number exists comes back alongside the record, because the
- * number itself is dropped before the record leaves here. The page needs to
- * know whether to offer the button, and asking the database again for a boolean
- * it has already seen would undo the point of caching the first question. The
- * number is handed out only by POST /api/billboards/[slug]/contact, to a
- * signed-in caller, as a lead (§23).
+ * One media item for its own page. The phone is dropped here; only whether one
+ * exists comes back, so the page knows to offer the button. The number itself
+ * is given only by POST /api/billboards/[slug]/contact, to a signed-in caller (§23).
  */
 type MediaPage = { billboard: Billboard; phoneAvailable: boolean } | null;
 
@@ -161,14 +113,10 @@ async function mediaPage(slug: string, includeUnpublished: boolean): Promise<Med
 const cachedMediaPage = unstable_cache(mediaPage, ["billboard-by-slug"], cacheOptions);
 
 /**
- * Only a slug that exists reaches the cache. The address is whatever the
- * visitor typed, and the cache stores its answer even when that answer is
- * "nothing": forty requests for made-up slugs wrote forty files (measured
- * against npm run demo), with no limit on how many more. A staff preview is not
- * cached at all — it is rare, and it must never share an entry with the public.
- *
- * React's cache() lets the page and its generateMetadata share one existence
- * check per request.
+ * Only a slug that exists reaches the cache, which would otherwise store a file
+ * for every made-up address. A staff preview is never cached, so it cannot
+ * share an entry with the public. React's cache() lets the page and its
+ * generateMetadata share one lookup per request.
  */
 export const getCachedBillboardBySlug = cache(async (slug: string, includeUnpublished: boolean): Promise<MediaPage> => {
   if (includeUnpublished) return mediaPage(slug, true);
@@ -176,14 +124,7 @@ export const getCachedBillboardBySlug = cache(async (slug: string, includeUnpubl
   return cachedMediaPage(slug, false);
 });
 
-/**
- * The suggestions at the foot of a media page.
- *
- * Worth caching on its own: it is up to three widening queries per visit, and
- * every listing in a city shares the same answer for that city and media type.
- * Keyed by those three fields rather than by the whole record, so one entry
- * serves every neighbour.
- */
+/** The suggestions under a media page: up to three queries, keyed by id, city and type. */
 export const getCachedRelatedBillboards = unstable_cache(
   async (
     ref: Pick<Billboard, "id" | "city" | "type">,

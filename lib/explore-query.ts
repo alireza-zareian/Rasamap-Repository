@@ -3,17 +3,9 @@ import { provinces, getProvince } from "@/lib/geo/iran-cities";
 import type { BillboardFilterParams } from "./db/billboards";
 
 /**
- * The catalogue's filters, as they live in the URL.
- *
- * Since V1 the query string is the single source of truth for what /explore
- * shows: the page reads it on the server and queries the database with it, and
- * the filter bar writes to it. That is what makes a filtered catalogue a real
- * address — one that can be shared, bookmarked, reached with the back button,
- * and read by a search engine, none of which was true while the filters lived
- * in React state and sessionStorage.
- *
- * Both sides import this module, so a parameter has one name and one set of
- * accepted values whether it is being read or written.
+ * The catalogue's filters as they live in the URL — the one source of truth
+ * for what /explore shows, so a filtered view can be shared, bookmarked and
+ * indexed. The page reads it and the filter bar writes it, both through here.
  */
 
 export const ALLOWED_SORT   = ["price_asc", "price_desc", "traffic_desc", "area_desc"] as const;
@@ -21,12 +13,9 @@ export const ALLOWED_SORT   = ["price_asc", "price_desc", "traffic_desc", "area_
 export type SortKey = (typeof ALLOWED_SORT)[number];
 
 /**
- * How far a radial search may reach.
- *
- * A ceiling, not a preference. Without one, `radiusKm=99999` is a way to ask
- * for the whole country in a single request and walk straight past the page cap
- * §20 exists to enforce — the same hole the `limit` and `page` ceilings close.
- * Fifty kilometres is past the far edge of any Iranian city.
+ * How far a radial search may reach. Without a ceiling, `radiusKm=99999` would
+ * read the whole country in one request past the page cap (§20). Fifty km is
+ * past the edge of any Iranian city.
  */
 export const MAX_RADIUS_KM = 50;
 export const MIN_RADIUS_KM = 1;
@@ -37,7 +26,7 @@ export const DEFAULT_RADIUS_KM = 5;
 export const MAX_PRICE = 500;
 export const MIN_PRICE = 10;
 export const PAGE_SIZE = 24;
-/** Matches the ceiling GET /api/billboards enforces — an anti-scraping limit. */
+/** Beyond the last page of the whole catalogue; a page past the end gets the "no such page" screen. */
 const MAX_PAGE = 200;
 
 export interface ExploreFilters {
@@ -74,13 +63,8 @@ function intInRange(value: string, min: number, max: number, fallback: number): 
 }
 
 /**
- * A coordinate pair from the query string, or null.
- *
- * Both halves or neither: half a centre is not a narrower search, it is a
- * meaningless one, and silently keeping the half that parsed would put the
- * visitor somewhere off the coast of Africa. Anything outside the real range of
- * a latitude or longitude is rejected the same way — a hand-edited URL yields
- * an ordinary catalogue page, never an error.
+ * A coordinate pair from the query string, or null: both halves or neither,
+ * and only real latitudes and longitudes. A bad URL gives the plain catalogue.
  */
 function parseNear(
   latRaw: string, lngRaw: string, radiusRaw: string,
@@ -97,13 +81,9 @@ function parseNear(
 }
 
 /**
- * Read a URL's query string into filters.
- *
- * Total by construction: every field is checked against an allowlist or a
- * numeric range and falls back to its default, so a hand-edited or hostile URL
- * yields a valid catalogue page rather than an error. Nothing here reaches a
- * query without passing through it — the sort key in particular becomes an
- * ORDER BY, so it is never taken from the caller as given.
+ * A query string to filters. Every field is checked against an allowlist or a
+ * range and falls back to its default, so any URL gives a valid page — and the
+ * sort key, which becomes an ORDER BY, is never taken as given.
  */
 export function parseExploreParams(
   sp: Record<string, string | string[] | undefined>,
@@ -111,14 +91,13 @@ export function parseExploreParams(
   const province = pick(one(sp.province), provinces.map(p => p.name), "");
   const cityParam = one(sp.city).slice(0, 60);
 
-  // A city with no province is how the landing page links in (`/explore?city=تهران`).
-  // Resolve the province from it so the city dropdown opens on the right list.
+  // `/explore?city=تهران` (a link from the landing) names no province: find it,
+  // so the city dropdown opens on the right list.
   const cityOwner = cityParam
     ? provinces.find(p => p.cities.some(c => c.name === cityParam))
     : undefined;
   const resolvedProvince = province || cityOwner?.name || "";
-  // A city is only kept when it really belongs to the province in play, so the
-  // two selects can never disagree.
+  // A city is kept only if it belongs to the province, so the two selects agree.
   const city = cityOwner && (!province || cityOwner.name === province) ? cityParam : "";
 
   return {
@@ -135,12 +114,7 @@ export function parseExploreParams(
   };
 }
 
-/**
- * Filters to a database query.
- *
- * A province with no city becomes the list of that province's cities, which is
- * the same translation the client used to do before calling the JSON API.
- */
+/** Filters to a database query. A province without a city becomes its list of cities. */
 export function toFilterParams(f: ExploreFilters): BillboardFilterParams {
   return {
     search:   f.search || undefined,
@@ -157,11 +131,8 @@ export function toFilterParams(f: ExploreFilters): BillboardFilterParams {
 }
 
 /**
- * Filters back to a /explore address.
- *
- * Defaults are left out, so the plain catalogue stays at `/explore` and every
- * filtered view has exactly one address — one page for a search engine to
- * index, and one cache key rather than a family of equivalent ones.
+ * Filters back to an address. Defaults are left out, so each view has exactly
+ * one address: one page to index, one cache key.
  */
 export function exploreHref(f: ExploreFilters, base = "/explore"): string {
   const p = new URLSearchParams();
@@ -175,16 +146,13 @@ export function exploreHref(f: ExploreFilters, base = "/explore"): string {
   if (f.view !== "grid")       p.set("view",     f.view);
   if (f.page > 1)              p.set("page",     String(f.page));
   if (f.near) {
-    // Six decimals is about ten centimetres — far past what a map click or a
-    // phone's own fix can tell apart, and it keeps one place on one address
-    // instead of a different cache key per trailing digit.
+    // Six decimals is about 10 cm: one place, one address, one cache key.
     p.set("lat",      f.near.lat.toFixed(6));
     p.set("lng",      f.near.lng.toFixed(6));
     p.set("radiusKm", String(f.near.radiusKm));
   }
   const qs = p.toString();
-  // `base` so the map view can carry the identical filter set to its own
-  // address instead of growing a second, drifting copy of this function.
+  // `base` lets the map view carry the same filters to its own address.
   return qs ? `${base}?${qs}` : base;
 }
 

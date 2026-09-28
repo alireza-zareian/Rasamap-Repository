@@ -2,15 +2,9 @@ import { z } from "zod";
 import { latinDigits } from "./digits.ts";
 
 /**
- * The one password rule, for customers and staff alike.
- *
- * Customers were allowed six characters and staff eight, in five separate
- * schemas. Eight is the floor NIST SP 800-63B sets for a password a person
- * chooses; the upper bound keeps bcrypt (which reads only the first 72 bytes)
- * from being handed a megabyte to hash.
- *
- * Applies to a password being *set*. Signing in accepts any length, so an
- * account made under the old six-character rule can still get in and change it.
+ * The one rule for a password being set, customers and staff alike: eight is
+ * NIST SP 800-63B's floor; the ceiling keeps a megabyte away from bcrypt, which
+ * reads only 72 bytes anyway.
  */
 export const MIN_PASSWORD_LENGTH = 8;
 export const MAX_PASSWORD_LENGTH = 128;
@@ -25,8 +19,7 @@ export const NewPassword = z
     .max(MAX_PASSWORD_LENGTH, "رمز عبور بیش از حد طولانی است"));
 
 /**
- * A password being checked rather than set: any length, so an account made
- * under an older, shorter rule can still sign in. Same digit conversion as
- * NewPassword, or a password set with Persian digits would never match.
+ * A password being checked: any length, so an account made under the older
+ * six-character rule still signs in. Same digit conversion as NewPassword.
  */
 export const GivenPassword = z.string().min(1).max(MAX_PASSWORD_LENGTH).transform(latinDigits);

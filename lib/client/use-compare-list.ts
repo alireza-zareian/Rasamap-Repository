@@ -3,17 +3,10 @@ import { useCallback, useEffect, useState } from "react";
 import type { CatalogueItem } from "@/lib/types";
 
 /**
- * The visitor's compare selection, shared by /explore and /compare through
- * localStorage.
- *
- * It is read before it is ever written. /explore used to start from an empty
- * list and save it on mount, so opening the catalogue — a reload, or coming
- * back from /compare — erased the selection the visitor had just made. The
- * write now waits until the stored value has been read (`ready`).
- *
- * What comes back from storage is another page's snapshot, possibly from an
- * older version of the site, so it is checked for the fields the tray draws
- * and dropped if it does not have them, rather than crashing the page.
+ * The compare selection, shared by /explore and /compare through localStorage.
+ * Nothing is written until the stored value has been read (`ready`), or a
+ * reload would erase it. A stored item is checked for the fields the tray draws
+ * — it may come from an older version of the site.
  */
 const KEY = "rasamap_compare";
 
@@ -42,12 +35,8 @@ export function useCompareList() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Storage exists only in the browser, so the server render starts empty and
-    // this fills it once, after hydration. It merges rather than replaces: the
-    // page is clickable a moment before this effect runs, and a card ticked in
-    // that moment used to be overwritten by the stored list — the browser test
-    // "a compare selection survives a reload" caught it once page transitions
-    // shifted the timing.
+    // After hydration, merge the stored list with anything ticked before this
+    // ran — replacing it lost that tick (§37).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(picked => {
       const stored = readStored();

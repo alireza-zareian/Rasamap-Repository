@@ -1,12 +1,8 @@
 /**
- * The weekly, quarterly and yearly prices, from the monthly one.
- *
- * A quarter is three months less 10%, a year twelve months less 20%, and a week
- * a quarter of a month. Every row that gets a new monthly price — an admin
- * create or edit, a submitted or resubmitted listing — takes the other three
- * from here, so a price edited in one place cannot sit next to three stale ones
- * on the detail page. (The crawler applies the same rule in
- * scraper/scraper.py.)
+ * Weekly, quarterly and yearly prices from the monthly one: a quarter is three
+ * months less 10%, a year twelve less 20%, a week a quarter of a month. Every
+ * new monthly price takes the other three from here, so none goes stale; the
+ * crawler applies the same rule (scraper/scraper.py).
  */
 export function derivedPrices(monthly: number) {
   return {

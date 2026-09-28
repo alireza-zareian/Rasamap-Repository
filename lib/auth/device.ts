@@ -5,25 +5,15 @@ import type { NextRequest, NextResponse } from "next/server";
 import { isSecureRequest } from "./session";
 
 /**
- * A "this browser has signed in to this account before" cookie.
+ * A "this browser has signed in to this account before" cookie (OWASP's
+ * device cookies). An account lockout stops a guesser, but also lets anyone who
+ * knows an email lock its owner out. A browser that has signed in to the account
+ * keeps a signed token naming it, and its attempts count on a budget of their
+ * own; every other browser shares the account's.
  *
- * Locking an account after five wrong passwords stops a guesser, and hands
- * anyone who knows an address a way to lock its owner out: five requests, and
- * the super admin cannot reach the panel for a quarter of an hour, again and
- * again. The device cookie is the usual answer to that (OWASP's "device
- * cookies"). A browser that signed in to an account successfully keeps a
- * signed token naming the account; its attempts are counted on a budget of its
- * own, so a lockout run up by strangers never reaches it. A browser without
- * one — the attacker, or the owner on a machine they have never used — shares
- * the account-wide budget as before.
- *
- * One browser remembers up to MAX_ACCOUNTS accounts — a shared office machine,
- * or a staff member who also has a customer account — so signing in to a
- * second one does not make the first a stranger again.
- *
- * Not covered: the owner on a brand-new device while an attack is running is
- * still locked out, and a stolen device cookie buys its thief the owner's
- * budget (five tries per lockout, no password).
+ * Up to MAX_ACCOUNTS accounts per browser (a shared office machine). Not
+ * covered: the owner on a new device during an attack is still locked out, and
+ * a stolen cookie gives its thief the owner's budget — but no password.
  */
 
 const DEVICE_COOKIE = "rasamap_device";

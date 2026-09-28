@@ -3,19 +3,13 @@ import { createClient } from "redis";
 import { logger } from "@/lib/logger";
 
 /**
- * Where rate-limit counters live.
+ * Where rate-limit counters live: in memory for one process, in Redis when
+ * REDIS_URL is set — otherwise three instances would allow three times the
+ * guesses. The response cache follows the same switch (§25).
  *
- * One process keeps them in memory. Several processes must share them, or each
- * instance hands out its own budget and three instances mean three times the
- * password guesses before a lockout. The response cache already follows
- * REDIS_URL for the same reason (cache-handler.js, §25); the counters follow the
- * same switch, so turning on a shared store turns on *all* of it rather than
- * half — which is what used to be the case.
- *
- * Both stores implement one fixed-window-with-lockout algorithm, spelled once in
- * TypeScript and once in Lua. The Lua version runs inside Redis as a single
- * script, so the read-increment-write is atomic across instances; the memory
- * version is atomic because Node runs it on one thread.
+ * One fixed-window-with-lockout algorithm, in TypeScript and in Lua. The Lua
+ * runs as one Redis script, atomic across instances; the memory version has no
+ * await between read and write, so it is atomic on Node's one thread.
  */
 
 export interface RateLimitOptions {
@@ -32,11 +26,7 @@ export interface RateLimitResult {
   remaining:  number;
   resetAt:    number;
   lockedUntil?: number;
-  /**
-   * True only on the single call that first crosses the limit. The 429 helper
-   * writes one durable audit row on it instead of one per rejected request, so
-   * a burst cannot flood the audit table.
-   */
+  /** True only on the call that first crosses the limit: one audit row per lockout, not per 429. */
   justLocked?: boolean;
 }
 
@@ -53,17 +43,12 @@ interface Window {
   lockedUntil?: number;
 }
 
-// Hard cap on tracked keys, so a flood of distinct keys cannot grow this Map
-// without bound.
-//
-// What gets dropped at the cap matters. Dropping plainly by age let the flood
-// itself erase a lockout: every sign-in attempt with a made-up identifier
-// inserts an account key, so ~50 000 cheap requests pushed the key of the
-// account under attack out of the Map, and with it the lock — five fresh
-// guesses. So expired windows go first, then the oldest *unlocked* ones, and a
-// live lockout is dropped only if nothing else is left.
+// A cap on tracked keys. What goes first at the cap matters: evicting by age
+// let ~50 000 made-up sign-ins push a locked account out of the Map, lock and
+// all. So expired windows go first, then unlocked ones, and a live lockout only
+// if nothing else is left.
 const MAX_KEYS = 50_000;
-const TRIM = 1000; // trim a slab at once, not one key per insert
+const TRIM = 1000; // a slab at once, not one key per insert
 
 export function createMemoryStore(): RateLimitStore {
   const windows = new Map<string, Window>();
@@ -87,8 +72,7 @@ export function createMemoryStore(): RateLimitStore {
     }
   };
 
-  // Clean expired entries every 5 minutes. unref(): the sweeper alone must not
-  // keep the process alive.
+  // Sweep expired entries; unref() so the sweeper alone does not keep the process alive.
   setInterval(() => {
     const now = Date.now();
     for (const [key, w] of windows) {
@@ -112,10 +96,7 @@ export function createMemoryStore(): RateLimitStore {
 
       w.count++;
       if (w.count > maxRequests) {
-        // With no lockout the caller is free again when the window rolls over,
-        // so `lockedUntil` stays unset and the retry time falls back to
-        // `resetAt` — otherwise it would answer "1 second" while the window
-        // still had most of a minute left on it.
+        // Without a lockout, `lockedUntil` stays unset so Retry-After is the window's end.
         if (lockoutMs > 0) w.lockedUntil = now + lockoutMs;
         return {
           allowed: false, remaining: 0, resetAt: w.resetAt, lockedUntil: w.lockedUntil,
@@ -134,10 +115,9 @@ export function createMemoryStore(): RateLimitStore {
 // ── Redis ───────────────────────────────────────────────────────────────────
 
 /**
- * The memory store's `hit`, as one atomic Redis script. The clock is Redis's
- * own (TIME), so instances with slightly different clocks still agree on when
- * a window ends. The key expires with the later of its window and its lockout,
- * so Redis prunes what the memory store's sweeper prunes.
+ * The memory store's `hit` as one atomic Redis script, on Redis's own clock so
+ * instances agree on when a window ends. The key expires with the later of its
+ * window and its lockout.
  *
  * Returns {allowed, remaining, resetAt, lockedUntil or -1, justLocked}.
  */
@@ -177,18 +157,15 @@ return {1, maxRequests - count, resetAt, -1, 0}
 const KEY_PREFIX = `${process.env.REDIS_PREFIX || "rasamap:"}ratelimit:`;
 
 /**
- * A Redis-backed store that falls back to a memory store while Redis cannot be
- * reached. Failing open to memory — not failing closed, not skipping the check
- * — keeps every limit enforced per instance during an outage: the site stays
- * up, and the worst case is the one-process behaviour this replaces.
+ * Redis, falling back to the memory store while Redis is unreachable: limits
+ * stay enforced per instance during an outage, and the site stays up.
  */
 export function createRedisStore(url: string, fallback: RateLimitStore): RateLimitStore {
   let warned = false;
   const client = createClient({
     url,
     socket: {
-      // Give up rather than queue commands behind a dead server: a sign-in is
-      // waiting on this answer.
+      // A sign-in waits on this: fail fast rather than queue behind a dead server.
       connectTimeout: 1000,
       reconnectStrategy: retries => Math.min(retries * 200, 5000),
     },
@@ -200,10 +177,8 @@ export function createRedisStore(url: string, fallback: RateLimitStore): RateLim
     logger.warn("rate-limit: Redis unavailable, limiting per process", { error: String(err?.message ?? err) });
   });
   client.on("ready", () => { warned = false; });
-  // Never awaited. With a reconnect strategy, connect() stays pending for as
-  // long as Redis is down — a request that waited on it would wait for the
-  // outage. Each call asks instead whether the link is up *now*, and uses
-  // memory if not.
+  // Not awaited: with reconnects, connect() stays pending through an outage.
+  // Each call checks whether the link is up now instead.
   client.connect().catch(() => {});
 
   const usable = () => client.isReady;

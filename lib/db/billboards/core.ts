@@ -8,42 +8,27 @@ import { logger } from "@/lib/logger";
 import { isPlottable } from "@/lib/geo/distance";
 
 /**
- * The vocabulary ./queries.ts and ./mutations.ts both speak: the row mapper,
- * the two outward-facing narrowings of a record, the cache tag and the
- * definition of "published". Split out so neither half has to import the
- * other — a read must not pull the write path in behind it.
+ * What ./queries.ts and ./mutations.ts share — the row mapper, the two public
+ * narrowings, the cache tag and "published" — so neither imports the other (§34).
  */
 
 /**
- * One invalidation tag for everything derived from the billboards table. The
- * cached readers in ./cached.ts store under it; the mutations below drop it, so
- * an approved listing shows up on /explore on the next refresh instead of when
- * the cache happens to expire. Declared here rather than in ./cached.ts to keep
- * the dependency one-way: the cache knows the data layer, not the reverse.
+ * The cache tag for everything derived from the billboards table. ../cached.ts
+ * stores under it and every write drops it, so a change shows on the next
+ * refresh. Declared here so the cache depends on the data layer, not the reverse.
  */
 export const CATALOGUE_TAG = "billboards";
 
-/**
- * Drop every cached catalogue read. Called at the end of each write that
- * changes what a visitor would see — here, in ../listings.ts and in
- * ../reviews.ts. Every caller runs inside a request, which is the context
- * revalidateTag() needs.
- */
+/** Drop every cached catalogue read. Called inside a request, which revalidateTag() needs. */
 export function revalidateCatalogue(): void {
-  // `{ expire: 0 }` rather than the recommended "max" profile: "max" marks the
-  // entry stale and serves it once more while it refreshes behind the visitor,
-  // so an admin who has just approved a listing would still not see it on the
-  // next refresh. Expiring outright makes that next read a blocking miss, which
-  // is the point of calling this from a write. (The one-argument form does the
-  // same thing but is deprecated in Next.js 16.)
+  // `expire: 0`, not "max": "max" serves the stale entry once more, so staff
+  // who just approved a listing would not see it on the next refresh.
   revalidateTag(CATALOGUE_TAG, { expire: 0 });
 }
 
 /**
- * Read a JSON column through its schema. A malformed value is logged with the
- * row and the column, and replaced by the empty value for its shape: one bad
- * row written by a script must cost that row its list of features, not the
- * whole catalogue page a 500.
+ * A JSON column through its schema. A malformed value is logged and replaced by
+ * its empty shape, so one bad row costs that row a list, not the page a 500.
  */
 function jsonColumn<T>(schema: ZodType<T>, value: unknown, empty: T, id: number, column: string): T {
   const parsed = schema.safeParse(value);
@@ -96,21 +81,15 @@ export function fromRow(row: RowWithSource): Billboard {
 }
 
 /**
- * Strip the fields no browser may receive.
- *
- * The owner/agency phone is the product: it is handed out one record at a time
- * by POST /api/billboards/[slug]/contact, to a signed-in caller, and logged as
- * a lead. Anything that ships a catalogue to a client — the JSON API, and since
- * V1 the server-rendered pages, whose props travel to the browser inside the
- * RSC payload — passes through here first, so there is one place to check.
+ * Strip what no browser may receive. The phone is given only one record at a
+ * time, to a signed-in caller, as a lead (POST /api/billboards/[slug]/contact).
+ * Every whole record sent to a client — the JSON API, a page's props — passes here.
  */
 export function toPublicBillboard(b: Billboard): Billboard {
   const pub = { ...b };
   delete pub.phone;
-  // About one crawled point in six sits far from the city its row names — a
-  // Tabriz board geocoded to the centre of Tehran. The map already refused to
-  // draw those; the media page's map and its "nearby" link did not, and showed
-  // the wrong street. A point we know is wrong is not shown anywhere.
+  // About one crawled point in six is far from its own city (a Tabriz board
+  // geocoded to Tehran); a point known to be wrong is not shown anywhere (§32).
   if (!isPlottable(b.city, b.lat, b.lng)) {
     delete pub.lat;
     delete pub.lng;
@@ -119,15 +98,8 @@ export function toPublicBillboard(b: Billboard): Billboard {
 }
 
 /**
- * Narrow a record to what a catalogue card draws.
- *
- * The counterpart to toPublicBillboard for the *page* path rather than the API
- * path. The API answers with a whole record because a caller may want any part
- * of it; a card draws a fixed dozen fields, and everything else it is handed
- * gets serialised into the HTML and downloaded for nothing.
- *
- * The phone is not stripped here so much as never selected — the field list is
- * the guarantee. See CatalogueItem in lib/types.ts for what is left out and why.
+ * Narrow a record to what a card draws (CatalogueItem in lib/types.ts). The
+ * field list is the guarantee: the phone is never selected.
  */
 export function toCatalogueItem(b: Billboard): CatalogueItem {
   return {
@@ -141,12 +113,7 @@ export function toCatalogueItem(b: Billboard): CatalogueItem {
   };
 }
 
-/**
- * "Only rows the public may see", as a Prisma filter. A listing is public once
- * it has passed review; nothing else about it matters. Every public read —
- * catalogue, detail, map, stats, analytics, sitemap — spreads this into its
- * WHERE, so the rule has one spelling.
- */
+/** Rows the public may see, as a Prisma filter. Every public read spreads it into its WHERE. */
 export const published = { moderation: "approved" } as const satisfies Prisma.BillboardWhereInput;
 
 /** The same rule, for a row already in hand. */

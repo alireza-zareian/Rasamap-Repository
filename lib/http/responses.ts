@@ -6,17 +6,11 @@ import { auditLog, recordAudit } from "@/lib/audit";
 import { retryAfterSeconds, type RateLimitResult } from "@/lib/rate-limit";
 import type { Actor } from "@/lib/auth/actor";
 
-/**
- * The two responses every route may need and none may spell by hand: an
- * unexpected failure, and a refusal for going too fast. One definition each is
- * what keeps their wording, headers and logging from drifting apart — four
- * hand-rolled 429s once disagreed about the limit they reported.
- */
+/** The two responses no route spells by hand: an unexpected failure and a 429. */
 
 /**
- * A 500 that is still useful: the real error (with its stack and a short
- * reference id) goes to the log, and the caller gets a calm Persian message
- * plus the same id to quote. Internals never reach the response body (§5).
+ * A 500: the error, its stack and a short reference id go to the log; the
+ * caller gets a calm Persian message and the same id to quote.
  */
 export function serverError(
   where: string,
@@ -40,10 +34,9 @@ export function serverError(
 }
 
 /**
- * A failed rate-limit check, as a 429 with `Retry-After` and a Persian message
- * that says how long to wait. The request that first crosses a limit writes one
- * durable `rate_limit_hit` row; the repeated 429s after it are only counted in
- * the in-memory log, so a burst cannot flood the audit table.
+ * A 429 with `Retry-After` and a Persian wait time. The request that first
+ * crosses a limit writes one durable `rate_limit_hit` row; the rest go to the
+ * in-memory log only, so a burst cannot flood the audit table.
  */
 export function rateLimited(
   rl: RateLimitResult,
@@ -61,14 +54,9 @@ export function rateLimited(
     ? `حدود ${faNum(mins)} دقیقه دیگر`
     : "یک دقیقه دیگر";
 
-  // Two refusals that feel the same to the server are very different to the
-  // person reading them: "this account is paused" tells them to stop retyping
-  // the password, while "this network is busy" tells them it is not about them
-  // at all. Saying "too many requests" for both left people guessing.
-  //
-  // Neither wording says whether the account exists. The account message is
-  // reached only after attempts were made against that identifier, which the
-  // caller already knows — it reveals nothing a failed sign-in did not.
+  // "This account is paused" and "this network is busy" ask different things of
+  // the reader. Neither says whether the account exists: the first follows
+  // attempts on an identifier whether or not it is registered.
   const message =
     ctx.limitedBy === "account"
       ? `به‌دلیل تلاش‌های ناموفق پیاپی، ورود با این حساب موقتاً بسته شده است. لطفاً ${wait} دوباره تلاش کنید.`

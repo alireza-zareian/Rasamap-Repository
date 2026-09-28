@@ -3,15 +3,12 @@ import { prisma } from "./client";
 import { isUniqueViolation } from "@/lib/domain/errors";
 
 /**
- * Opt-in Idempotency-Key support for non-idempotent POSTs. `raw` is the
- * request's Idempotency-Key header, or null when it sent none; keys are scoped
- * to a customer account.
+ * Opt-in Idempotency-Key for non-idempotent POSTs, scoped to a customer
+ * account. `raw` is the header, or null.
  *
- * The key is *claimed* before the work runs: one INSERT of a pending row
- * (statusCode 0), which the primary key lets exactly one request win. It used
- * to be looked up first and written after the work, so two requests with the
- * same key could both miss the lookup and both run — the one case the key
- * exists for.
+ * The key is claimed before the work runs — an INSERT of a pending row
+ * (statusCode 0) that the primary key lets exactly one request win — so two
+ * requests with one key cannot both run.
  *
  * - No header           → `{ claim: null }`; the route runs normally.
  * - Header, won         → `{ claim }`; the route runs, then `claim.save()` on
@@ -21,10 +18,9 @@ import { isUniqueViolation } from "@/lib/domain/errors";
  * - Header, in flight   → `{ error, status: 409 }`.
  * - Other user/endpoint → `{ error, status: 409 }`.
  *
- * A pending row older than PENDING_TIMEOUT_MS is taken to be a request that
- * died mid-way (a crash, a killed process) and is claimed afresh. Finished rows
- * are pruned after RETENTION_MS: a key absorbs a double-click or a client
- * retry, both of which happen within seconds.
+ * A pending row older than PENDING_TIMEOUT_MS belongs to a request that died,
+ * and is claimed afresh. Finished rows are pruned after RETENTION_MS, on each
+ * save; a key only has to absorb a double click or a retry.
  */
 
 const KEY_RE = /^[A-Za-z0-9_-]{8,128}$/;
@@ -85,8 +81,7 @@ export async function idempotency(raw: string | null, userId: number, endpoint: 
             where: { createdAt: { lt: new Date(Date.now() - RETENTION_MS) }, NOT: { statusCode: PENDING } },
           });
         } catch {
-          // A failed prune is housekeeping, not the caller's problem — the write
-          // that mattered already succeeded.
+          // Housekeeping; the write that mattered already succeeded.
         }
       },
       async release() {

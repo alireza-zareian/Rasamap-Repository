@@ -1,20 +1,12 @@
 import { latinDigits } from "./digits.ts";
 
 /**
- * A place, as people actually hand one over: a link copied from a map app, or
- * two numbers. And the links that open a place in the map apps people use.
- *
- * No map is embedded to pick a point on (every provider that could draw one is
- * billed, keyed or unreachable — §32), so the listing form and the admin form
- * take a pasted link instead. Share a location from Google Maps, Neshan, Balad
- * or OpenStreetMap, or type "35.7, 51.4", and the coordinates are read out of
- * it here.
+ * A place as people hand one over — a link shared from Google Maps, Neshan,
+ * Balad or OpenStreetMap, or "35.7, 51.4" — and links that open one. No map
+ * picker is embedded: every provider is billed, keyed or unreachable (§32).
  */
 
-/**
- * Coordinates the catalogue accepts: a box around Iran. Every schema that
- * takes a latitude or longitude reads these.
- */
+/** The box around Iran every latitude/longitude schema reads. */
 export const IRAN_LAT = { min: 24, max: 40 } as const;
 export const IRAN_LNG = { min: 44, max: 64 } as const;
 
@@ -28,9 +20,8 @@ function westernDigits(s: string): string {
 const NUM = String.raw`(-?\d{1,3}(?:\.\d+)?)`;
 
 /**
- * Where each app puts the point in its links, latitude first unless noted.
- * Order matters: a Google link carries both a viewport (`@`) and the pin
- * (`!3d…!4d…`), and the pin is the answer.
+ * Where each app puts the point, latitude first. Order matters: a Google link
+ * carries a viewport (`@`) and the pin (`!3d…!4d…`), and the pin wins.
  */
 const PATTERNS: { re: RegExp; lngFirst?: boolean }[] = [
   { re: new RegExp(String.raw`!3d${NUM}!4d${NUM}`) },                       // Google, the dropped pin
@@ -47,9 +38,8 @@ export function isInIran(lat: number, lng: number): boolean {
 }
 
 /**
- * The point in a pasted link or pair of numbers, or null when there is none or
- * it is outside Iran. Two plain numbers typed the wrong way round are read the
- * right way round, since no point in Iran has a latitude above 40.
+ * The point in a pasted link or pair of numbers, or null if none is in Iran.
+ * A swapped pair is read the right way round: no Iranian latitude exceeds 40.
  */
 export function parseMapLocation(input: string): LatLng | null {
   const text = westernDigits(input.trim());
@@ -65,7 +55,7 @@ export function parseMapLocation(input: string): LatLng | null {
   return null;
 }
 
-/** Six decimals is about ten centimetres — far past what any of these apps tells apart. */
+/** Six decimals: about 10 cm. */
 function round(n: number): number {
   return Math.round(n * 1e6) / 1e6;
 }

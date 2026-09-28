@@ -9,13 +9,7 @@ import type { Actor, CustomerActor, StaffActor } from "@/lib/domain/actor";
 // The types live in lib/domain/actor.ts; re-exported so callers keep one import.
 export type { Actor, CustomerActor, StaffActor };
 
-/**
- * The actor for the current request: the account behind its session cookie,
- * read from the database (lib/db/sessions.ts), or null.
- *
- * Wrapped in React's `cache` so a page whose layout and body both ask pays for
- * one lookup, not two.
- */
+/** The account behind this request's session cookie, or null — one lookup per request (React `cache`). */
 export const getActor = cache(async (): Promise<Actor | null> => {
   const token = await readSessionToken();
   return token ? findSessionActor(token) : null;
@@ -28,11 +22,7 @@ export async function startSession(res: NextResponse, account: AccountRef, req: 
   return res;
 }
 
-/**
- * Sign this browser out on this response: its session row goes and the cookie
- * is cleared. Other browsers of the same account are not touched. Works for a
- * session whose account was deactivated a moment ago — it needs only the token.
- */
+/** Sign this browser out: delete its row, clear the cookie. Needs only the token. */
 export async function endSession(res: NextResponse, req: NextRequest): Promise<NextResponse> {
   const token = await readSessionToken();
   if (token) await deleteSession(token);
@@ -41,11 +31,8 @@ export async function endSession(res: NextResponse, req: NextRequest): Promise<N
 }
 
 /**
- * The staff member viewing a panel page, or a redirect to sign in.
- *
- * proxy.ts only routes on the cookie's claim; this is the check that reads the
- * account, so a deactivated one is sent to sign in rather than shown a panel in
- * which every request would then fail.
+ * The staff member viewing a panel page, or a redirect to sign in. proxy.ts
+ * only routes on the cookie's claim; this reads the account.
  */
 export async function requireStaff(): Promise<StaffActor> {
   const actor = await getActor();

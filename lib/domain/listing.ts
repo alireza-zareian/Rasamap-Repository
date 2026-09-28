@@ -4,10 +4,9 @@ import { IRAN_LAT, IRAN_LNG } from "./location.ts";
 import { MobileNumber } from "./phone.ts";
 
 /**
- * A listing is a media item a customer submitted through /list-media. It is a
- * Billboard row like any other, plus a trip through review before the public
- * may see it. This file holds that trip's rules — no I/O, so they can be read,
- * and tested, on their own.
+ * A listing is a media item a customer submitted through /list-media: a
+ * billboard row plus a trip through review. These are that trip's rules, with
+ * no I/O, so they are unit-tested on their own.
  */
 
 /** Photos per listing, and the size of each. */
@@ -17,9 +16,8 @@ export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 export const MAX_BILLBOARD_IMAGES = 10;
 
 /**
- * The largest multipart body that can carry `images` photos: the photos plus
- * room for the text fields and the multipart framing. Routes refuse anything
- * bigger before reading it, and next.config.ts lets Proxy buffer this much.
+ * The largest multipart body carrying `images` photos, plus room for the text
+ * fields. Routes refuse more; next.config.ts lets Proxy buffer this much.
  */
 export function maxUploadBodyBytes(images: number): number {
   return images * MAX_IMAGE_BYTES + 64 * 1024;
@@ -29,14 +27,11 @@ export const LISTING_PLANS = ["free", "featured"] as const;
 export type ListingPlan = (typeof LISTING_PLANS)[number];
 
 /**
- * Where a new or resubmitted listing starts in review.
+ * Where a new or resubmitted listing starts in review:
  *
- * free     → `pending`: an admin only has to check the content before it goes live.
- * featured → `awaiting_payment`: the same review plus a payment an admin confirms
- *            by hand (there is no gateway; see docs/engineering-decisions.md §18).
- *
- * `featured` itself stays false until that confirmation, so asking for a paid
- * plan can never promote a listing on its own.
+ *   free     → `pending`: staff check the content.
+ *   featured → `awaiting_payment`: the same, plus a payment staff confirm by
+ *              hand (no gateway, §18). Asking for the plan promotes nothing.
  */
 export function initialModeration(plan: ListingPlan): "pending" | "awaiting_payment" {
   return plan === "featured" ? "awaiting_payment" : "pending";
@@ -52,17 +47,15 @@ const MODERATION_BY_DECISION = {
 } as const;
 
 /**
- * What a decision does to a listing still awaiting one:
+ * What a decision does to a listing awaiting one:
  *
  *   pending          --approve--> approved
  *   awaiting_payment --approve--> approved + featured
  *   either           --reject----> rejected        (never publicly reachable)
  *   either           --revision--> needs_revision  (submitter edits & resends)
  *
- * A decision moves the listing's review state and nothing else — whether the
- * board is free is a separate question (its availability) that review does not
- * answer. A featured slot is granted only here, on the approval of a listing
- * that asked for one — never from the submitted plan alone.
+ * Only the review state moves; availability is a separate question. This is the
+ * one place a featured slot is granted.
  */
 export function decisionOutcome(decision: ListingDecision, plan: ListingPlan) {
   return {
@@ -71,20 +64,6 @@ export function decisionOutcome(decision: ListingDecision, plan: ListingPlan) {
   };
 }
 
-/**
- * What a submitter fills in — the same fields on first submission and on a
- * resubmission after "needs revision", so the two cannot drift. (They did: the
- * edit schema had lost the trimming, and the partial unique index on
- * (submittedById, name, city) compares bytes, so a trailing space let a
- * near-identical listing past it.)
- *
- * Every field is coerced, because it arrives in a multipart form where
- * everything is a string. The photos travel beside these fields as files and
- * are checked by the route (lib/http/form.ts) and by lib/uploads.ts.
- *
- * The wizard validates each step with the same fields, so the browser and the
- * server cannot disagree about a minimum length.
- */
 /** An optional coordinate from a form, where "not given" arrives as an empty string. */
 function optionalCoordinate(min: number, max: number) {
   return z.preprocess(
@@ -93,6 +72,13 @@ function optionalCoordinate(min: number, max: number) {
   );
 }
 
+/**
+ * What a submitter fills in — one schema for the first submission, the
+ * resubmission and each wizard step, so none can drift (a lost `.trim()` once
+ * let a trailing space past the unique index on (submittedById, name, city)).
+ * Fields are coerced: a multipart form sends strings. Photos travel beside
+ * them as files (lib/http/form.ts, lib/uploads.ts).
+ */
 export const ListingFieldsSchema = z.object({
   name:     z.string().trim().min(3, "نام رسانه باید حداقل ۳ کاراکتر باشد").max(100),
   desc:     z.string().max(1000).default(""),
@@ -106,17 +92,15 @@ export const ListingFieldsSchema = z.object({
   faces:    z.coerce.number().int().min(1).max(12),
   price:    z.coerce.number().int().positive("قیمت باید عدد مثبت باشد").max(10_000),
   plan:     z.enum(LISTING_PLANS).default("free"),
-  // Where the board stands, read out of a pasted map link in the browser
-  // (lib/geo/map-link.ts). Optional: without it the listing is simply not on
-  // the map, as a crawled row without coordinates is not.
+  // Read from a pasted map link in the browser (parseMapLocation in
+  // ./location.ts). Optional: without it the listing is just not on the map.
   lat:      optionalCoordinate(IRAN_LAT.min, IRAN_LAT.max),
   lng:      optionalCoordinate(IRAN_LNG.min, IRAN_LNG.max),
 });
 
 /**
- * Both coordinates or neither — half a point is not a location. Applied by
- * the routes after they add the photo field, since a refined schema can no
- * longer be extended.
+ * Both coordinates or neither. Applied by the routes after they add the photo
+ * field, because a refined schema can no longer be extended.
  */
 export function coordinatesTogether(f: { lat?: number; lng?: number }): boolean {
   return (f.lat === undefined) === (f.lng === undefined);

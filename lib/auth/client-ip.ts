@@ -1,34 +1,21 @@
 import type { NextRequest } from "next/server";
 
 /**
- * Best-effort client IP for rate limiting and audit logs.
+ * The client address, for rate limits and audit rows.
  *
- * `X-Forwarded-For` is `client, proxy1, proxy2, …`, each proxy appending the
- * address it saw. The leftmost value is whatever the client wrote, so the one
- * worth reading is the entry the outermost *trusted* proxy appended,
- * `TRUSTED_PROXY_COUNT` positions from the right.
+ * TRUSTED_PROXY_COUNT is the number of reverse proxies in front (nginx = 1).
+ * Each appends to `X-Forwarded-For`, so the entry that many places from the
+ * right is the one a trusted proxy wrote; anything left of it the client wrote.
  *
- * TRUSTED_PROXY_COUNT — reverse proxies in front of the app (nginx = 1,
- * Cloudflare + nginx = 2). Default 0: `next start` reached directly, which is
- * the demo laptop. The default used to be 1, and a machine set up from
- * .env.example without a proxy then read a header the caller writes: rotating
- * X-Forwarded-For escaped every per-address limit (reproduced against
- * `npm run demo`). Wrong in that direction, the setting hands out budgets;
- * wrong the other way — 0 behind a proxy — every visitor shares the proxy's
- * address, which is loud and safe. So the unsafe reading must be asked for.
+ * The default, 0, is the demo laptop with no proxy: the address is the TCP
+ * peer, which server.mjs writes into `x-rasamap-peer`, replacing any value a
+ * client sent. (Plain `next start` has no such header, and falls back to an
+ * X-Forwarded-For the caller can set.) Setting 0 behind a proxy is the safe
+ * mistake — everyone shares one address; setting 1 without one lets a caller
+ * choose theirs, so it must be asked for.
  *
- * With 0, the address is the TCP peer. `npm run demo` runs server.mjs, which
- * writes it into `x-rasamap-peer` on every request and overwrites any value a
- * client sent under that name — the one address here a caller cannot choose.
- * Under plain `next start` that header is absent, and the fallback is the
- * X-Forwarded-For entry Next fills from the socket (`??=` in base-server.js),
- * which a caller *can* choose by sending the header itself.
- *
- * Earlier, 0 read `x-real-ip`, which nothing sets: every demo visitor was
- * "unknown" and shared one budget (reproduced against `npm run demo`).
- *
- * No protection rests on the address alone: sign-in is limited per account and
- * device, phone reveals per account (lib/rate-limit).
+ * No defence rests on the address alone: sign-in is also limited per account
+ * and device, and phone reveals per account (lib/rate-limit).
  */
 const TRUSTED_PROXIES = Math.max(
   0,
@@ -36,20 +23,15 @@ const TRUSTED_PROXIES = Math.max(
 );
 
 /**
- * Whether the address came from a proxy we actually trust.
- *
- * An audit row saying `ip: 198.51.100.5` reads as an observation, and behind a
- * proxy it is one. Without a proxy it is a claim the subject of the audit made
- * about itself. The two should not look identical to whoever reads the log
- * afterwards, so callers that record evidence mark the difference.
+ * Whether the address was observed (the peer, or a trusted proxy's entry)
+ * rather than claimed by the caller, so audit rows can mark the difference.
  */
 export function isClientIpTrusted(req: NextRequest): boolean {
   // With no proxy, only server.mjs's peer header is an observation.
   if (TRUSTED_PROXIES === 0) return !!req.headers.get("x-rasamap-peer");
   const xff = req.headers.get("x-forwarded-for");
   if (!xff) return false;
-  // A genuine chain carries at least one entry per trusted hop. Fewer means the
-  // header did not come through the proxy chain this deployment expects.
+  // A real chain has at least one entry per trusted hop.
   return xff.split(",").filter((p) => p.trim()).length >= TRUSTED_PROXIES;
 }
 

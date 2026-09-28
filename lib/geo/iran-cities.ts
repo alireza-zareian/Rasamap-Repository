@@ -1,12 +1,8 @@
-// ============================================================
-// RASAMAP — Iran's provinces and the cities the catalogue lists
-//
-// The province → city selects, the allowlist a `city` filter is checked
-// against (lib/explore-query.ts), and the centre a row without coordinates is
-// judged by (lib/geo/distance.ts). Every city a crawled or submitted row can
-// name must be here, or that row cannot be filtered to and falls off the map —
-// which was true of 61 cities and about 380 rows until they were added.
-// ============================================================
+// Iran's provinces and the cities the catalogue lists: the province → city
+// selects, the allowlist a `city` filter is checked against
+// (lib/explore-query.ts), and each city's centre, which a row's own point is
+// checked against (lib/geo/distance.ts). A city missing here cannot be
+// filtered to, and its rows fall off the map.
 
 export interface CityLocation {
   name: string;
@@ -228,16 +224,13 @@ export function getProvince(name: string): ProvinceLocation | undefined {
   return provinces.find((p) => p.name === name);
 }
 
-// Finds which province a given city name belongs to, regardless of which
-// province is currently selected in the UI — handy for syncing state when
-// only a city (e.g. a billboard's `city` field) is known.
+// The province a city belongs to, for when only the city is known.
 export function findProvinceOfCity(cityName: string): ProvinceLocation | undefined {
   return provinces.find((p) => p.cities.some((c) => c.name === cityName));
 }
 
-// Returns approximate [lat, lng] for any known city name, regardless of
-// province. Used as a fallback so every scraped billboard gets a map pin
-// even when the source page didn't expose precise GPS coordinates.
+// A known city's approximate centre, or null. isPlottable() measures a row's
+// point against it; a row without a point gets no pin.
 export function coordsForCity(cityName: string): { lat: number; lng: number } | null {
   for (const province of provinces) {
     const city = province.cities.find((c) => c.name === cityName);

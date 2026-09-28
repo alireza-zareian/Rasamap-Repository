@@ -14,22 +14,15 @@ import { faNum } from "@/lib/format";
 import type { CustomerActor } from "@/lib/domain/actor";
 
 /**
- * Listings: media items customers submit through /list-media, from submission
- * through review to publication. The rules of that trip are in
- * lib/domain/listing.ts; this file applies them to the table and to the disk.
+ * Listings from submission through review to publication. The rules are in
+ * lib/domain/listing.ts; this applies them to the table and the disk.
  *
- * Every state change here is a conditional write — the state it expects is in
- * the WHERE of the update, not in a read before it — so a double-click, a
- * retried request or two admin tabs cannot both pass a check and both write
- * (audit §8).
+ * Every state change is a conditional write — the expected state is in the
+ * update's WHERE, not in a read before it — so a double click, a retry or two
+ * staff tabs cannot both write.
  */
 
-/**
- * What the submitter's dashboard shows for each of their own listings. The full
- * editable field set, not a summary, so a listing sent back for revision can be
- * edited in place without a second round-trip; `reviewNote` carries the admin's
- * feedback.
- */
+/** A submitter's own listing: every editable field, so a revision is edited in place. */
 const OWN_FIELDS = {
   id: true, slug: true, name: true, city: true, type: true, price: true,
   moderation: true, availability: true, plan: true, featured: true, images: true,
@@ -80,14 +73,10 @@ export async function listOwnListings(owner: CustomerActor) {
 }
 
 /**
- * Submit a new listing. It lands unpublished, at its plan's initial status.
- *
- * Photos are written to disk first, so a rejected image never creates a
- * half-listing; if the row then fails to write, the folder is removed again.
- * `photos` are the uploaded files, in the order the submitter put them.
- * The partial unique index on (submittedById, name, city) is the floor under
- * the route's opt-in Idempotency-Key: a double-click without the header loses
- * the race here instead of creating a second listing.
+ * Submit a new listing, unpublished at its plan's initial state. Photos are
+ * written first, so a bad image creates no row; a failed row removes them. The
+ * unique index on (submittedById, name, city) stops a double submit that did
+ * not send the route's Idempotency-Key.
  */
 export async function submitListing(owner: CustomerActor, fields: ListingFields, photos: File[]) {
   const saved = await saveImages("listings", photos);
@@ -115,24 +104,16 @@ export async function submitListing(owner: CustomerActor, fields: ListingFields,
 }
 
 /**
- * The submitter's edit of a listing an admin sent back ("needs_revision").
- *
- * Only the account that submitted it, and only while it is still in
- * `needs_revision`. It re-enters the queue at its plan's initial status,
- * `featured` drops back to false (a new review), and the review note is
- * cleared.
- *
- * `photos` is the new photo list in order: an entry is either one of this
- * listing's own current URLs, kept — never an arbitrary string a client sends —
- * or a newly uploaded file.
+ * The submitter's edit of a listing sent back for revision. It re-enters the
+ * queue at its plan's initial state, unfeatured, with the note cleared.
+ * `photos` is the new list in order: this listing's own URLs, or new files.
  */
 export async function resubmitListing(owner: CustomerActor, id: number, fields: ListingFields, photos: (string | File)[]) {
   const current = await prisma.billboard.findUnique({
     where:  { id },
     select: { submittedById: true, moderation: true, images: true },
   });
-  // Someone else's listing is reported as missing, not forbidden: the
-  // difference would tell a stranger which ids exist.
+  // "Not found", not "forbidden", so a stranger cannot learn which ids exist.
   if (!current || current.submittedById !== owner.id) throw notFound("آگهی یافت نشد");
   if (current.moderation !== "needs_revision") {
     throw conflict("این آگهی در وضعیت «نیاز به اصلاح» نیست و قابل ویرایش نیست");
@@ -168,8 +149,7 @@ export async function resubmitListing(owner: CustomerActor, id: number, fields: 
     throw err;
   }
   if (count === 0) {
-    // Another request moved it out of `needs_revision` between the read and
-    // the write.
+    // Another request moved it out of `needs_revision` since the read.
     await discardImages(saved.dir);
     throw conflict("این آگهی قابل ویرایش نیست");
   }
@@ -213,18 +193,12 @@ export async function listSubmissionQueue(filter: { moderation?: Moderation; pag
 }
 
 /**
- * Decide on a submission. Only a listing not yet approved is accepted (see
- * UNDECIDED), so a second click cannot re-approve a live listing or silently
- * re-grant a paid promotion. `note` is the admin's message to the submitter,
- * shown on their dashboard; on an approval without one it clears any earlier
- * feedback.
+ * Decide on a submission not yet approved (UNDECIDED), so a second click cannot
+ * re-approve or re-grant a promotion. `note` replaces the submitter's feedback.
  *
- * `seen` is the listing's updatedAt as the admin's screen showed it, and the
- * write only lands on that exact version. Checking the state alone let a
- * submitter resend new content and photos between the admin opening a listing
- * and clicking approve, and the click published what nobody had reviewed. The
- * plan the outcome was computed from is part of the same condition, so a
- * listing that dropped its paid plan cannot be granted the promotion.
+ * `seen` is the updatedAt the reviewer's screen showed; the write lands only on
+ * that version, so content resent while the reviewer looked is never published
+ * unseen. The plan is in the same condition, for the same reason.
  */
 export async function decideListing(id: number, decision: ListingDecision, note: string | null, seen: Date) {
   const before = await prisma.billboard.findUnique({

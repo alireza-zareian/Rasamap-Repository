@@ -1,19 +1,8 @@
-// ============================================================
-// RASAMAP — SMS (Kavenegar), dormant by default
+// SMS through Kavenegar, dormant until KAVENEGAR_API_KEY is set (§16): until
+// then every send returns `{ sent: false, reason: "sms_disabled" }` and nothing
+// throws. A live line needs a paid top-up and a verified sender.
 //
-// The whole layer is a no-op until KAVENEGAR_API_KEY is set. Nothing here
-// throws: register still works, the OTP endpoints still respond, and code that
-// wants to send a message just gets `{ sent: false, reason: "sms_disabled" }`.
-// Fill the env var in and it starts sending — no code change.
-//
-// Why it ships disabled: a Kavenegar line needs a paid minimum top-up and a
-// verified sender, which is not worth doing for a capstone demo. The
-// integration is complete and covered by tests so it can be switched on in
-// minutes. See docs/engineering-decisions.md §10.
-//
-// Privacy: never log a full phone number or an OTP code — only a masked phone
-// and the code length.
-// ============================================================
+// Never log a full phone number or a code: a masked phone and the code length only.
 
 import { logger } from "./logger";
 
@@ -22,8 +11,7 @@ const SENDER       = process.env.KAVENEGAR_SENDER?.trim() ?? "";
 const OTP_TEMPLATE = process.env.KAVENEGAR_OTP_TEMPLATE?.trim() ?? "";
 const TIMEOUT_MS   = 8000;
 
-/** True when a real API key is configured. Callers can branch on this to keep
- *  a dev/demo affordance (e.g. echoing the OTP into logs). */
+/** Whether an API key is configured; OTP_DEV_ECHO may show the code only when it is not. */
 export const smsEnabled = API_KEY.length > 0;
 
 export interface SmsResult {
@@ -72,9 +60,8 @@ export async function sendSms(phone: string, message: string): Promise<SmsResult
 }
 
 /**
- * Send a one-time code. If KAVENEGAR_OTP_TEMPLATE is set, Kavenegar's dedicated
- * verify-lookup line is used (higher deliverability, no sender approval needed
- * — the recommended path in Iran); otherwise it falls back to a plain SMS.
+ * Send a one-time code: through Kavenegar's verify-lookup template when
+ * KAVENEGAR_OTP_TEMPLATE is set (no sender approval needed), else as plain SMS.
  */
 export async function sendOtp(phone: string, code: string): Promise<SmsResult> {
   if (!smsEnabled) {

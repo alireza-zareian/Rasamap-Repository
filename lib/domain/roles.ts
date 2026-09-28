@@ -1,10 +1,7 @@
 /**
- * Staff roles, lowest to highest. A customer has no role: being a customer is
- * a different kind of account (see Actor in lib/auth/actor.ts), not the bottom
- * rung of this ladder — which is what the old `role: "user"` pretended, and why
- * every staff check had to remember to exclude it by hand.
- *
- * Data-free and I/O-free, so the admin panel can import it for its role picker.
+ * Staff roles, lowest to highest. A customer is another kind of account
+ * (Actor, ./actor.ts), not the bottom rung. No I/O, so the panel's role picker
+ * can import it.
  */
 export const STAFF_ROLES = ["viewer", "editor", "admin", "super_admin"] as const;
 

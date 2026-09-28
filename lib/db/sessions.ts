@@ -7,25 +7,16 @@ import { SESSION_IDLE_MS, SESSION_MAX_LIFETIME_MS } from "@/lib/domain/session";
 import type { Actor } from "@/lib/domain/actor";
 
 /**
- * Sessions — the `sessions` table. One row per signed-in browser.
- *
- * The cookie carries a random token; the row is keyed by its SHA-256, so the
- * table on its own opens nothing. This replaced a signed JWT that every request
- * still had to check against the database twice (a revocation list and a
- * per-account version number): the JWT's one advantage, needing no lookup, was
- * already gone, and what was left was the machinery around it. Here the row
- * *is* the session: signing out deletes it, signing an account out everywhere
- * deletes all of its rows, and one primary-key read answers who is asking.
- *
- * The two lifetimes it enforces are in lib/domain/session.ts.
+ * One row per signed-in browser (§36). The cookie carries a random token and
+ * the row is keyed by its SHA-256, so the table alone opens nothing. Signing
+ * out deletes the row; one primary-key read answers who is asking. The two
+ * lifetimes are in lib/domain/session.ts.
  */
 
 /**
- * The cookie value starts with the kind of account — `s.` for staff, `c.` for a
- * customer — so proxy.ts can route a request (sign-in page or 403) without a
- * database read. That prefix is a hint and nothing more: it is part of what is
- * hashed, so changing it names a row that does not exist, and every real
- * decision is made from the row.
+ * The value starts `s.` (staff) or `c.` (customer) so proxy.ts can route without
+ * a database read. Only a hint: it is part of what is hashed, so a changed
+ * prefix names no row, and every decision is made from the row.
  */
 const PREFIX = { staff: "s", customer: "c" } as const;
 
@@ -52,16 +43,11 @@ export async function createSession(account: AccountRef): Promise<string> {
 }
 
 /**
- * The account behind a cookie value, as an actor, or null when the session is
- * missing, expired, or belongs to a deactivated staff account.
- *
- * The name, number and role are read from the account row on every request,
- * so a role changed by a super admin applies on the next click. A session past
- * half its idle window is extended here, never beyond its absolute lifetime —
- * at most one write per session every four hours.
- *
- * A database failure is left to throw rather than read as "signed out", which
- * would sign someone out over a transient error.
+ * The actor behind a cookie value, or null if the session is missing, expired
+ * or a deactivated staff account's. Name and role are read on every request, so
+ * a role change applies on the next click. Past half its idle window a session
+ * is extended, never beyond its absolute lifetime — at most one write per four
+ * hours. A database error throws rather than reading as "signed out".
  */
 export async function findSessionActor(value: string): Promise<Actor | null> {
   const id = hashToken(value);
@@ -90,8 +76,7 @@ export async function findSessionActor(value: string): Promise<Actor | null> {
   if (!staff?.active) return null;
   return {
     kind: "staff", sessionId: id, id: staff.id, name: staff.name, email: staff.email,
-    // The column is an enum, but a value outside the ladder is still treated as
-    // the least authority rather than trusted.
+    // An enum to Prisma, unchecked text to SQLite: an unknown value gets the least authority.
     role: isStaffRole(staff.role) ? staff.role : "viewer",
   };
 }
@@ -119,11 +104,7 @@ export async function endSessionsOf(
   });
 }
 
-/**
- * Opportunistic prune, as ./idempotency.ts and ./audit-log.ts do: an expired
- * row is refused on read anyway, so this only keeps the table from growing.
- * One sign-in in fifty does the work.
- */
+/** Delete expired rows on one sign-in in fifty, as ./audit-log.ts does — only to bound the table. */
 async function pruneExpiredSessions(): Promise<void> {
   if (Math.random() > 0.02) return;
   try {

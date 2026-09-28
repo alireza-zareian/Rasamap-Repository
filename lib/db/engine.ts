@@ -1,29 +1,13 @@
 /**
- * Which database engine this process is talking to.
- *
- * One question, answered in one place, from one input: the connection string.
- * Nothing else in the codebase gets to decide — no second environment variable
- * that can disagree with `DATABASE_URL`, and nothing inferred from `NODE_ENV`
- * (rule 9 in AGENTS.md is about exactly that class of guess).
- *
- * The project runs on SQLite and is expected to keep doing so for the demo:
- * §14 of docs/engineering-decisions.md explains why a single file is the right
- * answer for one process on one laptop. This module exists so that the day the
- * answer changes, changing it is a connection string rather than a rewrite —
- * see §27 and `npm run db:to-postgres`.
+ * The database engine, read from DATABASE_URL and nothing else. SQLite today
+ * (§14); PostgreSQL is a connection string away (§27, `npm run db:to-postgres`).
  */
 
 export type DbEngine = "sqlite" | "postgresql";
 
 /**
- * Read the engine out of a connection string.
- *
- * `file:./dev.db`                        → sqlite
- * `postgresql://user:pass@host:5432/db`  → postgresql
- *
- * An unrecognised scheme is an error rather than a default. A typo that
- * silently picked SQLite would open an empty database file next to the app and
- * look like data loss.
+ * `file:…` → sqlite, `postgres(ql)://…` → postgresql. Anything else throws: a
+ * typo that defaulted to SQLite would open an empty file and look like data loss.
  */
 export function dbEngineOf(url: string | undefined): DbEngine {
   if (!url) throw new Error("DATABASE_URL is not set");

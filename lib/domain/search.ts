@@ -1,19 +1,13 @@
 /**
- * How catalogue search compares Persian text.
+ * How search compares Persian text. One word arrives in several spellings:
+ * many keyboards type Arabic ي and ك for ی and ک («كرج» found 1 of Karaj's 273
+ * boards), a half-space is a space to a reader, Persian and Arabic digits are
+ * Latin ones, and a tatweel changes nothing.
  *
- * The same word reaches the database in more than one spelling. Windows' and
- * several Android keyboards type the Arabic ي and ك where Persian has ی and ک,
- * and the crawled data carries both, so «كرج» found 1 of Karaj's 273 boards and
- * «شيراز» none of Shiraz's 72 (measured on the demo database). A half-space
- * (ZWNJ) and a space are the same break to a reader, Persian and Arabic digits
- * are the same numbers as Latin ones, and a tatweel stretches a letter without
- * changing it.
- *
- * So both sides are folded through one table: the stored text in the
- * `searchText` column, which SQLite triggers fill from this table (migration
- * 20260925160000_add_search_text — searchTextSql() below wrote them), and the
- * visitor's query by searchTokens(). Change the table and a migration must
- * rewrite the column and the triggers, or the two sides stop matching.
+ * Both sides fold through this one table: the stored `searchText` column, which
+ * SQLite triggers fill (migration 20260925160000_add_search_text, written by
+ * searchTextSql()), and the query, by searchTokens(). Changing the table needs
+ * a migration that rewrites the column and the triggers.
  */
 export const SEARCH_FOLD: readonly (readonly [from: string, to: string])[] = [
   ["ي", "ی"], ["ى", "ی"], ["ك", "ک"], ["ة", "ه"], ["ۀ", "ه"],
@@ -30,13 +24,9 @@ export function foldSearchText(text: string): string {
 }
 
 /**
- * A visitor's query as the words to look for, each of which must appear.
- *
- * Every word, not the phrase: «بیلبورد تهران» used to need those two words
- * side by side in one field and found 5 of Tehran's 707 boards. `%` and `_`
- * are dropped because the database reads them as wildcards — a search for «%»
- * returned the whole catalogue. At most five words, so one request cannot
- * become an arbitrarily long chain of LIKE scans.
+ * A query as the words that must each appear — every word, not the phrase
+ * («بیلبورد تهران» as a phrase found 5 of Tehran's 707). `%` and `_` are
+ * wildcards to the database, so they are dropped. At most five words.
  */
 export function searchTokens(query: string): string[] {
   return foldSearchText(query)
@@ -47,10 +37,8 @@ export function searchTokens(query: string): string[] {
 }
 
 /**
- * The SQLite expression the searchText triggers compute: the four
- * searchable fields, joined by spaces, folded through SEARCH_FOLD. Kept here so
- * the table and the SQL cannot be written separately; it is what the migration
- * holds, and a unit test checks the two still agree.
+ * The expression the searchText triggers compute: the four searchable fields,
+ * folded through SEARCH_FOLD. A unit test checks the migration still holds it.
  */
 export function searchTextSql(): string {
   let expr = `"name" || ' ' || "city" || ' ' || "location" || ' ' || "agency"`;

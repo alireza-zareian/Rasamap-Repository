@@ -1,12 +1,7 @@
 /**
- * Persian (۰–۹) and Arabic-Indic (٠–٩) digits, as Latin ones.
- *
- * A phone on a Persian keyboard types these for numbers, and they are
- * different characters: "۱۲۳" is not "123" to a regular expression or to
- * bcrypt. The sign-in form converted them and the reset form did not, so a
- * password reset to "۱۲۳۴۵۶۷۸" could never be typed back in. The server now
- * converts every mobile number and password it reads, so no form has to
- * remember to.
+ * Persian (۰–۹) and Arabic-Indic (٠–٩) digits as Latin ones. "۱۲۳" is not "123"
+ * to a regex or to bcrypt, so the server converts every mobile number and
+ * password it reads — a form that forgot once made a password untypeable.
  */
 const PERSIAN = "۰۱۲۳۴۵۶۷۸۹";
 const ARABIC = "٠١٢٣٤٥٦٧٨٩";

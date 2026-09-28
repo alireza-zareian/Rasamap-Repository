@@ -1,11 +1,11 @@
 /**
- * How long a sign-in lasts. Read by the data layer, which enforces both, and by
- * the cookie, which the browser keeps for the longer of the two.
+ * How long a sign-in lasts; the data layer enforces both, the cookie lives as
+ * long as the longer.
  *
- *   idle      — this long without a request and the session ends. A request
- *               in the second half of the window pushes it forward.
- *   absolute  — this long after signing in it ends however busy it is, so a
- *               copied cookie cannot be kept alive for ever.
+ *   idle      — ends after this long without a request; a request in the
+ *               second half of the window extends it.
+ *   absolute  — ends this long after sign-in regardless, so a copied cookie
+ *               cannot be kept alive for ever.
  */
 export const SESSION_IDLE_MS = 8 * 60 * 60 * 1000;               // 8 hours
 export const SESSION_MAX_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;  // 7 days

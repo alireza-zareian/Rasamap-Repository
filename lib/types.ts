@@ -1,32 +1,21 @@
-// ============================================================
-// RASAMAP — Core domain types + small display maps
-//
-// This file holds ONLY types and tiny constant maps. It must never import
-// data (no scraper JSON, no billboard arrays), so that client components can
-// import `typeLabels` / the `Billboard` type without dragging the static
-// dataset into the browser bundle. The static dataset lives in lib/data.ts
-// and is used only by prisma/seed.ts at build time.
-// ============================================================
+// Domain types and their Persian labels. Imports no data, so a client component
+// can use them without pulling the seed dataset (lib/data.ts, used only by
+// prisma/seed.ts) into the browser bundle.
 
 export type BillboardType = "billboard" | "digital" | "bridge" | "station" | "vehicle";
 
 /**
- * Two questions about a media item, kept apart.
+ * Two separate questions about a media item (§35):
  *
- * Availability describes the board: is it free to book right now. It is shown
- * on every card and may be filtered on.
+ * Availability — is the board free right now. Shown on every card, filterable.
  *
- * Moderation describes the listing: has it passed review. Only `approved` is
- * ever returned by a public read. A customer's submission starts at `pending`
- * (or `awaiting_payment` on a paid plan); an admin decision moves it to
- * `approved`, `rejected` (turned down for good) or `needs_revision` (sent back
- * for the submitter to edit and resubmit). `suspended` is a published row
- * that staff took down, and can put back.
+ * Moderation — has the listing passed review. Public reads return `approved`
+ * only. A submission starts `pending` (`awaiting_payment` on a paid plan);
+ * staff move it to `approved`, `rejected` or `needs_revision` (sent back to
+ * edit). `suspended` is a published row staff took down and can restore.
  *
- * They used to be one `status` column, which is how an admin editing "is this
- * board busy" could set a listing to `pending`, and why every public query had
- * to carry a list of four values to exclude. Both unions are checked against
- * the Prisma enums in lib/db/billboards/core.ts.
+ * fromRow() in lib/db/billboards/core.ts assigns the Prisma enums to these, so
+ * the compiler refuses a database value a union lacks.
  */
 export type Availability = "available" | "busy" | "reserved" | "inactive" | "unknown";
 export type Moderation = "pending" | "awaiting_payment" | "needs_revision" | "rejected" | "approved" | "suspended";
@@ -63,41 +52,31 @@ export interface Billboard {
   lat?: number;          // real coordinates — present for scraped listings that have them
   lng?: number;
   images: string[];
-  allImages?: string[];  // all images across all faces — populated by DetailModal from images[]
+  allImages?: string[];  // every photo across all faces, as crawled; `images` is the lead set
   agency: string;
-  // Optional because a Billboard that has crossed into a browser has no phone:
-  // toPublicBillboard() in lib/db/billboards.ts drops it, and the number is only
-  // handed out by POST /api/billboards/[slug]/contact to a signed-in caller.
+  // Absent once a record leaves the server: toPublicBillboard() drops it, and
+  // only POST /api/billboards/[slug]/contact hands it to a signed-in caller.
   phone?: string;
   description: string;
   features: string[];
   nearbyLandmarks: string[];
   rating: number;
   reviewCount: number;
-  // Monetisation: `plan` is what the submitter asked for, `featured` is what an
-  // admin granted after confirming payment. Only `featured` affects ordering.
+  // `plan` is what the submitter asked for; `featured` is what staff granted
+  // after confirming payment, and the only one that affects ordering (§18).
   plan: ListingPlan;
   featured: boolean;
   // Where the row came from ("billboardiha", "listing", "manual", …; absent for
-  // the curated set) and, for a crawled row, when it was last read.
+  // the curated set) and, if crawled, when it was last read.
   source?: string;
   scrapedAt?: string;
 }
 
 /**
- * A media record as the catalogue ships it to a browser.
- *
- * Exactly the fields the cards, the compare tray and the hero carousels
- * render — nothing else. A Server Component's props travel to the browser
- * inside the RSC payload, so every field left in is a field downloaded 24
- * times per page whether or not anything draws it. Measured on /explore: the
- * full record cost 52 KB of payload, this subset costs about half that.
- *
- * Two fields are absent on purpose rather than by accident: `phone`, which is
- * never public (see toPublicBillboard), and `lat`/`lng`, because handing out
- * precise coordinates for the whole catalogue in one page is the bulk-copy
- * problem §20 of docs/engineering-decisions.md is about. The map asks for
- * those separately.
+ * A media record as the catalogue sends it to a browser: only the fields the
+ * cards, compare tray and carousels draw, since every field travels in the RSC
+ * payload 24 times a page (/explore payload 52.4 → 39.4 KB). No `phone` (never
+ * public) and no `lat`/`lng` (coordinates for a whole page are a bulk copy, §20).
  */
 export type CatalogueItem = Pick<
   Billboard,
@@ -120,11 +99,9 @@ export const typeLabels: Record<BillboardType, string> = {
 /** The type allowlist, derived from the labels so the two cannot disagree. */
 export const BILLBOARD_TYPES = Object.keys(typeLabels) as [BillboardType, ...BillboardType[]];
 
-// One label per state for the whole app — the card, the detail page, the
-// analytics bars and the admin panel all read from here, so a state can never
-// be spelled two ways in two places. `satisfies` makes the compiler require an
-// entry for every value; the exported type stays `Record<string, string>`
-// because callers index it with a plain string read back from an API.
+// One label per state for the whole app. `satisfies` requires an entry for
+// every value; the exported type is `Record<string, string>` because callers
+// index it with strings read back from an API.
 const AVAILABILITY_LABELS = {
   available: "خالی",
   busy:      "مشغول",
@@ -154,10 +131,8 @@ export const planLabels: Record<string, string> = {
   featured: "ویژه",
 } satisfies Record<ListingPlan, string>;
 
-// ── Leads ──────────────────────────────────────────────────────
-// A lead is one account asking for one media owner's phone number. Since
-// Rasamap hands the deal off at that point, "contacted" and "closed" describe
-// the admin's own follow-up, not a state of the deal itself.
+// A lead is one account asking for one owner's phone number. The deal happens
+// elsewhere, so these states track the team's own follow-up (§23).
 export type LeadStatus = "new" | "contacted" | "closed";
 
 const LEAD_STATUS_LABELS = {
@@ -171,12 +146,7 @@ export const leadStatusLabels: Record<string, string> = LEAD_STATUS_LABELS;
 /** Allowlist for the admin PATCH, derived from the labels so they cannot drift. */
 export const LEAD_STATUSES = Object.keys(LEAD_STATUS_LABELS) as [LeadStatus, ...LeadStatus[]];
 
-/**
- * Where a crawled row came from, for the attribution on its page. The rows
- * are the sources' published listings; naming and linking them is the credit
- * they are owed, and it tells a visitor where to check what the catalogue
- * shows.
- */
+/** The sites crawled rows come from, credited and linked on each row's page. */
 export const DATA_SOURCES: Record<string, { name: string; site: string }> = {
   billboardiha: { name: "بیلبوردیها", site: "https://billboardiha.com" },
   aradholding:  { name: "آراد هلدینگ", site: "https://aradholding.com" },

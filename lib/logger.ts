@@ -1,13 +1,8 @@
-// ============================================================
-// RASAMAP — structured logger
+// One JSON object per line on stdout/stderr, and in a size-rotated
+// LOG_DIR/app.log when LOG_DIR is set.
 //
-// One JSON object per line on stdout/stderr (searchable, ready for a log
-// collector). When LOG_DIR is set, the same lines are also appended to a
-// size-rotated file. No dependencies — Node stdlib only.
-//
-// Never pass secrets or PII here: log `userId`, never a phone number, name,
-// token, password, or request body. Callers are responsible for that.
-// ============================================================
+// Never pass secrets or personal data: an id, never a phone, name, token,
+// password or request body.
 
 import { appendFileSync, mkdirSync, renameSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -76,10 +71,7 @@ export const logger = {
   error: (msg: string, fields?: Record<string, unknown>) => emit("error", msg, fields),
 };
 
-/**
- * Short, human-quotable reference id. Printed to the user on an unexpected
- * error and logged alongside the stack trace so the two can be correlated.
- */
+/** A short id a user can quote, logged beside the stack trace. Not unique — only enough to find the line. */
 export function newErrorRef(): string {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }

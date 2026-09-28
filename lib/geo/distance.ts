@@ -1,11 +1,8 @@
 import { coordsForCity, findProvinceOfCity } from "./iran-cities";
 
 /**
- * The arithmetic behind the map view.
- *
- * All of it runs in the browser on rows the page already fetched, so the map
- * costs no query, no tile request and no API key — which is the whole reason it
- * is drawn from coordinates instead of embedded from a provider (§32).
+ * The geometry behind the map view and the radial search. Pure arithmetic: the
+ * map needs no tile server and no API key (§32).
  */
 
 export interface Bounds {
@@ -13,12 +10,9 @@ export interface Bounds {
 }
 
 /**
- * Equirectangular, with longitude squeezed by the cosine of the middle latitude.
- *
- * Without that factor Iran comes out visibly too wide: at 32° north a degree of
- * longitude is only about 85% of a degree of latitude on the ground. A real
- * projection would be better cartography and worse code for a shape drawn a
- * few hundred pixels wide.
+ * Equirectangular, longitude scaled by the cosine of the middle latitude — at
+ * 32° north a degree of longitude is about 85% of one of latitude. Enough for
+ * a shape a few hundred pixels wide.
  */
 export function project(
   lng: number, lat: number, b: Bounds, width: number, height: number,
@@ -37,7 +31,7 @@ export function project(
   };
 }
 
-/** Great-circle distance, flat-earth approximation — fine over one country. */
+/** Distance in km by a flat-earth approximation: close enough over a city-sized radius. */
 export function distanceKm(
   aLat: number, aLng: number, bLat: number, bLng: number,
 ): number {
@@ -46,28 +40,16 @@ export function distanceKm(
   return Math.hypot(dLat, dLng);
 }
 
-/**
- * How far from its city a pin may sit before we stop believing it.
- *
- * Tehran to Karaj is about 40 km, so this keeps genuine metropolitan sprawl and
- * still rejects the geocoder's misses.
- */
+/** How far from its city a pin may sit. Tehran to Karaj is about 40 km. */
 export const MAX_CITY_RADIUS_KM = 40;
 
 const IRAN = { minLng: 43, maxLng: 64, minLat: 24, maxLat: 40 };
 
 /**
- * Whether a row's coordinates can be drawn as a pin.
- *
- * Measured on the real dataset: 3,032 of 3,528 rows carry coordinates, and
- * about one in six of those sits far from the city it claims — a row labelled
- * تهران with a point 490 km away. The city and district text on those rows is
- * still right; only the point is wrong, so they stay in the catalogue and stay
- * off the map. Showing a pin we know to be misplaced is worse than showing none
- * (§5: the unhappy path is a designed screen, not an accident).
- *
- * For a city with no reference centre of its own, the box check is all there
- * is — weak, but it still catches a swapped lat/lng or a zero.
+ * Whether a row's point can be believed. About one in six crawled points is far
+ * from its own city (a تهران row 490 km away); the row stays in the catalogue,
+ * the point stays off every map. A city with no known centre gets only the
+ * country box, which still catches a swapped pair or a zero.
  */
 export function isPlottable(
   city: string, lat: number | null | undefined, lng: number | null | undefined,
@@ -80,13 +62,7 @@ export function isPlottable(
   return distanceKm(lat, lng, centre.lat, centre.lng) <= MAX_CITY_RADIUS_KM;
 }
 
-/**
- * Per-city counts folded up into per-province counts.
- *
- * The province shading is deliberately built from the city column and not from
- * coordinates, so it stays exact for every row — including the rows whose point
- * is wrong and the 496 that were never geocoded at all.
- */
+/** Per-city counts folded into provinces — from the city column, so rows without a good point still count. */
 export function countByProvince(byCity: Record<string, number>): Record<string, number> {
   const out: Record<string, number> = {};
   for (const [city, n] of Object.entries(byCity)) {

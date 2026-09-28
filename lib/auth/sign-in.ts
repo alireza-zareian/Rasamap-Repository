@@ -9,20 +9,13 @@ import { verifyCustomerCredentials } from "@/lib/db/customers";
 import { recordAudit } from "@/lib/audit";
 
 /**
- * Signing in, for both kinds of account.
+ * Signing in, for both kinds of account. Customers use a mobile number, staff
+ * an email, so the identifier's shape picks the table. Every refusal is the
+ * same sentence, and every well-formed one costs one bcrypt comparison, so a
+ * refusal reveals neither the table nor whether the account exists.
  *
- * Customers sign in with a mobile number and the team with an email address,
- * so the identifier's own shape says which table to look in — no guessing, and
- * no probing one store after the other. An email can never match a `users` row
- * and a phone can never match an `admins` one, so nothing about a refusal
- * reveals which store was consulted: every refusal is the same sentence, and
- * every one costs the same bcrypt comparison.
- *
- * Every attempt, successful or not, is written to the durable audit table. They
- * used to go only to an in-memory buffer, which a restart emptied — so the one
- * record of who signed in to the panel did not survive the process. A flood
- * cannot turn into a flood of rows: once an account or an address is out of
- * attempts, the request is refused before it reaches here.
+ * Every attempt is written to the durable audit table. A flood does not become
+ * a flood of rows: an account or address out of attempts is refused earlier.
  */
 
 export const SIGN_IN_DENIED = "شماره/ایمیل یا رمز عبور اشتباه است";
@@ -35,10 +28,8 @@ export function isEmail(identifier: string): boolean {
 }
 
 /**
- * The rate limit for one attempt: the account's budget (or this browser's own,
- * if it has signed in to the account before — see lib/auth/device.ts), then the
- * address's. A staff email is charged to one budget whichever form it comes
- * through.
+ * The rate limit for one attempt: the account's budget (or this browser's own
+ * if it has signed in before, lib/auth/device.ts), then the address's.
  */
 export async function signInAttempt(identifier: string, ip: string, req: NextRequest): Promise<CredentialAttempt> {
   const device = await knownDevice(req, identifier);

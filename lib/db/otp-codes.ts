@@ -1,9 +1,6 @@
-// One-time code lifecycle for phone-verified flows: password reset and sign-up.
-// The code is never stored — only an HMAC-SHA256 hash keyed by AUTH_SECRET.
-// Codes are 6 digits, valid 5 minutes, single-use, and capped at 5 attempts.
-//
-// The purpose is part of every lookup, so a code issued to reset a password can
-// never be spent to open an account, and the two flows cannot share a row.
+// One-time codes for sign-up and password reset: 6 digits, 5 minutes, single
+// use, 5 attempts. Only an HMAC-SHA256 of the code (keyed by AUTH_SECRET) is
+// stored. The purpose is in every lookup, so a reset code cannot open an account.
 
 import "server-only";
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
@@ -30,7 +27,7 @@ export async function issueOtp(phone: string, purpose: OtpPurpose): Promise<stri
   await prisma.otpCode.create({
     data: { phone, purpose, codeHash: hashCode(code), expiresAt: new Date(Date.now() + TTL_MS) },
   });
-  // Opportunistic prune of old rows so the table can't grow unbounded.
+  // Bound the table: drop rows older than a day.
   await prisma.otpCode.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } });
   return code;
 }
@@ -39,8 +36,7 @@ export type OtpFailure = "not_found" | "expired" | "too_many_attempts" | "mismat
 
 export type OtpCheck = { ok: true } | { ok: false; reason: OtpFailure };
 
-/** What to show someone whose code was refused. Both flows say the same thing,
- *  so the sentences live with the check that produces them. */
+/** The refusal each failure shows, shared by both flows. */
 const FAILURE_MESSAGE: Record<OtpFailure, string> = {
   not_found:         "کدی برای این شماره پیدا نشد. دوباره درخواست کد بدهید.",
   expired:           "کد منقضی شده است. دوباره درخواست کد بدهید.",
@@ -52,7 +48,7 @@ export function otpErrorMessage(reason: OtpFailure): string {
   return FAILURE_MESSAGE[reason];
 }
 
-/** Verify and consume a code. A wrong code increments the attempt counter. */
+/** Verify and consume a code. Every attempt, right or wrong, counts toward the cap. */
 export async function verifyOtp(phone: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {
   const row = await prisma.otpCode.findFirst({
     where: { phone, purpose, consumedAt: null },
@@ -60,11 +56,8 @@ export async function verifyOtp(phone: string, purpose: OtpPurpose, code: string
   });
   if (!row) return { ok: false, reason: "not_found" };
   if (row.expiresAt.getTime() < Date.now()) return { ok: false, reason: "expired" };
-  // The attempt is claimed before the code is compared, and only while the
-  // count is still under the cap. Reading `attempts` and incrementing it after
-  // a mismatch let concurrent guesses all read the same count and all be
-  // compared, so the cap of five was really "five, plus however many arrive
-  // at once".
+  // Claim the attempt before comparing, and only under the cap — otherwise
+  // concurrent guesses all read the same count and all get compared.
   const { count: claimed } = await prisma.otpCode.updateMany({
     where: { id: row.id, consumedAt: null, attempts: { lt: MAX_ATTEMPTS } },
     data:  { attempts: { increment: 1 } },
@@ -73,11 +66,8 @@ export async function verifyOtp(phone: string, purpose: OtpPurpose, code: string
 
   if (!equalHex(row.codeHash, hashCode(code))) return { ok: false, reason: "mismatch" };
 
-  // Consumption is conditional on the row still being unconsumed, not a bare
-  // update, so two concurrent verifies with the same correct code (a
-  // double-submit, a retried request) cannot both succeed — the second finds
-  // count === 0 and is treated as already-spent rather than authorizing a
-  // second password write.
+  // Conditional on still unconsumed, so two concurrent verifies of one correct
+  // code cannot both succeed.
   const { count } = await prisma.otpCode.updateMany({
     where: { id: row.id, consumedAt: null },
     data: { consumedAt: new Date() },

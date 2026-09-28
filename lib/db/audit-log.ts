@@ -27,18 +27,9 @@ export function listAuditRows(limit: number) {
 }
 
 /**
- * Opportunistic prune, the same shape ./idempotency.ts uses: the table is
- * trimmed on the way past a write rather than by a scheduled job, because this
- * deployment has nowhere to schedule one.
- *
- * Without it `audit_logs` grows for the life of the deployment — every sign-in,
- * every listing decision, every lockout, kept for ever on a SQLite file sitting
- * next to the app. Ninety days is well past answering "who changed this, and
- * when", which is what the table is for.
- *
- * The sampling is what keeps this cheap: a DELETE on every audited action would
- * be a scan on every sign-in, and the rows being removed are three months old —
- * a few hours either way costs nothing.
+ * Trim rows past 90 days on the way past a write, since there is no scheduler.
+ * Sampled, so not every sign-in pays for a DELETE; for rows three months old a
+ * few hours either way costs nothing.
  */
 async function pruneOldAuditRows(): Promise<void> {
   if (Math.random() > 0.01) return;   // ~1 write in 100 does the work
@@ -47,6 +38,6 @@ async function pruneOldAuditRows(): Promise<void> {
       where: { timestamp: { lt: new Date(Date.now() - AUDIT_RETENTION_MS) } },
     });
   } catch {
-    // Housekeeping, not the caller's problem — the row that mattered is written.
+    // Housekeeping; the row that mattered is written.
   }
 }

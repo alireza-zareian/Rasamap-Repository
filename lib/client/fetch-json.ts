@@ -1,18 +1,8 @@
 /**
- * The browser's side of every call this app makes to its own API.
- *
- * There were thirty-nine `fetch` calls in client code and not one carried a
- * timeout. That is not a theoretical gap: `await fetch()` on a request that
- * never answers — a stalled mobile connection, a busy server, a tunnel that
- * dropped — simply does not return. The `setSubmitting(false)` after it never
- * runs, so the button stays on "در حال ارسال…" forever, with no error and no
- * way back except reloading, which on a form risks sending the whole thing
- * twice. §5 of the project's rules asks for a timeout, a bounded retry where
- * safe, and a defined fallback on every outbound call; this is where the first
- * and third live.
- *
- * The only place that already had one was lib/sms.ts, which is server-side —
- * so the pattern was known and simply never reached the client.
+ * Every browser call to the app's own API. Each has a timeout: a `fetch` that
+ * never answers (a stalled mobile link) never returns, and a form's button
+ * would stay on "در حال ارسال…" for good. Failures arrive as a Persian sentence
+ * ready to show.
  */
 
 /** A failed call, already carrying the sentence to show the user. */
@@ -29,16 +19,8 @@ export class FetchError extends Error {
 }
 
 /**
- * How long to wait before giving up.
- *
- * `read` covers the small JSON calls — a listing, a review, a phone reveal.
- * Ten seconds is far past a working request and well short of a person
- * deciding the site is broken.
- *
- * `upload` is deliberately several times that. A listing carries up to five
- * photographs, and two megabytes over a slow mobile connection legitimately
- * takes most of a minute — cutting that off would *be* the bug this module
- * exists to prevent, just with a different message.
+ * `read` for the small JSON calls. `upload` for photo forms: five photos over a
+ * slow mobile link can take most of a minute.
  */
 export const TIMEOUT_MS = {
   read: 10_000,
@@ -54,13 +36,7 @@ interface Options extends Omit<RequestInit, "signal"> {
   timeoutMs?: number;
 }
 
-/**
- * Call the API and get parsed JSON back, or throw a FetchError whose `message`
- * is already a Persian sentence fit to show the user.
- *
- * Callers therefore never build their own wording for a network failure, which
- * is how four spellings of "خطای شبکه" appeared in the first place.
- */
+/** Parsed JSON, or a FetchError whose `message` is a Persian sentence to show. */
 export async function fetchJson<T = unknown>(url: string, options: Options = {}): Promise<T> {
   const { timeoutMs = TIMEOUT_MS.read, ...init } = options;
 
@@ -68,9 +44,7 @@ export async function fetchJson<T = unknown>(url: string, options: Options = {})
   try {
     res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
   } catch (err) {
-    // TimeoutError is what AbortSignal.timeout raises; anything else reaching
-    // here is the network being unavailable rather than the server being slow,
-    // and the two deserve different sentences.
+    // A timeout (slow server) and a network failure get different sentences.
     const timedOut = err instanceof DOMException && err.name === "TimeoutError";
     throw new FetchError(timedOut ? TIMEOUT_ERROR : NETWORK_ERROR, 0);
   }
@@ -87,8 +61,7 @@ export async function fetchJson<T = unknown>(url: string, options: Options = {})
   }
 
   if (!res.ok) {
-    // The API answers failures with a Persian `error` (see lib/api-error.ts), so
-    // the server's own wording is preferred over anything invented here.
+    // The API's own Persian `error` (lib/http/responses.ts) is preferred.
     const fromApi = (body as { error?: unknown } | undefined)?.error;
     throw new FetchError(
       typeof fromApi === "string" && fromApi ? fromApi : "خطایی رخ داد. لطفاً دوباره تلاش کنید.",

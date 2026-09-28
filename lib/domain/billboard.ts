@@ -1,14 +1,9 @@
 import { z } from "zod";
 
 /**
- * The shapes of a billboard's JSON columns.
- *
- * SQLite has no array or record type, so `traffic`, `images`, `features` and
- * the rest are stored as JSON — and a JSON column is whatever was last written
- * to it: the seed, the crawler's feed, an admin's edit, a hand-run script. The
- * compiler cannot see inside one, and the row mapper used to assert the shape
- * with `as unknown as` and hope. These schemas are the assertion made real;
- * lib/db/billboards/core.ts reads every row through them.
+ * The shapes of a billboard's JSON columns. A JSON column holds whatever was
+ * last written — the seed, the crawler, a script — so lib/db/billboards/core.ts
+ * reads every row through these instead of trusting a cast.
  */
 export const TrafficSchema = z.object({
   daily:            z.number(),
@@ -22,14 +17,10 @@ export const TrafficSchema = z.object({
 export const StringListSchema = z.array(z.string());
 
 /**
- * A crawled row's availability, from the feed's `status`.
- *
- * Every crawler writes "available" for every board it finds: it means "listed
- * at the source", not "free this month" — none of the sources publish that.
- * Shown as «خالی», it was a promise nobody had made, on 3,500 boards. So a
- * crawler's "available" becomes `unknown` («استعلام از مالک»); what a
- * crawler does know — a board gone from its source — still comes through.
- * Returns null for a status the enum does not have.
+ * A crawled row's availability from the feed's `status`. A crawler's
+ * "available" means "listed at the source", not "free now" — no source
+ * publishes that — so it becomes `unknown` («استعلام از مالک»). Null for a
+ * status the enum lacks.
  */
 export function availabilityFromFeed(status: unknown): "busy" | "reserved" | "inactive" | "unknown" | null {
   switch (status) {
@@ -48,22 +39,16 @@ export const NO_TRAFFIC: z.infer<typeof TrafficSchema> = {
 };
 
 /**
- * Who may decide on a listing: anything not yet approved. `needs_revision` and
- * `rejected` are included on purpose — an admin can still reverse a decision
- * that has not published anything — while an approved listing is live and can
- * no longer be re-decided (a second click must not re-grant a paid promotion).
+ * The states a listing can still be decided from: anything not approved, so a
+ * decision that published nothing can be reversed, and a second click cannot
+ * re-grant a paid promotion.
  */
 export const UNDECIDED = ["pending", "awaiting_payment", "needs_revision", "rejected"] as const;
 
 /**
- * What an admin may type for a board's size, faces and price.
- *
- * The columns are integers. The edit form used to accept any non-negative
- * number — 10.5 metres, a price of 12.5, a width of 0 — which Prisma then
- * refused to write, and the admin saw a bare server error instead of a
- * sentence about the field. The create form had its own, different bounds.
- * One set now serves both, with the same 200 m ceiling a listing and the
- * nightly import use.
+ * What staff may type for size, faces and price: integers, as the columns are,
+ * with the same 200 m ceiling a listing and the nightly import use — so a bad
+ * value gets a sentence, not a failed write.
  */
 export const SizeMetres = z.number().int("ابعاد باید عدد صحیح (متر) باشد").min(1).max(200);
 export const FaceCount  = z.number().int().min(1).max(12);

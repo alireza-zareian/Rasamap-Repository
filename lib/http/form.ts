@@ -5,11 +5,7 @@ import { z, type ZodTypeAny } from "zod";
  * string or a File and a repeated field arrives as an array.
  */
 
-/**
- * A field that may be sent any number of times, from zero to `max`. A single
- * value arrives bare and several arrive as an array, so both are read as an
- * array here.
- */
+/** A field sent zero to `max` times: one value arrives bare, several as an array; both read as an array. */
 export function many<T extends ZodTypeAny>(item: T, max: number, tooMany: string) {
   return z.preprocess(
     v => (v === undefined ? [] : Array.isArray(v) ? v : [v]),
@@ -17,5 +13,5 @@ export function many<T extends ZodTypeAny>(item: T, max: number, tooMany: string
   );
 }
 
-/** An uploaded file. What it contains is checked in lib/uploads.ts, by its bytes. */
+/** An uploaded file; lib/uploads.ts checks its bytes. */
 export const UploadedFile = z.instanceof(File, { message: "فایل ارسال‌شده معتبر نیست" });

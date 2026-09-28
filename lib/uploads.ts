@@ -1,31 +1,19 @@
-// ============================================================
-// RASAMAP — uploaded photos: validation, storage and serving
+// Uploaded photos: validation, storage and serving (§19).
 //
-// Photos arrive as files in a multipart form (the listing wizard, a
-// resubmission, the admin image manager). Everything a client says about a
-// file is a claim, so nothing here trusts any of it:
+// Nothing a client says about a file is trusted:
+//   - the type comes from the file's own first bytes, so a renamed executable,
+//     a PDF or an SVG is refused whatever it was called;
+//   - the extension follows the detected type, and the file name is generated
+//     here, so no client string reaches a path;
+//   - size is capped on the real byte count, and dimensions on the header.
 //
-//   - the type is read from the file's own first bytes, so a renamed
-//     executable, a PDF, an SVG (scriptable) or a polyglot is refused whatever
-//     it was called or declared as;
-//   - the extension is derived from the detected type, never from the client;
-//   - the file name is generated here, so no client string ever reaches a path
-//     (no traversal, no null bytes, no overwriting an existing file);
-//   - size is capped on the real byte count.
+// Image content is not decoded or scanned: a valid JPEG can still target a
+// decoder bug. Photos are served back only as images with nosniff, and a
+// listing stays unpublished until staff have looked.
 //
-// What this does NOT do: scan image content. A genuinely valid JPEG can still
-// carry a payload aimed at a specific decoder bug. What limits that here is
-// that photos are only ever served back as images with nosniff, never
-// executed, and that a listing stays unpublished until an admin has looked.
-//
-// Where they live: UPLOAD_DIR, by default storage/uploads — outside public/.
-// Under public/ they were part of the build's static folder: `next start` lists
-// that folder once at boot, so a photo written later answered 404 until a
-// restart, and every upload was also mixed into the source tree. They are
-// served by app/uploads/[...path]/route.ts at the same /uploads/... addresses
-// as before; photos written under public/uploads by an earlier version are
-// still read from there.
-// ============================================================
+// Files live in UPLOAD_DIR (default storage/uploads), outside public/, which
+// `next start` lists only at boot. app/uploads/[...path]/route.ts serves them;
+// photos an earlier version wrote under public/uploads are still read.
 
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, rm, readFile, readdir, rmdir } from "node:fs/promises";
@@ -128,12 +116,9 @@ export type SaveResult =
   | { ok: false; error: string };
 
 /**
- * Validate and write a batch of photos under `<UPLOAD_ROOT>/<scope>/<uuid>/`.
- *
- * Every file is checked before any is written, so a bad photo in the batch
- * leaves nothing half-written. The folder name is a random UUID rather than
- * the record id, so a not-yet-approved listing's photos cannot be enumerated.
- * Returns public URLs in the input order.
+ * Validate and write a batch under `<UPLOAD_ROOT>/<scope>/<uuid>/`, returning
+ * URLs in input order. Every file is checked before any is written. The folder
+ * is a random UUID, so photos of a listing in review cannot be enumerated.
  */
 export async function saveImages(scope: string, files: File[], max: number = MAX_LISTING_IMAGES): Promise<SaveResult> {
   if (files.length === 0) return { ok: true, urls: [], dir: "" };
@@ -169,7 +154,7 @@ export async function discardImages(dir: string): Promise<void> {
   try {
     await rm(dir, { recursive: true, force: true });
   } catch {
-    /* best effort: an orphaned folder is harmless, a thrown error here is not */
+    /* best effort: an orphaned folder costs disk, a throw here would cost the caller's error message */
   }
 }
 
@@ -179,11 +164,7 @@ function inside(root: string, segments: string[]): string | null {
   return full.startsWith(root + sep) ? full : null;
 }
 
-/**
- * An uploaded photo, for app/uploads/[...path]/route.ts, or null. Only one of
- * the three image types saveImages() writes, and only from inside an upload
- * root.
- */
+/** An uploaded photo for app/uploads/[...path]/route.ts: one of the three types saveImages() writes, from inside an upload root, or null. */
 export async function readUpload(segments: string[]): Promise<{ body: Buffer; contentType: string } | null> {
   for (const root of [UPLOAD_ROOT, LEGACY_ROOT]) {
     const full = inside(root, segments);
@@ -200,15 +181,10 @@ export async function readUpload(segments: string[]): Promise<{ body: Buffer; co
 }
 
 /**
- * Delete uploaded photos no record points to any more — the ones a
- * resubmission, a photo replacement or a deletion just dropped. They used to
- * stay on disk for ever, and stayed reachable by URL.
- *
- * Only /uploads/ addresses are touched; the crawled catalogue under /images/
- * is never an upload. Every upload lives in a folder of its own batch, so no
- * other record can share the file; the folder goes too once it is empty. Best
- * effort, like discardImages: a file left behind costs disk space, a thrown
- * error here would cost the write that already succeeded.
+ * Delete photos no record points to any more (after a resubmission, a
+ * replacement or a deletion), and their folder once empty. Only /uploads/
+ * addresses; each batch has its own folder, so no other record shares a file.
+ * Best effort: a throw here would fail a write that already succeeded.
  */
 export async function discardUploads(urls: string[]): Promise<void> {
   for (const url of urls) {

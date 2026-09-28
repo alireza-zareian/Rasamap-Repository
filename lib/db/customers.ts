@@ -9,12 +9,9 @@ import { endSessionsOf } from "./sessions";
 import type { CustomerActor, StaffActor } from "@/lib/domain/actor";
 
 /**
- * Customer accounts — the `users` table. Staff are in ./staff.ts.
- *
- * A customer's mobile number is their identity: it is what signs in, what a
- * reset code is sent to, and what an advertiser is called back on. So an
- * account is only ever opened, or its password reset, on a number whose owner
- * answered a code sent to it.
+ * Customer accounts (`users`); staff are in ./staff.ts. The mobile number is
+ * the identity — it signs in and receives reset codes — so an account is opened
+ * or reset only on a number that answered a code sent to it.
  */
 
 const PHONE_TAKEN = "این شماره قبلاً ثبت شده است";
@@ -29,9 +26,8 @@ export async function isPhoneRegistered(phone: string): Promise<boolean> {
 }
 
 /**
- * The customer these credentials open, or null. Costs the same bcrypt
- * comparison whether or not the number is registered (see passwordMatches), so
- * response time cannot be used to enumerate accounts.
+ * The customer these credentials open, or null. One bcrypt comparison either
+ * way (passwordMatches), so timing does not reveal registered numbers.
  */
 export async function verifyCustomerCredentials(phone: string, password: string): Promise<CustomerAccount | null> {
   const user = await prisma.user.findUnique({ where: { phone } });
@@ -40,13 +36,9 @@ export async function verifyCustomerCredentials(phone: string, password: string)
 }
 
 /**
- * Open an account on a verified number.
- *
- * The code is spent here, after the caller has already checked the number is
- * free: a code is single-use, and burning it to tell someone a number they
- * cannot have is taken would make them ask for a fresh one before they could
- * try another. The unique index on `phone` still has the last word if two
- * sign-ups race.
+ * Open an account on a verified number. The caller checks the number is free
+ * first, so a single-use code is not spent on a refusal; the unique index on
+ * `phone` decides if two sign-ups race.
  */
 export async function registerCustomer(input: {
   name: string; phone: string; password: string; code: string;
@@ -93,18 +85,16 @@ export async function updateOwnProfile(
 }
 
 /**
- * Finish a phone-verified password reset: spend the code, set the password,
- * and sign out every existing session — a reset is often the answer to "someone
- * else is in my account". One step, with no intermediate token to track.
- * Returns the account id for the audit record.
+ * A phone-verified password reset in one step: spend the code, set the
+ * password, end every session (a reset often answers "someone else is in my
+ * account"). Returns the account id for the audit row.
  */
 export async function resetPasswordWithCode(phone: string, code: string, newPassword: string): Promise<number> {
   const check = await verifyOtp(phone, "password_reset", code);
   if (!check.ok) throw invalid(otpErrorMessage(check.reason));
 
   const user = await prisma.user.findUnique({ where: { phone }, select: { id: true } });
-  // The code was valid, so the account existed when it was issued; one that has
-  // since vanished gets the same generic refusal as any other failure.
+  // Deleted since the code was issued: the same generic refusal as any failure.
   if (!user) throw invalid("امکان تغییر رمز نیست");
 
   const passwordHash = await hashPassword(newPassword);
@@ -179,14 +169,10 @@ export async function getCustomer(id: number) {
 }
 
 /**
- * Staff correct a customer's name or number. The unique index on `phone`
- * decides a clash — a read beforehand would let two edits slip between it and
- * the write — and a clash becomes a plain "already registered".
- *
- * Moving the number is super admin only. The number is where a reset code
- * goes, so whoever sets it to a phone they hold can then reset the password
- * and own the account. The form sends the number with every save, so only an
- * actual change is refused.
+ * Staff correct a customer's name or number; the unique index on `phone`
+ * decides a clash. Changing the number is super admin only: whoever sets it to
+ * a phone they hold can reset the password and own the account. The form
+ * always sends the number, so only an actual change is refused.
  */
 export async function updateCustomer(actor: StaffActor, id: number, patch: { name?: string; phone?: string }) {
   const before = await prisma.user.findUnique({ where: { id }, select: { id: true, name: true, phone: true } });
@@ -218,9 +204,9 @@ function readablePassword(): string {
 }
 
 /**
- * Staff set a new password for a customer — the one given, or a readable
- * random one — and get it back once to pass on. Existing sessions end. An existing password can never
- * be shown: it is only stored as a bcrypt hash.
+ * Staff set a customer's password — the one given, or a readable random one —
+ * and get it back once to pass on. Existing sessions end. Stored only as a
+ * bcrypt hash, so an existing password can never be shown.
  */
 export async function setCustomerPassword(id: number, password?: string): Promise<string> {
   const exists = await prisma.user.count({ where: { id } });

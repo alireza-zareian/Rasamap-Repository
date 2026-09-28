@@ -12,20 +12,13 @@ import { logger } from "@/lib/logger";
 import { rateLimited, serverError } from "./responses";
 
 /**
- * Every API route is declared through `defineRoute`.
+ * Every API route is declared through `defineRoute`, which runs the order
+ * AGENTS.md rule 2 requires, written once:
  *
- * AGENTS.md rule 2 fixes the order of a protected request —
+ *     session  →  rate limit  →  role  →  Zod  →  business logic
  *
- *     session  →  rate limit  →  permission  →  Zod  →  business logic
- *
- * — and it used to be enforced by thirty-five handlers each typing it out, plus
- * a test that grepped them for the word "RateLimit". This is the order, written
- * once. A route states *what* it needs (who may call it, which limit applies,
- * the shape of its input) and the pipeline decides *when*, so a new route
- * cannot get the order wrong and a reader can see a route's whole contract in
- * the first ten lines of its file.
- *
- * What each step answers, when it refuses:
+ * A route states what it needs; the pipeline decides when. What each step
+ * answers when it refuses:
  *
  *   access      401 when signed out, 403 when signed in as the wrong kind of
  *               account (a customer on a staff route, or the reverse)
@@ -38,12 +31,11 @@ import { rateLimited, serverError } from "./responses";
  *               schema
  *   form        the same for a multipart/form-data body — the one that
  *               carries files. A route declares `body` or `form`, not both.
- *   handler     a DomainError becomes its status (see STATUS_BY_KIND); any
- *               other throw becomes a 500 with a reference id
+ *   handler     a DomainError becomes its status (STATUS_BY_KIND); any other
+ *               throw becomes a 500 with a reference id
  *
- * Every call also writes one `api_request` log line, and a response from a
- * non-public route is `Cache-Control: no-store` unless the handler said
- * otherwise — an authenticated answer has no business in a shared cache.
+ * Every call writes one `api_request` log line. A non-public route's response
+ * is `Cache-Control: no-store` unless the handler set its own.
  */
 
 export type Access =
@@ -65,15 +57,11 @@ type IpLimiter = (ip: string) => Promise<RateLimitResult>;
 /**
  * How a route is rate limited.
  *
- *   IpLimiter    the usual case: a named policy from lib/rate-limit, checked
- *                right after the access check.
- *   afterBody    a limit keyed on something in the body — the account a
- *                credential form is attacking, the phone a code was sent to.
- *                The body is parsed first, so what bounds the work done
- *                before the check is the body size limit, not the schema.
- *   "none"       only for signing out. Throttling it fails in the dangerous
- *                direction: someone who taps "sign out" twice would be told to
- *                wait and left signed in.
+ *   IpLimiter    a named policy from lib/rate-limit, checked right after access.
+ *   afterBody    a limit keyed on the body (the account a sign-in targets, the
+ *                phone a code went to). The body is read first, so the body
+ *                size cap is what bounds the work before the check.
+ *   "none"       sign-out only: throttling it would leave someone signed in.
  */
 type RateLimitSpec<B> =
   | IpLimiter
@@ -149,23 +137,15 @@ const DEFAULT_MESSAGES = {
 
 const fail = (status: number, error: string) => NextResponse.json({ error }, { status });
 
-/**
- * The body limit for a route that declares none. The largest non-upload body
- * (an admin's billboard form, 2 000-character description included) is a few
- * kilobytes; this leaves room for that and nothing like a flood.
- */
+/** The body cap for a route that declares none. The largest non-upload body is a few KB. */
 const DEFAULT_MAX_BODY_BYTES = 32 * 1024;
 
 const TOO_LARGE = Symbol("too-large");
 
 /**
- * The request body, refusing it once it passes `max` bytes.
- *
- * Counted while reading rather than trusted from Content-Length: a chunked
- * request carries no length at all, and `req.json()` would buffer whatever
- * arrived. Public routes parse their body before their rate limit (the limit is
- * keyed on the body), so without this an anonymous caller could make the server
- * hold and parse an arbitrarily large payload for free.
+ * The request body, refused once it passes `max` bytes. Counted while reading,
+ * because a chunked request has no Content-Length. Body-keyed limits run after
+ * this, so it is what stops an anonymous caller sending an unbounded payload.
  */
 async function readBodyCapped(req: NextRequest, max: number): Promise<Buffer | typeof TOO_LARGE> {
   if (Number(req.headers.get("content-length")) > max) return TOO_LARGE;
@@ -188,10 +168,8 @@ async function readBodyCapped(req: NextRequest, max: number): Promise<Buffer | t
 }
 
 /**
- * A multipart body, already read within its size cap, as a plain object: one
- * value per field, or an array when the field was sent more than once. Parsed
- * by the platform's own FormData reader over the bytes already counted, so the
- * cap applies before anything is decoded.
+ * A multipart body as a plain object: one value per field, an array when a
+ * field repeats. Parsed from bytes already counted, so the cap applies first.
  */
 async function parseForm(bytes: Buffer, contentType: string): Promise<Record<string, unknown> | null> {
   if (!contentType.toLowerCase().startsWith("multipart/form-data")) return null;
@@ -210,13 +188,10 @@ async function parseForm(bytes: Buffer, contentType: string): Promise<Record<str
 }
 
 /**
- * Next signals control flow by throwing: `redirect()`, `notFound()`, and the
- * DynamicServerError the build throws when a route reads request headers while
- * being probed for static rendering. Each carries a string `digest`, which is
- * the one precondition all of Next's own guards check — so the digest is the
- * stable contract, rather than importing from `next/dist/*`, which is private.
- * These must reach the framework untouched: answering one with a 500 told the
- * build a dynamic route had failed rather than that it was dynamic.
+ * Next signals control flow by throwing (`redirect()`, `notFound()`, the build's
+ * DynamicServerError), each with a string `digest`. They must reach the
+ * framework untouched; a 500 in their place told the build a dynamic route had
+ * failed. The digest is checked rather than importing Next's private classes.
  */
 function isFrameworkSignal(err: unknown): boolean {
   return typeof err === "object" && err !== null && typeof (err as { digest?: unknown }).digest === "string";
@@ -294,11 +269,10 @@ export function defineRoute<
         raw = await parseForm(bytes, req.headers.get("content-type") ?? "");
         if (raw === null) return fail(400, messages?.invalidBody ?? DEFAULT_MESSAGES.invalidJson);
       } else if (bytes.length > 0) {
-        // An empty JSON body reaches the schema as `undefined`, so a route
-        // whose body is optional says so in its schema (`.optional()`) instead
-        // of every route having to tell "no body" apart from "not JSON".
+        // An empty body reaches the schema as `undefined`; an optional body
+        // says so with `.optional()`.
         try {
-          // Parsed here only to be handed straight to the schema below.
+          // Straight into the schema below — never used unvalidated.
           raw = JSON.parse(bytes.toString("utf8"));
         } catch {
           return fail(400, messages?.invalidBody ?? DEFAULT_MESSAGES.invalidJson);

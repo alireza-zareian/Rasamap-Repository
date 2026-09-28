@@ -1,17 +1,10 @@
 import type { StaffRole } from "./roles";
 
 /**
- * Who is making a request — the identity every route, page and data-layer
- * function reasons about, instead of a raw token. Resolved from the session by
- * lib/auth/actor.ts.
- *
- * `id` is a number, already parsed, and `kind` says which table it belongs to,
- * so a customer id can never be written into a staff column or the reverse.
- *
- * The types live here, apart from the code that resolves them, because the
- * data layer needs the types while the resolver needs the data layer: kept in
- * one file they made lib/auth/actor.ts and lib/db/{customers,staff}.ts import
- * each other, a cycle in the graph §34 measures to be acyclic.
+ * Who is making a request, as every route, page and data-layer function sees
+ * it (resolved by lib/auth/actor.ts). `kind` names the table `id` belongs to,
+ * so a customer id cannot land in a staff column. Kept apart from the resolver
+ * to keep the import graph acyclic (§34).
  */
 export interface CustomerActor {
   kind:  "customer";

@@ -3,10 +3,9 @@ import { prisma } from "./client";
 import { published } from "./billboards";
 
 /**
- * The public /analytics page's figures, optionally for one city: counts by
- * type, status and city, the price spread in four brackets, and how much of the
- * catalogue has a photo and a map position. Every figure is a COUNT or an
- * aggregate in the database — nothing here loads the rows themselves.
+ * The /analytics figures, optionally for one city: counts by type, status and
+ * city, four price brackets, and photo and map coverage. Every figure is a
+ * COUNT or aggregate in the database; no rows are loaded.
  */
 export async function getCatalogueAnalytics(city?: string) {
   const baseWhere = {
@@ -40,9 +39,7 @@ export async function getCatalogueAnalytics(city?: string) {
     prisma.billboard.count({ where: { ...baseWhere, price: { gte: 50, lt: 150 } } }),
     prisma.billboard.count({ where: { ...baseWhere, price: { gte: 150, lt: 300 } } }),
     prisma.billboard.count({ where: { ...baseWhere, price: { gte: 300 } } }),
-    // `hasImages`, not a comparison against the `images` JSON column: a Json
-    // `not` filter does not match a stringified array in SQLite, so that form
-    // silently counted every row.
+    // `hasImages`: a Json `not` filter on `images` matched every row in SQLite.
     prisma.billboard.count({ where: { ...baseWhere, hasImages: true } }),
     prisma.billboard.count({ where: { ...baseWhere, lat: { not: null } } }),
   ]);

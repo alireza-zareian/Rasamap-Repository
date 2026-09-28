@@ -2,12 +2,9 @@ import "server-only";
 import { createMemoryStore, createRedisStore, type RateLimitOptions, type RateLimitResult } from "./stores";
 
 /**
- * RASAMAP — rate limits.
- *
- * Every limit the app enforces is a named policy below, so the numbers live in
- * one file and a route names the policy it applies rather than inventing one.
- * The counters themselves live in ./stores.ts: in memory for one process, in
- * Redis when REDIS_URL is set.
+ * Every limit the app enforces, as a named policy: the numbers live here and a
+ * route names the policy it applies. The counters are in ./stores.ts — in
+ * memory for one process, in Redis when REDIS_URL is set.
  */
 
 export type { RateLimitOptions, RateLimitResult };
@@ -29,56 +26,39 @@ export function retryAfterSeconds(r: RateLimitResult): number {
 export type CredentialScope = "login" | "user_login";
 
 /**
- * A credential attempt, judged on two independent questions.
+ * A credential attempt, checked on two dimensions that answer different
+ * questions:
  *
- * Guessing a password means attacking **one account**, so that is where the
- * tight limit belongs. The address is a far weaker signal: in production behind
- * a proxy, one public address carries a whole university, office or mobile
- * carrier, and — as card B1 records — without a proxy the address is a value
- * the caller can simply choose. A control that rests on it alone is both too
- * harsh on real people and trivially escaped by anyone who reads this file.
+ *   account — a few tries, then a lockout. This is the brute-force defence,
+ *             and no header moves a caller off it.
+ *   address — a high ceiling with no lockout, against a flood from one source.
+ *             One address can be a whole office or carrier, so it never locks.
  *
- * So both are checked, and they are asked different questions:
- *
- *   account — 5 tries, then a short lockout. This is the real brute-force
- *             defence, and no header can move a caller off it.
- *   address — a high ceiling with **no lockout**, as a backstop against a flood
- *             from one source. The window rolling over frees it, so a shared
- *             address never strands the people behind it.
- *
- * The account key is an identifier the visitor typed. It is lowercased and
- * trimmed so "Ali@X.com " and "ali@x.com" are one account rather than two
- * budgets, and hashed so the store never holds a list of attempted emails and
- * phone numbers in memory.
+ * The account key is the identifier the visitor typed, trimmed and lowercased
+ * so "Ali@X.com " and "ali@x.com" share one budget, and hashed so the store
+ * holds no list of attempted emails or phone numbers.
  */
 export interface CredentialAttempt {
-  /** Refused, and which dimension refused it — the caller phrases the message. */
   result: RateLimitResult;
+  /** Which dimension refused — the caller phrases the message. */
   limitedBy: "account" | "address" | null;
 }
 
-/** Keep the in-memory store free of readable identifiers. */
 function accountKey(identifier: string): string {
   const norm = identifier.trim().toLowerCase();
-  // djb2 — this is a cache key, not a security boundary. It only needs to be
-  // stable and to not be the identifier itself.
+  // djb2: a store key, not a secret — it only has to be stable and not the identifier itself.
   let h = 5381;
   for (let i = 0; i < norm.length; i++) h = ((h << 5) + h + norm.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
 }
 
 /**
- * Both dimensions of one credential attempt.
+ * `device` is this browser's device token for the account (lib/auth/device.ts),
+ * or null. A known device counts on its own budget, so strangers locking an
+ * account out never lock out the browser its owner already signs in from.
  *
- * `device` is the id of this browser's device token for the account (see
- * lib/auth/device.ts), or null. A known device is counted on a budget of its
- * own, with the same numbers, instead of the account-wide one — so a lockout
- * that strangers run up against an account never locks out the browser its
- * owner already signs in from. That is what used to let anyone who knew the
- * super admin's email keep them out of the panel with five requests.
- *
- * The account (or device) is checked first so that a caller who has genuinely
- * exhausted its tries is told so, rather than being told the network is busy.
+ * The account is checked first, so a caller who has really used up its tries
+ * is told that rather than that the network is busy.
  */
 async function credentialAttempt(
   scope: string,
@@ -98,10 +78,7 @@ async function credentialAttempt(
   return { result: addr, limitedBy: null };
 }
 
-/**
- * Staff sign-in. Five tries against one email, then that email waits a quarter
- * of an hour; the address gets a much looser ceiling and is never locked.
- */
+/** Staff sign-in: five tries per email, then a 15-minute wait. */
 export function adminLoginAttempt(email: string, ip: string, device: string | null): Promise<CredentialAttempt> {
   return credentialAttempt("login", email, ip, device,
     { windowMs: 15 * 60 * 1000, maxRequests: 5,   lockoutMs: 15 * 60 * 1000 },
@@ -109,11 +86,7 @@ export function adminLoginAttempt(email: string, ip: string, device: string | nu
   );
 }
 
-/**
- * Customer sign-in. Ten rather than five, because a phone number and a password
- * are more often mistyped than an email is, and the account lockout is shorter
- * for the same reason.
- */
+/** Customer sign-in: ten tries and a shorter wait — a phone and password are mistyped more often than an email. */
 export function userLoginAttempt(identifier: string, ip: string, device: string | null): Promise<CredentialAttempt> {
   return credentialAttempt("user_login", identifier, ip, device,
     { windowMs: 15 * 60 * 1000, maxRequests: 10,  lockoutMs: 10 * 60 * 1000 },
@@ -121,21 +94,17 @@ export function userLoginAttempt(identifier: string, ip: string, device: string 
   );
 }
 
-/** Clear an account's failures (and this device's) after it signs in successfully. */
+/** Clear an account's failures (and this device's) after a successful sign-in. */
 export async function resetAccountAttempts(scope: CredentialScope, identifier: string, device: string | null = null): Promise<void> {
   await store.reset(`${scope}_acct:${accountKey(identifier)}`);
   if (device) await store.reset(`${scope}_dev:${device}`);
 }
 
-/**
- * Specific preset: admin API — a ceiling, not a throttle.
- *
- * A staff member working through the approval queue fires a burst of reads per
- * minute (the table, a listing's photos, the audit tab), so the number is set
- * far above real use and exists only to bound a runaway script. No lockout: an
- * admin who trips this is working, not attacking, and should be free again when
- * the window rolls over rather than locked out of their own panel.
- */
+// The policies below have no lockout on purpose: each is keyed on an address
+// that a whole office can share, or bounds a cost the window alone contains. A
+// burst from a real person should end when the window rolls over.
+
+/** Admin API: far above real use, only to bound a runaway script. */
 export function adminApiRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`admin_api:${ip}`, {
     windowMs:    60 * 1000,
@@ -144,16 +113,7 @@ export function adminApiRateLimit(ip: string): Promise<RateLimitResult> {
   });
 }
 
-/**
- * Specific preset: user API — the signed-in write paths (a listing, a review, a
- * phone reveal).
- *
- * Well above real interactive use, because several people behind one office or
- * campus NAT share a single address and spend this budget between them. No
- * lockout, for the same reason the public read limit has none: an accidental
- * burst — double-taps on a failing form — must not cost a real person the
- * 15-minute penalty that belongs to credential guessing.
- */
+/** Signed-in writes (a listing, a review, a phone reveal), per address. Per-account limits are below. */
 export function userApiRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`user_api:${ip}`, {
     windowMs:    60 * 1000,
@@ -163,18 +123,9 @@ export function userApiRateLimit(ip: string): Promise<RateLimitResult> {
 }
 
 /**
- * Registration, per address.
- *
- * This used to be five an hour followed by an hour-long lockout, which meant
- * the sixth person to sign up from an office or a campus was refused for the
- * rest of the hour — and, since the hour restarted on every further attempt,
- * for as long as anyone kept trying. Bulk sign-up is a real concern, but the
- * defence that actually answers it is a verified phone number (card B7), not a
- * closed front door.
- *
- * So: a ceiling that a flood still meets, and no lockout, so a legitimate queue
- * of people drains as the window rolls rather than being shut out by the first
- * five.
+ * Registration, per address. A flood still meets the ceiling; what stops bulk
+ * sign-up is the verified phone number, not a door that shuts the sixth person
+ * in an office out for an hour.
  */
 export function registrationRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`register:${ip}`, {
@@ -184,8 +135,7 @@ export function registrationRateLimit(ip: string): Promise<RateLimitResult> {
   });
 }
 
-/** OTP send — per phone: 3 per 10 min, 10 min lockout (SMS costs money and
- *  spamming a number is abuse). Verify is limited separately per phone. */
+/** OTP send, per phone: three in ten minutes, then a lockout — each one is a paid SMS to someone's phone. */
 export function otpSendRateLimit(phone: string): Promise<RateLimitResult> {
   return checkRateLimit(`otp_send:${phone}`, {
     windowMs:    10 * 60 * 1000,
@@ -194,13 +144,7 @@ export function otpSendRateLimit(phone: string): Promise<RateLimitResult> {
   });
 }
 
-/**
- * OTP send, per address — a backstop so one client cannot fan out across many
- * numbers. The per-phone cap above is what actually bounds the SMS bill, and it
- * is keyed on the thing being abused, so this one does not need a lockout: a
- * shared address that trips it would otherwise take everyone behind it out of
- * the password-reset flow for half an hour.
- */
+/** OTP send, per address: stops one client fanning out across many numbers. */
 export function otpSendIpRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`otp_send_ip:${ip}`, {
     windowMs:    60 * 60 * 1000,
@@ -209,8 +153,7 @@ export function otpSendIpRateLimit(ip: string): Promise<RateLimitResult> {
   });
 }
 
-/** OTP verify — per phone: 10 attempts per 10 min (the code itself is also
- *  attempt-capped at 5; this stops brute-forcing across fresh codes). */
+/** OTP verify, per phone. Each code also allows only 5 attempts; this bounds guessing across fresh codes. */
 export function otpVerifyRateLimit(phone: string): Promise<RateLimitResult> {
   return checkRateLimit(`otp_verify:${phone}`, {
     windowMs:    10 * 60 * 1000,
@@ -220,14 +163,9 @@ export function otpVerifyRateLimit(phone: string): Promise<RateLimitResult> {
 }
 
 /**
- * Owner phone reveals, per account.
- *
- * The phone number is the one thing the catalogue does not give away, and the
- * per-address limit around it is no guard: an address is shared by a whole
- * office and, without a proxy in front, chosen by the caller. Keyed on the
- * account instead, a single sign-up can no longer walk the catalogue and carry
- * off every number. Forty an hour is far past what a person comparing media
- * needs; no lockout, so the budget simply refills.
+ * Owner phone reveals, per account. The phone is the one thing the catalogue
+ * does not give away; keyed on the account, one sign-up cannot carry off every
+ * number however many addresses it uses.
  */
 export function contactRevealRateLimit(accountKey: string): Promise<RateLimitResult> {
   return checkRateLimit(`contact_reveal:${accountKey}`, {
@@ -238,19 +176,12 @@ export function contactRevealRateLimit(accountKey: string): Promise<RateLimitRes
 }
 
 /**
- * Writes one account may make, per account.
- *
- * The write routes were limited per address only, 300 a minute. That is a
- * ceiling for a shared office, not for one account: a single sign-up could post
- * replies without end, and — the one that costs real resources — submit
- * listings at 300 a minute with up to ten megabytes of photos each, filling
- * the disk the database lives on. These bound what one account can do however
- * many addresses it uses. No lockout: the window refilling is enough.
+ * Writes per account, whatever address they come from. Without these one
+ * account could submit listings — each with up to ten photos — as fast as the
+ * per-address ceiling allowed, and fill the disk.
  */
 const ACCOUNT_WRITES = {
-  // A person lists a handful of boards in a sitting, not dozens.
   listing: { windowMs: 60 * 60 * 1000, maxRequests: 10, lockoutMs: 0 },
-  // Replies and reviews are conversation; thirty in ten minutes is a lot of it.
   reply:   { windowMs: 10 * 60 * 1000, maxRequests: 30, lockoutMs: 0 },
   review:  { windowMs: 10 * 60 * 1000, maxRequests: 30, lockoutMs: 0 },
 } satisfies Record<string, RateLimitOptions>;
@@ -260,16 +191,10 @@ export function accountWriteRateLimit(kind: keyof typeof ACCOUNT_WRITES, account
 }
 
 /**
- * The catalogue as JSON — GET /api/billboards. The site's own pages never call
- * it (the catalogue is rendered on the server), so its only callers are
- * programs, and the cleanest copy of the data a copier could ask for. Measured
- * before this: one address read all ~3,500 rows in 80 requests, in seconds,
- * under the 600-a-minute ceiling below. With this budget and the page-depth
- * cap in the route, one address gets at most 60 × 48 rows per ten minutes.
- *
- * What it does not do: stop a crawler that spreads over many addresses, or one
- * that reads the HTML pages instead — those carry no per-address budget on
- * purpose (§20a). No lockout: the window alone bounds the cost.
+ * GET /api/billboards. No page calls it, so its callers are programs, and it is
+ * the cleanest copy of the catalogue on offer. With the route's page-depth cap,
+ * one address reads at most 60 × 48 rows per ten minutes (§20b). A crawler on
+ * many addresses, or one reading the HTML, is not bounded here (§20a).
  */
 export function catalogueApiRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`catalogue_api:${ip}`, {
@@ -279,19 +204,11 @@ export function catalogueApiRateLimit(ip: string): Promise<RateLimitResult> {
   });
 }
 
-/**
- * Public API rate limit — the read endpoints the site's own pages call (a
- * media item, the stats, analytics, who is signed in). Normal browser usage
- * never comes close to this ceiling.
- */
+/** Read endpoints the site's own pages call (a media item, stats, analytics, who is signed in). */
 export function publicApiRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`public_api:${ip}`, {
     windowMs:    60 * 1000,
     maxRequests: 600,
-    // No lockout. A read endpoint that punishes past the window it measures
-    // turns a burst of curiosity into ten minutes of a broken site, and a
-    // shared address (one office, one campus Wi-Fi) spends this budget between
-    // everyone behind it. The window alone is enough to bound the cost.
     lockoutMs:   0,
   });
 }
