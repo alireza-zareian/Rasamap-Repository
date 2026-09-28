@@ -1,27 +1,19 @@
-// The production server `npm run demo` runs: `next start`, plus one header.
+// The production server (`npm run demo`, `npm start`): `next start` plus two
+// things.
 //
-// A route handler cannot see the TCP connection, only headers, and the one
-// Next fills from the socket (X-Forwarded-For) it fills only when the client
-// did not send one — so without a proxy in front, a caller chose its own
-// address and walked around every per-address limit. This server writes the
-// real peer address into `x-rasamap-peer` on every request, replacing anything
-// a client sent under that name, and lib/auth/client-ip.ts reads it when no
-// proxy is configured. Nothing else differs from `next start`: the same
-// request handler, the same build, the same port, and every interface unless
-// BIND_ADDRESS says otherwise.
-//
-// Behind a real proxy (TRUSTED_PROXY_COUNT ≥ 1) the peer is the proxy itself,
-// so the header is ignored there and X-Forwarded-For is read as before.
+// A route sees headers, not the socket, and Next fills X-Forwarded-For from the
+// socket only when the client sent none — so without a proxy a caller chose its
+// own address. This writes the real peer into `x-rasamap-peer`, replacing any
+// value a client sent, for lib/auth/client-ip.ts. Behind a proxy
+// (TRUSTED_PROXY_COUNT ≥ 1) the peer is the proxy and the header is ignored.
 
 import { createServer } from "node:http";
 import next from "next";
 
 const port = Number.parseInt(process.env.PORT ?? "3000", 10);
-// Unset: every interface, which the demo needs (a phone on the Wi-Fi). Behind
-// nginx it must be 127.0.0.1 (deploy/rasamap.service sets it): reachable on a
-// public interface, port 3000 would let a client skip the proxy and name its
-// own X-Forwarded-For.
-// Not HOSTNAME: shells and containers set that one to the machine name.
+// Unset: every interface, for a phone on the demo Wi-Fi. Behind nginx it must
+// be 127.0.0.1 (deploy/rasamap.service), or a client could skip the proxy.
+// Not HOSTNAME, which shells set to the machine name.
 const hostname = process.env.BIND_ADDRESS || undefined;
 const app = next({ dev: false });
 const handle = app.getRequestHandler();
@@ -35,16 +27,12 @@ const server = createServer((req, res) => {
   console.log(`> Rasamap ready on http://${hostname ?? "localhost"}:${port}${hostname ? "" : " (and this machine's LAN address)"}`);
 });
 
-// A stop — systemd restarting for a deploy, Ctrl+C at the demo — used to end
-// the process at once, and every request in flight with it: a visitor's form
-// post or a photo upload half-received got a reset connection. Now the server
-// stops taking connections, lets the requests it has finish, and exits; a
-// request that is still running after ten seconds is not waited for.
+// The second: on a stop (a deploy, Ctrl+C) take no new connections, let the
+// requests in flight finish, then exit — at most ten seconds later.
 for (const signal of ["SIGTERM", "SIGINT"]) {
   process.once(signal, () => {
     server.close(() => process.exit(0));
-    // A kept-alive connection that finishes its request after this point goes
-    // idle and would hold close() open until the deadline, so keep sweeping.
+    // A kept-alive connection that goes idle later would hold close() open.
     setInterval(() => server.closeIdleConnections(), 100).unref();
     server.closeIdleConnections();
     setTimeout(() => process.exit(0), 10_000).unref();

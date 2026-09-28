@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { sessionHint } from "@/lib/auth/session";
 
 const ADMIN_PAGE_PATTERN = /^\/admin(\/|$)/;
-/** Exempt from the bot-UA filter — see the note at the top of proxy(). */
+/** Exempt from the bot filter — see "Health" in proxy(). */
 const HEALTH_PATH        = "/api/health";
 const ADMIN_API_PATTERN  = /^\/api\/admin(\/|$)/;
 const USER_PAGE_PATTERN  = /^\/(dashboard|list-media)(\/|$)/;
@@ -13,36 +13,22 @@ const USER_LOGIN_PATH    = "/login";
 const FORBIDDEN_PATH     = "/forbidden";
 const LEGACY_ADMIN_TABS  = ["billboards", "listings", "leads", "quality", "scraper", "users", "audit"];
 
-// Catalogue pages worth protecting from bulk copying. These are the only pages
-// that carry listing data; marketing pages are cheap and left alone.
+// The only pages that carry listing data.
 const CATALOGUE_PAGE = /^\/(explore|billboard)(\/|$)/;
 
-// Media that costs us bandwidth and is the actual product for a copycat.
+// Photos: bandwidth, and what a copy site would want.
 const PROTECTED_ASSET = /^\/(images\/scraped|uploads)\//;
 
-// Headless/automation UAs — blocked before any route handler runs. This is a
-// speed bump, not a wall: a scraper only has to change one header to get past
-// it. The per-IP budgets below are what actually make bulk copying expensive.
-// `okhttp` is deliberately absent from this list. It is the HTTP client inside
-// a great many Android apps, so it shows up in in-app browsers and link
-// previews — a reviewer opening the demo link from a messaging app would have
-// been met with a 403 and no explanation. The tools left here are ones no
-// person browses with.
+// Automation user agents. A speed bump, not a wall: changing one header gets
+// past it (§20). Only tools no person browses with — `okhttp` is absent
+// because Android in-app browsers and link previews send it.
 const BLOCK_UA = /python-requests|scrapy|wget\/|curl\/\d|go-http-client|java\/|headlesschrome|phantomjs|htmlunit|selenium|playwright|puppeteer|node-fetch|axios|apache-httpclient|libwww|lwp-|colly|httpx/i;
 
-// Search-engine crawlers we deliberately let through: the site needs to be
-// findable, and blocking them would cost more than the scraping they enable.
-// UA alone is spoofable — a fake Googlebot still meets the same rate limits as
-// everyone else, it just isn't rejected on sight.
+// Search engines, let through so the site stays findable. A fake one meets the
+// same rate limits as anyone.
 const SEARCH_BOT = /googlebot|bingbot|duckduckbot|yandexbot|applebot|slurp/i;
 
-/**
- * What the panel adds to the headers every response already gets from
- * next.config.ts (nosniff, Referrer-Policy, CSP, X-Frame-Options: SAMEORIGIN).
- * The panel is never framed, not even by this site, and never indexed. The
- * other headers used to be repeated here too — the same values in two places,
- * one of which would drift.
- */
+/** On top of next.config.ts's headers: the panel is never framed, not even by this site, and never indexed. */
 function adminHeaders(res: NextResponse): NextResponse {
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("X-Robots-Tag", "noindex, nofollow");
@@ -53,12 +39,8 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ── Health, before anything else ──
-  // Whatever watches this process — a reverse proxy's upstream check, systemd,
-  // an uptime pinger — identifies itself as curl, Go-http-client, kube-probe or
-  // nothing at all, every one of which the bot filter below is built to reject.
-  // A liveness check that only answers browsers reports the site as down the
-  // moment it is deployed. The endpoint returns a status and no data, so
-  // exempting it gives a scraper nothing.
+  // Monitors call themselves curl or Go-http-client, which the bot filter
+  // refuses. The endpoint returns no data, so exempting it gives a scraper nothing.
   if (pathname === HEALTH_PATH) return NextResponse.next();
 
   const ua = req.headers.get("user-agent") ?? "";
@@ -70,20 +52,13 @@ export async function proxy(req: NextRequest) {
   }
 
   // ── Anti-scraping: hotlink protection on listing media ──
-  // A cross-origin page embedding our images is a clone site using our
-  // bandwidth. A missing Referer is allowed: direct navigation, privacy modes
-  // and some mobile browsers send none, and refusing those breaks real users.
+  // Another site embedding our photos is refused. No Referer at all is allowed:
+  // direct opens, privacy modes and some mobile browsers send none.
   if (PROTECTED_ASSET.test(pathname)) {
     const referer = req.headers.get("referer");
     if (referer) {
-      // Compare against the host the *browser* actually used, which is the
-      // Host header (or X-Forwarded-Host behind a proxy) — never
-      // `req.nextUrl.host`. Under `next start` that one is the server's own
-      // bind hostname ("localhost:3000") no matter what the client asked for,
-      // so every visitor arriving by LAN IP or by domain name was serving a
-      // same-origin Referer that did not match, and got 403 on every photo.
-      // That is how the site looked image-less on a phone on the same Wi-Fi
-      // while it looked fine on the laptop.
+      // The host the browser used — never `req.nextUrl.host`, which is the
+      // server's bind name and refused every photo to a phone on the LAN (rule 9).
       const expected = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? req.nextUrl.host)
         .split(",")[0]
         .trim()
@@ -100,25 +75,12 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  // No per-IP budget on catalogue *pages*, deliberately. There used to be one,
-  // and it was a mistake in both directions.
-  //
-  // It did not stop a scraper: anyone serious rotates addresses, and the thing
-  // actually worth protecting — the owner's phone number — is behind a session
-  // and is never in a page's HTML at all. What it did stop was people. Several
-  // visitors behind one university or office NAT share a single address, so a
-  // demo where a reviewer, a phone and a laptop all browse at once spends one
-  // budget between them; and a person who reloads a few times too often was met
-  // with a refusal, which no ordinary site does.
-  //
-  // What still guards the data is the part that costs a human nothing: the
-  // page cap of 48 records, the owner phone behind a session, hotlink
-  // protection on the media, and rate limits on the endpoints that write or
-  // authenticate. See §20.
+  // No per-address budget on catalogue pages (§20a): it stopped people sharing
+  // one office or demo network, not scrapers, who rotate addresses. The data is
+  // guarded by what costs a person nothing — the 48-row page cap, the phone
+  // behind a session, hotlink protection, and limits on writes and sign-in.
 
-  // The panel used to be one page that picked its section with `?tab=`. Each
-  // section has its own address now; the old links live on in bookmarks and
-  // chat history, so they are forwarded rather than left on the overview.
+  // Old `/admin?tab=` links forward to the section's own address.
   if (pathname === "/admin") {
     const tab = req.nextUrl.searchParams.get("tab");
     if (tab && LEGACY_ADMIN_TABS.includes(tab)) {
@@ -140,18 +102,12 @@ export async function proxy(req: NextRequest) {
   if (pathname === LEGACY_STAFF_LOGIN || pathname === "/api/admin/auth/login") return adminHeaders(NextResponse.next());
   if (pathname.startsWith("/api/auth/")) return NextResponse.next();
 
-  // Which kind of account the cookie claims — routing only. This is Next's
-  // "optimistic check": no database read on a path every request takes. The
-  // session itself is resolved by the page (requireStaff, the dashboard) or by
-  // defineRoute, which is where access is actually decided.
+  // The cookie's claim, for routing only — Next's "optimistic check", with no
+  // database read. Pages and defineRoute decide access from the real session.
   const session = sessionHint(req);
 
-  // ── Admin routes — require an admin role ──
-  //
-  // "Not signed in" and "signed in as the wrong kind of account" are different
-  // refusals and get different answers. Sending the second to a sign-in form —
-  // which is what this did — tells a customer their session failed and leaves
-  // them retyping a password that was never the problem.
+  // ── Admin routes ──
+  // Signed out → sign in; signed in as a customer → 403, not a sign-in form.
   if (isAdminPage || isAdminApi) {
     const isStaff = session === "staff";
     if (!isStaff) {
@@ -161,10 +117,7 @@ export async function proxy(req: NextRequest) {
           : NextResponse.json({ error: "احراز هویت لازم است", code: "AUTH_REQUIRED" }, { status: 401 });
       }
       if (session) {
-        // Rewrite rather than redirect: the address the visitor typed stays in
-        // the bar, so a refusal does not look like the site moved them
-        // somewhere, and the 403 status travels with the response instead of
-        // being lost to a 307 that lands on a 200.
+        // A rewrite keeps the address in the bar and the 403 on the response.
         const forbidden = req.nextUrl.clone();
         forbidden.pathname = FORBIDDEN_PATH;
         forbidden.search = "";
@@ -207,8 +160,7 @@ export const config = {
     "/billboard/:path*",
     "/images/scraped/:path*",
     "/uploads/:path*",
-    // `/api/:path*` already covers /api/admin and /api/listings; it's this broad
-    // so the bot-UA block runs on every API route.
+    // All of /api/, so the bot filter covers every API route.
     "/api/:path*",
   ],
 };

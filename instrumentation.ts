@@ -4,8 +4,7 @@
 import type { Instrumentation } from "next";
 
 export async function register() {
-  // Node runtime only — skip on the Edge runtime (proxy.ts), which has no
-  // access to the full server env and does not need this check.
+  // Node only (Proxy runs on Node in Next 16; nothing here uses the Edge runtime).
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { validateEnv } = await import("./lib/env");
     validateEnv();
@@ -13,15 +12,10 @@ export async function register() {
 }
 
 /**
- * API routes already log their own errors with a searchable `ref` through
- * withApiLog/serverError (lib/api-log.ts, lib/api-error.ts) — that ref is
- * also what app/error.tsx would show, except it never had one. A page that
- * reads the DB directly (app/billboard/[slug]/page.tsx, for one) has no
- * try/catch, so its errors reached app/error.tsx showing only Next's own
- * `error.digest`, which is a different id that never touches logs/app.log —
- * a support ticket quoting it was a dead end. This is Next's own hook for
- * exactly that gap: log the digest here so it is grep-able against the
- * value the user is actually shown.
+ * A page's render error reaches app/error.tsx with Next's `digest` — the
+ * reference the visitor sees. API routes log their own (serverError in
+ * lib/http/responses.ts); this logs the digest for pages, so a reference a
+ * visitor quotes can be found in the log.
  */
 export const onRequestError: Instrumentation.onRequestError = async (err, request, context) => {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;

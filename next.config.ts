@@ -7,34 +7,26 @@ const securityHeaders = [
   { key: "X-Content-Type-Options",        value: "nosniff" },
   { key: "Referrer-Policy",               value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy",            value: "camera=(), microphone=(), geolocation=(self)" },
-  // X-XSS-Protection is deliberately absent. It drove a filter that every
-  // current browser has removed, and in the browsers that still honoured it the
-  // filter itself introduced vulnerabilities — which is why the guidance is now
-  // to send `0` or nothing at all. The Content-Security-Policy below is the
-  // control that actually does this job.
+  // No X-XSS-Protection: browsers removed the filter it drove, which itself
+  // caused vulnerabilities. The CSP below does that job.
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
   {
-    // Every origin here is one the app actually contacts. The list used to
-    // carry Leaflet's CDN, the OpenStreetMap and Carto tile servers and the
-    // Neshan API, all left over from a map layer that was removed — an allowed
-    // origin nothing uses is a supply-chain hole that buys nothing, and
-    // `unpkg.com` in script-src was the worst of them.
+    // Only origins the app actually contacts: an allowed origin nothing uses
+    // is risk for nothing (§29).
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // 'unsafe-inline' stays: the App Router streams its payload through inline
-      // <script> tags, and the alternative — a per-request nonce — makes every
-      // page dynamic, which would undo the prerendered landing page (§29).
+      // 'unsafe-inline': the App Router streams its payload in inline scripts,
+      // and a per-request nonce would make every page dynamic (§29).
       "script-src 'self' 'unsafe-inline'",
-      // Required by the project's own convention: styling is inline style={{}}
-      // objects (rule 5), which are inline styles as far as CSP is concerned.
+      // 'unsafe-inline': React `style` props for per-render values (rule 5)
+      // and the framework's own injected styles are inline styles to CSP.
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self'",
-      // data: and blob: are the upload previews, which exist only in the
-      // browser that made them.
+      // data: and blob: are upload previews made in the browser.
       "img-src 'self' data: blob:",
       "connect-src 'self'",
       // The one embedded third party: the location map on a media page.
@@ -46,10 +38,8 @@ const securityHeaders = [
   },
 ];
 
-// Hosts allowed to load /_next/* dev resources when `next dev` is reached from
-// a non-localhost origin (e.g. a phone on the same Wi-Fi at http://<lan-ip>:3000).
-// Dev-only — has no effect on `next build` / `next start`. Add your machine's
-// LAN IP here, or set DEV_ORIGINS="192.168.1.35,10.0.0.4" in .env.local.
+// `next dev` only: hosts other than localhost allowed to load /_next/*, such
+// as a phone on the Wi-Fi. Override with DEV_ORIGINS="192.168.1.35,…".
 const devOrigins = (
   process.env.DEV_ORIGINS ??
   // LAN ranges + common free tunnels (localhost.run, cloudflare, serveo).
@@ -59,18 +49,10 @@ const devOrigins = (
   .map((s) => s.trim())
   .filter(Boolean);
 
-// Where the server keeps rendered pages and cached queries.
-//
-// Unset: Next.js uses its own cache directory under .next/, which is correct
-// for one process on one machine — the demo laptop today.
-// Set:   every instance shares one Redis, so a cache entry written by one is
-//        read by all, an invalidation reaches all, and a redeploy does not
-//        start cold. See cache-handler.js and §25 of docs/engineering-decisions.md.
-//
-// cacheMaxMemorySize: 0 turns off the in-process LRU that would otherwise sit
-// in front of Redis. That layer is faster but private to each process, so it
-// would survive an invalidation the shared store had already honoured — which
-// is the exact bug Redis is being introduced to prevent.
+// Where cached pages and queries live: .next/ for one process (the demo), or
+// one Redis shared by every instance when REDIS_URL is set (cache-handler.js,
+// §25). cacheMaxMemorySize: 0 drops the per-process layer in front of Redis,
+// which would outlive an invalidation the shared store had honoured.
 const redisCache = process.env.REDIS_URL
   ? { cacheHandler: require.resolve("./cache-handler.js"), cacheMaxMemorySize: 0 }
   : {};
@@ -78,22 +60,17 @@ const redisCache = process.env.REDIS_URL
 const nextConfig: NextConfig = {
   ...redisCache,
   allowedDevOrigins: devOrigins,
-  // The test suite builds into its own directory (test/run.mjs sets this), so
-  // `npm test` never clobbers the .next that `npm run demo` is serving.
+  // The test runners build elsewhere, so `npm test` never replaces the demo's .next.
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
-  // No "X-Powered-By: Next.js" on every response: naming the framework and
-  // its version family tells a stranger which advisories to try first, and
-  // tells a visitor nothing. (Source maps are already off in production —
-  // productionBrowserSourceMaps is left at its default, false; a guard test
-  // fails if either changes.)
+  // No "X-Powered-By: Next.js": it tells a stranger which advisories to try.
+  // With productionBrowserSourceMaps: false below, guarded by the test "no
+  // response names the framework, and no source map is built".
   poweredByHeader: false,
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },
-      // Files in public/ default to max-age=0, so a browser asked the server
-      // about every photo again on every page view — 20 to 40 requests each
-      // time, all answered 304. A photo's name is its media's slug, not a hash
-      // of its content, so a re-crawl can replace it: a week, not forever.
+      // public/ defaults to max-age=0: every view re-asked about every photo.
+      // A photo is named after its media, not its content, so a week, not forever.
       {
         source: "/images/scraped/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" }],
@@ -101,43 +78,28 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    // No /_next/image endpoint: every size is a file on disk, written once by
-    // scripts/build-image-variants.py. See image-loader.js for why.
+    // No /_next/image endpoint: every size is a file written by
+    // scripts/build-image-variants.py (image-loader.js, §22c).
     loader: "custom",
     loaderFile: "./image-loader.js",
-    // The only widths that exist: two pre-built variants and the 500-wide
-    // source. Split across the two lists the way Next reads them — `imageSizes`
-    // holds sizes below the smallest device width, for small fixed slots like a
-    // 72 px thumbnail; `deviceSizes` is the ladder used once a `sizes` string
-    // mentions a viewport fraction.
-    //
-    // The split matters more than it looks. With everything in `deviceSizes`,
-    // Next filters the candidates to those at least as wide as the *smallest*
-    // device size, so a single entry of 500 silently threw both variants away
-    // and every image shipped at full size again.
+    // The only widths that exist: two variants and the 500-wide source. The
+    // split matters: with all of them in `deviceSizes`, Next drops every
+    // candidate narrower than the smallest, and every image shipped full size.
     imageSizes: [256],
     deviceSizes: [384, 500],
   },
   productionBrowserSourceMaps: false,
   experimental: {
-    // Proxy (proxy.ts) buffers every request body it sees, up to 10 MB by
-    // default, and hands the route only that much — so an upload past it
-    // reached the route cut short and failed as "not a valid form". The limit
-    // is the largest body any route accepts: the admin's photo list.
+    // Proxy buffers at most 10 MB of a body by default and passes on only that,
+    // so a larger upload arrived cut short. This is the largest any route accepts.
     proxyClientMaxBodySize: maxUploadBodyBytes(MAX_BILLBOARD_IMAGES),
-    // Route navigations run as view transitions, so a card's photo can morph
-    // into the media page's gallery (components/BillboardCard.tsx). The browser
-    // does the animation on the compositor; one without the API navigates as
-    // before, with no animation and nothing broken.
+    // Navigations as view transitions, so a card's photo morphs into the media
+    // page's gallery (§37). A browser without the API simply navigates.
     viewTransition: true,
   },
-  // /api-docs renders docs/api.md at runtime — make sure the standalone/prod
-  // build ships that file (it lives outside app/ and public/).
+  // Files read at runtime from outside app/ and public/, which the tracer would leave behind.
   outputFileTracingIncludes: {
     "/api-docs": ["./docs/api.md"],
-    // The Open Graph card rasterises Persian text, so the font has to travel
-    // with the build — it lives outside app/ and public/, which is exactly the
-    // set of files the tracer would otherwise leave behind.
     "/opengraph-image": ["./assets/fonts/*.ttf"],
   },
 };

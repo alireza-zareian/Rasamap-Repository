@@ -9,20 +9,16 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
-    // The test suites' own build output (test/run.mjs and test/run-e2e.mjs set
-    // distDir to these).
+    // The test runners' own build output.
     ".next-test/**",
     ".next-e2e/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Third-party bundles shipped beside the HTML docs so they open offline.
-    // Linting a 3 MB minified file is pointless and exhausts the Node heap.
+    // Vendored bundles for the offline HTML docs; a 3 MB minified file exhausts the heap.
     "docs/vendor/**",
   ]),
-  // ── Architecture boundaries ────────────────────────────────────────────────
-  // These were rules in AGENTS.md that only a careful reader obeyed. Written
-  // here, the next import that crosses one fails `npm run lint`.
+  // ── Architecture boundaries (AGENTS.md rule 1), enforced ──────────────────
   {
     files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "proxy.ts", "instrumentation.ts"],
     ignores: ["lib/db/**"],
@@ -53,9 +49,7 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    // lib/domain is the rules of the product with no I/O — so it can be read
-    // and unit-tested on its own. A database or framework import here would
-    // quietly end that.
+    // lib/domain: rules with no I/O, unit-tested on their own.
     files: ["lib/domain/**/*.ts"],
     rules: {
       "no-restricted-imports": ["error", {
@@ -64,10 +58,7 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    // Next.js loads the cache handler with require.resolve() at runtime, so it
-    // has to be CommonJS — see the shape in next/dist/docs .../self-hosting.md.
-    // The rule is right everywhere else in this repo; this file is the one
-    // place the framework dictates the module system.
+    // Next loads the cache handler with require.resolve(), so it must be CommonJS.
     files: ["cache-handler.js"],
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },
