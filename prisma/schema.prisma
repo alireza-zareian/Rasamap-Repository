@@ -107,6 +107,7 @@ model User {
   reviews         Review[]
   reviewReplies   ReviewReply[]
   contactRequests ContactRequest[]
+  favorites       Favorite[]
   auditLogs       AuditLog[]
 
   @@map("users")
@@ -220,6 +221,7 @@ model Billboard {
   sourceRecord    BillboardSource?
   reviews         Review[]
   contactRequests ContactRequest[]
+  favoritedBy     Favorite[]
 
   @@index([city])
   @@index([type])
@@ -376,6 +378,21 @@ model ContactRequest {
 // One-time codes for phone-verified flows (sign-up, password reset). The code
 // itself is never stored — only an HMAC-SHA256 hash. Short-lived, single-use,
 // attempt-capped. Consumed rows are kept briefly then pruned opportunistically.
+// A media item a customer saved to come back to. The pair is the key, so saving
+// twice is one row (lib/db/favorites.ts); a deleted media or account takes its
+// rows with it.
+model Favorite {
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billboardId Int
+  billboard   Billboard @relation(fields: [billboardId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@id([userId, billboardId])
+  @@index([billboardId])
+  @@map("favorites")
+}
+
 model OtpCode {
   id         Int        @id @default(autoincrement())
   phone      String

@@ -34,6 +34,12 @@
 }
 .tab:hover { color: var(--text-main); }
 .tabActive { background: var(--bg-surface); color: var(--accent); font-weight: 600; }
+/* How many are in the campaign or saved: the reason to open the tab. */
+.badge {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.66rem; font-weight: 800; color: #fff; background: var(--accent-warm);
+}
 
 .actions { display: flex; gap: 8px; align-items: center; }
 .iconButton {
@@ -73,8 +79,16 @@
     backdrop-filter: blur(16px);
   }
   .navItem {
+    position: relative;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
     font-size: 0.66rem; color: var(--text-muted); text-decoration: none;
+  }
+  .navBadge {
+    position: absolute; top: 5px; left: calc(50% - 20px);
+    min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 800; color: #fff; background: var(--accent-warm);
+    box-shadow: 0 0 0 2px var(--topbar-bg);
   }
   .navActive { color: var(--accent); font-weight: 700; }
   .navCta { color: #fff; }
@@ -109,4 +123,9 @@
   /* Brand on its own row, the three link columns side by side under it. */
   .footerGrid { grid-template-columns: repeat(3, 1fr); gap: 26px 14px; }
   .footerGrid > :first-child { grid-column: 1 / -1; }
+}
+
+/* Printing a page (a campaign plan) prints the page, not the site's frame. */
+@media print {
+  .topbar, .bottomNav, .footer { display: none !important; }
 }

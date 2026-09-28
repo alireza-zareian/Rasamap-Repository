@@ -43,6 +43,7 @@ const TABLES = [
   "billboardSource",
   "review",
   "contactRequest",
+  "favorite",
   // points at review, user and admin
   "reviewReply",
   // independent bookkeeping (auditLog points at user and admin)
@@ -62,6 +63,7 @@ const TABLE_NAMES = {
   billboardSource: "billboard_sources",
   review: "reviews",
   contactRequest: "contact_requests",
+  favorite: "favorites",
   reviewReply: "review_replies",
   otpCode: "otp_codes",
   auditLog: "audit_logs",

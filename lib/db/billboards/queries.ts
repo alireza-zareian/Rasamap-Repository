@@ -4,6 +4,7 @@ import { prisma } from "../client";
 import type { Availability, Billboard, BillboardType, Moderation } from "../../types";
 import { distanceKm, isPlottable } from "@/lib/geo/distance";
 import { searchTokens } from "@/lib/domain/search";
+import { MAX_PICKED } from "@/lib/domain/campaign";
 import { fromRow, published } from "./core";
 
 /** Every read of the billboards table. Nothing here writes or invalidates. */
@@ -240,6 +241,27 @@ export async function getBillboardBySlug(
   if (!row) return null;
   if (!includeUnpublished && row.moderation !== published.moderation) return null;
   return fromRow(row);
+}
+
+/**
+ * Published media by slug, in the order asked for; a slug that names nothing
+ * public is left out. For a list someone else chose — a shared campaign — so it
+ * reads at most MAX_PICKED rows whatever the caller sends.
+ */
+export async function getPublishedBillboardsBySlugs(slugs: readonly string[]): Promise<Billboard[]> {
+  const wanted = [...new Set(slugs)].slice(0, MAX_PICKED);
+  if (wanted.length === 0) return [];
+  const rows = await prisma.billboard.findMany({ where: { ...published, slug: { in: wanted } } });
+  const bySlug = new Map(rows.map((r) => [r.slug, fromRow(r)]));
+  return wanted.flatMap((slug) => bySlug.get(slug) ?? []);
+}
+
+/** Published media by id, in the order asked for (a customer's saved list, newest first). */
+export async function getPublishedBillboardsByIds(ids: readonly number[]): Promise<Billboard[]> {
+  if (ids.length === 0) return [];
+  const rows = await prisma.billboard.findMany({ where: { ...published, id: { in: [...ids] } } });
+  const byId = new Map(rows.map((r) => [r.id, fromRow(r)]));
+  return ids.flatMap((id) => byId.get(id) ?? []);
 }
 
 /**

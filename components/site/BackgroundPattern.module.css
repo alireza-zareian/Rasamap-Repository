@@ -42,3 +42,5 @@
   0%,100% { transform: translate(0,0); }
   50%     { transform: translate(60px,50px); }
 }
+
+@media print { .decor { display: none; } }

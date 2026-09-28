@@ -102,14 +102,16 @@ export function toPublicBillboard(b: Billboard): Billboard {
  * field list is the guarantee: the phone is never selected.
  */
 export function toCatalogueItem(b: Billboard): CatalogueItem {
+  const plottable = isPlottable(b.city, b.lat, b.lng);
   return {
     id: b.id, slug: b.slug, name: b.name,
     city: b.city, region: b.region, location: b.location,
     type: b.type, availability: b.availability, featured: b.featured,
-    price: b.price, priceYearly: b.priceYearly,
+    price: b.price, priceWeekly: b.priceWeekly, priceQuarterly: b.priceQuarterly, priceYearly: b.priceYearly,
     width: b.width, height: b.height, faces: b.faces, age: b.age,
     rating: b.rating, reviewCount: b.reviewCount,
     images: b.images, allImages: b.allImages, traffic: b.traffic,
+    ...(plottable ? { lat: b.lat, lng: b.lng } : {}),
   };
 }
 

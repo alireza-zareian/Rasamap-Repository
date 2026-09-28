@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/lib/client/theme";
 import { THEME_STORAGE_KEY } from "@/lib/client/theme-key";
 import { CurrentUserProvider } from "@/lib/client/use-current-user";
 import BackgroundPattern from "@/components/site/BackgroundPattern";
+import { FavoritesProvider } from "@/components/favorites/FavoritesProvider";
+import { CampaignProvider } from "@/lib/client/use-campaign";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -43,9 +45,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           {/* "Who is signed in?", asked once per page load and shared. */}
           <CurrentUserProvider>
-            <BackgroundPattern />
-            <div className="grain-overlay" aria-hidden="true" />
-            {children}
+            {/* The saved media, asked for once and shared by every heart. */}
+            <FavoritesProvider>
+              {/* The campaign pick, one list for every page (localStorage between visits). */}
+              <CampaignProvider>
+                <BackgroundPattern />
+                <div className="grain-overlay" aria-hidden="true" />
+                {children}
+              </CampaignProvider>
+            </FavoritesProvider>
           </CurrentUserProvider>
         </ThemeProvider>
       </body>

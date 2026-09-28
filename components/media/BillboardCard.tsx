@@ -1,8 +1,9 @@
 "use client";
 import IntentLink from "@/components/ui/IntentLink";
 import { ViewTransition } from "react";
-import { Scale, Star, Sparkles } from "lucide-react";
+import { Check, Plus, Star, Sparkles } from "lucide-react";
 import MediaImage from "@/components/media/MediaImage";
+import SaveButton from "@/components/favorites/SaveButton";
 import { type CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
 import { faNum, faCompact } from "@/lib/format";
 import { availabilityTone } from "@/components/ui/availability";
@@ -12,12 +13,19 @@ import styles from "./BillboardCard.module.css";
 
 interface BillboardCardProps {
   billboard: CatalogueItem;
-  isCompared: boolean;
-  onCompare: () => void;
+  isPicked: boolean;
+  onPick: () => void;
   listMode?: boolean;
+  /** Its pin on the results map is under the pointer. */
+  highlighted?: boolean;
+  /** Tell the results map which card the pointer is on. */
+  onHover?: (slug: string | null) => void;
 }
 
-export default function BillboardCard({ billboard: b, isCompared, onCompare, listMode = false }: BillboardCardProps) {
+export default function BillboardCard({ billboard: b, isPicked, onPick, listMode = false, highlighted = false, onHover }: BillboardCardProps) {
+  const hover = onHover
+    ? { onMouseEnter: () => onHover(b.slug), onMouseLeave: () => onHover(null) }
+    : {};
   const tone = cssVar("--tone", availabilityTone(b.availability));
   const status = `● ${availabilityLabels[b.availability] ?? b.availability}`;
   const views = b.traffic?.estimatedViews ?? 0;
@@ -31,9 +39,9 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
   );
   const actions = (
     <div className={styles.actions}>
-      <button type="button" className={styles.action} onClick={e => { e.stopPropagation(); onCompare(); }}
-        aria-label={isCompared ? "حذف از مقایسه" : "افزودن به مقایسه"} aria-pressed={isCompared}>
-        <Scale size={12} /> مقایسه
+      <button type="button" className={styles.action} onClick={e => { e.stopPropagation(); onPick(); }}
+        aria-label={isPicked ? `حذف «${b.name}» از کمپین` : `افزودن «${b.name}» به کمپین`} aria-pressed={isPicked}>
+        {isPicked ? <Check size={12} /> : <Plus size={12} />} کمپین
       </button>
       {/* The name's link already covers the card; this one is the visible cue, so it is skipped by keyboards and screen readers. */}
       <IntentLink href={`/billboard/${b.slug}`} className={`${styles.action} ${listMode ? "" : styles.primary}`}
@@ -43,10 +51,11 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
 
   if (listMode) {
     return (
-      <div data-testid="billboard-card" className={`${styles.row} ${isCompared ? styles.compared : ""}`} style={tone}>
+      <div data-testid="billboard-card" className={`${styles.row} ${isPicked ? styles.picked : ""} ${highlighted ? styles.lit : ""}`} style={tone} {...hover}>
         <div className={styles.thumb}>
           {/* 88 CSS pixels, so the loader hands over the 256-wide variant. */}
           <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="88px" iconSize={26} />
+          <SaveButton slug={b.slug} name={b.name} />
         </div>
         <div className={styles.rowBody}>
           <div className={styles.rowHead}>
@@ -60,8 +69,8 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
   }
 
   return (
-    <div data-testid="billboard-card" style={tone}
-      className={`${styles.card} ${isCompared ? styles.compared : ""} ${b.featured ? "gradient-frame" : ""}`}>
+    <div data-testid="billboard-card" style={tone} {...hover}
+      className={`${styles.card} ${isPicked ? styles.picked : ""} ${highlighted ? styles.lit : ""} ${b.featured ? "gradient-frame" : ""}`}>
       <div className={styles.photo}>
         {/* Shares its name with the media page's gallery, so opening the card
             morphs the photo (§37). One card per slug, so the name is unique. */}
@@ -72,6 +81,7 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
             <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="(max-width: 700px) 100vw, 384px" />
           </div>
         </ViewTransition>
+        <SaveButton slug={b.slug} name={b.name} />
         <div className={`${styles.badge} ${styles.glass} ${styles.type}`}>{typeLabels[b.type]}</div>
         <div className={`${styles.badge} ${styles.status}`}>{status}</div>
         {/* The only thing a paid promotion buys: this and the top of the results. */}

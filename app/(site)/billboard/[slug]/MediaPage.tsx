@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import IntentLink from "@/components/ui/IntentLink";
 import { Ruler, Square, Layers, MapPin, Check, ArrowRight, ExternalLink, ShieldCheck, Crosshair } from "lucide-react";
-import { isPublished } from "@/lib/db/billboards";
+import { isPublished, toCatalogueItem } from "@/lib/db/billboards";
 import { getCachedBillboardBySlug, getCachedRelatedBillboards } from "@/lib/db/cached";
 import BillboardGallery from "@/components/media/BillboardGallery";
 import RelatedBillboards from "@/components/media/RelatedBillboards";
@@ -13,6 +13,9 @@ import SearchBackLink from "@/components/media/SearchBackLink";
 import TrafficMeter from "@/components/media/TrafficMeter";
 import BillboardContact from "@/components/media/BillboardContact";
 import MapEmbed from "@/components/media/MapEmbed";
+import MediaActionBar from "@/components/media/MediaActionBar";
+import SaveButton from "@/components/favorites/SaveButton";
+import AddToCampaign from "@/components/campaign/AddToCampaign";
 import { typeLabels, availabilityLabels, moderationLabels, DATA_SOURCES, type Billboard } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-url";
 import { faNum, faCompact } from "@/lib/format";
@@ -96,6 +99,9 @@ function breadcrumbJsonLd(b: Billboard) {
   };
 }
 
+/** The price card's id: the phone's bar watches it and scrolls to it. */
+const CONTACT_CARD = "contact";
+
 /** "Nearby" from a media page; the results page can widen it. */
 const NEARBY_RADIUS_KM = 5;
 
@@ -129,6 +135,8 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
   const { billboard: b, phoneAvailable } = found;
 
   const unpublished = !isPublished(b.moderation);
+  // What a card, the campaign and the phone's bar need of this record.
+  const item = toCatalogueItem(b);
 
   const related = await getCachedRelatedBillboards(b, RELATED_COUNT);
 
@@ -180,6 +188,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
                 <div className={styles.badges}>
                   <span className={`${styles.badge} ${styles.typeBadge}`}>{TYPE_LABEL[b.type] ?? b.type}</span>
                   <span className={`${styles.badge} ${styles.statusBadge}`} style={tone}>{availabilityLabels[b.availability] ?? b.availability}</span>
+                  <SaveButton slug={b.slug} name={b.name} variant="chip" />
                   <ShareButton title={b.name} />
                 </div>
               </div>
@@ -264,7 +273,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
 
           <aside className={styles.side}>
             <div className={styles.sticky}>
-              <div className={styles.priceCard}>
+              <div className={styles.priceCard} id={CONTACT_CARD}>
                 <div className={styles.priceLine}>
                   <span className={styles.price}>{faNum(b.price)}</span>
                   <span className={styles.priceUnit}>میلیون تومان / ماه</span>
@@ -287,6 +296,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
                 {/* No checkout: the next step is the owner. The phone is fetched
                     on request by a signed-in visitor, never in the page (§23). */}
                 <BillboardContact hasPhone={phoneAvailable} agency={b.agency} slug={b.slug} />
+                <div className={styles.planRow}><AddToCampaign item={item} /></div>
 
                 <div className={styles.direct}>اجاره و قرارداد مستقیماً با صاحب رسانه انجام می‌شود. رسامپ واسطهٔ مالی نیست.</div>
 
@@ -331,6 +341,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
       </div>
 
       <RelatedBillboards items={related} />
+      <MediaActionBar item={item} contactId={CONTACT_CARD} />
     </main>
   );
 }

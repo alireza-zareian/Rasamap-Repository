@@ -184,6 +184,8 @@ const ACCOUNT_WRITES = {
   listing: { windowMs: 60 * 60 * 1000, maxRequests: 10, lockoutMs: 0 },
   reply:   { windowMs: 10 * 60 * 1000, maxRequests: 30, lockoutMs: 0 },
   review:  { windowMs: 10 * 60 * 1000, maxRequests: 30, lockoutMs: 0 },
+  // A heart is tapped on and off while browsing; this is a loop, not a person.
+  favorite: { windowMs: 10 * 60 * 1000, maxRequests: 120, lockoutMs: 0 },
 } satisfies Record<string, RateLimitOptions>;
 
 export function accountWriteRateLimit(kind: keyof typeof ACCOUNT_WRITES, accountKey: string): Promise<RateLimitResult> {

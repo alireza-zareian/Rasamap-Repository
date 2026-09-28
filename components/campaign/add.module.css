@@ -1,0 +1,10 @@
+.add {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 6px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; white-space: nowrap;
+  font-family: inherit; font-size: 0.78rem; font-weight: 700;
+  color: var(--accent-warm); background: color-mix(in srgb, var(--accent-warm) 10%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--accent-warm) 40%, var(--border));
+}
+.add:disabled { opacity: 0.55; cursor: not-allowed; }
+.in { color: var(--green); background: color-mix(in srgb, var(--green) 9%, var(--bg-surface)); border-color: color-mix(in srgb, var(--green) 35%, var(--border)); }
+.compact { min-height: 44px; padding: 0 12px; }

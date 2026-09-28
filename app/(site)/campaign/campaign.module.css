@@ -1,0 +1,117 @@
+/* The campaign planner (CampaignPlanner). */
+
+.page { max-width: 1180px; margin: 0 auto; padding: calc(var(--topbar-h) + 26px) 20px 48px; }
+
+.head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.title { display: flex; align-items: center; gap: 10px; font-size: 1.6rem; font-weight: 900; margin: 0 0 6px; }
+.title svg { color: var(--accent-warm); }
+.lede { font-size: 0.88rem; color: var(--text-muted); margin: 0; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.addMore {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px;
+  font-size: 0.8rem; font-weight: 700; text-decoration: none;
+  color: #111; background: var(--accent-warm);
+}
+
+.notice {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; margin-bottom: 14px; border-radius: 10px;
+  font-size: 0.82rem; color: var(--text-muted);
+  background: var(--bg-surface); border: 1px solid var(--border);
+}
+.notice span { flex: 1; min-width: 200px; }
+
+.periods { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 16px; border-radius: 12px; background: var(--bg-surface); border: 1px solid var(--border); }
+.period {
+  padding: 7px 16px; border: none; border-radius: 9px; cursor: pointer;
+  font-family: inherit; font-size: 0.82rem; font-weight: 600;
+  background: none; color: var(--text-muted);
+}
+.period[aria-checked="true"] { background: var(--accent); color: #fff; box-shadow: var(--shadow-accent); }
+
+.tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+.tile {
+  position: relative; overflow: hidden; padding: 14px 16px; border-radius: 14px;
+  background: var(--bg-card); border: 1px solid var(--border);
+}
+.tile::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--tone); }
+.tileIcon { color: var(--tone); margin-bottom: 6px; }
+.tileValue { font-size: 1.15rem; font-weight: 900; line-height: 1.3; }
+.tileLabel { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 18px; align-items: start; margin-bottom: 24px; }
+
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.item {
+  display: grid; grid-template-columns: auto 64px minmax(0, 1fr) auto auto; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 14px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.itemOn { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.index {
+  width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 800; color: #fff; background: var(--accent);
+}
+.thumb { position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; background: var(--bg-surface); }
+.itemBody { min-width: 0; }
+.itemName { display: block; font-size: 0.88rem; font-weight: 700; color: var(--text-main); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.itemName:hover { color: var(--accent); }
+.itemMeta { display: flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-muted); margin: 3px 0 8px; }
+.share { height: 6px; border-radius: 3px; background: var(--bg-surface); overflow: hidden; }
+.shareFill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent-warm), var(--accent)); transition: width 0.3s ease; }
+.itemCost { text-align: left; white-space: nowrap; }
+.itemCost strong { display: block; font-size: 0.88rem; font-weight: 800; color: var(--accent-warm); }
+.itemCost span { font-size: 0.68rem; color: var(--text-muted); }
+.remove {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; background: none; color: var(--text-muted);
+}
+.remove:hover { color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, var(--border)); }
+
+.mapCard { position: sticky; top: calc(var(--topbar-h) + 16px); border-radius: 16px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border); }
+.mapHead { display: flex; align-items: center; gap: 6px; padding: 10px 14px; font-size: 0.78rem; font-weight: 700; border-bottom: 1px solid var(--border); }
+.mapBox { aspect-ratio: 600 / 520; }
+.mapNote { margin: 0; padding: 8px 14px 12px; font-size: 0.7rem; color: var(--text-muted); }
+
+.compare { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px 8px; margin-bottom: 18px; }
+.sectionTitle { font-size: 1rem; font-weight: 800; margin: 0 0 6px; }
+
+.fine { font-size: 0.72rem; line-height: 1.9; color: var(--text-muted); margin: 0; }
+
+.empty { text-align: center; padding: 64px 20px; background: var(--bg-card); border: 1px dashed var(--border-hi); border-radius: 18px; }
+.emptyIcon { display: flex; justify-content: center; margin-bottom: 14px; color: var(--accent-warm); }
+.emptyTitle { font-size: 1.1rem; font-weight: 800; margin: 0 0 8px; }
+.emptyText { max-width: 460px; margin: 0 auto 22px; font-size: 0.85rem; line-height: 1.9; color: var(--text-muted); }
+
+/* While a removal is on its way: the page stays usable, and says it is working. */
+.busy { opacity: 0.7; transition: opacity 0.2s ease; }
+
+.printOnly { display: none; }
+
+@media (max-width: 1000px) {
+  .tiles { grid-template-columns: repeat(3, 1fr); }
+  .split { grid-template-columns: 1fr; }
+  .mapCard { position: static; }
+}
+@media (max-width: 640px) {
+  .page { padding-left: 12px; padding-right: 12px; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .tiles > :first-child { grid-column: 1 / -1; }
+  .item { grid-template-columns: auto 52px minmax(0, 1fr) auto; }
+  .thumb { width: 52px; height: 52px; }
+  .itemCost { grid-column: 3 / 5; grid-row: 2; display: flex; gap: 8px; align-items: baseline; }
+  .itemCost strong { display: inline; }
+  .periods { display: flex; }
+  .period { flex: 1; padding: 7px 4px; }
+}
+
+/* A plan printed or saved as PDF: the plan, not the site around it. */
+@media print {
+  .noPrint { display: none !important; }
+  .printOnly { display: block; font-size: 0.75rem; color: #555; margin-top: 4px; }
+  .page { padding-top: 0; max-width: none; }
+  .tile, .item, .mapCard, .compare { break-inside: avoid; box-shadow: none; }
+  .split { grid-template-columns: 1fr 320px; }
+  .mapCard { position: static; }
+}

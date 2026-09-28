@@ -49,7 +49,9 @@
 
 /* ── Side column ── */
 .sticky { position: sticky; top: calc(var(--topbar-h) + 16px); }
-.priceCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; }
+.priceCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; scroll-margin: calc(var(--topbar-h) + 12px); }
+.planRow { margin-top: 10px; }
+.planRow > * { width: 100%; }
 .priceLine { display: flex; align-items: baseline; gap: 7px; margin-bottom: 12px; flex-wrap: wrap; }
 .price { font-size: 1.85rem; font-weight: 800; color: var(--accent); line-height: 1; }
 .priceUnit { font-size: 0.73rem; color: var(--text-muted); }
@@ -79,6 +81,8 @@
 /* On a phone: title and photos, then price and map, then description and
    reviews. `display: contents` lets the main column's parts order around the side. */
 @media (max-width: 768px) {
+  /* Room for the phone's action bar (MediaActionBar), so it never covers the last line. */
+  .page { padding-bottom: 72px; }
   .grid { display: flex; flex-direction: column; align-items: stretch; }
   .main { display: contents; }
   .head { order: 1; }

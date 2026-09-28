@@ -287,26 +287,67 @@ test("the catalogue is usable at phone width", async () => {
   }, { width: 390, height: 844 });
 });
 
-// ── compare survives the page it was made on ──────────────────────────────
-test("a compare selection survives a reload and reaches /compare", async () => {
-  await withBrowser("compare-persists", async (b) => {
+// ── a campaign survives the page it was made on ──────────────────────────
+const PICKED = "[data-testid='billboard-card'] button[aria-label*='کمپین'][aria-pressed='true']";
+
+test("a campaign pick survives a reload and becomes a shareable plan", async () => {
+  await withBrowser("campaign-persists", async (b) => {
     await b.goto(`${BASE}/explore`);
     // The results hydrate in their own pass after loading.tsx; a click before
     // it is lost (2–5 runs in 10, measured). aria-busy says when they listen.
     await b.waitForSelector("[data-testid='results'][aria-busy='false']");
     // Two different cards: after the first click that card's button is renamed.
-    await b.click("button[aria-label='افزودن به مقایسه']");
-    await b.waitForSelector("[data-testid='billboard-card'] button[aria-pressed='true']");
-    await b.click("button[aria-label='افزودن به مقایسه']");
-    await b.waitFor("document.querySelectorAll(\"[data-testid='billboard-card'] button[aria-pressed='true']\").length === 2", { label: "two cards ticked" });
+    await b.click("button[aria-label^='افزودن «'][aria-label$='به کمپین']");
+    await b.waitForSelector(PICKED);
+    await b.click("button[aria-label^='افزودن «'][aria-label$='به کمپین']");
+    await b.waitFor(`document.querySelectorAll(${JSON.stringify(PICKED)}).length === 2`, { label: "two cards picked" });
 
     // /explore used to start from an empty list and save it on mount, so a
-    // reload wiped the selection before anyone could compare it.
+    // reload wiped the pick before anyone could use it.
     await b.goto(`${BASE}/explore`);
-    await b.waitFor("document.querySelectorAll(\"[data-testid='billboard-card'] button[aria-pressed='true']\").length === 2", { label: "the selection after a reload" });
+    await b.waitFor(`document.querySelectorAll(${JSON.stringify(PICKED)}).length === 2`, { label: "the pick after a reload" });
 
-    // With two chosen, /compare shows the table itself.
+    // An old /compare link lands on the planner, which moves to the plan's own
+    // address — the link that is shared — and draws the side-by-side table.
     await b.goto(`${BASE}/compare`);
-    await b.waitForText("بهتر در این معیار", { label: "the comparison table" });
+    await b.waitFor("location.pathname === '/campaign' && new URLSearchParams(location.search).get('m')?.split(',').length === 2",
+      { label: "the plan's address" });
+    await b.waitForText("بهترین در این معیار", { label: "the side-by-side table" });
+
+    // Opened fresh, the address alone rebuilds the same plan.
+    const url = await b.evaluate("return location.href");
+    await b.evaluate("localStorage.clear(); return true");
+    await b.goto(url);
+    await b.waitForText("بهترین در این معیار", { label: "the plan from its link alone" });
+  });
+});
+
+// ── saving a media item, from a guest's first tap ─────────────────────────
+test("a guest's heart survives the sign-in it asks for, and lands on /saved", async () => {
+  await withBrowser("favorites", async (b) => {
+    await b.goto(`${BASE}/billboard/valiasr-tower`);
+    // The heart on the page itself (the chip), not one on a related card.
+    const heart = "button[aria-label='ذخیرهٔ «Valiasr Tower»']";
+    await b.waitForSelector(heart);
+    await b.click(heart);
+
+    // A guest is sent to sign in, and back to the page afterwards.
+    await b.waitFor("location.pathname === '/login'", { label: "the sign-in the heart asked for" });
+    await b.fill("input[type='tel']", USER.phone);
+    await b.fill("input[type='password']", USER.password);
+    await b.click("button[type='submit']");
+    await b.waitFor("location.pathname === '/billboard/valiasr-tower'", { label: "the way back to the media page" });
+
+    // The tap made before signing in is made now, without a second one.
+    await b.waitForSelector("button[aria-label='حذف «Valiasr Tower» از ذخیره‌شده‌ها'][aria-pressed='true']");
+
+    await b.goto(`${BASE}/saved`);
+    await b.waitFor("document.body.innerText.includes('Valiasr Tower')", { label: "the saved item on /saved" });
+
+    // Unsaved here, its card leaves at once — and stays gone after a reload.
+    await b.click("button[aria-label='حذف «Valiasr Tower» از ذخیره‌شده‌ها']");
+    await b.waitForText("هنوز چیزی ذخیره نکرده‌اید", { label: "the empty list" });
+    await b.goto(`${BASE}/saved`);
+    await b.waitForText("هنوز چیزی ذخیره نکرده‌اید", { label: "the empty list after a reload" });
   });
 });

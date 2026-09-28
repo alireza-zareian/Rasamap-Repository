@@ -2,7 +2,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Map, BarChart2, Scale, Sun, Moon, User, LogOut } from "lucide-react";
+import { Map, BarChart2, Megaphone, Heart, Sun, Moon, User, LogOut } from "lucide-react";
+import { useCampaign } from "@/lib/client/use-campaign";
+import { useFavorites } from "@/components/favorites/FavoritesProvider";
+import { faNum } from "@/lib/format";
 import { useTheme } from "@/lib/client/theme";
 import { useCurrentUser } from "@/lib/client/use-current-user";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -17,7 +20,8 @@ import styles from "./chrome.module.css";
 export const SECTIONS: readonly { href: string; label: string; Icon: typeof Map; within?: readonly string[] }[] = [
   { href: "/explore",   label: "کاوش",   Icon: Map, within: ["/billboard"] },
   { href: "/analytics", label: "تحلیل",  Icon: BarChart2 },
-  { href: "/compare",   label: "مقایسه", Icon: Scale },
+  { href: "/campaign",  label: "کمپین",  Icon: Megaphone, within: ["/compare"] },
+  { href: "/saved",     label: "ذخیره‌ها", Icon: Heart },
 ];
 
 const under = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
@@ -25,6 +29,13 @@ const under = (pathname: string, prefix: string) => pathname === prefix || pathn
 /** Whether the visitor is in `section` (a SECTIONS entry, or any bare `{ href }`). */
 export function isCurrent(pathname: string, section: { href: string; within?: readonly string[] }): boolean {
   return under(pathname, section.href) || (section.within ?? []).some(p => under(pathname, p));
+}
+
+/** How many items the campaign and saved sections hold, for the badge on their tab. */
+export function useSectionCounts(): Record<string, number> {
+  const { items } = useCampaign();
+  const { count } = useFavorites();
+  return { "/campaign": items.length, "/saved": count };
 }
 
 /**
@@ -36,6 +47,7 @@ export default function Topbar() {
   const { theme, toggle } = useTheme();
   const dark = theme === "dark";
   const { user, logout } = useCurrentUser();
+  const counts = useSectionCounts();
   const overHero = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
 
@@ -56,10 +68,12 @@ export default function Topbar() {
         {SECTIONS.map(section => {
           const { href, label, Icon } = section;
           const current = isCurrent(pathname, section);
+          const count = counts[href] ?? 0;
           return (
             <Link key={href} href={href} className={`${styles.tab} ${current ? styles.tabActive : ""}`}
               aria-current={current ? "page" : undefined}>
               <Icon size={14} /> {label}
+              {count > 0 && <span className={styles.badge} aria-label={`${faNum(count)} مورد`}>{faNum(count)}</span>}
             </Link>
           );
         })}

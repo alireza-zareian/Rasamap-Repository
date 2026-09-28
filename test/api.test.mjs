@@ -340,6 +340,8 @@ test("a catalogue view has its own title and one canonical address; a one-off qu
   assert.ok(media.canonical.endsWith("/billboard/valiasr-tower"), media.canonical);
 });
 
+// ── Saved media and campaigns (§40) ─────────────────────────────
+
 test("the pre-paint theme script names the key the toggle writes", async () => {
   // The key once arrived in the Server Component as undefined (a value imported
   // from a "use client" module), so the script read localStorage.getItem(undefined)
@@ -356,6 +358,63 @@ test("GET /api/auth/session answers a guest with null, not a 401", async () => {
   const customer = await api("/api/auth/session", { token: await mintSession({ userId: "1", role: "user" }) });
   assert.equal(customer.json.user.id, 1);
   assert.equal(customer.json.user.isStaff, false);
+});
+
+test("saving is for customers: a guest is asked to sign in, staff are refused", async () => {
+  assert.equal((await api("/api/favorites/valiasr-tower", { method: "PUT" })).status, 401);
+  assert.equal((await api("/api/favorites")).status, 401);
+  const staff = await mintSession({ role: "admin" });
+  assert.equal((await api("/api/favorites/valiasr-tower", { method: "PUT", token: staff })).status, 403);
+});
+
+test("a save is idempotent, an unsave too, and only a published media item can be saved", async () => {
+  const token = await mintSession({ userId: "2", role: "user" });
+  const put = () => api("/api/favorites/mashhad-digital", { method: "PUT", token });
+
+  // Ten taps at once, as a double-tapping thumb or two tabs would send them: one row.
+  const burst = await Promise.all(Array.from({ length: 10 }, put));
+  assert.ok(burst.every(r => r.status === 200), JSON.stringify(burst.map(r => r.status)));
+  const listed = await api("/api/favorites", { token });
+  assert.deepEqual(listed.json.slugs.filter(s => s === "mashhad-digital"), ["mashhad-digital"]);
+
+  assert.equal((await api("/api/favorites/pending-listing", { method: "PUT", token })).status, 404, "a listing in review cannot be saved");
+  assert.equal((await api("/api/favorites/no-such-media", { method: "PUT", token })).status, 404);
+  assert.equal((await api("/api/favorites/BAD%20SLUG", { method: "PUT", token })).status, 400);
+
+  for (let i = 0; i < 2; i++) {
+    const del = await api("/api/favorites/mashhad-digital", { method: "DELETE", token });
+    assert.equal(del.status, 200);
+    assert.equal(del.json.saved, false);
+  }
+  assert.ok(!(await api("/api/favorites", { token })).json.slugs.includes("mashhad-digital"));
+});
+
+test("/saved shows a customer's saved media and asks a guest to sign in", async () => {
+  const token = await mintSession({ userId: "2", role: "user" });
+  await api("/api/favorites/valiasr-tower", { method: "PUT", token });
+  const mine = await api("/saved", { token });
+  assert.equal(mine.status, 200);
+  assert.ok(mine.json.includes("Valiasr Tower"), "the saved media must be on /saved");
+
+  const guest = await api("/saved");
+  assert.equal(guest.status, 200);
+  assert.ok(guest.json.includes("برای ذخیرهٔ رسانه وارد شوید"));
+  assert.ok(!guest.json.includes("Valiasr Tower"));
+  await api("/api/favorites/valiasr-tower", { method: "DELETE", token });
+});
+
+test("a shared campaign link shows only published media, in its own order", async () => {
+  const { status, json: html } = await api("/campaign?m=mashhad-digital,pending-listing,valiasr-tower,Bad%20Slug");
+  assert.equal(status, 200);
+  assert.ok(!html.includes("Pending Listing"), "a listing in review must not appear through a campaign link");
+  const a = html.indexOf("Mashhad Digital"), b = html.indexOf("Valiasr Tower");
+  assert.ok(a > 0 && b > a, "both published media, in the order the link names them");
+  assert.ok(html.includes("دیگر در سایت نیست"), "the plan says a media item it named is gone");
+
+  // The old compare page forwards to it.
+  const old = await api("/compare", { redirect: "manual" });
+  assert.ok([307, 308].includes(old.status));
+  assert.equal(new URL(old.headers.get("location"), "http://x").pathname, "/campaign");
 });
 
 test("admin search finds a row by its slug", async () => {

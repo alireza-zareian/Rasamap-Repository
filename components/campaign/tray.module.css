@@ -1,0 +1,61 @@
+/* The campaign tray, fixed to the bottom of the catalogue (CampaignTray). */
+
+.tray {
+  position: fixed; left: 0; right: 0; z-index: 200;
+  /* Above the phone tab bar, not under it. */
+  bottom: var(--bottomnav-offset, 0px);
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 22px;
+  background: var(--bg-card); border-top: 2px solid var(--accent-warm);
+  box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(10px);
+  animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.title { display: flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 0.85rem; font-weight: 800; color: var(--accent-warm); }
+.count { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); background: var(--bg-surface); border-radius: 20px; padding: 1px 8px; }
+
+.chips {
+  display: flex; gap: 6px; flex: 1; min-width: 0; margin: 0; padding: 2px 0;
+  overflow-x: auto; scrollbar-width: none; list-style: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0; max-width: 200px; display: flex; align-items: center; gap: 6px;
+  padding: 5px 6px 5px 10px; border-radius: 20px; font-size: 0.75rem;
+  background: var(--bg-surface); border: 1px solid color-mix(in srgb, var(--accent-warm) 45%, var(--border));
+  animation: pop 0.25s ease;
+}
+.chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip svg { flex-shrink: 0; color: var(--text-muted); }
+.remove {
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%; border: none; cursor: pointer;
+  background: none; color: var(--text-muted);
+}
+.remove:hover { background: var(--bg-surf2); color: var(--red); }
+
+.total { display: flex; align-items: baseline; gap: 4px; flex-shrink: 0; }
+.total strong { font-size: 1rem; font-weight: 800; color: var(--accent-warm); }
+.total span { font-size: 0.68rem; color: var(--text-muted); }
+
+.actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+.go {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 9px; text-decoration: none;
+  font-size: 0.82rem; font-weight: 800; color: #111; background: var(--accent-warm);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent-warm) 35%, transparent);
+}
+.go:hover { filter: brightness(1.06); }
+
+@media (max-width: 768px) {
+  .tray { flex-wrap: wrap; padding: 10px 14px; gap: 8px; }
+  /* Chips on their own row, or they push the buttons off screen. */
+  .chips { order: 3; flex-basis: 100%; }
+  .actions { margin-inline-start: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) { .tray, .chip { animation: none; } }
+
+/* Here, not in globals.css: a module renames the animations it names. */
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }

@@ -1,0 +1,32 @@
+/* The phone's bar on a media page (MediaActionBar). */
+.bar { display: none; }
+
+@media (max-width: 768px) {
+  .bar {
+    position: fixed; left: 0; right: 0; z-index: 90;
+    /* Above the phone tab bar, not under it. */
+    bottom: var(--bottomnav-offset, 0px);
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    background: var(--topbar-bg); border-top: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.14);
+    transform: translateY(0);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
+  }
+  /* Slid away, not removed: the slide is the cue that the card is back on screen. */
+  .hidden { transform: translateY(110%); opacity: 0; pointer-events: none; }
+
+  .price { display: flex; flex-direction: column; line-height: 1.2; margin-inline-end: auto; min-width: 0; }
+  .price strong { font-size: 1.05rem; font-weight: 900; color: var(--accent-warm); }
+  .price span { font-size: 0.64rem; color: var(--text-muted); }
+
+  .call {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px; padding: 0 16px; border: none; border-radius: 10px; cursor: pointer;
+    font-family: inherit; font-size: 0.85rem; font-weight: 800;
+    color: #fff; background: var(--green); box-shadow: 0 4px 14px color-mix(in srgb, var(--green) 35%, transparent);
+  }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) { .bar { transition: none; } }
+@media print { .bar { display: none !important; } }

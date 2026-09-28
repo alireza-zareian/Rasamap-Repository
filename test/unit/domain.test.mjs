@@ -91,3 +91,27 @@ test("Persian and Arabic digits read as Latin ones in numbers and passwords", ()
   assert.equal(set.data, given.data, "the password stored and the password typed must compare equal");
   assert.equal(NewPassword.safeParse("۱۲۳۴۵۶۷").success, false, "still too short after conversion");
 });
+
+test("a campaign prices every board for the same period and counts its reach", async () => {
+  const { campaignTotals, parsePickedSlugs, MAX_PICKED } = await import("../../lib/domain/campaign.ts");
+  const board = (city, price, views) => ({
+    city, type: "billboard", price, priceWeekly: price / 4, priceQuarterly: price * 2.7, priceYearly: price * 9.6,
+    traffic: { daily: views * 2, estimatedViews: views },
+  });
+  const plan = [board("تهران", 100, 10_000), board("مشهد", 300, 30_000)];
+
+  const month = campaignTotals(plan, "month");
+  assert.equal(month.cost, 400);
+  assert.equal(month.impressions, 40_000 * 30);
+  // 400 million toman over 1.2 million impressions: 333,333 toman per thousand.
+  assert.equal(month.cpm, 333_333);
+  assert.deepEqual(month.shares, [0.25, 0.75]);
+  assert.deepEqual(month.cities, ["تهران", "مشهد"]);
+
+  assert.equal(campaignTotals(plan, "week").cost, 100);
+  assert.equal(campaignTotals([], "month").cpm, null, "no views: no cost per thousand, not a division by zero");
+
+  assert.deepEqual(parsePickedSlugs("a-1, b-2,a-1,,Bad Slug,../x"), ["a-1", "b-2"], "duplicates and non-slugs are dropped");
+  const many = Array.from({ length: 20 }, (_, i) => `m-${i}`).join(",");
+  assert.equal(parsePickedSlugs(many).length, MAX_PICKED);
+});

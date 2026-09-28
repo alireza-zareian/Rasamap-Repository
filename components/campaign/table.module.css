@@ -1,0 +1,23 @@
+/* The campaign's side-by-side table (CampaignTable). */
+
+.scroll { overflow-x: auto; overscroll-behavior-x: contain; }
+.table { width: 100%; min-width: calc(150px + var(--cols, 2) * 150px); border-collapse: collapse; table-layout: fixed; }
+.table th, .table td { padding: 8px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.85rem; }
+/* The row names stay in view while the columns scroll under them. */
+.table th[scope="row"] {
+  position: sticky; right: 0; z-index: 1; width: 150px;
+  text-align: right; font-size: 0.75rem; font-weight: 400; color: var(--text-muted);
+  background: var(--bg-card);
+}
+.head th { border-bottom: 1px solid var(--border); padding: 14px 8px; vertical-align: top; }
+.headIcon { display: flex; justify-content: center; color: var(--text-muted); margin-bottom: 4px; }
+.headName { font-size: 0.8rem; font-weight: 700; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.headRegion { font-size: 0.7rem; color: var(--text-muted); font-weight: 400; margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.better { color: var(--green); font-weight: 700; background: rgba(34, 197, 94, 0.06); }
+.better::before { content: "★ "; font-size: 0.7rem; }
+.legend { font-size: 0.68rem; color: var(--text-muted); padding: 8px; text-align: center; }
+.cta td { border-bottom: none; padding-top: 14px; }
+.cta a {
+  display: block; padding: 9px 0; border-radius: 8px;
+  background: var(--accent); color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
+}

@@ -74,18 +74,21 @@ export interface Billboard {
 
 /**
  * A media record as the catalogue sends it to a browser: only the fields the
- * cards, compare tray and carousels draw, since every field travels in the RSC
- * payload 24 times a page (/explore payload 52.4 → 39.4 KB). No `phone` (never
- * public) and no `lat`/`lng` (coordinates for a whole page are a bulk copy, §20).
+ * cards, the campaign planner, the results map and the carousels draw, since
+ * every field travels in the RSC payload 24 times a page. No `phone` (never
+ * public). `lat`/`lng` only for a point that passes isPlottable: the map view
+ * (/explore/map) already publishes every such point, a province at a time, so a
+ * page of 24 adds nothing a copier could not take there (§20, §40).
  */
 export type CatalogueItem = Pick<
   Billboard,
   | "id" | "slug" | "name" | "city" | "region" | "location"
   | "type" | "availability" | "featured"
-  | "price" | "priceYearly"
+  | "price" | "priceWeekly" | "priceQuarterly" | "priceYearly"
   | "width" | "height" | "faces" | "age"
   | "rating" | "reviewCount"
   | "images" | "allImages" | "traffic"
+  | "lat" | "lng"
 >;
 
 export const typeLabels: Record<BillboardType, string> = {

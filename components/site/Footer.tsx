@@ -3,8 +3,8 @@ import { Logo } from "./Logo";
 import styles from "./chrome.module.css";
 
 const COLUMNS = [
-  { title: "پلتفرم", links: [["جستجوی رسانه", "/explore"], ["نقشهٔ رسانه‌ها", "/explore/map"], ["مقایسهٔ رسانه‌ها", "/compare"], ["تحلیل بازار", "/analytics"]] },
-  { title: "کاربران", links: [["ورود / ثبت‌نام", "/login"], ["داشبورد", "/dashboard"], ["ثبت رسانه", "/list-media"]] },
+  { title: "پلتفرم", links: [["جستجوی رسانه", "/explore"], ["نقشهٔ رسانه‌ها", "/explore/map"], ["طرح کمپین", "/campaign"], ["تحلیل بازار", "/analytics"]] },
+  { title: "کاربران", links: [["ورود / ثبت‌نام", "/login"], ["ذخیره‌شده‌ها", "/saved"], ["داشبورد", "/dashboard"], ["ثبت رسانه", "/list-media"]] },
   { title: "شرکت", links: [["درباره ما", "/about"], ["تماس با ما", "/contact"], ["قوانین و مقررات", "/terms"]] },
 ];
 
