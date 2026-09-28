@@ -10,6 +10,7 @@ import BillboardGallery from "@/components/BillboardGallery";
 import RelatedBillboards from "@/components/RelatedBillboards";
 import ShareButton from "@/components/ShareButton";
 import ReviewsSection from "@/components/ReviewsSection";
+import SearchBackLink from "@/components/SearchBackLink";
 import TrafficMeter from "@/components/TrafficMeter";
 import BillboardContact from "@/components/BillboardContact";
 import { typeLabels, availabilityLabels, moderationLabels, DATA_SOURCES, type Billboard } from "@/lib/types";
@@ -150,7 +151,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
       <nav className={styles.crumbs} aria-label="مسیر صفحه">
         <Link href="/">خانه</Link>
         <span aria-hidden>›</span>
-        <Link href="/explore">جستجو</Link>
+        <SearchBackLink>جستجو</SearchBackLink>
         <span aria-hidden>›</span>
         <span>{b.name}</span>
       </nav>
@@ -274,7 +275,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
 
                 <div className={styles.direct}>اجاره و قرارداد مستقیماً با صاحب رسانه انجام می‌شود. رسامپ واسطهٔ مالی نیست.</div>
 
-                <Link href="/explore" className={styles.back}><ArrowRight size={13} /> بازگشت به جستجو</Link>
+                <SearchBackLink className={styles.back}><ArrowRight size={13} /> بازگشت به نتایج جستجو</SearchBackLink>
               </div>
 
               {/* A crawled row credits and links its source. */}

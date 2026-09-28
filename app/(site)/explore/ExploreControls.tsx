@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useTransition, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useRememberSearch } from "@/lib/client/last-search";
 import { Search, X, LayoutGrid, List, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train, MapPin, ChevronDown, Crosshair } from "lucide-react";
 import { AVAILABILITIES, availabilityLabels, type BillboardType } from "@/lib/types";
 import { provinces, getProvince } from "@/lib/geo/iran-cities";
@@ -57,6 +58,7 @@ function useFilterNavigation(filters: ExploreFilters) {
 
 export function ExploreControls({ filters, total }: { filters: ExploreFilters; total: number }) {
   const { apply, pending } = useFilterNavigation(filters);
+  useRememberSearch(useSearchParams().toString());
   const [showMore, setShowMore] = useState(false);
   const [locOpen, setLocOpen] = useState(false);
   // How many filters the phone's fold is hiding right now — not
