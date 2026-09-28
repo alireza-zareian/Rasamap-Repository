@@ -340,6 +340,15 @@ test("a catalogue view has its own title and one canonical address; a one-off qu
   assert.ok(media.canonical.endsWith("/billboard/valiasr-tower"), media.canonical);
 });
 
+test("the pre-paint theme script names the key the toggle writes", async () => {
+  // The key once arrived in the Server Component as undefined (a value imported
+  // from a "use client" module), so the script read localStorage.getItem(undefined)
+  // and a dark theme was lost on every page load.
+  const { json: html } = await api("/about");
+  assert.ok(html.includes('localStorage.getItem(\\"rasamap-theme-v2\\")') || html.includes('localStorage.getItem("rasamap-theme-v2")'),
+    "the theme script must read the stored theme by its real key");
+});
+
 test("admin search finds a row by its slug", async () => {
   const staff = await mintSession({ role: "editor" });
   const { status, json } = await api("/api/admin/billboards?q=valiasr-tower&limit=20", { token: staff });

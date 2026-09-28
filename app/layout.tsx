@@ -3,7 +3,8 @@ import "@fontsource-variable/vazirmatn";
 import "./reset.css";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site-url";
-import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/client/theme";
+import { ThemeProvider } from "@/lib/client/theme";
+import { THEME_STORAGE_KEY } from "@/lib/client/theme-key";
 import { CurrentUserProvider } from "@/lib/client/use-current-user";
 import BackgroundPattern from "@/components/site/BackgroundPattern";
 

@@ -2,9 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 type Theme = "dark" | "light";
-// Versioned: the old key was written on every visit, choice or not, so it
-// would have kept the old dark default on every returning device.
-export const THEME_STORAGE_KEY = "rasamap-theme-v2";
+import { THEME_STORAGE_KEY } from "./theme-key";
 const Ctx = createContext<{ theme: Theme; toggle: () => void }>({ theme: "light", toggle: () => {} });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
