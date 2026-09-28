@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import IntentLink from "@/components/ui/IntentLink";
 import { MapPin, Building2 } from "lucide-react";
 import MediaImage from "@/components/MediaImage";
@@ -13,14 +13,25 @@ const SLIDE_MS = 5500;
 /**
  * The photo carousel beside the catalogue's search panel (desktop only). A
  * client component for the auto-advance and dots; the first slide is in the
- * HTML. Eager: only the current slide exists, and it is on screen.
+ * HTML.
+ *
+ * On a phone the module hides it, and a hidden carousel still turned: each
+ * slide was a new photo, one every 5.5 s for as long as the page stayed open
+ * (measured: 6.0, 11.5, 17.0, 22.5 s after load). So the timer runs only while
+ * the carousel is displayed and the tab is visible, and the photo is lazy —
+ * a lazy image under `display: none` is never requested, and on a wide screen
+ * the showcase is in the first viewport, where lazy loads at once.
  */
 export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
   const [idx, setIdx] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (items.length < 2) return;
-    const id = setInterval(() => setIdx(i => (i + 1) % items.length), SLIDE_MS);
+    const id = setInterval(() => {
+      const shown = root.current?.offsetParent != null;
+      if (shown && !document.hidden) setIdx(i => (i + 1) % items.length);
+    }, SLIDE_MS);
     return () => clearInterval(id);
   }, [items.length]);
 
@@ -34,10 +45,10 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
   }
 
   return (
-    <div className={styles.showcase}>
+    <div ref={root} className={styles.showcase}>
       {/* key restarts the fade on each slide */}
       <div key={idx} className={styles.slide}>
-        <MediaImage src={current.images?.[0]} alt={current.name} type={current.type} sizes="(max-width: 900px) 100vw, 360px" eager />
+        <MediaImage src={current.images?.[0]} alt={current.name} type={current.type} sizes="(max-width: 900px) 100vw, 360px" />
         <div className={styles.shade} />
       </div>
       <div className={styles.caption}>
