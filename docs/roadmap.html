@@ -4256,6 +4256,23 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">AUDIT6</div>
+      <div class="ph-title"><h3>بازخوانیِ همهٔ کامنت‌ها، راهنماها و nginxِ آزموده</h3><p>۶ مهر ۱۴۰۵ · §۳۸ در سندِ تصمیم‌ها؛ هر کامنت کنارِ کدِ زیرش خوانده شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>همهٔ کامنت‌ها کوتاه و درست</strong> — lib، app، components، آزمون‌ها، prisma، scripts و scraper؛ ادعاهایی که کدِ زیرشان چیزِ دیگری می‌کرد اصلاح شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>کلیدِ Neshan از متنِ کد بیرون آمد</strong> — <code>scripts/geocode-billboards.mjs</code> حالا <code>NESHAN_API_KEY</code> می‌خواند؛ کلیدِ قبلی در تاریخچهٔ git مانده و باید در پنلِ نشان باطل شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>حلقهٔ نامرئیِ کاتالوگ حذف شد</strong> — <code>SnakeScroll</code> در حالتِ بیکار ۵۸۵ فریم و تا ۷۵۳ میلی‌ثانیه تردِ اصلی در هر ۱۰ ثانیه می‌گرفت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>nginx جلوی ساختِ تولیدی اجرا شد</strong> — کشِ صفحه فقط برای آنچه برنامه <code>s-maxage</code> می‌دهد، هرگز <code>/api/</code> یا کاربرِ واردشده؛ gzip؛ keepalive. صفحهٔ اول ۲۲۶ → ۱۰۷۹ درخواست در ثانیه. راهنما در <code>RUNBOOK.md</code></div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>راهنماها هم‌خوان با کد</strong> — README (نشستِ دیتابیسی، نه JWT)، STATUS، architecture، defense (نقشه بدون ارائه‌دهنده)، راهنمای آزمون (آزمون‌های مرورگر)، دستورهای <code>.claude/commands</code>، و <code>migrate deploy</code> به‌جای <code>migrate dev</code> در گام‌های استقرار</div></div>
+      </div>
+      <div class="proof">هر commitِ کامنتی با اسکریپتی آزموده شد که کامنت‌ها را از هر دو طرف حذف می‌کند و باقی را بایت‌به‌بایت برابر می‌خواهد (TypeScript با printerِ کامپایلر، Python با <code>ast</code>). نقشهٔ کد از importهای واقعی دوباره ساخته شد: ۲۳۲ فایل، ۶۶۷ یال، بدونِ چرخه و بدونِ یالِ رو به بالا؛ اتصالِ دیتابیس را فقط ۱۴ فایل درونِ <code>lib/db/</code> وارد می‌کنند. تنظیماتِ واقعیِ SQLite روی اتصالِ خودِ Prisma خوانده شد: WAL، <code>synchronous=NORMAL</code>، <code>foreign_keys=ON</code>.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">AUDIT5</div>
       <div class="ph-title"><h3>بازبینی پنجم — یک بازدید چقدر برای سرور خرج دارد</h3><p>۵ مهر ۱۴۰۵ · §۳۸ در سندِ تصمیم‌ها؛ واحدِ اندازه‌گیری یک بازدیدِ کامل در مرورگرِ واقعی، نه یک درخواست</p></div>
       <div class="ph-badge done">✓ تموم شده</div>
@@ -4440,7 +4457,7 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
         <div class="task done-t"><div class="tick">✓</div><div><strong>قیمت نمایش داده می‌شود</strong> <em style="color:var(--amber);font-size:0.78rem">(حدسی یا متغیر — از منابع scrape شده، نه تأیید صاحب رسانه)</em> — IRBillboard «تماس بگیرید» دارد</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>داشبورد تحلیلی</strong> — نمودار توزیع شهر/نوع/قیمت از DB واقعی؛ رقبا هیچ analytics ندارند</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>حجم داده</strong> — <strong>۳٬۵۳۶ رکورد در ۱۰۱ شهر</strong> از ۳ منبع (Billboardiha ۲۷۸۱، Arad ۶۱۵، IRBillboard ۱۱۵) پس از dedup؛ ۳٬۰۲۰ رکورد (۸۵٪) دارای مختصات جغرافیایی</div></div>
-        <div class="task done-t"><div class="tick">✓</div><div><strong>امنیت</strong> — JWT HttpOnly، bcrypt cost 12، rate limit، Zod، RBAC، اعتبارسنجی آپلود از روی magic bytes، محافظت ضدِ کپی‌برداری</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>امنیت</strong> — نشستِ دیتابیسی در کوکیِ HttpOnly، bcrypt cost 12، rate limit، Zod، RBAC، اعتبارسنجی آپلود از روی magic bytes، محافظت ضدِ کپی‌برداری</div></div>
       </div>
       <div class="proof" style="background:var(--amber-dim); border-color:var(--amber-mid); color:var(--text)">رسامپ در ساختار فنی و قابلیت‌ها از رقبا پیشتاز است — با این صداقت که برخی داده‌ها heuristic هستند و همه صاحبان رسانه هنوز به پلتفرم متصل نشده‌اند. این محدودیت‌ها ذاتی مرحله MVP است، نه نقص طراحی.</div>
     </div>
@@ -5327,7 +5344,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۵ مهر ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۶ مهر ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>
