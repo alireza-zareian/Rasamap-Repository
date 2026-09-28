@@ -232,16 +232,9 @@ input[type=range] { accent-color: var(--accent); }
   background-size: auto, auto, auto, 28px 28px;
 }
 
-/* Light mode cards — subtle blue-tinted shadow for depth */
-[data-theme="light"] [style*="var(--bg-card)"],
-[data-theme="light"] [style*="--bg-card"] {
-  box-shadow: 0 2px 16px rgba(30,70,180,0.08), 0 1px 4px rgba(30,70,180,0.06);
-}
-
 /* ── Smooth theme transition — targeted only, never on * (kills scroll perf) ── */
 button, a, input, select, label,
-[role="button"], [role="tab"],
-.chip, .phase-card, .day {
+[role="button"], [role="tab"] {
   transition: background-color 0.2s ease, border-color 0.2s ease,
               color 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
 }
