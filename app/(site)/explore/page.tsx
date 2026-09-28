@@ -1,6 +1,5 @@
 import IntentLink from "@/components/ui/IntentLink";
 import { SearchX, Map as MapIcon } from "lucide-react";
-import SnakeScroll from "@/components/SnakeScroll";
 import { ButtonLink } from "@/components/ui/Button";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedShowcaseBillboards } from "@/lib/db/cached";
@@ -36,7 +35,6 @@ export default async function ExplorePage({
 
   return (
     <main className={styles.page}>
-      <SnakeScroll />
       <div className={styles.hero}>
         <ExploreControls filters={filters} total={total} />
         <ExploreShowcase items={showcase} />
