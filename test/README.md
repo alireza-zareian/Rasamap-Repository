@@ -11,8 +11,8 @@ npm test          # unit tests -> reset test db -> seed -> next build -> server.
 npm run test:unit # the pure rules in lib/domain and the source guards: no build, no server, ~0.5 s
 ```
 
-208 tests — 18 unit tests of the pure rules and the source guards (`test/unit/`),
-182 API tests, 8 covering the nightly importer — in about a minute end to end. `npm test` is fully self-contained. It sets its own env (`AUTH_SECRET`,
+209 tests — 18 unit tests of the pure rules and the source guards (`test/unit/`),
+183 API tests, 8 covering the nightly importer — in about a minute end to end. `npm test` is fully self-contained. It sets its own env (`AUTH_SECRET`,
 `DATABASE_URL=file:./prisma/test.db`, dummy admin/Neshan vars) which override
 any `.env*` file, so it never reads or writes the development database.
 

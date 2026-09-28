@@ -2334,13 +2334,21 @@ What it found beyond wording:
 - **A wrong script name** in the demo seed's usage line, Persian comments in an
   English codebase, and two doc blocks that sat on the wrong function.
 
-**Found and left for a decision** (each is a behaviour change, not a comment):
-a staff member below editor cannot delete their own reply; the manifest's
-`background_color` is dark while the default theme is light; the theme toggle
-writes `localStorage` inside a state updater, which React may call twice;
-`IRAN_LNG.min` is 44 where `lib/geo/distance.ts` uses 43; `updateBillboard`
-reads `area` before writing it rather than in one statement; `next dev` does
-not set `x-rasamap-peer`, so rate limits in dev see one address.
+**Found beside the comments, fixed afterwards** (each its own commit): the
+manifest's `background_color` was the dark theme's while the default is light;
+the theme toggle wrote `localStorage` inside a state updater, which React may
+call twice; `lib/geo/distance.ts` kept its own Iran box (west edge 43) where
+every schema reads `IRAN_LNG` (44) — it now calls `isInIran`, and no stored row
+lies between the two; `updateBillboard` read the other side of a resize before
+writing, so two concurrent edits could leave `area` stale — it now computes
+`area` from the row its own transaction wrote.
+
+**Left as it is.** A staff member below editor cannot delete their own reply:
+the page would need every reply's staff id to offer the button, which rule 12
+keeps off the public payload, and the alternative — viewers not replying at
+all — is a product decision. Under `next dev` there is no `x-rasamap-peer`, but
+the address then falls back to the X-Forwarded-For entry Next writes from the
+socket, so dev rate limits still see real addresses; nothing to change.
 
 ---
 
