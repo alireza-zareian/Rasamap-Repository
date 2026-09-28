@@ -101,25 +101,17 @@ function isMissingRow(err: unknown): boolean {
 }
 
 export async function updateBillboard(id: number, data: BillboardUpdateInput): Promise<Billboard> {
-  // `area` is stored (§21): a size edit recomputes it, reading the side not being changed.
-  let area: number | undefined;
-  if (data.width !== undefined || data.height !== undefined) {
-    const current = await prisma.billboard.findUnique({
-      where: { id },
-      select: { width: true, height: true },
-    });
-    if (!current) throw notFound("بیلبورد یافت نشد");
-    area = (data.width ?? current.width) * (data.height ?? current.height);
-  }
-
+  const resized = data.width !== undefined || data.height !== undefined;
   try {
-    const row = await prisma.billboard.update({
-      where: { id },
-      data: {
-        ...data,
-        ...(area === undefined ? {} : { area }),
-        ...(data.price === undefined ? {} : derivedPrices(data.price)),
-      },
+    const row = await prisma.$transaction(async tx => {
+      const updated = await tx.billboard.update({
+        where: { id },
+        data: { ...data, ...(data.price === undefined ? {} : derivedPrices(data.price)) },
+      });
+      if (!resized) return updated;
+      // `area` is stored (§21). Computed from the row this transaction just
+      // wrote, so a concurrent edit of the other side cannot leave it stale.
+      return tx.billboard.update({ where: { id }, data: { area: updated.width * updated.height } });
     });
     revalidateCatalogue();
     return fromRow(row);

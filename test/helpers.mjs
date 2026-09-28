@@ -238,3 +238,14 @@ export async function countOtpRows(phone, purpose = "password_reset") {
     await prisma.$disconnect();
   }
 }
+
+/** The stored size of a billboard, `area` included — the API never returns it. */
+export async function storedSize(id) {
+  const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
+  const prisma = new PrismaClient({ adapter });
+  try {
+    return await prisma.billboard.findUnique({ where: { id }, select: { width: true, height: true, area: true } });
+  } finally {
+    await prisma.$disconnect();
+  }
+}

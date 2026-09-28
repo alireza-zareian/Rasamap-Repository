@@ -15,7 +15,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { BASE, api, mintSession, sessionExpiry, tokenFromSetCookie, uniqueIp, randomPhone, pngFile, fakeImageFile, hugePngFile, uploadPath, recoverOtpCode, countOtpRows, registerUser, freshCustomer } from "./helpers.mjs";
+import { BASE, api, mintSession, sessionExpiry, tokenFromSetCookie, uniqueIp, randomPhone, pngFile, fakeImageFile, hugePngFile, uploadPath, recoverOtpCode, countOtpRows, registerUser, freshCustomer, storedSize } from "./helpers.mjs";
 
 // ── Public billboards API ──────────────────────────────────────────────
 
@@ -91,6 +91,19 @@ test("sortBy=traffic_desc orders by estimated views, not by rating", async () =>
   const views = json.items.map((b) => b.traffic?.estimatedViews ?? 0);
   assert.ok(new Set(views).size > 1, "fixtures all share one view count — the assertion would prove nothing");
   assertSortedBy(json.items, (b) => b.traffic?.estimatedViews ?? 0);
+});
+
+test("resizing one side in the panel recomputes the stored area", async () => {
+  const adminToken = await mintSession({ role: "admin" });
+  const [first, second] = await Promise.all([
+    api("/api/admin/billboards/3", { method: "PUT", token: adminToken, body: { width: 9 } }),
+    api("/api/admin/billboards/3", { method: "PUT", token: adminToken, body: { height: 7 } }),
+  ]);
+  assert.equal(first.status, 200, JSON.stringify(first.json));
+  assert.equal(second.status, 200, JSON.stringify(second.json));
+  // Both edits land, and area follows the row as it ended, whatever the order.
+  const size = await storedSize(3);
+  assert.deepEqual(size, { width: 9, height: 7, area: 63 });
 });
 
 test("sortBy=area_desc orders by width x height, not by width alone", async () => {
