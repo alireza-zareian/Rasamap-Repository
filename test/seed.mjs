@@ -16,20 +16,16 @@ const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 /**
- * Billboard row with every NOT-NULL column filled; override what a test cares
- * about. `views` keeps traffic.estimatedViews and the denormalised
- * estimatedViews column in step — a fixture where they disagree would let a
- * sort test pass while sorting on the wrong thing.
- */
-/**
- * Fixtures for the radial search, laid out so the assertions can be exact.
- *
- * Centre is Valiasr/Vanak in Tehran. One row sits about 1 km away, one about
- * 8 km, and one has no coordinates at all — which is 15% of the real dataset
- * and therefore the case most likely to be forgotten.
+ * Centre of the radial-search fixtures (Valiasr/Vanak, Tehran): one row about
+ * 1 km away, one about 8 km, and one with no coordinates at all.
  */
 export const NEAR_CENTRE = { lat: 35.7580, lng: 51.4100 };
 
+/**
+ * Billboard row with every NOT-NULL column filled; override what a test cares
+ * about. `views` sets traffic.estimatedViews and the denormalised
+ * estimatedViews column together, so a sort test cannot pass on the wrong one.
+ */
 function billboard({ views = 7500, width = 12, height = 4, ...overrides } = {}) {
   return {
     name: "Test Billboard",
@@ -85,25 +81,12 @@ async function main() {
   const passwordHash = await bcrypt.hash("secret123", 12);
   await prisma.user.create({ data: { id: 1, name: "Ali Tester", phone: "09120000000", passwordHash } });
   await prisma.user.create({ data: { id: 2, name: "Sara Tester", phone: "09120000002", passwordHash } });
-  // Reserved for the timing-oracle probe. It needs an account that really
-  // exists and whose per-account sign-in budget nothing else has spent — the
-  // budget follows the account now, so sharing a phone number across tests
-  // makes one test's failures another test's 429.
+  // Reserved for the timing-oracle probe: a real account whose per-account
+  // sign-in budget no other test spends.
   await prisma.user.create({ data: { id: 3, name: "Timing Probe", phone: "09120000004", passwordHash } });
 
-  // Staff accounts, one per role.
-  //
-  // These used to be absent, and every admin test minted a session for an id that
-  // had no row behind it. That passed for as long as nothing looked — but a
-  // session is only as good as the account it names, and the route that checks
-  // it (findSessionActor in lib/db/sessions.ts) reads the row to see whether the account is still
-  // active and still holds the role the token claims. A fabricated session is
-  // therefore not a session any more, and rightly so: one could never have
-  // existed in production, where the only way to hold a staff token is to have
-  // signed in against one of these rows.
-  //
-  // The ids are the defaults mintSession() hands out per role — see
-  // test/helpers.mjs — so `mintSession({ role: "editor" })` names this editor.
+  // Staff, one per role, at the ids mintSession() uses (test/helpers.mjs):
+  // findSessionActor (lib/db/sessions.ts) reads the row behind every session.
   for (const [id, role] of [[9001, "viewer"], [9002, "editor"], [9003, "admin"], [9004, "super_admin"]]) {
     await prisma.admin.create({
       data: { id, email: `${role}@test.local`, passwordHash, name: `Test ${role}`, role, active: true },

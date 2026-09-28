@@ -1,36 +1,15 @@
-// API integration tests — run via `npm test` (see test/run.mjs).
-// Covers: input validation, sort/param allowlists, rate limiting, absence of
-// user enumeration, the listing submission pipeline (upload validation and the
-// approval state machine), object-level authorisation, and the anti-scraping
-// limits.
+// API integration tests, run by `npm test` (test/run.mjs): validation,
+// allowlists, rate limits, no user enumeration, the listing pipeline,
+// object-level authorisation and the anti-scraping limits.
 //
-// ─────────────────────────────────────────────────────────────────────────
-//  READ THIS BEFORE TOUCHING THE TEST SETUP
-// ─────────────────────────────────────────────────────────────────────────
-//
-//  1. `npm test` already builds and serves a PRODUCTION server (next build +
-//     next start on :3100, into .next-test/). Do not "fix" a slow run by
-//     pointing it at `next dev`. That is where it started, and it did not
-//     merely cost the ~97x CPU of §22: one test reads the catalogue 120 times
-//     in a row, which under `next dev` pushed a single request past undici's
-//     300-second header timeout, wedged the server, and made the last ~20
-//     tests fail for reasons that had nothing to do with them. Whole suite:
-//     >20 min and never finishing, versus ~37 s and 113/113 green.
-//
-//  2. Nothing in here waits on an external service. The SMS layer is dormant
-//     without KAVENEGAR_API_KEY (lib/sms.ts, §16), so the OTP tests issue and
-//     read codes entirely inside the local database — no message is ever
-//     sent and nothing polls for one. If an OTP test appears to hang, the
-//     cause is the server, not an SMS.
-//
-//  3. Every request aborts after 30 s (test/helpers.mjs). A run that stalls
-//     will say so in seconds. If you are waiting minutes, something outside
-//     this file is wrong — check that the build step succeeded.
-//
-//  4. Run it with `npm test` and nothing else. It resets and seeds its own
-//     database (prisma/test.db) and never reads or writes dev.db.
-//
-//  Full reasoning: docs/engineering-decisions.md §22b, and test/README.md.
+// Before touching the setup (§22b, test/README.md):
+//  1. It runs against a PRODUCTION server on :3100. Never point it at
+//     `next dev`: one test reads the catalogue 120 times, and under dev a
+//     request passed the 300 s header timeout and wedged the server.
+//  2. Nothing waits on an outside service: without KAVENEGAR_API_KEY the OTP
+//     tests read their codes from the local database.
+//  3. Every request aborts after 30 s (test/helpers.mjs), so a stall reports itself.
+//  4. It resets and seeds its own prisma/test.db; dev.db is never touched.
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -81,11 +60,9 @@ test("GET /api/billboards cannot be tricked into revealing rows in review", asyn
 });
 
 /**
- * Every catalogue sort is the composite (featured desc, hasImages desc, metric
- * desc) — a paid listing outranks a photographed one, which outranks a bare
- * record. Asserting the tuple is non-increasing checks the real contract; a
- * bare "is the metric descending?" would fail on correct output, and comparing
- * only inside one group would pass even if the metric were ignored entirely.
+ * Every sort is (featured, hasImages, metric), all descending: asserting the
+ * whole tuple is non-increasing checks the real contract, where the metric
+ * alone would fail on correct output.
  */
 function assertSortedBy(items, metric) {
   const key = (b) => [b.featured ? 1 : 0, (b.images?.length ?? 0) > 0 ? 1 : 0, metric(b)];
@@ -270,9 +247,7 @@ test("a user cannot delete someone else's review", async () => {
 });
 
 // ── Staff powers on the public site ─────────────────────────────
-// The page is rendered on the server, so the check has to happen there. These
-// assert the shape that matters: a stranger cannot reach an unpublished listing
-// by any means, and a reviewer can.
+// A stranger cannot reach an unpublished listing by any means; a reviewer can.
 
 test("an unpublished listing stays a 404 for a guest and for a customer", async () => {
   const customer = await mintSession({ userId: "1", role: "user" });
@@ -420,10 +395,8 @@ test("GET /api/auth/me answers for a staff session with isStaff", async () => {
 });
 
 // ── Related media ───────────────────────────────────────────────
-// The suggestion strip used to match on `region`, a free-text neighbourhood
-// label that is near-unique per row, so it matched nothing and every listing in
-// the country fell through to one national list — the same dozen Tehran
-// billboards under a Zanjan page. City comes first now.
+// Matching on free-text `region` found nothing, so every page showed the same
+// Tehran dozen. City comes first now.
 
 test("suggestions prefer the same city over a higher-ranked one elsewhere", async () => {
   const { status, json: html } = await api("/billboard/valiasr-tower");
@@ -436,12 +409,9 @@ test("suggestions prefer the same city over a higher-ranked one elsewhere", asyn
   assert.ok(suggested.length > 0, "no suggestions were rendered");
   assert.ok(!suggested.includes("valiasr-tower"), "a listing must not suggest itself");
 
-  // photo-board is in Shiraz and outranks the Tehran rows on images, so the city
-  // ring has to win. Asserted as "the first suggestion is in the same city"
-  // rather than by naming one slug: several fixtures share Tehran and which of
-  // them ranks first is a detail of the sort, not the behaviour under test.
-  // Naming one made this fail the moment the radial-search fixtures were added,
-  // which said nothing about suggestions.
+  // photo-board (Shiraz) outranks the Tehran rows on images, so the city ring
+  // must win. Asserted by city, not by one slug: which Tehran fixture ranks
+  // first is the sort's business, not this test's.
   const TEHRAN_SLUGS = ["inactive-board", "near-centre", "just-outside", "no-coords"];
   assert.ok(
     TEHRAN_SLUGS.includes(suggested[0]),
@@ -503,10 +473,8 @@ test("an admin session browsing a media page does not create a lead", async () =
 });
 
 test("GET /api/admin/leads is 403 for a customer account", async () => {
-  // 403, not 401: the caller is authenticated and simply may not have this.
-  // Answering 401 told a client to authenticate again, which could not help —
-  // and it disagreed with the route handlers, which have always answered 403
-  // for an insufficient role. proxy.ts was the one saying something else.
+  // 403, not 401: the caller is signed in and lacks the role, as the route
+  // handlers answer too.
   const token = await mintSession({ userId: "1", role: "user" });
   const { status } = await api("/api/admin/leads", { token });
   assert.equal(status, 403);
@@ -696,10 +664,8 @@ test("signing out revokes that token, and only that one", async () => {
 });
 
 test("one account's failures do not lock another account on the same address", async () => {
-  // This is the whole point of keying on the account. Several people behind one
-  // office, campus or carrier address share it, and — as card B1 records — an
-  // address is a value the caller can choose anyway, so a control resting on it
-  // alone is both unfair and escapable.
+  // Keyed on the account: an address is shared by an office or carrier, and
+  // the caller can choose it anyway.
   const ip = uniqueIp();
   for (let i = 0; i < 14; i++) {
     await api("/api/auth/login", {
@@ -732,11 +698,8 @@ test("otp/send for an unknown phone is 200 and reveals nothing", async () => {
   assert.equal(await countOtpRows(phone), 0, "no code issued for a phone that isn't registered");
 });
 
-// Nothing here waits on an SMS. The SMS layer is dormant without
-// KAVENEGAR_API_KEY (lib/sms.ts, §16), so sendOtp() returns "sms_disabled"
-// without a network call, and the code is read back from the local store
-// rather than from a message. The ~1.9 s is bcrypt plus the hash search in
-// recoverOtpCode() — both local and both bounded.
+// No SMS is sent (§16): the code is read back from the local store. The ~2 s
+// is bcrypt plus recoverOtpCode()'s search, both local and bounded.
 test("otp/send + otp/verify resets the password; the new one then logs in", async () => {
   // Its own account: the reset signs out every session, so doing this to a
   // seeded user would invalidate the tokens every later test mints for it.
@@ -857,7 +820,7 @@ test("signing in and failing to sign in are both in the durable audit log", asyn
   );
 });
 
-// ── Sign-up behind a phone code (card B7) ─────────────────────────
+// ── Sign-up behind a phone code ───────────────────────────────────
 
 test("register without a code is refused and creates nothing", async () => {
   const phone = randomPhone();
@@ -929,10 +892,9 @@ test("otp/send for sign-up on a taken number is 409 and issues no code", async (
   const { status } = await api("/api/auth/otp/send", {
     method: "POST", ip: uniqueIp(), body: { phone, purpose: "register" },
   });
-  // Sign-up does not hide a taken number: the step that creates the account
-  // has to refuse it anyway, and silence would leave someone who mistyped a
-  // digit waiting for a code that was never coming. The per-phone ceiling is
-  // what bounds the abuse.
+  // Sign-up does not hide a taken number — account creation refuses it anyway,
+  // and silence would leave a mistyped number waiting for a code. The per-phone
+  // ceiling bounds the abuse.
   assert.equal(status, 409);
   assert.equal(await countOtpRows(phone, "register"), before, "a code was issued for a number that already has an account");
 });
@@ -1050,10 +1012,8 @@ test("POST /api/listings rejects more than five images", async () => {
 });
 
 test("10 identical listing submissions fired together create exactly one row (race guard)", async () => {
-  // The non-idempotent write now lives on this path, so the concurrency guard
-  // does too. Idempotency-Key is opt-in; these requests deliberately send none,
-  // so the only thing standing between a double-click and a duplicate row is
-  // the partial unique index on (submittedById, name, city).
+  // No Idempotency-Key is sent, so only the partial unique index on
+  // (submittedById, name, city) stands between a double-click and a duplicate.
   const token = await freshCustomer();
   const payload = {
     name: "بیلبورد مسابقه همزمانی", phone: "09120000000", type: "billboard",
@@ -1338,11 +1298,7 @@ test("a duplicate admin email is rejected with 409", async () => {
 
 test("a super_admin cannot change the role of its own account (409)", async () => {
   const token = await mintSession({ role: "super_admin", userId: "99003" });
-  // Created as a super_admin, because that is the account this test is about.
-  // It used to be created as an "admin" and then given a token claiming
-  // super_admin — which only reached the self-edit check while nothing verified
-  // the claim. The role is now read from the row, so the fixture has to hold
-  // the role it is meant to be exercising.
+  // A real super_admin: the role is read from the row, so the fixture must hold it.
   const created = await api("/api/admin/users", {
     method: "POST",
     token,
@@ -1456,11 +1412,8 @@ test("customer routes are 403 for role 'viewer'", async () => {
 // authenticate, not on reading pages. Registration is one of the tight ones and
 // is meant to stay tight: five per hour from one address.
 test("a refused request returns 429 with a Retry-After header", async () => {
-  // Registration used to be the vehicle for this, at five an hour. It is now a
-  // wide window with no lockout on purpose (the sixth person to sign up from an
-  // office was being refused for the rest of the hour), so the tight limit that
-  // remains — and the one worth checking the shape of — is the per-account
-  // sign-in budget.
+  // Registration has a wide window and no lockout on purpose, so the tight
+  // limit worth checking is the per-account sign-in budget.
   const phone = "09129999123";   // never registered; only the budget matters
   let got429 = null;
   for (let i = 0; i < 14 && !got429; i++) {
@@ -1476,12 +1429,9 @@ test("a refused request returns 429 with a Retry-After header", async () => {
 });
 
 test("reading is not rate limited the way writing is", async () => {
-  // The catalogue used to refuse a visitor who reloaded too often, which no
-  // ordinary site does and which a shared address made easy to hit. 120 reads
-  // of what a visitor's browser actually requests — the catalogue page and a
-  // media item — from one address in a row must all succeed. (The JSON list,
-  // which no page of the site calls, has its own budget: see "the catalogue
-  // API cannot be paged deep…".)
+  // Pages have no per-address budget (§20a): 120 reads of what a browser
+  // requests, from one address, all succeed. The JSON list has its own
+  // budget — see "the catalogue API cannot be paged deep…".
   const ip = uniqueIp();
   for (let i = 0; i < 120; i++) {
     const path = i % 2 ? "/api/billboards/valiasr-tower" : `/explore?page=${(i % 5) + 1}`;
@@ -1884,9 +1834,7 @@ test("the approval queue is closed to a customer session and to anonymous caller
 });
 
 // ── Source guards: the "works on the developer's machine" class ──────
-// Prose in AGENTS.md tells the next contributor what not to write; these fail
-// the build when someone writes it anyway. Every pattern below shipped once and
-// was invisible on localhost. See §24 of docs/engineering-decisions.md.
+// Each pattern below shipped once and was invisible on localhost (§24).
 
 /** Comments explain these patterns; only real code should trip the guards. */
 function stripComments(src) {
@@ -1968,14 +1916,9 @@ test("guard: every 429 goes through the shared helper", () => {
 });
 
 test("guard: an icon-only button carries a name", () => {
-  // A <button> whose whole content is an icon is announced as "button" and
-  // nothing else. The audit found 29 of them — the theme toggle, the gallery
-  // arrows, every modal's close, the star rating — so a keyboard or screen
-  // reader user met a row of unnamed controls on the busiest pages.
-  //
-  // A button is considered named if it has an aria-label, or if any Persian
-  // text appears inside it (including inside a ternary or a {label} the caller
-  // supplies, which is how the type chips and the sign-in tabs get their text).
+  // An icon-only <button> is announced as just "button" (29 were found). Named
+  // means an aria-label, or Persian text anywhere inside, including a ternary
+  // or a {label} the caller supplies.
   const offenders = [];
   for (const [file, src] of sourceFiles()) {
     if (!file.endsWith(".tsx")) continue;
@@ -2060,12 +2003,9 @@ test("a radial search pages correctly", async () => {
 });
 
 test("a password hashed by the seed still signs in", async () => {
-  // Every other sign-in test registers its own account first, so the password
-  // is hashed by the running server and verified by the running server — which
-  // cannot fail even if bcrypt changed underneath. Nothing covered the case
-  // that actually breaks on an upgrade: a hash written earlier, by a different
-  // version, read back now. That is every account in dev.db and the admin hash
-  // in .env, so getting it wrong locks out the whole site silently.
+  // Every other sign-in test hashes and verifies on the same server. This one
+  // reads a hash written earlier — what an upgrade of bcrypt could break for
+  // every existing account and the admin hash in .env.
   const res = await api("/api/auth/login", {
     method: "POST",
     body: { phone: "09120000002", password: "secret123" },   // seeded, id 2
@@ -2075,10 +2015,8 @@ test("a password hashed by the seed still signs in", async () => {
 });
 
 test("a signed-in customer is refused the panel, not asked to sign in again", async () => {
-  // Two different refusals that used to get one answer. Sending a customer who
-  // followed a link to /admin to the sign-in form told them their session had
-  // failed, so they retyped a password that was never the problem — while an
-  // actually signed-out visitor needs exactly that form.
+  // A signed-in customer is refused, not sent to the sign-in form: their
+  // password was never the problem. A signed-out visitor gets the form.
   const customer = await mintSession({ userId: "1", role: "user" });
 
   const page = await api("/admin", { token: customer, redirect: "manual" });
@@ -2131,19 +2069,9 @@ test("a deactivated staff account is sent to sign in, not shown the panel", asyn
 });
 
 test("guard: a write from the browser goes through fetchJson", () => {
-  // A bare fetch() has no timeout, and `await` on a request that never answers
-  // never returns — so the `finally` that releases the button never runs and it
-  // spins on "در حال ارسال…" forever, with no error and no way back but a
-  // reload, which on a form risks sending it twice. §5 asks for a timeout and a
-  // defined fallback on every outbound call; lib/client/fetch-json.ts is both.
-  //
-  // Reads are left alone: a list that fails to load is visibly empty, while a
-  // write that hangs looks like it is still working.
-  //
-  // The admin panel was exempt while B4 landed and is not any more. Staff are
-  // behind a session, but a stuck "approve" button is a stuck button whoever is
-  // pressing it — and the approval queue is the one screen where a listing is
-  // either published or not.
+  // A bare fetch() has no timeout: a write that never answers spins its button
+  // for good. Client writes go through lib/client/fetch-json.ts; reads are
+  // exempt, since a failed list is visibly empty.
   const WRITE = /fetch\(\s*[`"'][^`"']*[`"']\s*,\s*\{[^}]*method:\s*["'](POST|PATCH|PUT|DELETE)/s;
 
   for (const [file, src] of sourceFiles()) {
@@ -2158,16 +2086,9 @@ test("guard: a write from the browser goes through fetchJson", () => {
 });
 
 test("guard: no credential lockout rests on the address alone", () => {
-  // The failure this prevents was measured, not imagined: six failed sign-ins
-  // with unrelated emails from one address locked the real administrator out
-  // for 852 seconds while holding the correct password. Several real people
-  // share one address behind any office, campus or carrier — and card B1
-  // records that without a reverse proxy the address is a value the caller
-  // simply chooses, so a lockout keyed on it is unfair and escapable at once.
-  //
-  // A per-address ceiling is fine and stays. What must never come back is a
-  // per-address *lockout* on a credential path, because that is the shape that
-  // lets one person's mistakes shut out everyone beside them.
+  // Measured once: six failed sign-ins with other emails from one address
+  // locked the real administrator out for 852 s. A per-address ceiling may
+  // stay; a per-address lockout on a credential path must not come back.
   const src = stripComments(readFileSync("lib/rate-limit/index.ts", "utf8"));
 
   for (const m of src.matchAll(/checkRateLimit\(\s*`([^`]+)`\s*,\s*\{([^}]*)\}/g)) {
@@ -2184,13 +2105,8 @@ test("guard: no credential lockout rests on the address alone", () => {
 });
 
 test("guard: every API route goes through defineRoute", () => {
-  // Rule 2 of AGENTS.md fixes the order session -> rate limit -> permission ->
-  // Zod -> logic. It used to be typed out by hand in every handler, and this
-  // test used to grep each admin route for the word "RateLimit" — which is how
-  // GET /api/admin/auth/me once shipped without the middle step. The order now
-  // lives in one place (lib/http/route.ts) and the compiler requires every
-  // route to name its rate limit; what is left to check is that no handler is
-  // exported around the pipeline.
+  // The order (rule 2) lives in lib/http/route.ts and the compiler requires a
+  // rate limit; what is left to check is that no handler bypasses the pipeline.
   for (const [file, src] of sourceFiles()) {
     const path = file.replaceAll("\\", "/");
     if (!/^app\/api\/.*route\.ts$/.test(path)) continue;
@@ -2228,12 +2144,8 @@ test("guard: every infinite marquee pauses with the tab", () => {
 });
 
 // ── The session cookie must be storable by the client ────────────────
-// `Secure` used to be attached whenever NODE_ENV was "production", which
-// `next start` sets — including `npm run demo` on the laptop. A browser
-// discards a Secure cookie that arrives over plain HTTP, so a phone opening
-// the demo at http://<lan-ip> logged in and was instantly logged out again.
-// Chrome exempts http://localhost, which is why it never showed on the
-// developer's own machine.
+// `Secure` followed NODE_ENV once, so a phone at http://<lan-ip> dropped the
+// cookie and was signed straight out; localhost is exempt, which hid it (rule 9).
 
 test("a login over plain HTTP does not mark the session cookie Secure", async () => {
   // Register a fresh account rather than reusing a fixture: earlier tests in
@@ -2259,11 +2171,8 @@ test("a login behind an HTTPS proxy does mark the session cookie Secure", async 
 });
 
 // ── Hotlink protection on listing media ──────────────────────────────
-// The check must key off the host the browser actually used. It used to
-// compare against req.nextUrl.host, which under `next start` is the server's
-// own bind hostname whatever the client asked for — so every visitor who
-// arrived by LAN IP or by domain name got 403 on every photo, and the site
-// looked image-less on a phone while it looked fine on the laptop.
+// Keyed on the host the browser used: req.nextUrl.host (the bind name) once
+// refused every photo to a phone on the LAN (rule 9).
 
 const ASSET = "/images/scraped/does-not-exist.jpg";
 

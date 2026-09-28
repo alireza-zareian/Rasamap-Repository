@@ -11,10 +11,9 @@ export const BASE = process.env.TEST_BASE_URL || "http://localhost:3100";
 // A browser-ish UA so proxy.ts / route bot-UA filters don't drop the request.
 const UA = "Mozilla/5.0 (rasamap-test-suite)";
 
-// Fail a stuck request in seconds rather than inheriting undici's 300 s header
-// timeout. A wedged server used to burn five minutes per call and then cascade
-// into a wall of unrelated failures, which hid what had actually broken. The
-// slowest legitimate call here is a bcrypt round at roughly one second.
+// Fail a stuck request well before undici's 300 s header timeout, which let a
+// wedged server cascade into unrelated failures. The slowest real call is a
+// bcrypt round, about a second.
 const REQUEST_TIMEOUT_MS = 30_000;
 
 let ipCounter = 0;
@@ -26,9 +25,8 @@ export function uniqueIp() {
 }
 
 /**
- * The staff row each role's session belongs to, seeded by test/seed.mjs, so
- * `mintSession({ role: "editor" })` names a real editor. A session is only as
- * good as the account it names: the server reads the row on every request.
+ * The staff row each role's session names, seeded by test/seed.mjs: the server
+ * reads that row on every request.
  */
 const STAFF_IDS = { viewer: "9001", editor: "9002", admin: "9003", super_admin: "9004" };
 
@@ -70,13 +68,11 @@ export async function sessionExpiry(value) {
 
 /**
  * Call an API route.
- * @returns {{ status:number, json:any, headers:Headers }}
- */
-/**
  * @param {object} [opts]
  * @param {"follow"|"manual"} [opts.redirect] "manual" to read the redirect
  *   itself rather than what it points at — the only way to tell a 307 to the
  *   sign-in page from a 403 refusal, since following one turns it into a 200.
+ * @returns {{ status:number, json:any, headers:Headers }}
  */
 export async function api(path, { method = "GET", body, form, token, ip, headers = {}, redirect = "follow" } = {}) {
   const h = { "user-agent": UA, "x-forwarded-for": ip || uniqueIp(), ...headers };
@@ -141,10 +137,8 @@ export function pngFile() {
 }
 
 /**
- * A real PNG header declaring 20000 × 20000 pixels. Filled with one colour it
- * compresses to about 1.2 MB — under the byte ceiling — and decodes to 1.6 GB
- * in whichever browser shows it. The header is all the server reads, so the
- * pixels are left out.
+ * A PNG whose header declares 20000 × 20000 pixels — the shape of a small file
+ * that decodes to 1.6 GB. The server reads only the header, so no pixels follow.
  */
 export function hugePngFile() {
   const ihdr = Buffer.alloc(25);
@@ -176,15 +170,10 @@ export function randomPhone() {
 }
 
 /**
- * Recover the one-time code that `POST /api/auth/otp/send` just issued.
- *
- * The server never stores the code — only an HMAC-SHA256 of it keyed by
- * AUTH_SECRET (lib/db/otp-codes.ts) — so there is nothing to read back. The
- * route can echo the code when OTP_DEV_ECHO=1 and no SMS line exists (the demo
- * laptop), but the runners force that off so the suite proves the flow without
- * it. Instead this walks the six-digit space against the stored
- * hash: one second at worst, and it proves the flow using only what a real
- * client would receive by SMS.
+ * Recover the one-time code that `POST /api/auth/otp/send` just issued. Only
+ * an HMAC-SHA256 of it is stored (lib/db/otp-codes.ts) and the runners turn
+ * OTP_DEV_ECHO off, so this walks the six-digit space against the hash — about
+ * a second at worst.
  */
 export async function recoverOtpCode(phone, purpose = "password_reset") {
   const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
@@ -207,12 +196,8 @@ export async function recoverOtpCode(phone, purpose = "password_reset") {
 }
 
 /**
- * Open an account the way the sign-up screen does: ask for a code on the
- * number, read it back out of the store, and register with it.
- *
- * Registration has needed a verified phone since card B7, so every test that
- * just wants *an account* goes through here rather than repeating three calls.
- * Returns the register response, so a caller can still assert on its cookie.
+ * Open an account the way the sign-up screen does: a code on the number, read
+ * back, then register. Returns the register response.
  */
 export async function registerUser({ name = "Test User", phone, password = "secret123", ip, headers } = {}) {
   const send = await api("/api/auth/otp/send", { method: "POST", ip, headers, body: { phone, purpose: "register" } });
@@ -222,13 +207,9 @@ export async function registerUser({ name = "Test User", phone, password = "secr
 }
 
 /**
- * A customer account of its own, straight into the store, with a session for it.
- *
- * Listing submissions are limited per account (lib/rate-limit, ten an hour),
- * so the tests that submit do it from fresh accounts rather than all spending
- * the budget of seeded users 1 and 2 — the limit is not what they are testing.
- * Written to the database directly because going through sign-up would cost
- * each of them a bcrypt round and an OTP hash search.
+ * A new customer written straight to the database, with a session. Listing
+ * submissions are limited per account, so each submitting test gets its own;
+ * sign-up would cost a bcrypt round and an OTP search each.
  */
 export async function freshCustomer() {
   const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });

@@ -1,11 +1,6 @@
-// CSS modules rename every animation they name, so a module that says
-// `animation: fadeIn` is asking for its own hashed fadeIn — a @keyframes in
-// globals.css never matches it. The browser drops the animation without an
-// error, and a screenshot cannot show something that should be moving. The
-// landing ticker, the related-media strip and the background orbs all stopped
-// this way when their styles moved into modules.
-//
-// So: every animation a module names must be defined in that module.
+// Every animation a CSS module names must be defined in that module: the module
+// renames it, so a @keyframes in globals.css never matches and the browser
+// drops the animation silently. Three animations stopped this way once.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";

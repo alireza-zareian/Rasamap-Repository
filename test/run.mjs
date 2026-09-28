@@ -1,16 +1,8 @@
-// Orchestrator: unit tests -> reset test DB -> seed fixtures -> build -> start the app on an
-// isolated port with test env -> run the API tests against it -> tear down.
+// `npm test`: unit tests -> reset test DB -> seed -> build -> start the app on
+// :3100 -> API tests -> importer tests -> tear down.
 //
-//   npm test
-//
-// The server runs a *production* build (`next build` + `next start`), not
-// `next dev`, for the reason in docs/engineering-decisions.md §22: dev mode
-// recompiles a route on every request and costs ~97x the CPU. Under `next dev`
-// the 120-read loop in "reading is not rate limited the way writing is" pushed
-// a single request past undici's 300 s header timeout, which wedged the server
-// and cascaded into ~20 spurious failures at the tail of the suite. Building
-// once up front costs about a minute and makes the run both fast and honest —
-// the tests then exercise the same output that ships.
+// A production build, never `next dev` (§22b): dev recompiles per request, and
+// under it the 120-read test wedged the server past undici's 300 s timeout.
 
 import { spawn, execSync } from "node:child_process";
 import { openSync, readFileSync } from "node:fs";
@@ -41,10 +33,7 @@ const env = {
   NEXT_DIST_DIR: ".next-test",
   // Its own upload folder, so test photos never land beside the demo's.
   UPLOAD_DIR: "storage/test-uploads",
-  // SMS stays dormant here (no KAVENEGAR_API_KEY), and the on-screen code echo
-  // the demo laptop turns on in .env is forced off, so the suite proves the
-  // flows with only what a real client receives: helpers.recoverOtpCode()
-  // reads the issued code from the store instead.
+  // No SMS and no on-screen echo: helpers.recoverOtpCode() finds the code.
   OTP_DEV_ECHO: "0",
   // Every test request names its own address in X-Forwarded-For, so buckets do
   // not collide across tests; that is the behind-a-proxy reading. The demo's
@@ -57,17 +46,9 @@ function step(msg) {
 }
 
 /**
- * Refuse to start if something is already listening on our port.
- *
- * This is checked before spawning, and deterministically, because the readiness
- * probe that follows cannot tell our server from a stranger: a leftover
- * `next start` on this port answers the probe, the suite runs against its build
- * and its database, and the failures that follow name code that is fine. It is
- * not hypothetical — it happened twice while this guard was being written, once
- * costing an afternoon to a "slow endpoint" that was really someone else's
- * server. Checking the spawned process for an early exit is not enough on its
- * own: the probe can succeed against the stranger before our own process has
- * finished failing to bind.
+ * Refuse to start if something already listens on our port: the readiness
+ * probe cannot tell our server from a leftover `next start`, and the suite
+ * would run against its build and database.
  */
 function portInUse(port) {
   return new Promise((resolve) => {
@@ -107,19 +88,9 @@ execSync("npx next build", { stdio: "inherit", env });
 
 step(`start next on :${PORT}`);
 /**
- * Where the server's own output goes.
- *
- * It used to be a pipe, with the parent accumulating every line into a string.
- * That only works while the parent's event loop is free to drain it — and it is
- * not: `execSync` below blocks the parent for the whole test run. Once the 64 KB
- * pipe buffer filled, the *server* blocked writing to its own stdout, stopped
- * answering, and a request eventually tripped the suite's 30 s timeout. It read
- * as a slow endpoint; it was the harness holding the server's mouth shut, and
- * it got worse the more the server logged, so it surfaced as a flaky tail
- * rather than as an obvious failure.
- *
- * A file has no backpressure, so the server never blocks on it, and the output
- * is still there to print when something goes wrong.
+ * The server logs to a file, not a pipe: `execSync` below blocks the parent for
+ * the whole run, so a pipe filled at 64 KB and the server blocked on its own
+ * stdout.
  */
 const SERVER_LOG = join(tmpdir(), `rasamap-server-${PORT}-${process.pid}.log`);
 const serverOut = openSync(SERVER_LOG, "w");
@@ -142,14 +113,7 @@ function serverOutput() {
 async function waitForServer(timeoutMs = 60000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
-    // A server that has already exited will never become ready, and the usual
-    // reason is that the port was taken. That case must be caught here, because
-    // the readiness check below cannot tell our server from a stranger already
-    // answering on the same port — it would pass, and the whole suite would run
-    // against someone else's app and someone else's database. test/browser.mjs
-    // guards Chrome's debugging port against exactly this; the app's port had
-    // no such guard, and a stray `next start` on this port was enough to turn
-    // the run into a wall of meaningless failures.
+    // An early exit usually means the port was taken.
     if (server.exitCode !== null) return false;
     try {
       const r = await fetch(`${BASE}/api/billboards?limit=1`, {

@@ -1,23 +1,8 @@
-// End-to-end tests — a real browser, against the same production build the
-// API suite uses. Run with `npm run test:e2e` (test/run-e2e.mjs builds, serves
-// and tears down; this file assumes a server is already up at TEST_BASE_URL).
-//
-// ─────────────────────────────────────────────────────────────────────────
-//  WHY THIS EXISTS, AND WHAT IT IS FOR
-// ─────────────────────────────────────────────────────────────────────────
-//
-//  The API tests prove the server answers correctly. They open no browser,
-//  so nothing checked that the answers become a usable page: whether the form
-//  submits, whether the filter bar actually filters, whether the compare tray
-//  appears. The thesis lists this as a known gap; this closes it.
-//
-//  It is the same rule as §22b: a PRODUCTION build, never `next dev`. And the
-//  same isolation as the API suite — its own database, its own port, its own
-//  browser profile, so a run leaves nothing behind.
-//
-//  Failures write a screenshot to test/screenshots/, because "expected 24, got
-//  0" is a much slower way to learn that a filter reset the page than looking
-//  at it.
+// Browser flows: that the server's answers become a usable page — the form
+// submits, the filter bar filters, the compare tray appears. Run with
+// `npm run test:e2e`; test/run-e2e.mjs builds, serves on its own port and
+// database, and tears down (§22b: a production build, never `next dev`).
+// A failure leaves a screenshot in test/screenshots/.
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -44,11 +29,7 @@ writeFileSync(PHOTO, Buffer.from(
 /** The one sentence a refused sign-in is allowed to say — app/api/auth/login. */
 const DENIED = "شماره/ایمیل یا رمز عبور اشتباه است";
 
-/**
- * Run a body with a fresh browser, and photograph whatever state it died in.
- * The screenshot is the point: a selector that did not match is nearly useless
- * as a message and completely obvious as a picture.
- */
+/** Run a body with a fresh browser, and screenshot whatever state it died in. */
 async function withBrowser(name, body, { width = 1280, height = 900 } = {}) {
   const b = await Browser.launch({ width, height });
   try {
@@ -108,13 +89,9 @@ test("a visitor can sign in and lands signed in", async () => {
       label: "a redirect away from /login",
     });
 
-    // And the session survives a fresh page load, which is the part a cookie
-    // without Secure/SameSite right would fail (§24).
-    //
-    // waitForText, not text(): /dashboard is a client component that renders
-    // "در حال بررسی احراز هویت..." until GET /api/auth/me answers, so reading
-    // straight after goto() catches the page mid-check and blames the cookie
-    // for a race (§31, the fifth one).
+    // The session survives a fresh load — what a wrong Secure/SameSite breaks
+    // (§24). waitForText: /dashboard shows a checking state until
+    // /api/auth/me answers (§31).
     await b.goto(`${BASE}/dashboard`);
     await b.waitForText(USER.name.split(" ")[0], {
       label: "the dashboard greeting — the session did not survive a reload",
@@ -144,10 +121,7 @@ test("a rejected sign-in shows the visitor why, and says no more", async () => {
     const wrongPassword = await attempt(USER.phone);
     const unknownPhone = await attempt("09999999999");
 
-    // And that a real account with the wrong password is indistinguishable, on
-    // screen, from a number that has no account at all. The message names both
-    // possibilities together on purpose — that is what makes it tell nobody
-    // which of the two it was.
+    // A wrong password and an unknown number read the same on screen.
     assert.equal(wrongPassword, unknownPhone);
   });
 });
@@ -296,7 +270,7 @@ test("a reviewer signs in and moves between panel sections by their addresses", 
   });
 });
 
-// ── the phone-width run the card asks for ─────────────────────────────────
+// ── phone width ─────────────────────────────────────────────────────────────
 test("the catalogue is usable at phone width", async () => {
   await withBrowser("phone-width", async (b) => {
     await b.goto(`${BASE}/explore`);
@@ -317,10 +291,8 @@ test("the catalogue is usable at phone width", async () => {
 test("a compare selection survives a reload and reaches /compare", async () => {
   await withBrowser("compare-persists", async (b) => {
     await b.goto(`${BASE}/explore`);
-    // Not the button merely existing, nor React having claimed it: the
-    // catalogue's content hydrates in its own pass (loading.tsx), and a click
-    // before that pass commits is silently lost — measured, the handler never
-    // ran, in 2–5 runs of 10. The results say when they are listening.
+    // The results hydrate in their own pass after loading.tsx; a click before
+    // it is lost (2–5 runs in 10, measured). aria-busy says when they listen.
     await b.waitForSelector("[data-testid='results'][aria-busy='false']");
     // Two different cards: after the first click that card's button is renamed.
     await b.click("button[aria-label='افزودن به مقایسه']");

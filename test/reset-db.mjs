@@ -27,10 +27,8 @@ for (const suffix of ["", "-shm", "-wal", "-journal"]) {
 }
 console.log(`removed ${removed} stale test db file(s)`);
 
-// `migrate deploy` rather than `db push`: the schema includes a partial unique
-// index that only exists in a migration file (Prisma cannot express one), and
-// `db push` builds from schema.prisma alone — the test DB would silently lack
-// the constraint the race test is there to prove.
+// `migrate deploy`, not `db push`: the partial unique index the race test
+// relies on exists only in a migration (Prisma's schema cannot express it).
 execSync(`npx prisma migrate deploy`, {
   stdio: "inherit",
   env: { ...process.env, DATABASE_URL: DB },

@@ -1,15 +1,7 @@
-// The scheduled crawler import — prisma/sync-scraped.ts.
-//
-// These run the real script as a subprocess against the same isolated test
-// database the API suite uses, with a fixture feed instead of the crawler's
-// 3,528-row output. They are in their own file because nothing here is an HTTP
-// call: the script is a command, and the thing worth proving is what it does to
-// rows, not what any route answers.
-//
-// What each test is defending is the same promise in a different shape: a
-// nightly import must never undo a decision a person made. An edited price, a
-// deleted duplicate, a row taken off the site — the feed does not know about
-// any of them, so the importer has to.
+// The crawler import, prisma/sync-scraped.ts, run as a subprocess against the
+// test database with a fixture feed. Each test defends one promise (§33): the
+// import never undoes a decision a person made — an edited price, a deleted
+// duplicate, a row taken off the site.
 
 import test from "node:test";
 import assert from "node:assert/strict";

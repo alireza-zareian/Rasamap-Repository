@@ -1,17 +1,7 @@
-// Orchestrator for the browser tests: reset the test DB -> seed -> build ->
-// start the app on its own port -> drive a real Chrome against it -> tear down.
-//
-//   npm run test:e2e
-//
-// Same shape and the same rules as test/run.mjs, and for the same reasons:
-// a PRODUCTION build (§22b — `next dev` recompiles per request and wedged the
-// API suite once already), its own database file, its own port. It uses a
-// different port and a different dist directory from `npm test`, so the two
-// suites can run at the same time without fighting over either.
-//
-// The browser is the Chrome already installed on the machine, driven over the
-// DevTools Protocol by test/browser.mjs — see the note at the top of that file
-// for why this is not Playwright.
+// `npm run test:e2e`: reset the test DB -> seed -> build -> start the app on
+// :3200 -> drive Chrome (test/browser.mjs) -> tear down. Same rules as
+// test/run.mjs, with its own port, database and dist directory so the two
+// suites can run at once.
 
 import { spawn, execSync } from "node:child_process";
 import { openSync, readFileSync } from "node:fs";
@@ -65,17 +55,9 @@ function step(msg) {
 }
 
 /**
- * Refuse to start if something is already listening on our port.
- *
- * This is checked before spawning, and deterministically, because the readiness
- * probe that follows cannot tell our server from a stranger: a leftover
- * `next start` on this port answers the probe, the suite runs against its build
- * and its database, and the failures that follow name code that is fine. It is
- * not hypothetical — it happened twice while this guard was being written, once
- * costing an afternoon to a "slow endpoint" that was really someone else's
- * server. Checking the spawned process for an early exit is not enough on its
- * own: the probe can succeed against the stranger before our own process has
- * finished failing to bind.
+ * Refuse to start if something already listens on our port: the readiness
+ * probe cannot tell our server from a leftover `next start`, and the suite
+ * would run against its build and database.
  */
 function portInUse(port) {
   return new Promise((resolve) => {
@@ -110,19 +92,9 @@ execSync("npx next build", { stdio: "inherit", env });
 
 step(`start next on :${PORT}`);
 /**
- * Where the server's own output goes.
- *
- * It used to be a pipe, with the parent accumulating every line into a string.
- * That only works while the parent's event loop is free to drain it — and it is
- * not: `execSync` below blocks the parent for the whole test run. Once the 64 KB
- * pipe buffer filled, the *server* blocked writing to its own stdout, stopped
- * answering, and a request eventually tripped the suite's 30 s timeout. It read
- * as a slow endpoint; it was the harness holding the server's mouth shut, and
- * it got worse the more the server logged, so it surfaced as a flaky tail
- * rather than as an obvious failure.
- *
- * A file has no backpressure, so the server never blocks on it, and the output
- * is still there to print when something goes wrong.
+ * The server logs to a file, not a pipe: `execSync` below blocks the parent for
+ * the whole run, so a pipe filled at 64 KB and the server blocked on its own
+ * stdout.
  */
 const SERVER_LOG = join(tmpdir(), `rasamap-server-${PORT}-${process.pid}.log`);
 const serverOut = openSync(SERVER_LOG, "w");
@@ -151,14 +123,7 @@ process.on("SIGINT", () => { stop(); process.exit(130); });
 // Wait for it to answer rather than guessing how long a cold start takes.
 let up = false;
 for (let i = 0; i < 120; i++) {
-  // A server that has already exited will never become ready, and the usual
-  // reason is that the port was taken. That case must be caught here, because
-  // the readiness check below cannot tell our server from a stranger already
-  // answering on the same port — it would pass, and the whole suite would run
-  // against someone else's app and someone else's database. test/browser.mjs
-  // guards Chrome's debugging port against exactly this; the app's port had
-  // no such guard, and a stray `next start` on this port was enough to turn
-  // the run into a wall of meaningless failures.
+  // An early exit usually means the port was taken.
   if (server.exitCode !== null) break;
   try {
     const res = await fetch(`${BASE}/api/health`);
