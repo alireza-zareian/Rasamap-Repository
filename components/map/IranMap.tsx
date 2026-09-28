@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin as PinIcon, ArrowRight } from "lucide-react";
 import { PROVINCE_RINGS, IRAN_BOUNDS, type Ring } from "@/lib/geo/iran-provinces";
-import { project, type Bounds } from "@/lib/geo/distance";
+import { fitBounds, project, type Bounds } from "@/lib/geo/distance";
 import type { MapPin } from "@/lib/db/billboards";
 import { exploreHref, type ExploreFilters } from "@/lib/explore-query";
 import { faNum } from "@/lib/format";
@@ -21,10 +21,6 @@ import styles from "./IranMap.module.css";
 /** Internal units. The SVG scales to its container; these only set the aspect. */
 const W = 1000;
 const H = 760;
-/** Breathing room around whatever is being zoomed to, as a share of its extent. */
-const ZOOM_PAD = 0.12;
-/** The tightest zoom, in degrees (~17 km): the drawing has no streets to magnify. */
-const MIN_SPAN_DEG = 0.15;
 /** Below this share of the busiest province, a label would not be worth the ink. */
 const LABEL_MIN_SHARE = 0.06;
 /** Rough width of one Persian glyph at the label size, for collision testing. */
@@ -32,38 +28,8 @@ const LABEL_CHAR_PX = 8.5;
 /** Two labels closer than this vertically are treated as the same line. */
 const LABEL_LINE_PX = 17;
 
-/** Pad, and widen anything narrower than the floor, around its own middle. */
-function fit(
-  minLng: number, maxLng: number, minLat: number, maxLat: number,
-): Bounds {
-  const padX = Math.max((maxLng - minLng) * ZOOM_PAD, MIN_SPAN_DEG / 2);
-  const padY = Math.max((maxLat - minLat) * ZOOM_PAD, MIN_SPAN_DEG / 2);
-  return {
-    minLng: minLng - padX, maxLng: maxLng + padX,
-    minLat: minLat - padY, maxLat: maxLat + padY,
-  };
-}
-
 function ringsBounds(rings: Ring[]): Bounds {
-  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-  for (const r of rings) for (const [lng, lat] of r) {
-    if (lng < minLng) minLng = lng;
-    if (lng > maxLng) maxLng = lng;
-    if (lat < minLat) minLat = lat;
-    if (lat > maxLat) maxLat = lat;
-  }
-  return fit(minLng, maxLng, minLat, maxLat);
-}
-
-function pinsBounds(pins: MapPin[]): Bounds {
-  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-  for (const p of pins) {
-    if (p.lng < minLng) minLng = p.lng;
-    if (p.lng > maxLng) maxLng = p.lng;
-    if (p.lat < minLat) minLat = p.lat;
-    if (p.lat > maxLat) maxLat = p.lat;
-  }
-  return fit(minLng, maxLng, minLat, maxLat);
+  return fitBounds(rings.flatMap(r => r.map(([lng, lat]) => ({ lng, lat }))));
 }
 
 /** Rough centre of a shape, for dropping a label on it. */
@@ -108,7 +74,7 @@ export default function IranMap({
   // Frame the pins, not the province: most of a province's media is in one city.
   const bounds = useMemo(() => {
     if (!zoomed) return IRAN_BOUNDS;
-    return pins.length ? pinsBounds(pins) : ringsBounds(PROVINCE_RINGS[province]);
+    return pins.length ? fitBounds(pins) : ringsBounds(PROVINCE_RINGS[province]);
   }, [zoomed, province, pins]);
 
   // Re-projected only when the bounds change: once per navigation, not per frame.

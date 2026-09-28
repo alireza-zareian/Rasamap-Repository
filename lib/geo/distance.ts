@@ -32,6 +32,26 @@ export function project(
   };
 }
 
+/**
+ * The box around a set of points, padded by `pad` of its extent on each side
+ * and widened to at least `minSpan` degrees around its own middle — a single
+ * point, or two on one street, would otherwise zoom past anything worth drawing.
+ */
+export function fitBounds(
+  points: readonly { lng: number; lat: number }[], pad = 0.12, minSpan = 0.15,
+): Bounds {
+  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  for (const { lng, lat } of points) {
+    if (lng < minLng) minLng = lng;
+    if (lng > maxLng) maxLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+  }
+  const padX = Math.max((maxLng - minLng) * pad, minSpan / 2);
+  const padY = Math.max((maxLat - minLat) * pad, minSpan / 2);
+  return { minLng: minLng - padX, maxLng: maxLng + padX, minLat: minLat - padY, maxLat: maxLat + padY };
+}
+
 /** Distance in km by a flat-earth approximation: close enough over a city-sized radius. */
 export function distanceKm(
   aLat: number, aLng: number, bLat: number, bLng: number,
