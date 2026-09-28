@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { idParams } from "@/lib/http/params";
 import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { addReply } from "@/lib/db/reviews";
+import { REVIEW_REPLY } from "@/lib/domain/rating";
 
 // POST /api/reviews/[id]/replies — answer a review, as a customer or as staff.
 export const POST = defineRoute(
@@ -13,7 +14,7 @@ export const POST = defineRoute(
     rateLimit: userApiRateLimit,
     params: idParams,
     body: z.object({
-      body: z.string().trim().min(2, "پاسخ خیلی کوتاه است").max(600, "پاسخ خیلی بلند است"),
+      body: z.string().trim().min(REVIEW_REPLY.min, "پاسخ خیلی کوتاه است").max(REVIEW_REPLY.max, "پاسخ خیلی بلند است"),
     }),
     messages: { signedOut: "برای پاسخ دادن باید وارد حساب کاربری شوید" },
   },

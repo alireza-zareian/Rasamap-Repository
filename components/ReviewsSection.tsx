@@ -7,6 +7,7 @@ import { faNum } from "@/lib/format";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
 import { hasRole, isStaffRole } from "@/lib/domain/roles";
+import { REVIEW_COMMENT, REVIEW_REPLY } from "@/lib/domain/rating";
 import { Button } from "@/components/ui/Button";
 import form from "@/components/ui/form.module.css";
 import styles from "./ReviewsSection.module.css";
@@ -151,7 +152,7 @@ export default function ReviewsSection({ billboardId }: Props) {
   const sendReply = async (reviewId: number) => {
     if (replyBusy) return;
     const body = replyBody.trim();
-    if (body.length < 2) { setError("پاسخ خیلی کوتاه است"); return; }
+    if (body.length < REVIEW_REPLY.min) { setError("پاسخ خیلی کوتاه است"); return; }
     setReplyBusy(true); setError("");
     try {
       await fetchJson(`/api/reviews/${reviewId}/replies`, {
@@ -178,7 +179,7 @@ export default function ReviewsSection({ billboardId }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rating) { setError("لطفاً امتیاز را انتخاب کنید"); return; }
-    if (comment.length < 10) { setError("نظر باید حداقل ۱۰ کاراکتر باشد"); return; }
+    if (comment.length < REVIEW_COMMENT.min) { setError(`نظر باید حداقل ${faNum(REVIEW_COMMENT.min)} کاراکتر باشد`); return; }
     setError(""); setSubmitting(true);
     try {
       await fetchJson("/api/reviews", {
@@ -225,7 +226,8 @@ export default function ReviewsSection({ billboardId }: Props) {
           <textarea
             className={form.input}
             value={comment} onChange={e => setComment(e.target.value)}
-            placeholder="تجربه خود از استفاده از این رسانه را بنویسید... (حداقل ۱۰ کاراکتر)"
+            placeholder={`تجربه خود از استفاده از این رسانه را بنویسید... (حداقل ${faNum(REVIEW_COMMENT.min)} کاراکتر)`}
+            maxLength={REVIEW_COMMENT.max}
             aria-label="متن نظر"
             rows={3}
           />
@@ -320,7 +322,7 @@ export default function ReviewsSection({ billboardId }: Props) {
                       <textarea
                         className={form.input}
                         value={replyBody} onChange={e => setReplyBody(e.target.value)}
-                        rows={2} maxLength={600}
+                        rows={2} maxLength={REVIEW_REPLY.max}
                         aria-label="متن پاسخ"
                         placeholder={user?.isStaff ? "پاسخ رسمی تیم رسامپ…" : "پاسخ شما…"}
                       />

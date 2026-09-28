@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { positiveId } from "@/lib/http/params";
 import { accountWriteRateLimit, userApiRateLimit } from "@/lib/rate-limit";
 import { listReviews, saveReview } from "@/lib/db/reviews";
+import { REVIEW_COMMENT } from "@/lib/domain/rating";
 
 // GET /api/reviews?billboardId=X — public
 export const GET = defineRoute(
@@ -31,7 +32,7 @@ export const POST = defineRoute(
     body: z.object({
       billboardId: z.number().int().positive(),
       rating:      z.number().int().min(1).max(5),
-      comment:     z.string().min(10).max(1000),
+      comment:     z.string().min(REVIEW_COMMENT.min).max(REVIEW_COMMENT.max),
     }),
     messages: { signedOut: "برای ثبت نظر باید وارد حساب کاربری شوید" },
   },
