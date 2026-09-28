@@ -24,12 +24,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.colorScheme = theme;
   }, [theme]);
 
-  // Stored only on a real toggle.
-  const toggle = () => setTheme(t => {
-    const next = t === "dark" ? "light" : "dark";
+  // Stored only on a real toggle, outside the updater: React may call an
+  // updater twice, and it must stay free of side effects.
+  const toggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
     try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch { /* private mode */ }
-    return next;
-  });
+    setTheme(next);
+  };
 
   return (
     <Ctx.Provider value={{ theme, toggle }}>
