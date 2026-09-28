@@ -2,16 +2,10 @@
 import { useEffect } from "react";
 
 /**
- * Last-resort error boundary: this one catches a failure in the root layout
- * itself, which app/error.tsx cannot — error.tsx is rendered *inside* the
- * layout, so if the layout throws there is nothing left to wrap it.
- *
- * Because it replaces the root layout it has to supply its own <html>/<body>,
- * and it cannot rely on globals.css or the Vazirmatn import having loaded:
- * whatever broke the layout may have broken those too. So every colour here is
- * a literal, the font stack falls back to the system, and nothing is imported
- * beyond React. Without this file the user would see Next.js's default English
- * error screen (§5: never a blank screen, never a raw trace).
+ * The last-resort boundary, for a failure in the root layout itself. It
+ * replaces the layout, so it brings its own <html>/<body> and assumes no CSS
+ * or font loaded: literal colours, system fonts, inline styles. Without it the
+ * visitor would see Next's English error screen.
  */
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => { console.error("global error boundary", error); }, [error]);
@@ -41,9 +35,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               <button onClick={reset} style={{ background: "#3B7BF5", border: "none", color: "#fff", fontFamily: "inherit", fontSize: "0.88rem", fontWeight: 700, padding: "11px 24px", borderRadius: 9, cursor: "pointer" }}>
                 تلاش مجدد
               </button>
-              {/* A plain <a>, not <Link>: a client-side navigation would re-mount
-                  the very layout that just crashed. A full page load is the
-                  point — it is the only way out of a broken root. */}
+              {/* A plain <a>: a client navigation would re-mount the crashed layout. */}
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <a href="/" style={{ background: "none", border: "1px solid #22304A", color: "#94A3B8", fontFamily: "inherit", fontSize: "0.88rem", padding: "11px 24px", borderRadius: 9, textDecoration: "none", display: "inline-block" }}>
                 صفحه اصلی

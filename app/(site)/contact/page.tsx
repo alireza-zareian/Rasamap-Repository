@@ -68,8 +68,7 @@ export default function ContactPage() {
             در اسرع وقت پاسخ می‌دهیم.
           </p>
           <div className={styles.actions}>
-            {/* Plain <a>, not ButtonLink: mailto: and an outside site are not
-                routes for next/link to prefetch. */}
+            {/* Plain <a>: mailto: and outside sites are not routes. */}
             <a href="mailto:info@rasamap.ir" className={`${button.button} ${button.primary}`}><Mail size={15} /> ارسال ایمیل</a>
             <a href="https://t.me/rasamap" target="_blank" rel="noopener noreferrer" className={`${button.button} ${button.secondary}`}><Send size={15} /> تلگرام</a>
           </div>

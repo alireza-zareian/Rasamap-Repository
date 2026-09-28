@@ -1,6 +1,4 @@
-/* The sign-in and password-reset screens: a centred card on the page colour,
-   outside the site frame. Staff sign-in wears the panel's violet so someone
-   arriving by a stale link can tell at a glance which door they are at. */
+/* Sign-in and password reset: a centred card. Staff mode wears the panel's violet. */
 
 .frame { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .column { width: 100%; max-width: 420px; --tone: var(--accent); --tone-glow: rgba(59, 123, 245, 0.45); }
@@ -36,8 +34,7 @@
 
 .password { position: relative; }
 .form .password .input { padding-left: 42px; }
-/* 44px so a thumb can hit it; the icon sits in the space the input's left
-   padding already reserves. */
+/* 44px for a thumb, inside the input's left padding. */
 .reveal {
   position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; padding: 0;
   background: none; border: none; cursor: pointer; color: var(--text-muted);

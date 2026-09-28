@@ -1,5 +1,4 @@
-/* The reference is docs/api.md rendered to HTML, so everything below the
-   wrapper is plain elements rather than classes. */
+/* Rendered markdown: plain elements under one wrapper. */
 .doc { max-width: 980px; margin: 0 auto; padding: 48px 20px 80px; line-height: 1.85; }
 .doc h1 { font-size: 1.7rem; font-weight: 800; margin: 0 0 4px; }
 .doc h2 { font-size: 1.2rem; font-weight: 700; margin: 40px 0 10px; padding-top: 12px; border-top: 1px solid var(--border); }

@@ -27,20 +27,11 @@ const TYPE_LABEL = typeLabels as Record<string, string>;
 const RELATED_COUNT = 12;
 
 /**
- * Structured data for one media item.
+ * Structured data for one media item: a Product with a monthly Offer, which
+ * lets a search result show the photo, price and rating (§30).
  *
- * A catalogue page in a search result is either a blue link or a card with the
- * photo, the price and the rating on it. This is the difference between the
- * two, and for a directory it is close to the whole SEO argument.
- *
- * Modelled as a Product with an Offer because that is what the page is: a
- * thing with a price and an availability, rented by the month.
- *
- * The price needs care. The catalogue stores millions of Toman — `price: 65`
- * means 65 million Toman a month — and schema.org wants an ISO 4217 currency,
- * of which Toman is not one. Iran's ISO code is IRR, the Rial, and one Toman is
- * ten Rial: hence the factor of ten million. Publishing 65 against "IRR" would
- * advertise a billboard for six Toman.
+ * Prices are stored in millions of Toman; schema.org wants ISO 4217, and
+ * Toman is not a code. IRR is the Rial, ten to a Toman — hence × 10,000,000.
  */
 function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
   const url = `${SITE_URL}/billboard/${b.slug}`;
@@ -63,24 +54,21 @@ function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
       url,
       priceCurrency: "IRR",
       price: b.price * 10_000_000,
-      // The listed rate is per month; the unit is what stops a crawler reading
-      // it as a one-off purchase price.
+      // Per month, not a one-off price.
       priceSpecification: {
         "@type": "UnitPriceSpecification",
         priceCurrency: "IRR",
         price: b.price * 10_000_000,
         unitCode: "MON",
       },
-      // Only what is known: a crawled board's state is not (see
-      // availabilityFromFeed), and saying InStock for it would be a guess.
+      // Omitted when unknown (availabilityFromFeed) rather than guessed.
       ...(b.availability === "available" ? { availability: "https://schema.org/InStock" }
         : b.availability === "unknown" ? {}
         : { availability: "https://schema.org/OutOfStock" }),
       areaServed: { "@type": "City", name: b.city },
       ...(phoneAvailable ? { seller: { "@type": "Organization", name: b.agency || "رسامپ" } } : {}),
     },
-    // Only when real reviews exist — a rating invented for the crawler is the
-    // kind of thing that gets a site's rich results removed.
+    // Only from real reviews.
     ...(b.reviewCount > 0
       ? {
           aggregateRating: {
@@ -93,16 +81,12 @@ function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
   };
 }
 
-/** What "nearby" means from a media page — a comfortable ring rather than the
- *  widest the catalogue allows. The visitor can widen it on the results page. */
+/** "Nearby" from a media page; the results page can widen it. */
 const NEARBY_RADIUS_KM = 5;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  // The same cached read the page itself makes, so the two share one entry
-  // instead of querying for the same record twice per visit. Always the public
-  // view: a title and a social preview are for crawlers and shared links, and a
-  // listing still under review has neither.
+  // The page's own cached read, always the public view: a listing in review has no preview.
   const found = await getCachedBillboardBySlug(slug, false);
   if (!found) return { title: "رسانه یافت نشد | رسامپ" };
   const b = found.billboard;
@@ -120,23 +104,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BillboardPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  // A reviewer needs to see a submission the way an advertiser eventually will,
-  // not only as rows in a form — so a staff member may open a listing that is
-  // still pending, and gets told plainly that it is. The check happens here, on
-  // the server: the page is rendered before anything reaches the browser, so
-  // there is no moment where the markup exists and the permission does not.
+  // Staff may open a listing still in review, to see it as a visitor will.
+  // Checked here on the server, and read uncached, so no visitor is handed it.
   const isStaff = (await getActor())?.kind === "staff";
 
-  // A staff view is read uncached, so a reviewer's view of a listing still
-  // under review can never be stored where a visitor would be handed it.
   const found = await getCachedBillboardBySlug(slug, isStaff);
   if (!found) notFound();
   const { billboard: b, phoneAvailable } = found;
 
   const unpublished = !isPublished(b.moderation);
 
-  // Suggestions for the foot of the page — same neighbourhood or same media
-  // type, narrowed to what those cards draw.
   const related = await getCachedRelatedBillboards(b, RELATED_COUNT);
 
   const allImgs: string[] = [
@@ -151,9 +128,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
 
   return (
     <main className={styles.page}>
-      {/* Escaping "<" is not decoration: without it a name containing
-          "</script>" would end the tag early and turn catalogue data into
-          markup. */}
+      {/* "<" escaped, or a name containing "</script>" would end the tag. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -293,10 +268,8 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                   ))}
                 </div>
 
-                {/* Rasamap lists media it does not own, so there is no checkout
-                    here: the next step is talking to the owner. The phone
-                    number is fetched from an authed endpoint only when a
-                    signed-in user asks for it — never embedded in the page. */}
+                {/* No checkout: the next step is the owner. The phone is fetched
+                    on request by a signed-in visitor, never in the page (§23). */}
                 <BillboardContact hasPhone={phoneAvailable} agency={b.agency} slug={b.slug} />
 
                 <div className={styles.direct}>اجاره و قرارداد مستقیماً با صاحب رسانه انجام می‌شود. رسامپ واسطهٔ مالی نیست.</div>
@@ -304,9 +277,7 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                 <Link href="/explore" className={styles.back}><ArrowRight size={13} /> بازگشت به جستجو</Link>
               </div>
 
-              {/* A crawled row is the source's published listing. Naming and
-                  linking the source is the credit it is owed, and tells the
-                  visitor where to check what this page says. */}
+              {/* A crawled row credits and links its source. */}
               {source && (
                 <div className={styles.source}>
                   اطلاعات این رسانه از{" "}
@@ -321,28 +292,21 @@ export default async function BillboardPage({ params }: { params: Promise<{ slug
                 <div className={styles.mapHead}>موقعیت</div>
                 <iframe
                   src={`https://maps.google.com/maps?q=${at.lat},${at.lng}&z=15&output=embed&hl=fa`}
-                  /* No loading="lazy": on a phone the frame sits just below the
-                     fold, and Chrome on Android shrinks the lazy pre-load
-                     distance on a slow connection, so it was never requested
-                     on a first view (AGENTS.md rule 9). */
+                  /* Not lazy: just below the fold on a phone, a lazy frame was never loaded (rule 9). */
                   allowFullScreen
-                  /* no-referrer: over plain http on a LAN address the default
-                     handed Google a private host as referrer — the one input
-                     that differed between the laptop and a phone. */
+                  /* no-referrer: over http on the LAN the default sent Google a private host. */
                   referrerPolicy="no-referrer"
                   title="موقعیت رسانه روی نقشه"
                 />
-                {/* The embed is Google's and often unreachable from an Iranian
-                    mobile line, and a failed cross-origin frame cannot be
-                    detected. So the way out is always shown: the coordinates,
-                    and the two Iranian map apps next to Google. */}
+                {/* Google's embed is often unreachable from an Iranian mobile
+                    line, and a failed frame cannot be detected — so the
+                    coordinates and the Iranian map apps are always shown. */}
                 <div className={styles.mapFoot}>
                   <span className={styles.coords}>
                     مختصات: <span>{at.lat.toFixed(5)}, {at.lng.toFixed(5)}</span>
                   </span>
                   <div className={styles.mapLinks}>
-                    {/* A radial search that needs no geolocation permission and
-                        no secure context — both missing on the LAN demo. */}
+                    {/* No geolocation needed — unavailable over http on the LAN. */}
                     <IntentLink href={`/explore?lat=${at.lat.toFixed(6)}&lng=${at.lng.toFixed(6)}&radiusKm=${NEARBY_RADIUS_KM}`} className={styles.mapLink}>
                       <Crosshair size={10} /> رسانه‌های نزدیک این نقطه
                     </IntentLink>

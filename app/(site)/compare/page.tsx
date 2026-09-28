@@ -11,19 +11,13 @@ import type { CatalogueItem } from "@/lib/types";
 import { faNum } from "@/lib/format";
 import styles from "./compare-page.module.css";
 
-/**
- * The media ticked on the catalogue, side by side. The comparison is on the
- * page itself once there are two; it used to be one more click away, in the
- * same modal the catalogue opens.
- */
+/** The media ticked on the catalogue, side by side. */
 export default function ComparePage() {
   const { items, setItems, remove, ready } = useCompareList();
   const [notice, setNotice] = useState("");
   const [refreshed, setRefreshed] = useState(false);
 
-  // The stored cards are a snapshot from whenever they were ticked. Each is read
-  // again before they are compared: a price may have moved, and a listing taken
-  // down since must not be compared as if it existed.
+  // The stored cards are a snapshot: re-read each, since a price may have moved or a listing gone.
   useEffect(() => {
     if (!ready || refreshed) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -8,9 +8,8 @@ import { replaceBillboardImages } from "@/lib/db/billboards";
 import { faNum } from "@/lib/format";
 import { MAX_BILLBOARD_IMAGES, maxUploadBodyBytes } from "@/lib/domain/listing";
 
-// PUT /api/admin/billboards/[id]/images — replace the photo list (editor+), as
-// a multipart form whose `photos` field is the new list in order: each entry a
-// photo the record already has, or a new file.
+// PUT /api/admin/billboards/[id]/images — replace the photo list (editor+):
+// `photos` in order, each a photo the record has or a new file.
 export const PUT = defineRoute(
   {
     name: "admin/billboards/[id]/images",
@@ -24,8 +23,7 @@ export const PUT = defineRoute(
   },
   async ({ params, body, audit }) => {
     const images = await replaceBillboardImages(params.id, body.photos, MAX_BILLBOARD_IMAGES);
-    // A customer's listing can have its photos replaced here, so the change has
-    // to be answerable afterwards like any other edit.
+    // A customer's listing can be changed here, so it is audited like any edit.
     await audit("billboard_images_update", { details: { billboardId: params.id, count: images.length } });
     return NextResponse.json({ images });
   },

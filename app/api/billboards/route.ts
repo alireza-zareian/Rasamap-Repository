@@ -8,13 +8,9 @@ import { catalogueApiRateLimit } from "@/lib/rate-limit";
 import { invalid } from "@/lib/domain/errors";
 import { faNum } from "@/lib/format";
 
-/** How deep one query may page, and how many rows a page may carry. The
- *  site's own pages do not use this route. */
+/** How deep one query may page, and how many rows a page may carry (§20b). No page uses this route. */
 const MAX_API_PAGE = 5;
 const MAX_API_LIMIT = 48;
-
-// Bot user agents are rejected in proxy.ts for every /api/* path, so the
-// per-route copies of that list are gone — one matcher, one place to update.
 
 const querySchema = z.object({
   search:   z.string().max(100).optional(),
@@ -24,15 +20,10 @@ const querySchema = z.object({
   cities:   z.string().max(500).optional(), // comma-separated city names for province filter
   maxPrice: z.coerce.number().int().min(0).max(100_000).optional(),
   sortBy:   z.enum(ALLOWED_SORT).optional(),
-  // Page and size ceilings are anti-scraping limits as much as validation ones:
-  // together they cap how much of the catalogue one query can carry off. Five
-  // pages deep is 240 rows of one filter; a program that wants more narrows the
-  // filter, and every narrower query spends the same per-address budget.
+  // Together they cap one query at 5 × 48 rows; more means narrower filters, each spending the same budget.
   page:     z.coerce.number().int().min(1).max(MAX_API_PAGE).optional(),
   limit:    z.coerce.number().int().min(1).max(MAX_API_LIMIT).optional(),
-  // Radial search. The radius ceiling is the same anti-scraping limit as the
-  // ones above: without it, one request with a huge radius is a way to ask for
-  // the whole country and step past the page cap (§20).
+  // The radius ceiling stops one huge circle from reading the whole country (§20).
   lat:      z.coerce.number().min(-90).max(90).optional(),
   lng:      z.coerce.number().min(-180).max(180).optional(),
   radiusKm: z.coerce.number().int().min(MIN_RADIUS_KM).max(MAX_RADIUS_KM).optional(),
@@ -54,9 +45,7 @@ export const GET = defineRoute(
       ? citiesRaw.split(",").map(c => c.trim()).filter(Boolean).slice(0, 50)
       : undefined;
 
-    // Both coordinates or neither — half a centre is not a narrower search, and
-    // quietly keeping the half that parsed would centre it somewhere nobody asked
-    // for. Same rule as parseNear() in lib/explore-query.ts.
+    // Both coordinates or neither, as parseNear() in lib/explore-query.ts.
     if ((lat === undefined) !== (lng === undefined)) {
       throw invalid("برای جست‌وجوی شعاعی باید هر دو مختصات داده شود");
     }

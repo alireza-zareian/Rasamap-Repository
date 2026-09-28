@@ -16,10 +16,8 @@ export const GET = defineRoute(
   },
   async ({ query }) => {
     const result = await listReviews(query.billboardId);
-    // Not cached at all. The page re-reads this right after every post, edit,
-    // reply and delete, and `max-age=5, stale-while-revalidate=30` let the
-    // browser answer that re-read from its own cache — so a deleted reply
-    // could stay on screen for half a minute after the delete succeeded.
+    // Not cached: the page re-reads it right after each change, and a cached
+    // answer kept a deleted reply on screen for half a minute.
     return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
   },
 );

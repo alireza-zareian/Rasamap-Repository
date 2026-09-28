@@ -2,10 +2,7 @@ import type { MetadataRoute } from "next";
 import { getPublishedSlugs } from "@/lib/db/billboards";
 import { SITE_URL } from "@/lib/site-url";
 
-// Without this, Next prerenders the sitemap once at build time and serves that
-// snapshot forever: a listing approved after deploy would never be indexed, and
-// one that was rejected would stay listed. Hourly is far more often than the
-// catalogue changes and costs one query.
+// Otherwise the build-time snapshot is served for ever. Hourly costs one query.
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

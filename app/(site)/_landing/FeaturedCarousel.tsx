@@ -44,8 +44,7 @@ export default function FeaturedCarousel({ items }: { items: CatalogueItem[] }) 
         <div className={styles.track} style={{ transform: `translateX(calc(${index} * ${STEP}))` }}>
           {[...items, ...items.slice(0, 4)].map((b, i) => (
             <IntentLink key={i} href={`/billboard/${b.slug}`} className={styles.slide} tabIndex={i >= items.length ? -1 : undefined}>
-              {/* Not lazy: these cards sit off-screen inside a translated strip,
-                  where a lazy image is never requested (AGENTS.md rule 9). */}
+              {/* Not lazy: off-screen in a translated strip, a lazy image never loads (rule 9). */}
               <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="280px" eager />
               <div className={styles.slideShade} />
               <div className={styles.slideText}>

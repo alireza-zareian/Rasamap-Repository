@@ -1,8 +1,7 @@
 import { readUpload } from "@/lib/uploads";
 
-// GET /uploads/... — photos written after the server started. See readUpload()
-// for why this exists; files present at boot never reach it. proxy.ts has
-// already applied the hotlink check by the time a request gets here.
+// GET /uploads/... — uploaded photos from UPLOAD_DIR, outside public/ (lib/uploads.ts).
+// proxy.ts has applied the hotlink check before this runs.
 export async function GET(_req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const file = await readUpload((await params).path);
   if (!file) return new Response(null, { status: 404 });
@@ -10,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ path: s
     headers: {
       "Content-Type": file.contentType,
       "X-Content-Type-Options": "nosniff",
-      // Every upload lands under a fresh random folder and is never rewritten.
+      // Each upload gets a fresh random folder and is never rewritten.
       "Cache-Control": "public, max-age=31536000, immutable",
     },
   });

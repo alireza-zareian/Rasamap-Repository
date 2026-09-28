@@ -10,11 +10,7 @@ export const GET = defineRoute(
   async () => {
     const logs = getRecentAuditLogs(200);
 
-    // The durable rows survive a restart, unlike the buffer. If the table
-    // cannot be read, the live view is still worth showing rather than a 500.
-    // Not caught: an unreadable audit table used to come back as an empty list,
-    // which the panel showed as "no records yet". It is a 500 with a reference
-    // id now, and the panel says it could not read the log.
+    // Not caught: an unreadable table is a 500, not an empty list that reads as "no records".
     const persisted = await listAuditRows(200);
     return NextResponse.json({ logs, persisted });
   },

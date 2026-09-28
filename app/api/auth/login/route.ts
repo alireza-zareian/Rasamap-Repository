@@ -4,11 +4,9 @@ import { SIGN_IN_DENIED, signIn, signInAttempt } from "@/lib/auth/sign-in";
 import { GivenPassword } from "@/lib/domain/password";
 import { latinDigits } from "@/lib/domain/digits";
 
-// POST /api/auth/login — one sign-in form for customers (mobile number) and
-// staff (email). See lib/auth/sign-in.ts for why one form is safe.
+// POST /api/auth/login — one form for customers (mobile) and staff (email); see lib/auth/sign-in.ts.
 
-// The identifier is accepted under its older names too, so a client from
-// before the shared form keeps working; `identifier` is what the form sends now.
+// Older field names are still accepted; the form sends `identifier`.
 const LoginSchema = z
   .object({
     identifier: z.string().optional(),

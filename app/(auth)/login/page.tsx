@@ -19,16 +19,10 @@ function LoginForm() {
   const requestedNext = safeNextPath(searchParams.get("next"));
 
   /**
-   * Which kind of account the form is dressed for.
-   *
-   * A label only. The server decides from the shape of what was typed — an
-   * email goes to `admins`, a mobile number to `users` — and never reads a mode
-   * the browser claims, because a client-declared role is not a fact. Switching
-   * here changes the field, the wording and the colour, so a member of the team
-   * is not left typing an email into a box asking for 09…
-   *
-   * It is not hidden, and hiding it would buy nothing: the panel's address is
-   * public anyway (/admin/login forwards here with this tab chosen). Shopify and Zendesk put the same switch on the same screen.
+   * Which kind of account the form is dressed for — field, wording and colour
+   * only. The server decides from the shape of what was typed (an email is
+   * staff, a mobile number a customer) and never reads this. /admin/login
+   * forwards here with the staff mode chosen.
    */
   const [mode, setMode] = useState<"customer" | "staff">(
     searchParams.get("as") === "staff" ? "staff" : "customer",
@@ -44,12 +38,9 @@ function LoginForm() {
   const s = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   /**
-   * Sign-up is two steps, and this says which one is on screen.
-   *
-   * "phone" asks for the number and sends a code to it; "details" takes the
-   * code together with the name and password, and it is the *register* call
-   * that spends the code — there is no separate verify round-trip and so no
-   * window where a number is proven but no account exists yet.
+   * The sign-up step on screen: "phone" sends a code; "details" sends the code
+   * with the name and password in one register call, so a number is never
+   * proven without an account being made.
    */
   const [signUpStep, setSignUpStep] = useState<"phone" | "details">("phone");
   const [notice, setNotice] = useState("");
@@ -82,8 +73,7 @@ function LoginForm() {
         : data.message ?? "کد تأیید ارسال شد.");
       setSignUpStep("details");
     } catch (err) {
-      // Includes the 409 for a number that already has an account — the message
-      // the server sends tells them to sign in instead.
+      // Including the 409 for a registered number, whose message says to sign in.
       setError(errorMessage(err));
     } finally { setLoading(false); }
   };
@@ -99,9 +89,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const endpoint = tab === "login" ? "/api/auth/login" : "/api/auth/register";
-      // Signing in accepts a mobile number or a team email address — the server
-      // reads the shape of it to know which store to check. Registration is for
-      // customers only, so it stays a phone.
+      // Sign-in takes a mobile number or a staff email; sign-up is customers only.
       const body = tab === "login"
         ? { identifier: form.phone.trim(), password: form.pass }
         : { name: form.name.trim(), phone: form.phone, password: form.pass, code: form.code };
@@ -110,18 +98,13 @@ function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      // The session answer is cached for the whole page load (see
-      // CurrentUserProvider), and router.push below is a soft navigation that
-      // does not reload it. Without this the visitor would arrive signed in but
-      // be shown the signed-out header until they reloaded by hand.
+      // CurrentUserProvider asks once per page load, and router.push is a soft
+      // navigation: without this the header would still show "signed out".
       await refresh();
-      // Back to wherever they were headed; with no destination, a team member
-      // wants the panel and a customer their dashboard.
+      // Where they were headed, else the panel or the dashboard.
       router.push(requestedNext ?? (data.user?.isStaff ? "/admin" : "/dashboard"));
     } catch (err) {
-      // Covers a refusal from the API (wrong password, rate limit) and a
-      // network failure alike — fetchJson has already turned both into the
-      // sentence to show.
+      // A refusal or a network failure — fetchJson already made it a sentence.
       setError(errorMessage(err)); setLoading(false);
     }
   };
@@ -148,15 +131,11 @@ function LoginForm() {
       type="text" autoComplete="name" aria-label="نام و نام خانوادگی" placeholder="نام و نام خانوادگی" />
   );
 
-  // The field is dressed for the mode: an email keyboard and no digit
-  // conversion for the team, a phone keypad for a customer. Either way the
-  // server reads the value's own shape, so a wrong guess here costs nothing
-  // but a keyboard.
+  // An email keyboard for staff, a phone keypad for customers; the server
+  // reads the value's own shape either way.
   const identifierInp = () => (
-    // Once a code has been sent, the number is what that code belongs to.
-    // Editing it would only produce "no code found for this number" a moment
-    // later, so the field goes read-only and the way back is the "wrong
-    // number" button under the form.
+    // Read-only once a code is sent — the code belongs to this number. The
+    // "wrong number" button is the way back.
     <input
       className={`${field.input} ${field.ltr} ${styles.input}`}
       value={form.phone}
@@ -171,9 +150,7 @@ function LoginForm() {
     />
   );
 
-  // A password box with a show/hide toggle. Persian digits are converted as
-  // they are typed so the field shows what will be sent; the server converts
-  // them too, so nothing depends on this.
+  // Persian digits are converted as typed, to show what will be sent; the server converts them too.
   const passInp = (
     value: string,
     onChange: (v: string) => void,
@@ -211,8 +188,7 @@ function LoginForm() {
       </div>
 
       <div className={styles.card}>
-        {/* Staff accounts are created by an administrator, never here, so the
-            sign-up tab does not exist in that mode. */}
+        {/* Staff accounts are made by an admin, so staff mode has no sign-up tab. */}
         <div className={styles.tabs} role="tablist">
           {tabs.map(t => (
             <button key={t} type="button" id={`tab-${t}`} role="tab" aria-selected={tab === t}
@@ -221,13 +197,11 @@ function LoginForm() {
             </button>
           ))}
         </div>
-        {/* A real <form>, not inputs side by side: without one, Enter in the
-            password box does nothing and the button has to be clicked. */}
+        {/* A real <form>, so Enter submits. */}
         <form className={styles.form} role="tabpanel" aria-labelledby={`tab-${tab}`}
           onSubmit={e => { e.preventDefault(); if (!loading) void (askingForCode ? sendCode() : submit()); }}>
           {notice && detailsStep && <div role="status" className={styles.notice}>{notice}</div>}
-          {/* Step one asks for the number alone; everything else waits until a
-              code has been sent to it. */}
+          {/* Step one is the number alone. */}
           {identifierInp()}
           {detailsStep && codeInp()}
           {detailsStep && nameInp()}
@@ -254,7 +228,7 @@ function LoginForm() {
         </form>
       </div>
 
-      {/* The switch. It changes the form's clothes, not its rules. */}
+      {/* The mode switch: presentation only. */}
       <div className={styles.modes}>
         {([
           { key: "customer", label: "کاربر",   hint: "با شماره موبایل",  Icon: User,        color: "var(--accent)" },

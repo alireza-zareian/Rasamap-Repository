@@ -5,10 +5,8 @@ import { publicApiRateLimit } from "@/lib/rate-limit";
 import { getBillboardBySlug, toPublicBillboard } from "@/lib/db/billboards";
 import { notFound } from "@/lib/domain/errors";
 
-// GET /api/billboards/[slug] — one published media item. The detail page reads
-// the same getBillboardBySlug() as a Server Component; this is the same
-// resource over REST, for API clients and tests. The owner's phone is never in
-// it — see POST /api/billboards/[slug]/contact.
+// GET /api/billboards/[slug] — one published media item, the record the media
+// page reads, over REST. Never the owner's phone (see .../contact).
 export const GET = defineRoute(
   { name: "billboards/[slug]", access: "public", rateLimit: publicApiRateLimit, params: slugParams },
   async ({ params }) => {

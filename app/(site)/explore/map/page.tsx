@@ -8,17 +8,8 @@ import { ButtonLink } from "@/components/ui/Button";
 import styles from "./map.module.css";
 
 /**
- * The catalogue as a map.
- *
- * A Server Component over the same cached queries the list uses, so switching
- * between the two views costs no database work — and the filters travel in the
- * URL, so a filtered map is a real address exactly as a filtered list is.
- *
- * Nothing here reaches a map provider. The reasoning is in §32: every hosted
- * map that could draw this is billed, keyed, or unreachable from an Iranian
- * connection, and usually all three. The outline is vendored, the projection is
- * arithmetic, and the only geography that leaves the server is the coordinates
- * of the rows being shown.
+ * The catalogue as a map, over the list's cached queries and URL filters. No
+ * map provider (§32): the outline is vendored and the projection arithmetic.
  */
 export const metadata = {
   title: "نقشهٔ رسانه‌ها | رسامپ",
@@ -34,9 +25,7 @@ export default async function MapPage({
   const params = toFilterParams(filters);
   const zoomed = Boolean(filters.province);
 
-  // Pins are fetched only once a province is in view. At country level they
-  // would be three thousand dots inside shapes that already carry the number,
-  // which is slower to send and harder to read.
+  // Pins only once a province is chosen; at country level the shading carries the count.
   const [stats, { total }, rawPins] = await Promise.all([
     getCachedSiteStats(),
     getCachedFilteredBillboards(params),
@@ -78,8 +67,7 @@ export default async function MapPage({
           <strong>{faNum(total)}</strong> رسانه در این محدوده
           {zoomed && <> · <strong className={styles.onMap}>{faNum(pins.length)}</strong> روی نقشه</>}
         </div>
-        {/* geoBoundaries is CC BY 4.0, so the credit is a licence term, not
-            a courtesy — and it is the only outside thing this page uses. */}
+        {/* Required by geoBoundaries' CC BY 4.0 licence. */}
         <div className={styles.credit}>مرزها: geoBoundaries (CC BY 4.0)</div>
       </div>
     </main>

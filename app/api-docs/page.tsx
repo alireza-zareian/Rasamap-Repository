@@ -1,11 +1,6 @@
-// Self-hosted API reference — renders docs/api.md as HTML at request time,
-// for signed-in staff only. The reference names every limit, lockout and
-// defence the API has — including how a patient scraper gets past them — so
-// to anyone else the address does not exist (404, not 403: a 403 would
-// confirm there is something here).
-// No external CDN, no markdown dependency: a small, escaped-first renderer that
-// covers exactly the constructs api.md uses (headings, tables, code, bold,
-// links, rules, lists, paragraphs).
+// docs/api.md as HTML, for staff only: it names every limit and defence, so to
+// anyone else the address does not exist (404, not 403). A small escape-first
+// renderer covers exactly what api.md uses; no markdown dependency.
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -99,12 +94,7 @@ function mdToHtml(md: string): string {
   return out.join("\n");
 }
 
-/**
- * docs/api.md is shipped with the build and cannot change while the server is
- * up, so reading and converting it once and holding the result is exactly
- * right — every visit was otherwise re-reading the file and re-running the
- * renderer over it.
- */
+/** Rendered once: the file ships with the build and cannot change while the server runs. */
 const renderApiDocs = unstable_cache(
   async (): Promise<string> => {
     try {
@@ -114,7 +104,6 @@ const renderApiDocs = unstable_cache(
     }
   },
   ["api-docs-html"],
-  // The file ships with the build and cannot change while the server is up.
   { revalidate: false },
 );
 

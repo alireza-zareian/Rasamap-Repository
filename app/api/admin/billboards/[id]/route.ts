@@ -19,9 +19,8 @@ export const GET = defineRoute(
   },
 );
 
-// PUT /api/admin/billboards/[id] — edit (editor+). Review state is not among
-// the fields: it moves only through POST /api/admin/listings/[id]/decision,
-// which is where its transitions are enforced.
+// PUT /api/admin/billboards/[id] — edit (editor+). Review state is not a field:
+// it moves only through .../listings/[id]/decision and .../visibility.
 export const PUT = defineRoute(
   {
     name: "admin/billboards/[id]",

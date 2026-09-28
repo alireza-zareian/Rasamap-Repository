@@ -25,9 +25,8 @@ export const PATCH = defineRoute(
     }),
   },
   async ({ ip, actor, body, tooMany, audit }) => {
-    // The current password is a credential check like a sign-in, so it spends
-    // the same budget: a borrowed session must not become a way to guess the
-    // password behind it at 600 tries a minute.
+    // A credential check, so it spends the sign-in budget: a borrowed session
+    // must not become a fast way to guess the password.
     const attempt = await adminLoginAttempt(actor.email, ip, null);
     if (!attempt.result.allowed) return tooMany(attempt.result);
 

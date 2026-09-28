@@ -13,11 +13,9 @@ const AUDIT_ACTION = {
 } as const;
 
 /**
- * POST /api/admin/listings/[id]/decision — approve, reject, or send back.
- *
- * admin+ only: publishing someone's paid listing is a money decision, not an
- * edit. `note` is required for reject and revision — a bare refusal helps no
- * one. The transitions are in decisionOutcome (lib/domain/listing.ts).
+ * POST /api/admin/listings/[id]/decision — approve, reject or send back.
+ * Admin and above: approving a paid listing is a money decision. A refusal
+ * needs a `note`. The transitions are decisionOutcome (lib/domain/listing.ts).
  */
 export const POST = defineRoute(
   {

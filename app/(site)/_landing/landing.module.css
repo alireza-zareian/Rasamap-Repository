@@ -1,9 +1,7 @@
 .page { color: var(--text-main); }
 
 /* ── Hero ── */
-/* clip, not hidden: see hero-scene.module.css for why a scroll container here
-   would break the scene. The min-height leaves room below the search box for
-   the street the scene draws. */
+/* `clip`, not `hidden` (see hero-scene.module.css). The min-height leaves room for the street. */
 .hero { position: relative; overflow: clip; padding-top: var(--topbar-h); min-height: calc(var(--topbar-h) + 470px); }
 .heroBg { position: absolute; inset: 0; background: linear-gradient(135deg, #0A0E1A 0%, #0f1829 50%, #0A0E1A 100%); }
 :global([data-theme="light"]) .heroBg { background: linear-gradient(135deg, #E8EBF4 0%, #F0F2F8 50%, #E8EBF4 100%); }
@@ -206,6 +204,5 @@
   .carousel { --slide-w: 240px; }
 }
 
-/* Local: a CSS module renames every animation it names, so a @keyframes in
-   globals.css is out of its reach. */
+/* Here, not in globals.css: a module renames the animations it names. */
 @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }

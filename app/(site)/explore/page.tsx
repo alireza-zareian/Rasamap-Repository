@@ -11,13 +11,11 @@ import ExploreResults from "./ExploreResults";
 import styles from "./explore.module.css";
 
 /**
- * The catalogue — a Server Component. The Prisma query runs while the page is
- * built, so the catalogue is in the document a search engine reads, and repeat
- * visits to the same filter are served from the cache (lib/db/cached.ts).
- * /api/billboards is the same resource for anything that is not this page.
+ * The catalogue, a Server Component: the results are in the HTML a search
+ * engine reads, and repeat filters come from the cache (lib/db/cached.ts).
  */
 
-/** Slides in the hero carousel — a dozen photos is a minute of auto-advance. */
+/** Slides in the hero carousel. */
 const SHOWCASE_SLIDES = 12;
 
 export default async function ExplorePage({
@@ -33,8 +31,7 @@ export default async function ExplorePage({
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  // A page past the end is reachable by hand or from a stale link, and must
-  // not be answered with "nothing matched".
+  // Past the end (a stale link) is not the same as "nothing matched".
   const pastEnd = total > 0 && filters.page > totalPages;
 
   return (
@@ -48,13 +45,11 @@ export default async function ExplorePage({
       <div className={styles.bar}>
         <div className={styles.barCount}>
           <strong>{faNum(total)}</strong> رسانه یافت شد
-          {/* A visitor who arrived from a media page's "nearby" link and is not
-              told the results are cut to a circle reads a short list as an
-              empty catalogue. */}
+          {/* Say the results are cut to a circle, or a short list reads as an empty catalogue. */}
           {filters.near && <span className={styles.barNear}> — در شعاع {faNum(filters.near.radiusKm)} کیلومتری</span>}
         </div>
         <div className={styles.barActions}>
-          {/* The filters travel to the map, so switching view keeps the search. */}
+          {/* The filters travel to the map view. */}
           <ButtonLink href={exploreHref(filters, "/explore/map")} size="sm"><MapIcon size={14} /> نمای نقشه</ButtonLink>
           <SortSelect filters={filters} />
         </div>
@@ -84,11 +79,7 @@ export default async function ExplorePage({
   );
 }
 
-/**
- * The page numbers to show: the first, the last, and two either side of the
- * current one, with a gap marker where pages are skipped. With only
- * "previous / next" the 148 pages of the full catalogue were 147 clicks apart.
- */
+/** First, last, and two either side of the current page, with gaps marked. */
 function pageWindow(current: number, last: number): (number | "gap")[] {
   const pages = new Set([1, last, current - 2, current - 1, current, current + 1, current + 2]);
   const sorted = [...pages].filter(p => p >= 1 && p <= last).sort((a, b) => a - b);
@@ -100,10 +91,7 @@ function pageWindow(current: number, last: number): (number | "gap")[] {
   return out;
 }
 
-/**
- * Real links rather than buttons, so every page of the catalogue has an address
- * a crawler can follow and a visitor can bookmark.
- */
+/** Links, not buttons, so every page has an address to follow and bookmark. */
 function Pager({ filters, totalPages }: { filters: ExploreFilters; totalPages: number }) {
   const link = (to: number, label: React.ReactNode, aria: string, disabled = false) =>
     disabled

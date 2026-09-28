@@ -13,12 +13,8 @@ import styles from "./_landing/landing.module.css";
 import reveal from "@/components/ui/reveal.module.css";
 
 /**
- * The landing page — a Server Component. Its statistics and featured media are
- * read from the same cached queries the catalogue uses and are in the HTML.
- * The markup is rendered here; only the two things that need a browser — the
- * search box and the auto-advancing carousel — are client components. It used
- * to be one 400-line client component with its own copy of the header and the
- * footer.
+ * The landing page, a Server Component over the catalogue's cached queries.
+ * Only the search box and the carousel are client components.
  */
 
 /** Cards in the featured gallery. */
@@ -109,7 +105,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Left out entirely if nothing in the catalogue has a photograph. */}
+      {/* Absent when nothing in the catalogue has a photo. */}
       {featured.length > 0 && (
         <section className={styles.featured}>
           <div className={styles.featuredInner}>

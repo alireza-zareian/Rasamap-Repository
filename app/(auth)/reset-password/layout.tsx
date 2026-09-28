@@ -3,9 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "بازیابی رمز عبور | رسامپ",
   description: "بازیابی رمز عبور حساب کاربری رسامپ با رمز یک‌بارمصرفِ پیامکی.",
-  // Useful to a person, useless in a search result — and in the admin case,
-  // private. Keeping it out of the index means nobody arrives here from Google
-  // expecting to find media.
+  // Useful to a person, useless as a search result.
   robots: { index: false, follow: false },
 };
 

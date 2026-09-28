@@ -1,12 +1,9 @@
-/* Room for the phone tab bar, which is fixed over the bottom of the page.
-   --bottomnav-offset is read by the staff bar so it sits above the tab bar
-   rather than under it. */
 .site { min-height: 100vh; display: flex; flex-direction: column; }
-/* The width: a flex item with auto side margins shrinks to its content instead
-   of stretching, so a page that centres its <main> with a max-width would
-   collapse to the width of whatever is inside it. */
+/* width: a flex item with auto margins would shrink to its content. */
 .site > :global(main) { flex: 1; width: 100%; }
 
+/* Room for the phone's fixed tab bar. The staff bar, the compare tray and toasts
+   read --bottomnav-offset to sit above it. */
 @media (max-width: 768px) {
   .site {
     --bottomnav-offset: calc(var(--bottomnav-h) + env(safe-area-inset-bottom));

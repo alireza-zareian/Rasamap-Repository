@@ -9,17 +9,10 @@ import { auditLog } from "@/lib/audit";
 import { isLocalNetworkRequest, isLoopbackAddress } from "@/lib/auth/client-ip";
 import { MobileNumber } from "@/lib/domain/phone";
 
-// Echo the code back on screen, for a machine with no SMS line — the demo
-// laptop. It used to be refused whenever NODE_ENV was "production", which
-// `next start` always sets, so on `npm run demo` sign-up and password reset
-// could not be completed at all: the code reached no phone and no screen.
-//
-// It is keyed on the fact that matters instead: there is no SMS line to send
-// through. It needs the explicit flag too, it switches itself off the moment
-// KAVENEGAR_API_KEY is set, and it answers only a local-network visit
-// (isLocalNetworkRequest): left on by mistake on a public server, it still
-// shows nothing to anyone arriving by a public domain or address. lib/env.ts
-// also warns at boot whenever it is armed.
+// Show the code on screen when there is no SMS line — the demo laptop. Keyed
+// on that fact, not on NODE_ENV (the demo runs production). It needs the flag,
+// turns off once KAVENEGAR_API_KEY is set, answers only local-network visits,
+// and lib/env.ts warns at boot while it is on.
 const DEV_ECHO = process.env.OTP_DEV_ECHO === "1" && !smsEnabled;
 
 // POST /api/auth/otp/send — start a phone-verified flow: reset or sign-up (public)
@@ -42,19 +35,10 @@ export const POST = defineRoute(
 
     const registered = await isPhoneRegistered(phone);
 
-    // A number already registered is the answer to sign-up and the requirement
-    // for a reset, so the two purposes read the same fact in opposite
-    // directions.
-    //
-    // Only one of them can stay silent about what it found. A reset says
-    // nothing: it issues a code when the account exists and returns the
-    // identical body when it does not, so the endpoint cannot be used to test
-    // whether a number is registered. Sign-up answers plainly, because it has
-    // nothing left to hide — an account cannot be opened twice on one number,
-    // so the step that creates it must refuse a duplicate anyway, and staying
-    // quiet here would only leave a visitor who mistyped one digit waiting for
-    // a code that was never going to arrive. What bounds the abuse is the
-    // per-phone ceiling above, not silence this side of it.
+    // A reset answers the same whether or not the number is registered, so it
+    // reveals nothing. Sign-up says so plainly: creating the account would
+    // refuse a duplicate anyway, and silence would leave a mistyped number
+    // waiting for a code. The per-phone limit above bounds probing.
     if (purpose === "register" && registered) {
       return NextResponse.json(
         { error: "این شماره قبلاً ثبت شده است. وارد شوید یا رمز عبور را بازیابی کنید." },
@@ -67,10 +51,9 @@ export const POST = defineRoute(
       const code = await issueOtp(phone, purpose);
       const r = await sendOtp(phone, code);
       auditLog("otp_sent", "info", { ip, details: { purpose, delivered: r.sent, smsEnabled } });
-      // A sign-up code is shown to the whole local network, so a reviewer's
-      // phone on the demo Wi-Fi can open an account. A reset code is shown only
-      // on the machine itself: echoed to the room, anyone there could reset the
-      // demo account's password in the middle of the presentation.
+      // A sign-up code shows anywhere on the LAN (a reviewer's phone can sign
+      // up); a reset code only on the laptop itself, or anyone in the room
+      // could reset the demo account.
       const echoHere = purpose === "register" ? isLocalNetworkRequest(req, ip) : isLoopbackAddress(ip);
       if (DEV_ECHO && echoHere) devCode = code;
     }

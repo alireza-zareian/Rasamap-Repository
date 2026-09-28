@@ -22,14 +22,8 @@ export const POST = defineRoute(
   async ({ body, audit }) => {
     const customerId = await resetPasswordWithCode(body.phone, body.code, body.newPassword);
 
-    // Clear the failed-sign-in budget for this account.
-    //
-    // Forgetting a password and guessing at it is the *normal* way to arrive
-    // here, so by the time someone completes a reset their account has usually
-    // spent most of its attempts. Leaving the count standing would meet them
-    // with "this account is temporarily locked" holding the password they just
-    // chose, through a phone code they just proved they control — a refusal
-    // with no security left in it.
+    // Clear the sign-in failures: guessing is how people arrive at a reset, and
+    // a lockout after proving the phone would protect nothing.
     await resetAccountAttempts("user_login", body.phone);
 
     await audit("password_reset_self", {

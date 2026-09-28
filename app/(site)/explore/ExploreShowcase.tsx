@@ -11,11 +11,9 @@ import styles from "./explore.module.css";
 const SLIDE_MS = 5500;
 
 /**
- * The photo carousel beside the catalogue's search panel (desktop only — on a
- * phone it hid the first result). The slides arrive from the server, so the
- * first is in the HTML; this is a client component only for the auto-advance
- * and the dots. The image is eager: only the current slide is in the DOM, and
- * it is already on screen.
+ * The photo carousel beside the catalogue's search panel (desktop only). A
+ * client component for the auto-advance and dots; the first slide is in the
+ * HTML. Eager: only the current slide exists, and it is on screen.
  */
 export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
   const [idx, setIdx] = useState(0);

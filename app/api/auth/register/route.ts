@@ -9,10 +9,8 @@ import { sendSms } from "@/lib/sms";
 import { NewPassword } from "@/lib/domain/password";
 import { MobileNumber } from "@/lib/domain/phone";
 
-// An account is opened only on a number whose owner answered a code sent to it.
-// The number is the identity here — it is what signs in, what a reset is sent
-// to, and what an advertiser is called back on — so a sign-up that never proves
-// it is a sign-up that lets anyone mint accounts on other people's numbers.
+// An account opens only on a number that answered a code: the number is the
+// identity, so an unproven one would let anyone open accounts on others' phones.
 export const POST = defineRoute(
   {
     name: "auth/register",
@@ -26,8 +24,7 @@ export const POST = defineRoute(
     }),
   },
   async ({ req, body, tooMany }) => {
-    // Before the code is looked at: a code is single-use, and spending it only
-    // to say the number is taken would force a fresh one for the next attempt.
+    // Before the code: spending a single-use code to say "taken" would waste it.
     if (await isPhoneRegistered(body.phone)) throw conflict("این شماره قبلاً ثبت شده است");
 
     const codeRl = await otpVerifyRateLimit(body.phone);
@@ -35,8 +32,7 @@ export const POST = defineRoute(
 
     const customer = await registerCustomer(body);
 
-    // Welcome SMS — fire-and-forget, a no-op unless KAVENEGAR_API_KEY is set,
-    // and never allowed to fail the registration.
+    // Fire and forget; a no-op without an SMS line, and never fails the sign-up.
     void sendSms(customer.phone, "به رسامپ خوش آمدید. حساب کاربری شما با موفقیت ساخته شد.");
 
     const user = { id: customer.id, name: customer.name, phone: customer.phone };

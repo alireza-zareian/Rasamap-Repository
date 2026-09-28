@@ -41,9 +41,7 @@ const advantages = [
 ];
 
 export default async function AboutPage() {
-  // The same published-only figures the landing page shows. A page about the
-  // project is still worth rendering without them, so a failed read leaves the
-  // counters at zero — and says why in the log.
+  // The landing page's figures; a failed read leaves them at zero and logs why.
   let total = 0;
   let cityCount = 0;
   try {

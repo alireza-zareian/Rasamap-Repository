@@ -9,14 +9,9 @@ import { MAX_COMPARE, useCompareList } from "@/lib/client/use-compare-list";
 import styles from "./explore.module.css";
 
 /**
- * The results grid.
- *
- * The cards themselves come from the server: this component receives them as
- * props and never fetches. It is a Client Component only because comparison is
- * a browser-side selection — which two records the visitor has ticked, held in
- * localStorage so /compare can pick them up (lib/client/use-compare-list.ts). A Client Component is still
- * rendered to HTML on the server, so the prices, names and photos are in the
- * document either way; what "use client" buys here is the tick box working.
+ * The results grid. The cards come from the server as props; this is a Client
+ * Component only for the compare tick box (lib/client/use-compare-list.ts).
+ * It still renders to HTML on the server.
  */
 
 interface ToastState { msg: string; type: "success" | "error" | "info" }
@@ -26,11 +21,8 @@ export default function ExploreResults({ items, view }: { items: CatalogueItem[]
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  // The updater stays pure — it only computes the next list. It used to call
-  // setToast from inside it, which React does not allow: an updater may be
-  // run again or reordered when a click lands while the page is still
-  // hydrating, and the side effect then fired at the wrong time or not at all.
-  // The message is decided from the list as it is on screen.
+  // The updater stays pure — React may run it again during hydration — so the
+  // toast is decided from the list as it is on screen.
   const handleCompare = useCallback((b: CatalogueItem) => {
     const inList = compareList.some(x => x.id === b.id);
     if (!inList && compareList.length >= MAX_COMPARE) {
@@ -45,8 +37,7 @@ export default function ExploreResults({ items, view }: { items: CatalogueItem[]
 
   return (
     <>
-      {/* Busy until the saved compare selection has been read: a tick made
-          before that is a tick on a page that is not listening yet. */}
+      {/* Busy until the saved selection has been read. */}
       <div className={view === "grid" ? styles.grid : styles.list} data-testid="results" aria-busy={!ready}>
         {items.map(b => (
           <BillboardCard

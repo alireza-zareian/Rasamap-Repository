@@ -5,43 +5,23 @@ import { getCachedSiteStats } from "@/lib/db/cached";
 import { faNum } from "@/lib/format";
 
 /**
- * The card Telegram, WhatsApp and X draw when someone shares the site.
+ * The card Telegram, WhatsApp and X show for a shared link, with the real
+ * counts (read through the cache, so a share does not reach the database).
  *
- * Until now they drew nothing — no image meant a bare grey box beside the
- * link, which for a product whose whole pitch is "see the media before you
- * call" is the worst possible first impression.
+ * Persian in this renderer (Satori), learned from its output (§30):
  *
- * Generated rather than a static file so the counts on it are the real ones,
- * and rendered at build time: the numbers move a few times a day and the
- * cached read (§25) keeps this from touching the database per share.
- *
- * Two things about Persian in this renderer, both learned by looking at the
- * output rather than by reading about it.
- *
- * The font has to be handed over as bytes, and it has to be a *static* TTF.
- * Given neither, the renderer reaches out to Google Fonts, which fails on a
- * machine without that reachable and silently produces a card with Persian
- * text drawn as blank boxes — worse than no card at all. The two files in
- * assets/fonts/ are the project's own Vazirmatn with the weight axis pinned:
- * scripts/build-og-fonts.py makes them from the woff2 that ships in
- * node_modules, because Satori reads neither woff2 nor a variable axis.
+ * The font must be passed as bytes, as a static TTF; otherwise it fetches from
+ * Google Fonts and, where that is unreachable, draws blank boxes.
+ * assets/fonts/ holds Vazirmatn with the weight pinned, made by
+ * scripts/build-og-fonts.py — Satori reads neither woff2 nor a variable axis.
  */
 
 /**
- * And Satori has no bidirectional layout. It shapes the glyphs correctly and
- * then places the words left to right, so a Persian sentence comes out with
- * its words in reverse order — legible letters, unreadable sentence, which is
- * worse than no card at all. `dir="rtl"` does not fix it.
- *
- * So a line is laid out explicitly: one element per word, in a row-reverse
- * flex box. That puts the first word on the right, which is what reading order
- * means here. It also means no automatic wrapping — a line is a line — which
- * is why the copy below is short by design.
- *
- * The same reversal happens one level down, around the zero-width non-joiner
- * that Persian uses to join parts of a word without a space: «یک‌جا» came out
- * as «جایک». So each word is split on it too and its parts reversed in place,
- * with no gap — which is exactly what the character means.
+ * Satori has no bidirectional layout: words come out left to right, so a
+ * Persian sentence reads backwards, and `dir="rtl"` does not help. A line is
+ * therefore one element per word in a row-reverse flex box, with no wrapping —
+ * hence the short copy. The same reversal happens around a zero-width
+ * non-joiner («یک‌جا» became «جایک»), so each word's parts are reversed too.
  */
 const ZWNJ = "\u200c";
 

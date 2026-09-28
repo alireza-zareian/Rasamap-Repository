@@ -12,16 +12,10 @@ import {
 import styles from "./explore.module.css";
 
 /**
- * The catalogue's interactive controls.
- *
- * The results are rendered on the server. Nothing here holds a copy of the
- * filter state — every control reads the `filters` prop and writes a new
- * address, and the server sends back a new page. The exceptions are the search
- * box and the price slider, which echo the visitor at once and navigate when
- * the input settles.
- *
- * Navigation goes through a transition, so the current results stay on screen
- * while the next page is built instead of collapsing into the loading screen.
+ * The catalogue's controls. They hold no filter state: each reads `filters`
+ * and writes a new address, and the server renders the page. The search box
+ * and price slider echo at once and navigate once input settles. Navigation is
+ * a transition, so the current results stay up while the next page is built.
  */
 
 const TYPE_CHIPS: { label: string; value: BillboardType | "all"; Icon?: React.ComponentType<{ size?: number }> }[] = [
@@ -47,11 +41,7 @@ const SEARCH_DEBOUNCE_MS = 350;
 
 const SORTED_PROVINCES = [...provinces].sort((a, b) => a.name.localeCompare(b.name, "fa"));
 
-/**
- * Push a filter change to the URL. Any change except paging returns to page
- * one: staying on page 7 of a result set that just shrank to two pages shows
- * an empty catalogue for no reason.
- */
+/** Push a filter change to the URL; any change but paging returns to page one. */
 function useFilterNavigation(filters: ExploreFilters) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -73,8 +63,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
   const [price, setPrice] = useState(filters.maxPrice);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // The URL is the source of truth, and it can change without passing through
-  // these inputs — the back button, or the reset link below.
+  // The URL can change without these inputs (back button, reset link).
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { setText(filters.search); }, [filters.search]);
   useEffect(() => { setPrice(filters.maxPrice); }, [filters.maxPrice]);
@@ -150,9 +139,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
             </button>
           ))}
 
-          {/* A radial search has no control of its own up here: it is started
-              from a media page ("others near this one"), so this is where it
-              becomes visible and adjustable once it exists. */}
+          {/* A radial search starts from a media page; here it becomes visible and adjustable. */}
           {filters.near && (
             <div className={styles.near}>
               <Crosshair size={13} />

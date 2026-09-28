@@ -6,15 +6,8 @@ import { updateOwnProfile } from "@/lib/db/customers";
 import { GivenPassword, NewPassword } from "@/lib/domain/password";
 
 /**
- * GET /api/auth/me — who is signed in.
- *
- * Answers for a staff session too, not only a customer one: to the public site
- * an administrator is then not a stranger — their name is in the header and
- * they can answer a review. `isStaff` is what the site reads to decide whether
- * to offer the things only the team should see.
- *
- * Keeping the session alive needs nothing here any more: every request that
- * resolves it pushes its idle limit forward (lib/db/sessions.ts).
+ * GET /api/auth/me — who is signed in, staff included, so the public site
+ * greets staff by name and `isStaff` gates what only the team sees.
  */
 export const GET = defineRoute(
   { name: "auth/me", access: "signed-in", rateLimit: publicApiRateLimit },

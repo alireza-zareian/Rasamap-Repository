@@ -4,22 +4,13 @@ import { ButtonLink } from "@/components/ui/Button";
 
 export const metadata = {
   title: "دسترسی مجاز نیست | رسامپ",
-  // Nothing here is worth indexing, and the address only appears after a
-  // refusal — so keep it out of search results entirely.
   robots: { index: false, follow: false },
 };
 
 /**
- * "You are signed in, but not as someone who may see this."
- *
- * Before this page existed, proxy.ts answered that case by redirecting to the
- * sign-in form. For a signed-out visitor that is right. For a customer who
- * followed a link to /admin it was actively misleading: they *were* signed in,
- * so being shown a sign-in form suggested their session had failed and left
- * them typing a password that was never the problem.
- *
- * §5 asks for a designed Persian page per status code, and 403 was the one
- * missing. It deliberately does not say what lives at the address it refused.
+ * "Signed in, but not as someone who may see this" — where proxy.ts sends a
+ * customer who follows a link to /admin, instead of a sign-in form that would
+ * suggest the session failed. It does not say what the refused address holds.
  */
 export default function ForbiddenPage() {
   return (

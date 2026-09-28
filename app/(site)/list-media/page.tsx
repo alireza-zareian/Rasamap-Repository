@@ -21,22 +21,15 @@ const DONE_STEP   = 5;
 const STEP_GROUP = ["basic", "place", "size"] as const;
 
 /**
- * One key per filled-in form, sent as Idempotency-Key. A submission that
- * outlives the client's timeout may still have landed; retrying with the same
- * key replays that answer instead of hitting the duplicate guard with a
- * confusing "already submitted". getRandomValues rather than randomUUID: the
- * latter exists only in a secure context, and the demo is opened over plain
- * http from a phone (AGENTS.md rule 9).
+ * One Idempotency-Key per filled-in form: a retry after a timeout replays the
+ * answer rather than hitting the duplicate guard. getRandomValues, because
+ * randomUUID needs a secure context (rule 9).
  */
 function newIdempotencyKey(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("");
 }
 
-/**
- * What survives a trip to the sign-in page when the session ran out mid-form.
- * The text fields only: five photographs are several times what sessionStorage
- * holds, so the owner is asked to add those again.
- */
+/** What survives a sign-in detour mid-form: text only — photos exceed sessionStorage. */
 const DRAFT_KEY = "rasamap:list-media-draft";
 type SavedDraft = { form: ListingDraft; plan: ListingPlan };
 
@@ -66,16 +59,14 @@ export default function ListMediaPage() {
   useEffect(() => {
     const saved = readDraft();
     if (!saved) return;
-    // Restored once, after mount: sessionStorage does not exist while the
-    // server renders this page, so it cannot be the initial state.
+    // After mount: sessionStorage does not exist during the server render.
     setDraft(d => ({ ...d, ...saved.form }));
     setPlan(saved.plan);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     setNotice("اطلاعاتی که وارد کرده بودید بازیابی شد. لطفاً تصاویر را دوباره اضافه کنید.");
   }, [setDraft, setPlan]);
 
-  // A refresh or an accidental tab close mid-wizard would silently drop
-  // everything typed; this at least stops the browser from doing it unasked.
+  // Ask before a refresh or tab close drops what was typed.
   useEffect(() => {
     if (step === 0 || step >= DONE_STEP) return;
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
@@ -103,8 +94,6 @@ export default function ListMediaPage() {
     setSubmitting(true);
     try {
       await fetchJson("/api/listings", {
-        // The upload budget: five photographs over a mobile connection can
-        // legitimately take most of a minute.
         timeoutMs: TIMEOUT_MS.upload,
         method: "POST",
         headers: { "Idempotency-Key": idempotencyKey },
@@ -112,8 +101,7 @@ export default function ListMediaPage() {
       });
       setStep(DONE_STEP);
     } catch (err) {
-      // A session that expired while the form was being filled in is a trip to
-      // the sign-in page and back, not an error to read.
+      // An expired session: keep the draft, sign in, come back.
       if (err instanceof FetchError && err.status === 401) {
         try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form: listing.draft, plan: listing.plan })); } catch { /* storage unavailable: the redirect still helps */ }
         router.push(`/login?next=${encodeURIComponent("/list-media")}`);

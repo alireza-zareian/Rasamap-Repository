@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/Button";
 import styles from "./landing.module.css";
 
 /**
- * The hero's search: free text and, optionally, a city. The city list is the
- * catalogue's own — every city with published media, busiest first — rather
- * than six names typed into the page, and it starts on "every city": opening
- * on Tehran quietly hid 80% of the catalogue from anyone who just typed.
+ * The hero's search: free text and an optional city, from every city with
+ * published media, busiest first. It starts on "every city" — starting on
+ * Tehran hid most of the catalogue from anyone who just typed.
  */
 export default function LandingSearch({ cities }: { cities: [name: string, count: number][] }) {
   const router = useRouter();

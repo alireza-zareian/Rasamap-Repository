@@ -5,11 +5,8 @@ import { userApiRateLimit } from "@/lib/rate-limit";
 import { deleteReview } from "@/lib/db/reviews";
 
 /**
- * DELETE /api/reviews/[id] — the author removes their own review, or an editor
- * (or above) removes someone else's as moderation, which is audited.
- *
- * Editing needs no route of its own: POST /api/reviews upserts on the unique
- * (billboardId, userId) pair, so submitting again replaces what is there.
+ * DELETE /api/reviews/[id] — by its author, or by an editor as audited
+ * moderation. Editing is POST /api/reviews again, which upserts.
  */
 export const DELETE = defineRoute(
   {

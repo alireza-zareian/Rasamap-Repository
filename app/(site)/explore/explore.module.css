@@ -58,8 +58,7 @@
 .range { width: 100%; }
 .pending { font-size: 0.72rem; color: var(--accent); margin-top: 8px; }
 
-/* On a phone the location and type controls fold behind one button, so the
-   results start right under the search box. */
+/* On a phone, location and type fold behind one button so results start under the search box. */
 .locToggle {
   display: none; width: 100%; align-items: center; gap: 8px; margin-bottom: 12px;
   padding: 10px 14px; border-radius: 10px;
@@ -129,8 +128,7 @@
 @media (max-width: 768px) {
   .hero { display: block; }
   .controls { border-left: none; }
-  /* The rotating showcase pushed the first result below the fold; on a phone
-     the results come first. */
+  /* It pushed the first result below the fold. */
   .showcase { display: none; }
   .locToggle { display: flex; }
   .secondary { display: none; }
@@ -140,6 +138,5 @@
   .grid { grid-template-columns: 1fr; }
 }
 
-/* Local: a CSS module renames every animation it names, so a @keyframes in
-   globals.css is out of its reach. */
+/* Here, not in globals.css: a module renames the animations it names. */
 @keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }

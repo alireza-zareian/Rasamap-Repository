@@ -6,10 +6,9 @@ import { adminApiRateLimit } from "@/lib/rate-limit";
 import { setCustomerPassword } from "@/lib/db/customers";
 import { NewPassword } from "@/lib/domain/password";
 
-// POST /api/admin/customers/[id]/reset-password (super_admin) — set the given
-// password, or a generated one, and return it once so it can be passed on.
-// Super admin only: whoever reads that password back holds the account, so
-// this is an account takeover that only an audit row would ever reveal.
+// POST /api/admin/customers/[id]/reset-password — set the given or a generated
+// password and return it once. Super admin only: whoever reads it holds the
+// account, and only the audit row would show it.
 export const POST = defineRoute(
   {
     name: "admin/customers/[id]/reset-password",

@@ -7,18 +7,10 @@ import { recordLead } from "@/lib/db/leads";
 import { notFound } from "@/lib/domain/errors";
 
 /**
- * POST /api/billboards/[slug]/contact — hand the owner's phone number to a
- * signed-in account, and record that it happened.
- *
- * POST rather than GET on purpose. The number is the end of Rasamap's part in
- * the transaction (there is no booking — §17 of docs/engineering-decisions.md),
- * so the reveal is the last observable signal of demand and the only thing the
- * lead table can be built from. A GET would be fired by every page render and
- * would record interest nobody expressed; asking for the number is an explicit
- * click, and an explicit click is a write.
- *
- * The number is kept out of every public response so it cannot be scraped
- * anonymously (§20).
+ * POST /api/billboards/[slug]/contact — give a signed-in account the owner's
+ * phone and record the lead (§17, §23). POST, because asking is a deliberate
+ * click that writes; a GET could be fired by a prefetch. The number is in no
+ * public response (§20).
  */
 export const POST = defineRoute(
   {
@@ -36,8 +28,7 @@ export const POST = defineRoute(
     if (!billboard) throw notFound("رسانه یافت نشد");
     const phone = billboard.phone && billboard.phone !== "—" ? billboard.phone.trim() : "";
 
-    // Only a customer produces a lead: a staff member checking a page is not
-    // demand.
+    // Staff checking a page is not demand.
     if (actor.kind === "customer") await recordLead(billboard.id, actor.id);
 
     return NextResponse.json(

@@ -5,7 +5,7 @@ import { positiveId } from "@/lib/http/params";
 import { userApiRateLimit } from "@/lib/rate-limit";
 import { deleteReply } from "@/lib/db/reviews";
 
-// DELETE /api/reviews/[id]/replies/[replyId] — by its author, or by an editor and above.
+// DELETE /api/reviews/[id]/replies/[replyId] — by the customer who wrote it, or an editor and above.
 export const DELETE = defineRoute(
   {
     name: "reviews/[id]/replies/[replyId]",

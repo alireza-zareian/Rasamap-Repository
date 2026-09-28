@@ -5,11 +5,7 @@ import { SectionCard } from "@/components/admin/Badge";
 import { StatusScreen } from "@/components/ui/StatusScreen";
 import { Button } from "@/components/ui/Button";
 
-/**
- * A failure inside one section. The menu and the top bar belong to the layout
- * above this boundary, so they stay: the admin can retry, or move to another
- * section, without the whole panel turning into an error page.
- */
+/** A failure in one section; the menu and top bar, from the layout above, stay usable. */
 export default function PanelError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => { console.error(error); }, [error]);
 

@@ -9,8 +9,7 @@
 .previewLink { margin-right: auto; font-size: 0.75rem; color: #8B7BE0; text-decoration: none; border: 1px solid rgba(98, 71, 196, 0.4); border-radius: 8px; padding: 5px 13px; white-space: nowrap; }
 
 .crumbs { max-width: 1350px; margin: 0 auto; padding: 16px 20px 0; display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-muted); }
-/* A 14px line of text is half the 44px a finger needs; the padding grows the
-   target and the negative margin takes the growth back out of the layout. */
+/* Padding grows the target toward 44px; the negative margin takes it back out of the layout. */
 .crumbs a { color: var(--text-muted); text-decoration: none; padding: 10px 6px; margin: -10px -6px; }
 .crumbs span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
 
@@ -78,9 +77,8 @@
   border: 1px solid rgba(59, 123, 245, 0.28); border-radius: 7px; padding: 4px 11px;
 }
 
-/* A phone stacks the two columns and reads: title and photos, then the price
-   and the map, then the description and the reviews. `display: contents`
-   lets the head and body of the main column be ordered around the side one. */
+/* On a phone: title and photos, then price and map, then description and
+   reviews. `display: contents` lets the main column's parts order around the side. */
 @media (max-width: 768px) {
   .grid { display: flex; flex-direction: column; align-items: stretch; }
   .main { display: contents; }
