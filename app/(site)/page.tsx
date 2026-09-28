@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import IntentLink from "@/components/ui/IntentLink";
 import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Phone, Monitor, Milestone, Train, Map } from "lucide-react";
 import { getCachedSiteStats, getCachedShowcaseBillboards } from "@/lib/db/cached";
@@ -16,6 +17,9 @@ import reveal from "@/components/ui/reveal.module.css";
  * The landing page, a Server Component over the catalogue's cached queries.
  * Only the search box and the carousel are client components.
  */
+
+/** The one address of the home page, whatever query string a shared link carries. */
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 /** Cards in the featured gallery. */
 const GALLERY_CARDS = 12;

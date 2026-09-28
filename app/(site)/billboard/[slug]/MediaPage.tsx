@@ -82,6 +82,20 @@ function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
   };
 }
 
+/** The trail drawn above the title, for a search result to show instead of the URL. */
+function breadcrumbJsonLd(b: Billboard) {
+  const trail = [
+    { name: "خانه", url: `${SITE_URL}/` },
+    { name: "جستجو", url: `${SITE_URL}/explore` },
+    { name: b.name, url: `${SITE_URL}/billboard/${b.slug}` },
+  ];
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: trail.map((t, i) => ({ "@type": "ListItem", position: i + 1, name: t.name, item: t.url })),
+  };
+}
+
 /** "Nearby" from a media page; the results page can widen it. */
 const NEARBY_RADIUS_KM = 5;
 
@@ -92,6 +106,8 @@ export async function mediaMetadata(slug: string): Promise<Metadata> {
   const b = found.billboard;
   return {
     title: `${b.name} | رسامپ`,
+    // The public address, which the staff preview (served under it) shares.
+    alternates: { canonical: `/billboard/${b.slug}` },
     description: `${TYPE_LABEL[b.type] ?? b.type} در ${b.city} — ${b.width}×${b.height} متر — ${faNum(b.price)} میلیون تومان/ماه`,
     openGraph: {
       title: b.name,
@@ -132,7 +148,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(mediaJsonLd(b, area, phoneAvailable)).replace(/</g, "\\u003c"),
+          __html: JSON.stringify([mediaJsonLd(b, area, phoneAvailable), breadcrumbJsonLd(b)]).replace(/</g, "\\u003c"),
         }}
       />
 

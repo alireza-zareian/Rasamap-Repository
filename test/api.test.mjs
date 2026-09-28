@@ -316,6 +316,30 @@ test("an address that cannot be percent-decoded is a 404, not a 500", async () =
   }
 });
 
+test("a catalogue view has its own title and one canonical address; a one-off query is not indexed", async () => {
+  const head = (html) => ({
+    title: html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "",
+    canonical: html.match(/<link rel="canonical" href="([^"]*)"/)?.[1] ?? "",
+    noindex: /<meta name="robots" content="noindex/.test(html),
+  });
+
+  const city = head((await api("/explore?type=digital&city=" + encodeURIComponent("مشهد") + "&sortBy=price_desc&view=list")).json);
+  assert.ok(city.title.startsWith("دیجیتال در مشهد"), city.title);
+  const canonical = new URL(city.canonical.replace(/&amp;/g, "&"));
+  assert.equal(canonical.pathname, "/explore");
+  assert.equal(canonical.searchParams.get("type"), "digital");
+  assert.equal(canonical.searchParams.get("city"), "مشهد");
+  assert.ok(!canonical.searchParams.has("sortBy") && !canonical.searchParams.has("view"),
+    "sort and layout must not be part of the canonical address: " + city.canonical);
+  assert.equal(city.noindex, false);
+
+  const typed = head((await api("/explore?search=" + encodeURIComponent("ونک"))).json);
+  assert.equal(typed.noindex, true, "a free-text search result must stay out of the index");
+
+  const media = head((await api("/billboard/valiasr-tower")).json);
+  assert.ok(media.canonical.endsWith("/billboard/valiasr-tower"), media.canonical);
+});
+
 test("admin search finds a row by its slug", async () => {
   const staff = await mintSession({ role: "editor" });
   const { status, json } = await api("/api/admin/billboards?q=valiasr-tower&limit=20", { token: staff });

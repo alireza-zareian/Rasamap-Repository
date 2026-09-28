@@ -1,4 +1,5 @@
-import { AVAILABILITIES, BILLBOARD_TYPES, type Availability, type BillboardType } from "./types";
+import { AVAILABILITIES, BILLBOARD_TYPES, typeLabels, type Availability, type BillboardType } from "./types";
+import { faNum } from "./format";
 import { provinces, getProvince } from "@/lib/geo/iran-cities";
 import type { BillboardFilterParams } from "./db/billboards";
 
@@ -162,4 +163,24 @@ export function hasActiveFilters(f: ExploreFilters): boolean {
     f.search || f.type !== "all" || f.availability ||
     f.province || f.city || f.maxPrice < MAX_PRICE || f.near,
   );
+}
+
+/**
+ * How a search engine should see this view. A type and a place make a page
+ * worth indexing on its own — «بیلبورد در مشهد» is what people search for — so
+ * each gets its own title. Free text, a map circle, a price or an availability
+ * filter are one visitor's query, not a page: kept out of the index (followed,
+ * so the media pages they list are still found). The canonical address drops
+ * what only changes the presentation, the sort and the layout.
+ */
+export function exploreSeo(f: ExploreFilters): { title: string; canonical: string; indexable: boolean } {
+  const place = f.city || f.province;
+  const what = f.type !== "all" ? typeLabels[f.type] : "رسانه‌های تبلیغاتی";
+  const heading = f.type === "all" && !place ? "جستجوی رسانه" : `${what} در ${place || "ایران"}`;
+  const title = f.page > 1 ? `${heading} — صفحهٔ ${faNum(f.page)}` : heading;
+  return {
+    title,
+    canonical: exploreHref({ ...f, sortBy: DEFAULT_FILTERS.sortBy, view: DEFAULT_FILTERS.view }),
+    indexable: !f.search && !f.near && f.maxPrice >= MAX_PRICE && !f.availability,
+  };
 }

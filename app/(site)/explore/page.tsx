@@ -4,18 +4,29 @@ import { SearchX, Map as MapIcon } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedShowcaseBillboards, getCachedSiteStats } from "@/lib/db/cached";
-import { parseExploreParams, toFilterParams, exploreHref, PAGE_SIZE, type ExploreFilters } from "@/lib/explore-query";
+import { parseExploreParams, toFilterParams, exploreHref, exploreSeo, PAGE_SIZE, type ExploreFilters } from "@/lib/explore-query";
 import { ExploreControls, SortSelect } from "./ExploreControls";
 import ExploreShowcase from "./ExploreShowcase";
 import ExploreResults from "./ExploreResults";
 import styles from "./explore.module.css";
 
-/** The counts come from the catalogue: the hand-written «۲۸۰۰ … ۸۷ شهر» they replace had drifted to 3545 in 100. */
-export async function generateMetadata(): Promise<Metadata> {
+/**
+ * A title per type and place, one canonical address per view, and no index for
+ * a one-off query (exploreSeo). The counts come from the catalogue: the
+ * hand-written «۲۸۰۰ … ۸۷ شهر» they replace had drifted to 3545 in 100.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const seo = exploreSeo(parseExploreParams(await searchParams));
   const { total, cityCount } = await getCachedSiteStats();
   return {
-    title: "جستجوی رسانه | رسامپ",
+    title: `${seo.title} | رسامپ`,
     description: `جستجو و فیلتر ${faNum(total)} بیلبورد، تلویزیون شهری، عرشه پل و ایستگاه در ${faNum(cityCount)} شهر ایران.`,
+    alternates: { canonical: seo.canonical },
+    ...(seo.indexable ? {} : { robots: { index: false, follow: true } }),
   };
 }
 
