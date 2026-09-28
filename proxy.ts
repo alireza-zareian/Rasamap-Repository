@@ -20,6 +20,16 @@ const CATALOGUE_PAGE = /^\/(explore|billboard)(\/|$)/;
 /** A media page itself, not its /preview. */
 const MEDIA_PAGE = /^\/billboard\/[^/]+$/;
 
+/** Whether percent-decoding the path would throw, as Next's own param decoding then does (a 500). */
+function undecodable(pathname: string): boolean {
+  try {
+    decodeURIComponent(pathname);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 // Photos: bandwidth, and what a copy site would want.
 const PROTECTED_ASSET = /^\/(images\/scraped|uploads)\//;
 
@@ -46,6 +56,14 @@ export async function proxy(req: NextRequest) {
   // Monitors call themselves curl or Go-http-client, which the bot filter
   // refuses. The endpoint returns no data, so exempting it gives a scraper nothing.
   if (pathname === HEALTH_PATH) return NextResponse.next();
+
+  // "/billboard/%E0%A4%A" reached the route and failed there with a 500. It
+  // names nothing, so it gets the not-found page (any path with no route).
+  if (undecodable(pathname)) {
+    const missing = req.nextUrl.clone();
+    missing.pathname = "/404";
+    return NextResponse.rewrite(missing);
+  }
 
   const ua = req.headers.get("user-agent") ?? "";
   const isSearchBot = SEARCH_BOT.test(ua);

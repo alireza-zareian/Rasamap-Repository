@@ -310,6 +310,12 @@ test("a staff session is never handed the visitors' cached copy", async () => {
   assert.equal(res.headers.get("x-nextjs-cache"), null, "staff must get the uncached preview route");
 });
 
+test("an address that cannot be percent-decoded is a 404, not a 500", async () => {
+  for (const path of ["/billboard/%E0%A4%A", "/uploads/%E0%A4%A"]) {
+    assert.equal((await api(path)).status, 404, path);
+  }
+});
+
 test("admin search finds a row by its slug", async () => {
   const staff = await mintSession({ role: "editor" });
   const { status, json } = await api("/api/admin/billboards?q=valiasr-tower&limit=20", { token: staff });
