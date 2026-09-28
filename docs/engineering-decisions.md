@@ -2263,6 +2263,12 @@ counter (`/proc/<pid>/stat`) is read before and after.
 | The nginx example skipped the hotlink check | it serves `/images/` itself, so `proxy.ts` never runs | `valid_referers` in the example |
 | A 1.2 MB PNG could declare 20000 × 20000 | built one; the listing route accepted it (the new test failed first) | header dimensions read and capped at 8000 px / 40 MP |
 | A stop reset every open request | — | `server.mjs` finishes requests in flight: 20 of 20 answered 200 across a SIGTERM, exit 2.5 s later |
+| The catalogue ran an invisible 60 fps loop | idle 10 s with a real browser UA: `/explore` 585 animation frames and 532–753 ms of main thread; every other page 12–17 ms. The source was `SnakeScroll`, a decoration drawn under the results | removed with its stylesheet |
+
+The first idle measurement of `/explore` read almost zero. It was taken with
+headless Chrome's own user agent, which the bot filter answers with a 403
+page — the measurement had timed the refusal. Every browser measurement since
+sets a real user agent, as `test/browser.mjs` does.
 
 **Probed and already sound** (each by an attack, not by reading): 540
 distinct query strings grew the query cache by 5 entries (free text, map
@@ -2281,14 +2287,59 @@ page HTML carries the React Server Components payload beside the markup
 (45–63 KB) — that is how the App Router hydrates, not a leak: nothing in it is
 a field the page does not draw.
 
-**Not done, and why.** Compression happens inside Node, 30–40% of each
-request's CPU; behind nginx, `compress: false` and nginx's own gzip would move
-that work to C — but it cannot be measured without the nginx this environment
-lacks, and on the demo laptop there is no nginx. A short `proxy_cache` in
-nginx for anonymous GETs of the catalogue would take the render off repeat
-visits entirely; same reason. SQLite `synchronous=NORMAL` would save a sync per
-write; the Prisma adapter opens its own connection, and 200 concurrent writes
-already finish in 1.5 s.
+**What nginx adds on a real host.** `deploy/nginx.conf.example` was run in
+front of the production build: static files from disk, gzip, upstream
+keepalive, and a page cache that stores only what the app marks `s-maxage` and
+never `/api/` or a signed-in visitor. The landing page went from 226 to
+1,079 req/s (p50 85 → 17 ms, 20 concurrent). The first draft also cached
+`/api/billboards`, which answers `public, max-age=60` — that would have hidden
+repeat calls from the JSON catalogue's budget, so `/api/` now bypasses the
+cache. What each setting costs is in RUNBOOK.md, "Production: what nginx takes
+off the app".
+
+**Not done, and why.** Compression happens inside Node, 30–40 % of each
+request's CPU; `compress: false` behind nginx would move it, but the demo
+laptop has no nginx and must keep it, so the switch is documented rather than
+made. SQLite `synchronous=NORMAL` would save a sync per write; the Prisma
+adapter opens its own connection, and 200 concurrent writes already finish in
+1.5 s.
+
+### Every comment, read against its code
+
+Asked to make every comment true, short and free of claims. Each file was read
+with the code under each comment; each commit was checked by a script that
+strips comments from both sides and requires the rest to be byte-identical
+(TypeScript through the compiler's printer, Python through `ast`), so the pass
+could not change behaviour by accident. Paths, `§` numbers and identifiers
+named in comments were resolved against the tree.
+
+What it found beyond wording:
+
+- **Comments that described other code.** A cache said "one entry serves every
+  neighbour" when the key is the exact query; a page cap was described as the
+  last page of the catalogue; a payload size quoted a figure from before a
+  later cut; three headers named files that no longer exist; sign-in claimed
+  every attempt costs a bcrypt comparison, when a malformed identifier is
+  refused before any; the importer's field list named a `status` column split
+  in §35. Each was corrected to what the code does.
+- **A key in the source.** `scripts/geocode-billboards.mjs` carried a Neshan
+  API key as a literal. It now reads `NESHAN_API_KEY` and refuses to run
+  without it. The key stays in the git history, so it has to be revoked in
+  the Neshan panel.
+- **A deployment step that would have dropped the database's safety net.** The
+  RUNBOOK's first-deployment block ran `npm run db:migrate`, which is
+  `prisma migrate dev` — it can reset a database and must not run on a server.
+  It now runs `prisma migrate deploy`.
+- **A wrong script name** in the demo seed's usage line, Persian comments in an
+  English codebase, and two doc blocks that sat on the wrong function.
+
+**Found and left for a decision** (each is a behaviour change, not a comment):
+a staff member below editor cannot delete their own reply; the manifest's
+`background_color` is dark while the default theme is light; the theme toggle
+writes `localStorage` inside a state updater, which React may call twice;
+`IRAN_LNG.min` is 44 where `lib/geo/distance.ts` uses 43; `updateBillboard`
+reads `area` before writing it rather than in one statement; `next dev` does
+not set `x-rasamap-peer`, so rate limits in dev see one address.
 
 ---
 
@@ -2344,4 +2395,5 @@ already finish in 1.5 s.
 | 2026-09-27 | **Third review — sessions, uploads, styles** | §36 — database sessions instead of a JWT; multipart uploads stored outside `public/`; `TRUSTED_PROXY_COUNT` defaults to 0; bounded page cache; take-down and review moderation; `unknown` availability for crawled rows, linked sources, Iranian map links; every dataset city known; readable slugs; one password rule and Persian digits read as Latin; CSS modules across the site with shared `Button`/`Dialog`/`StatusScreen`, and a test that an animation named in a module is defined there. 18 unit + 181 API + 8 importer + 11 browser tests; a stranger learns nothing of the internals (no framework banner, `/api-docs` staff-only) and the JSON catalogue has its own budget (§20b). |
 | 2026-09-27 | **Native visual effects** | §37 — card-to-gallery morph (View Transitions), scroll reveals (view timelines); main-thread time unchanged within noise; three compare-selection faults behind a flaky test fixed. |
 | 2026-09-27 | **Fourth review — cost of a visit** | §38 — list links prefetch on intent (a catalogue visit's background requests 91 → 22, server CPU 660 → 440 ms); the shimmer no longer repaints forever; photos cached a week; gigantic-image uploads refused; graceful shutdown. Seven attacks on existing defences, all held. |
+| 2026-09-28 | **Every comment against its code; nginx proven** | §38 — comment pass over lib, app, components, tests, prisma, scripts and scraper, each commit proved comment-only by a stripping diff; a hardcoded Neshan key moved to the environment; the invisible `/explore` loop removed; `migrate dev` taken out of the deployment steps; the nginx example run in front of the production build (landing 226 → 1,079 req/s) and corrected to never cache `/api/`. |
 | 2026-09-27 | **3D hero street** | §37 — CSS 3D street of real media on the landing, one-shot arrival + scroll-linked approach; no server cost, load time within noise; a 300 ms 3D floor plane and a flattening opacity found by measurement and designed out. Card spotlight removed. |
