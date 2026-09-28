@@ -7,7 +7,7 @@ isolated SQLite database (`prisma/test.db`, git-ignored, never `dev.db`).
 ## Run
 
 ```bash
-npm test          # unit tests -> reset test db -> seed -> next build -> next start :3100 -> API + importer tests -> stop
+npm test          # unit tests -> reset test db -> seed -> next build -> server.mjs on :3100 -> API + importer tests -> stop
 npm run test:unit # the pure rules in lib/domain and the source guards: no build, no server, ~0.5 s
 ```
 
@@ -31,8 +31,8 @@ same output that ships. Two guards keep a stall legible: the build goes to
 Helper scripts (rarely needed on their own):
 
 ```bash
-npm run test:reset   # recreate prisma/test.db schema from prisma/schema.prisma
-npm run test:seed    # load fixtures: 3 billboards, 2 users (password "secret123")
+npm run test:reset   # recreate prisma/test.db from the migrations (migrate deploy, not db push)
+npm run test:seed    # load fixtures: billboards, customers (password "secret123"), one staff row per role
 ```
 
 ### Unit tests
@@ -57,17 +57,35 @@ module names is defined in that module.
 | Object-level authz | a user cannot see another user's submissions via `/api/listings` |
 | Sorting | `traffic_desc` really orders by estimated views and `area_desc` by width × height (each guarded against a vacuous pass) |
 | Anti-scraping | a scraper user agent is refused; `limit` is capped at 48 |
-| Admin route | 401 without a session; 401 for role `user`; 200 for role `admin`; POST returns 403 for role `viewer` (RBAC) |
+| Admin route | 401 without a session; 403 for a customer (signed in, wrong role); 200 for role `admin`; a write returns 403 for role `viewer` (RBAC) |
 | Reviews | 404 on an unpublished listing; a successful review **recomputes** `billboards.rating` / `reviewCount`; a second review by the same account edits rather than adds |
 
-Sessions for authenticated cases are minted directly with `jose` using the same
-`AUTH_SECRET` the test server runs with (`test/helpers.mjs`), so no login round
-trip is needed.
+Sessions for authenticated cases are opened the way a sign-in opens one — a
+random token in the cookie, its SHA-256 as a `sessions` row (`mintSession` in
+`test/helpers.mjs`) — so no login round trip is needed. Staff sessions name the
+seeded staff rows, because the server reads that row on every request.
+
+## Browser tests
+
+```bash
+npm run test:e2e    # reset prisma/e2e.db -> seed -> build into .next-e2e -> :3200 -> Chrome -> stop
+```
+
+11 flows, driven over the Chrome DevTools Protocol by `test/browser.mjs` (no
+Playwright: its browser download is not reachable from the development
+machine). They check that the server's answers become a usable page: the
+filter narrows the catalogue, sign-in sticks across a reload, sign-up takes its
+code, the contact number appears only after a sign-in, a listing with a photo
+arrives as pending, the panel refuses a customer, and the catalogue works at
+phone width. A failure leaves a screenshot in `test/screenshots/`. Set
+`CHROME_PATH` when Chrome is not at its usual place. §31 of
+`docs/engineering-decisions.md` records the races behind the first flaky
+runs and how each was closed.
 
 ## Benchmark
 
 ```bash
-npm run dev                 # in one terminal (uses the real dev.db + .env.local)
+npm run demo                # in one terminal — a production build; never measure `next dev` (§22)
 npm run bench               # in another: 20 clients x 10s against /api/billboards?limit=24
 BENCH_CONCURRENCY=50 BENCH_DURATION_MS=8000 npm run bench
 npm run bench -- http://localhost:3000 /api/billboards?limit=48

@@ -3,13 +3,18 @@
 Review the security posture of a specific API route or component.
 
 Check for:
-1. Missing session/auth check
-2. Missing Zod validation on inputs
-3. Sort/filter values not checked against allowlists
-4. `JSON.parse(userInput)` anywhere
-5. User enumeration risk in auth responses
-6. Missing rate limit on auth endpoints
-7. Any `eval`, `innerHTML`, or XSS vectors in client components
+1. A route not declared with `defineRoute()`, or with the wrong `access`
+2. Object-level authorisation: does `lib/db/` check the actor owns the row it touches?
+3. Missing Zod validation on inputs
+4. Sort/filter values not checked against allowlists
+5. `JSON.parse(userInput)` anywhere
+6. User enumeration risk in auth responses — in the text and in the timing
+7. A rate limit keyed only on the address where an account key is possible
+8. Any `eval`, `dangerouslySetInnerHTML`, or XSS vectors in client components
+9. A property of the connection read from the build (rule 9 in `AGENTS.md`)
+10. A field a client component or error body does not need (rule 12)
+
+Label each finding verified (you broke it) or suspected (you read it).
 
 Read `docs/api.md` for expected patterns.
 

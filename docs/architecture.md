@@ -109,17 +109,25 @@ the server would be making to itself.
 
 ## 6. Measured, not asserted
 
-From the `import` data `docs/thesis/build.py` extracts (195 TypeScript files,
-497 edges):
+From the `import` data `docs/thesis/build.py` extracts (232 TypeScript files,
+667 edges, rebuilt 2026-09-28):
 
 - **Zero cycles.** No file depends, directly or through others, on itself.
 - **Zero upward edges.** Dependencies run one way — pages and routes →
   components → `lib` — so any layer can be read, tested or replaced on its own.
-- **13 files import the database client, all of them inside `lib/db/`.** Before
+- **14 files import the database client, all of them inside `lib/db/`.** Before
   the data layer was made the only door (§35), 30 did, including the route
   handlers themselves.
-- **One route pipeline.** All 36 route files declare themselves through
-  `defineRoute()`; the order of the security checks is written once.
+- **One route pipeline.** All 36 files under `app/api/` declare themselves
+  through `defineRoute()`; the order of the security checks is written once.
+
+Path 1 has one cost that a single request does not show. A `<Link>` prefetches
+the page it points at as soon as it is on screen, so a catalogue of cards asked
+the server to render pages nobody opened — measured over one real visit, 91
+background requests. Links in lists now prefetch on intent (a pointer, a touch,
+keyboard focus; `components/ui/IntentLink.tsx`): 22 requests, and the server's
+CPU for the visit 660 → 440 ms. The header keeps plain links, so moving between
+the main sections stays instant (§38).
 
 What remains is tuning, not redesign — Partial Prerendering on `/explore`,
 streaming more of the static chrome — tracked in `docs/STATUS.md`.

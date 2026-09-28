@@ -484,8 +484,10 @@ waiting for me — stopping only under rule 0.7.
 ## PROJECT-SPECIFIC NOTES (Rasamap — read before running the phases)
 
 - **Stack reality:** Next.js 16.2.11 App Router, React 19, TypeScript strict, SQLite +
-  Prisma 7 (`better-sqlite3` adapter, WAL mode), JWT HttpOnly cookies (jose), Leaflet.
-  Single instance, single SQLite file. No test suite exists.
+  Prisma 7 (`better-sqlite3` adapter, WAL mode), database sessions (random token,
+  SHA-256 row) in HttpOnly cookies, CSS Modules, a vendored SVG map with no provider.
+  Single instance, single SQLite file. `npm test` (unit + API + importer on a
+  production build) and `npm run test:e2e` (browser flows) — see test/README.md.
 - **Scale reality:** ~2800-3500 billboard rows, read-heavy, a handful of concurrent
   users during the demo. Not a high-traffic product.
 - **Already done — do NOT redo (confirm, then move on):** security headers + CSP
@@ -495,16 +497,15 @@ waiting for me — stopping only under rule 0.7.
   server-only data layer that alone imports Prisma (`lib/db/`), bcrypt cost 12 + timing-safe
   dummy hash, Zod `.safeParse()` on every route, allowlists for sort/filter, styled
   Persian `app/error.tsx` + `app/not-found.tsx`, `app/robots.ts` + `app/sitemap.ts`,
-  server-side pagination on `/api/billboards`, composite DB indexes, reservation overlap
-  check already wrapped in a `prisma.$transaction`, audit log in memory and in
-  `audit_logs` (`lib/audit.ts`).
+  server-side pagination on `/api/billboards`, composite DB indexes, conditional
+  writes and unique constraints on every race (§8), audit log in memory and in
+  `audit_logs` (`lib/audit.ts`), nginx/systemd templates in `deploy/` (RUNBOOK.md).
 - **Hard constraints (never violate):** Zod `.safeParse()` only; every route declared
   with `defineRoute()` (order `session -> rate limit -> role -> Zod -> business logic`);
   DB access only through `lib/db/*`
-  never `lib/data.ts`; all user-visible strings in Persian; styling is inline
-  `style={{}}` only, no Tailwind classes in JSX; `proxy.ts` not `middleware.ts`.
+  never `lib/data.ts`; all user-visible strings in Persian; a CSS module per component,
+  no Tailwind classes and no static inline styles; `proxy.ts` not `middleware.ts`.
 - **Deferred by decision (out of scope for this audit):** scraper/geocoding pipeline,
-  switching away from SQLite, guest checkout, map provider comparison (MAP-A..D in
-  `docs/STATUS.md`).
+  switching away from SQLite (§14, §27), online booking and payment (§17, §18).
 - **After finishing a phase:** update `docs/roadmap.html` per the rules in `CLAUDE.md`
   and bump the footer date to today in Jalali.
