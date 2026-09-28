@@ -11,19 +11,13 @@ import styles from "./detail.module.css";
 const TYPE_LABEL = typeLabels as Record<string, string>;
 
 /**
- * Foot-of-page carousel of related media (same neighbourhood or same media
- * type). A pure-CSS marquee: the strip holds the list twice and slides -50%, so
- * it loops with no seam and no JS — the same mechanism as the home page live
- * ticker. `.related-strip` pauses on hover and, under prefers-reduced-motion,
- * the animation stops and `.related-marquee` becomes a normal scroll container.
- * Those two stay global in globals.css because the ticker shares them and the
- * hidden-tab pause list names them.
+ * Related media under a media page, as a CSS marquee (globals.css): the list
+ * twice, sliding -50%, no JavaScript per frame.
  */
 export default function RelatedBillboards({ items }: { items: CatalogueItem[] }) {
   if (!items || items.length === 0) return null;
 
-  // Duplicated once for the seamless -50% loop. Scale the duration with the
-  // item count so the on-screen speed stays roughly constant (~4s per card).
+  // About 4 s per card, whatever the count.
   const loop = [...items, ...items];
   const duration = Math.max(18, items.length * 4);
 
@@ -47,9 +41,7 @@ export default function RelatedBillboards({ items }: { items: CatalogueItem[] })
                 tabIndex={clone ? -1 : undefined}
               >
                 <div className={styles.relatedPhoto}>
-                  {/* Not lazy: this strip scrolls itself with a CSS animation inside
-                      overflow:hidden, so a card off to the side never enters the
-                      viewport and a lazy image is never requested (§24). */}
+                  {/* Not lazy: off to the side in the marquee, a lazy image never loads (§24). */}
                   <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="230px" eager iconSize={28} />
                   <span className={styles.relatedType}>{TYPE_LABEL[b.type] ?? b.type}</span>
                 </div>

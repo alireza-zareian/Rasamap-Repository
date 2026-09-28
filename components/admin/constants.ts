@@ -1,18 +1,14 @@
 import type { AuditAction } from "@/lib/audit";
 import { typeLabels } from "@/lib/types";
 
-// One label map per question for the whole app — the admin filters, the edit
-// modal and the row badges read the same maps as the public cards, so a state
-// cannot be spelled two ways. See Availability / Moderation in lib/types.ts.
+// The panel reads the same label maps as the public site (lib/types.ts).
 
 export { availabilityLabels as AVAILABILITY_LABEL, moderationLabels as MODERATION_LABEL } from "@/lib/types";
 
 /** Indexed with plain strings read back from the API, hence the wider type. */
 export const TYPE_LABEL: Record<string, string> = typeLabels;
 
-// Availability is shown in the same colours as on the public site —
-// availabilityTone in components/ui/availability.ts. The panel had its own
-// copy, in which "busy" was amber here and red everywhere else.
+// Availability uses the public site's colours (components/ui/availability.ts).
 export const MODERATION_TONE: Record<string, string> = {
   pending:          "#f59e0b",
   awaiting_payment: "#8b5cf6",
@@ -30,10 +26,8 @@ export const ROLE_COLOR: Record<string, string> = {
   super_admin: "var(--red)", admin: "var(--accent)", editor: "#8b5cf6", viewer: "var(--text-muted)",
 };
 
-// Plain-Persian gloss for every audit action, so an admin who cannot read the
-// English event name still understands what the line means. `title` is a short
-// label, `desc` is one sentence of context. `satisfies` makes the compiler
-// require an entry for every AuditAction in lib/audit.ts.
+// A Persian title and sentence for every audit action; `satisfies` requires one
+// per AuditAction (lib/audit.ts).
 export const AUDIT_ACTION = {
   login_success:           { title: "ورود موفق",              desc: "یک حساب (کاربر یا عضو تیم) با رمز درست وارد شد." },
   login_failure:           { title: "ورود ناموفق",            desc: "تلاش برای ورود با شماره/ایمیل یا رمز اشتباه رد شد." },

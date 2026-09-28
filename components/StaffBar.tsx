@@ -7,19 +7,9 @@ import { useCurrentUser } from "@/lib/client/use-current-user";
 import styles from "./StaffBar.module.css";
 
 /**
- * A thin bar shown across the public site to whoever is signed in as staff —
- * the pattern WordPress and Django both use, and for the same reason: the team
- * spends most of its time looking at the site the way a visitor sees it, and
- * making them remember an admin URL to act on what they are looking at is how
- * things stop getting checked.
- *
- * The actions are **contextual**: standing on a listing offers to edit that
- * listing, standing on the catalogue offers the media table, and so on. A bar
- * that shows the same four links everywhere is a menu, not a tool.
- *
- * It grants nothing. Every destination checks the session again, and so does
- * every API behind it — this is a shortcut, not a permission. It renders only
- * for a staff session and never inside the panel itself.
+ * A thin bar on the public site for staff, with actions for the page in view
+ * (on a listing: edit it). A shortcut, not a permission: every destination
+ * checks the session again. Never shown inside the panel.
  */
 
 interface Action {
@@ -86,14 +76,8 @@ export default function StaffBar() {
 
   const visible = !!user?.isStaff && !pathname.startsWith("/admin");
 
-  // A fixed bar at the bottom of the viewport sits on top of whatever the page
-  // put there — the footer's last row, or a page short enough that the bar
-  // lands on the content itself. The page cannot be trusted to leave room for
-  // it (every page would have to know a staff session exists), so the bar
-  // reserves its own space: it measures its real height — which text wrapping,
-  // font loading or a future extra action could change — and writes it to a
-  // CSS variable that a global rule turns into bottom padding on <body>. Hidden
-  // (a customer, or the admin panel itself) removes both, exactly once.
+  // The bar is fixed, so it reserves its own room: it writes its measured height
+  // to --staffbar-h, which globals.css turns into padding on <body>.
   useEffect(() => {
     const root = document.documentElement;
     if (!visible) {

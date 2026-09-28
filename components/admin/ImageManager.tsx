@@ -27,8 +27,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
   const [lightbox, setLightbox] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Each preview holds its file in memory until its address is released, and
-  // an admin may pick dozens in one sitting.
+  // Each preview holds its file in memory until released.
   const previews = useRef<string[]>([]);
   useEffect(() => () => previews.current.forEach(URL.revokeObjectURL), []);
 
@@ -49,8 +48,6 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
     setSaving(true); setError("");
     try {
       const data = await fetchJson<{ images: string[] }>(`/api/admin/billboards/${billboard.id}/images`, {
-        // Photographs travel with this one, so it gets the upload budget rather
-        // than the ten seconds a small JSON call is allowed.
         timeoutMs: TIMEOUT_MS.upload,
         method: "PUT",
         body: photoForm({}, images.map(e => ("kept" in e ? e.kept : e.file))),
@@ -78,8 +75,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
     >
       {error && <div role="alert" className={field.error}>{error}</div>}
 
-      {/* A button, not a clickable box: the file picker has to be reachable
-          from the keyboard like everything else in the dialog. */}
+      {/* A button, so the keyboard reaches the file picker. */}
       <button type="button" className={styles.pick} onClick={() => fileRef.current?.click()} disabled={uploading}>
         <FolderOpen size={22} />
         {uploading ? "در حال آماده‌سازی…" : `کلیک برای انتخاب (JPG/PNG/WEBP، حداکثر ${faNum(MAX_BILLBOARD_IMAGES)} تصویر)`}

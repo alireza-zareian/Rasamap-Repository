@@ -5,11 +5,8 @@ import { faNum } from "@/lib/format";
 import styles from "./compare.module.css";
 
 /**
- * Two media side by side, with the better value of each measurable row marked.
- *
- * A row compares the *number* and displays the formatted text. The two used to
- * be one value: the text was parsed back with parseFloat, which reads a Persian
- * "۵٬۰۰۰" as NaN, so views and traffic were never marked better at all.
+ * Two media side by side, the better value of each measurable row marked. A
+ * row compares numbers and shows text — parsing the text back read "۵٬۰۰۰" as NaN.
  */
 interface Row {
   label: string;

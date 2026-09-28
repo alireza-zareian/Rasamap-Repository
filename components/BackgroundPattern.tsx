@@ -8,17 +8,13 @@ export default function BackgroundPattern() {
   const vine3Ref = useRef<SVGPathElement>(null);
 
   useEffect(() => {
-    // ── Pause every decorative animation while the tab is hidden ────
-    // One listener that fires only on tab switch / minimise. Without it the
-    // orbs and text shimmers keep compositing forever in a background tab.
+    // Pause every infinite animation while the tab is hidden (globals.css list).
     const onVisibility = () =>
       document.documentElement.classList.toggle("page-hidden", document.hidden);
     document.addEventListener("visibilitychange", onVisibility);
     onVisibility();
 
-    // ── Vines: draw once on mount, then leave them alone ────────────
-    // No scroll / mousemove listeners — the orbs keep drifting via CSS
-    // keyframes, but nothing here runs per frame while the user scrolls.
+    // The vines draw once on mount; nothing here runs per frame.
     const paths = [vine1Ref.current, vine2Ref.current, vine3Ref.current]
       .filter(Boolean) as SVGPathElement[];
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

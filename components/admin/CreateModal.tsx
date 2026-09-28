@@ -14,12 +14,7 @@ import styles from "./BillboardForm.module.css";
 
 const EMPTY = { name: "", location: "", city: "تهران", type: "billboard", price: "", agency: "", phone: "", description: "", width: "12", height: "4", faces: "1" };
 
-/**
- * A media item added by hand. The same city picker and map-link box as the
- * edit dialog: this one used to take a free-text city and two bare
- * coordinate boxes, so a board created here could be filed under a city no
- * filter knew.
- */
+/** A media item added by hand, with the edit dialog's city picker and map-link box. */
 export function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (b: Billboard) => void }) {
   const [form, setForm] = useState(EMPTY);
   const [place, setPlace] = useState<LatLng | null>(null);

@@ -29,9 +29,8 @@
 .navLink[aria-current="page"] { color: var(--accent); font-weight: 700; background: color-mix(in srgb, var(--accent) 9%, transparent); }
 .main { flex: 1; min-width: 0; }
 
-/* A phone: the menu becomes a wrapping row of links above the section, and
-   the top bar drops its sub-label and the site link's text so the role,
-   name and sign-out still fit on one line. */
+/* On a phone the menu wraps above the section, and the top bar drops two
+   labels so role, name and sign-out fit one line. */
 @media (max-width: 768px) {
   .topbar { padding: 0 12px; gap: 8px; }
   .sep, .sub, .siteLabel { display: none; }

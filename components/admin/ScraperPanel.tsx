@@ -7,12 +7,9 @@ import styles from "./admin.module.css";
 import own from "./ScraperPanel.module.css";
 
 /**
- * Read-only status of the data pipeline.
- *
- * The scraper is a set of Python scripts run by .github/workflows/scrape.yml on
- * a nightly cron; the Next.js app has no way to start one and does not pretend
- * to. Everything below is counted from the billboards table itself, so it
- * reflects what actually landed in the database after the last run.
+ * The data pipeline's status, read-only. The crawler runs nightly from
+ * .github/workflows/scrape.yml, not from here; every figure is counted from the
+ * billboards table, so it shows what actually landed.
  */
 
 // A fixed palette so a source keeps the same colour between renders.
@@ -20,8 +17,7 @@ const SOURCE_COLORS = ["var(--accent)", "#8b5cf6", "var(--green)", "#f59e0b", "#
 
 const pct = (n: number, total: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
 
-/** One health metric: a big number, a coloured icon chip, and — when a ratio
- *  makes sense — a slim progress bar underneath. */
+/** One figure, with a progress bar when it is a share. */
 function Metric({ icon, label, value, tone = "var(--text-main)", ratio, sub }: {
   icon: React.ReactNode; label: string; value: string; tone?: string; ratio?: number; sub?: string;
 }) {

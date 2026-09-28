@@ -1,10 +1,6 @@
 import type { Availability } from "@/lib/types";
 
-/**
- * The colour each availability is shown in — on a card, the media page, the
- * analytics tab and the panel. There were four copies of this, each missing a
- * different state; `satisfies` now makes the compiler ask for every one.
- */
+/** Each availability's colour, everywhere it is shown; `satisfies` requires every state. */
 export const AVAILABILITY_TONE = {
   available: "var(--green)",
   busy:      "var(--red)",

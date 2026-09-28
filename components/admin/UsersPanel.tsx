@@ -64,9 +64,8 @@ export function UsersPanel({ currentUser }: { currentUser: SessionUser }) {
   );
 }
 
-// ── Admin accounts (super_admin only) ──────────────────────────────
-// The caller's identity comes back from the API as `currentId` (used to lock
-// the row for your own account) — no prop needed.
+// ── Staff accounts (super_admin only) ──────────────────────────────
+// The API returns `currentId`, which locks the caller's own row.
 function AdminAccounts() {
   const [rows, setRows] = useState<AdminRow[]>([]);
   const [currentId, setCurrentId] = useState<number | null>(null);
@@ -247,8 +246,7 @@ function CustomersSection({ canManageAccess }: { canManageAccess: boolean }) {
             <tbody>
               {rows.map(u => (
                 <tr key={u.id}>
-                  {/* A button, not a clickable row: a row with onClick never
-                      reaches the tab order, so the details were mouse-only. */}
+                  {/* A button, so the details open from the keyboard too. */}
                   <td><button type="button" className={own.open} aria-label={`مشخصات ${u.name}`} onClick={() => setOpenId(u.id)}>{u.name}</button></td>
                   <td className={`${styles.muted} ${own.ltr}`}>{u.phone}</td>
                   <td className={styles.muted}>{fmt(u.createdAt)}</td>

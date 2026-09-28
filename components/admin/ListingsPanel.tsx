@@ -43,20 +43,15 @@ type Decision = "approve" | "reject" | "revision";
 const PAGE_SIZE = 50;
 
 /**
- * The approval queue for user-submitted media.
- *
- * Everything shown here is live from /api/admin/listings; a decision goes to
- * /api/admin/listings/[id]/decision, which is the only place a review state
- * is allowed to change. `canDecide` mirrors the server-side rule
- * (admin+) so the buttons match what the API will actually accept.
+ * The approval queue. Decisions go to /api/admin/listings/[id]/decision;
+ * `canDecide` mirrors the server's admin-and-above rule, so the buttons match
+ * what the API accepts.
  */
 export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
-  // The queue is paged. It used to fetch the first 50 and stop, and since it is
-  // newest first, the oldest submissions — the ones waiting longest — were the
-  // ones no reviewer could reach.
+  // Paged: newest first, so without paging the longest-waiting were unreachable.
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -90,8 +85,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
     setLoadingMore(true); setError("");
     try {
       const data = await fetchPage(page + 1);
-      // A decision since the last page shifted the offsets, so an id already
-      // on screen can come round again; it is shown once.
+      // A decision shifts the offsets, so an id can come round again; show it once.
       setListings(prev => [...prev, ...data.listings.filter(l => !prev.some(p => p.id === l.id))]);
       setTotal(data.total); setPage(page + 1); setPages(data.pages);
     } catch (err) {
@@ -168,20 +162,16 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
         <div className={styles.queue}>
           {listings.map(l => {
             const busy = busyId === l.id;
-            // Every row's buttons are disabled while any decision is in flight:
-            // decide() no-ops when one is already running, and a button that
-            // silently does nothing reads as broken during a live demo.
+            // All buttons wait while any decision is in flight, rather than silently no-op.
             const anyBusy = busyId !== null;
             return (
               <article key={l.id} className={styles.item}>
-                {/* Submitted photos — an admin has to see these before publishing */}
+                {/* The submitted photos, to see before publishing. */}
                 <div className={own.photos}>
                   {l.images.length === 0 ? (
                     <div className={own.noPhoto}><ImageOff size={16} /> بدون تصویر</div>
                   ) : l.images.slice(0, 3).map((src, i) => (
-                    // A button, not a clickable <img>: reviewing the photos is
-                    // the whole job on this screen, and nothing about an image
-                    // with an onClick reaches the tab order.
+                    // A button, so the keyboard can open each photo.
                     <button key={i} type="button" className={own.photo} onClick={() => setLightbox(src)}
                       aria-label={`بزرگ‌نمایی تصویر ${i + 1} از ${l.name}`}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -201,9 +191,8 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                     {l.city}{l.region ? ` · ${l.region}` : ""} · {l.location}<br />
                     {faNum(l.width)}×{faNum(l.height)} متر · {faNum(l.faces)} وجه · {faNum(l.price)}M تومان/ماه<br />
                     فرستنده: {l.submittedBy ? <>{l.submittedBy.name} (<span className={own.ltr}>{l.submittedBy.phone}</span>)</> : "نامشخص"} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}<br />
-                    {/* The number buyers will be handed. Nobody verified it unless it
-                        is the submitter's own, which their sign-up code proved — any
-                        other one could be a stranger's, so the reviewer is told. */}
+                    {/* The number buyers will get. Only the submitter's own was proven
+                        by a code; any other could be a stranger's, so it is flagged. */}
                     شماره تماس آگهی: <span className={own.ltr}>{l.phone}</span>{" "}
                     {l.submittedBy?.phone === l.phone
                       ? <Badge text="شمارهٔ تأییدشدهٔ فرستنده" tone="var(--green)" />

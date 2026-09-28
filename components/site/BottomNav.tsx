@@ -7,11 +7,8 @@ import { SECTIONS, isCurrent } from "./Topbar";
 import styles from "./chrome.module.css";
 
 /**
- * The tab bar at the bottom of a phone screen. The top bar used to squeeze the
- * three sections into unlabeled icons and drop "ثبت رسانه" — the one action the
- * supply side of the marketplace exists for — off a phone entirely. Here every
- * item has its label and a thumb-sized target, and listing a board sits in the
- * middle. Hidden above 768px, where the top bar has room for all of it.
+ * The phone's tab bar: every section labelled at thumb size, listing a board in
+ * the middle. Hidden above 768px, where the top bar has room.
  */
 export default function BottomNav() {
   const pathname = usePathname() ?? "/";

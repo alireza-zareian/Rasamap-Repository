@@ -134,10 +134,8 @@ export function CustomerModal({ userId, canManageAccess, onClose, onSaved }: {
               <p>رمز جدید ساخته شد. همین حالا به کاربر بدهید — دیگر نمایش داده نمی‌شود.</p>
               <div className={own.secretRow}>
                 <code>{newPassword}</code>
-                {/* The password is shown once, so a copy button that lies is worse
-                    than none: navigator.clipboard is undefined outside a secure
-                    context (the panel over http on the local network). copyText()
-                    falls back to execCommand and reports whether it worked. */}
+                {/* Shown once, so copying must not fail silently over http:
+                    copyText() falls back and says whether it worked. */}
                 <Button size="sm" intent="quiet" onClick={async () => setCopied(await copyText(newPassword))}
                   aria-label="کپی رمز" title={copied ? "کپی شد" : "کپی رمز — اگر مرورگر اجازه ندهد، رمز را دستی از کادر کناری بردارید"}>
                   {copied ? <Check size={12} /> : <Copy size={12} />}

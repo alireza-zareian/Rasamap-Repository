@@ -1,6 +1,5 @@
-/* Every modal in the app: a dimmed backdrop, a card, a head with the title and
-   a close button, a body and an optional row of actions. The backdrop scrolls,
-   so a tall form on a short phone screen is still reachable. */
+/* Every modal: backdrop, card, head, body, actions. The backdrop scrolls, so a
+   tall form on a short phone stays reachable. */
 .backdrop {
   position: fixed; inset: 0; z-index: 1000;
   display: flex; align-items: flex-start; justify-content: center;

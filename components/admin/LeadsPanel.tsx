@@ -34,12 +34,8 @@ const statusTone = (s: string) => STATUS_TONE[s] ?? "var(--text-muted)";
 const fmt = (d: string) => new Date(d).toLocaleDateString("fa-IR", { year: "numeric", month: "short", day: "numeric" });
 
 /**
- * Leads — who asked for which media owner's phone number.
- *
- * Rasamap hands the deal off at the phone number (there is no booking — §17),
- * so this is the whole demand-side record the platform has. Rows are created by
- * POST /api/billboards/[slug]/contact and are never written by hand here: an
- * admin only moves the follow-up state and keeps an internal memo.
+ * Leads: who asked for which owner's number (§17, §23). Rows come only from
+ * POST /api/billboards/[slug]/contact; here staff set the follow-up state and a memo.
  */
 export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -47,8 +43,7 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
-  // Paged, like the approval queue: the header counted every lead while the
-  // list stopped at the first 50, with no way to reach the rest.
+  // Paged, like the approval queue.
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -102,14 +97,12 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
       });
 
       const saved: Lead = data.lead;
-      // A status change can move the row out of the current filter — drop it
-      // rather than leaving a row on screen that the filter no longer matches.
+      // A row the filter no longer matches leaves the list.
       if (filter && saved.status !== filter) setLeads(prev => prev.filter(l => l.id !== id));
       else setLeads(prev => prev.map(l => (l.id === id ? saved : l)));
       setNotes(prev => { const n = { ...prev }; delete n[id]; return n; });
 
-      // The per-status counts changed; re-read them rather than guessing.
-      // A failure here leaves the old counts on screen; the save itself succeeded.
+      // Re-read the counts; on failure the old ones stay — the save succeeded.
       const fresh = await fetchPage(1, 1).catch(() => null);
       if (fresh) { setCounts(fresh.counts); setTotal(fresh.total); }
     } catch (err) {

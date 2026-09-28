@@ -1,6 +1,2 @@
-/**
- * Names for view transitions that span two pages. Both ends must spell the
- * name the same way, or the browser sees two unrelated elements and the morph
- * silently does not happen — so it is spelled once, here.
- */
+/** View-transition names shared by two pages, spelled once: a mismatch silently skips the morph. */
 export const mediaPhotoTransition = (slug: string) => `media-photo-${slug}`;

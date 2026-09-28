@@ -3,10 +3,8 @@ import { useState } from "react";
 import Toast from "@/components/Toast";
 
 /**
- * A short-lived "you may not do that" notice, for an action the viewer's role
- * does not allow. The server refuses the request either way; this only saves
- * a round-trip and says why the button did nothing. It is the site's own
- * toast, keyed per refusal so a second click restarts its timer.
+ * A brief "your role cannot do that" toast. The server refuses anyway; this
+ * saves the round-trip. Keyed per refusal, so a second click restarts it.
  */
 export function usePermissionNotice() {
   const [refusal, setRefusal] = useState<{ text: string; n: number } | null>(null);

@@ -11,18 +11,11 @@ import { Button } from "@/components/ui/Button";
 import styles from "./IranMap.module.css";
 
 /**
- * The catalogue as a map, drawn from coordinates rather than embedded.
+ * The catalogue as a map, drawn here rather than embedded from a provider (§32).
  *
- * Every provider that would draw this for us is either billed, keyed, or
- * unreachable from an Iranian connection — usually all three (§32). So the
- * outline ships in the bundle, the arithmetic runs here, and the map has no way
- * to fail that the rest of the page would not fail with it.
- *
- * Two levels, because they answer different questions. The country view shades
- * each province by how much inventory is in it — "where is there anything?" —
- * and is built from the city column, so it is exact for all 3,528 rows. Picking
- * a province drops to its own pins, which is "where exactly?", and that one can
- * only show rows whose coordinates survive `isPlottable`.
+ * Two levels: the country shades each province by inventory, from the city
+ * column, so every row counts; a chosen province shows its pins, which only
+ * rows whose point passes `isPlottable` can have.
  */
 
 /** Internal units. The SVG scales to its container; these only set the aspect. */
@@ -30,13 +23,7 @@ const W = 1000;
 const H = 760;
 /** Breathing room around whatever is being zoomed to, as a share of its extent. */
 const ZOOM_PAD = 0.12;
-/**
- * Floor on how tight a zoom may get, in degrees (~17 km).
- *
- * A city whose pins all sit on one boulevard would otherwise fill the frame at
- * street scale, on a drawing that has no streets — magnification with nothing
- * to magnify.
- */
+/** The tightest zoom, in degrees (~17 km): the drawing has no streets to magnify. */
 const MIN_SPAN_DEG = 0.15;
 /** Below this share of the busiest province, a label would not be worth the ink. */
 const LABEL_MIN_SHARE = 0.06;
@@ -100,11 +87,10 @@ interface Props {
   provinceCounts: Record<string, number>;
   /** Pins for the province in view. Empty at country level, by design. */
   pins: MapPin[];
-  /** How many rows in this scope could not be placed, and why it is honest. */
+  /** Rows in this scope with no believable point — said on screen, not hidden. */
   unplottable: number;
-  /** The filters in play. A Server Component cannot hand a client one a
-   *  function, so the map gets the state and builds its own addresses — which
-   *  also keeps every link on this page going through `exploreHref`. */
+  /** The filters in play; the map builds its links with `exploreHref`, as a
+   *  Server Component cannot pass a function. */
   filters: ExploreFilters;
 }
 
@@ -119,17 +105,13 @@ export default function IranMap({
   const [hoverPin, setHoverPin] = useState<MapPin | null>(null);
 
   const zoomed = Boolean(province && PROVINCE_RINGS[province]);
-  // Frame the pins rather than the province when there are any: nearly all of a
-  // province's media sits inside one city, so fitting the province spends most
-  // of the picture on empty country either side of the part being looked at.
+  // Frame the pins, not the province: most of a province's media is in one city.
   const bounds = useMemo(() => {
     if (!zoomed) return IRAN_BOUNDS;
     return pins.length ? pinsBounds(pins) : ringsBounds(PROVINCE_RINGS[province]);
   }, [zoomed, province, pins]);
 
-  // Every province is redrawn when the bounds change and never otherwise —
-  // 2,658 points through one projection, which is far cheaper than it looks and
-  // happens once per navigation rather than once per frame.
+  // Re-projected only when the bounds change: once per navigation, not per frame.
   const paths = useMemo(
     () => Object.entries(PROVINCE_RINGS).map(
       ([name, rings]) => [name, toPath(rings, bounds)] as const,
@@ -142,14 +124,11 @@ export default function IranMap({
     [pins, bounds],
   );
 
-  // Square root, not linear: Tehran holds several times what the next province
-  // does, and on a linear ramp every other province reads as empty.
+  // Square root: on a linear ramp Tehran would leave every other province pale.
   const max = Math.max(1, ...Object.values(provinceCounts));
   const shade = (n: number) => (n ? 0.1 + 0.6 * (Math.sqrt(n) / Math.sqrt(max)) : 0);
 
-  // Hover names a province, but a phone has no hover — so the provinces worth
-  // naming carry their name. Only the busiest few: thirty-one labels at this
-  // size would overlap into noise.
+  // A phone has no hover, so the busiest provinces carry their names.
   const labels = useMemo(() => {
     if (zoomed) return [];
     const wanted = Object.entries(provinceCounts)
@@ -160,10 +139,7 @@ export default function IranMap({
         return { name, n, ...project(lng, lat, bounds, W, H) };
       });
 
-    // Two provinces whose centres sit close together — the two Azerbaijans —
-    // would print their names on top of each other. Place them in order of how
-    // much media each holds and drop any that will not fit, which is the one
-    // rule that never leaves an unreadable pair on screen.
+    // Busiest first; a label that would overlap one already placed is dropped.
     const kept: typeof wanted = [];
     for (const l of wanted) {
       const halfW = (l.name.length * LABEL_CHAR_PX) / 2;
@@ -221,8 +197,7 @@ export default function IranMap({
             textAnchor="middle"
             dominantBaseline="middle"
             className={styles.label}
-            // A halo, so a name stays readable over both the palest province
-            // and the darkest one without needing two colours.
+            // A halo keeps the name readable over pale and dark shading alike.
             stroke="var(--bg-card)"
             strokeWidth={3.5}
             paintOrder="stroke"
@@ -250,9 +225,7 @@ export default function IranMap({
         ))}
       </svg>
 
-      {/* One floating label for whichever thing the pointer is on. It is a
-          convenience on top of the <title> elements above, which are what a
-          screen reader and a touch device actually get. */}
+      {/* A pointer convenience; screen readers and touch get the <title>s above. */}
       {(hoverPin || hoverProvince) && (
         <div className={styles.tip}>
           {hoverPin ? (
@@ -272,9 +245,7 @@ export default function IranMap({
         </Button>
       )}
 
-      {/* Saying the number out loud is the point. A map that quietly drops one
-          row in six is a map that lies; one that says so is a map with a known
-          edge (§5). */}
+      {/* Say how many rows the map cannot place, rather than dropping them silently. */}
       {zoomed && unplottable > 0 && (
         <p className={styles.note}>
           <PinIcon size={13} />

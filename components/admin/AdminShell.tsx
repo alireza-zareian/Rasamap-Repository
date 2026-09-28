@@ -12,10 +12,8 @@ import { Button } from "@/components/ui/Button";
 import styles from "./AdminShell.module.css";
 
 /**
- * The frame every panel section renders inside: the top bar and the section
- * menu. Each section is its own route under /admin, so the menu is links —
- * a section can be bookmarked, opened in a new tab and reached with the back
- * button, and only the code for the section in view is sent to the browser.
+ * The panel's frame: top bar and section menu. Each section is its own route,
+ * so it can be bookmarked and only its code is sent.
  */
 const ADMIN_SECTIONS: [label: string, href: string, Icon: React.ComponentType<{ size?: number }>][] = [
   ["نمای کلی",       "/admin",            LayoutDashboard],
@@ -39,9 +37,7 @@ export function AdminShell({ user, children }: { user: { name: string; role: Sta
     try {
       await fetchJson("/api/admin/auth/logout", { method: "POST" });
     } catch {
-      // Leaving is not negotiable — see the same reasoning in
-      // lib/client/use-current-user.tsx. A hung request must not strand someone
-      // on a panel they asked to leave, with a dead button and no explanation.
+      // Leave anyway, as lib/client/use-current-user.tsx does.
     }
     router.push("/login?as=staff");
   };
@@ -57,8 +53,7 @@ export function AdminShell({ user, children }: { user: { name: string; role: Sta
         <div className={styles.account}>
           <Badge text={ROLE_LABEL[user.role] ?? user.role} tone={ROLE_COLOR[user.role] ?? "var(--text-muted)"} />
           <div className={styles.name}>{user.name}</div>
-          {/* In the sticky top bar rather than at the foot of the menu, which on
-              a phone collapses into a row of links and pushes it off screen. */}
+          {/* In the top bar: on a phone the menu's foot is off screen. */}
           <Link href="/" className={styles.siteLink} aria-label="مشاهده سایت">
             <Globe size={13} /> <span className={styles.siteLabel}>مشاهده سایت</span>
           </Link>

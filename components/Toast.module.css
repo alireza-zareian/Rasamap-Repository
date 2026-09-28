@@ -12,6 +12,5 @@
 .error { --tone: var(--red); }
 .info { --tone: var(--accent); }
 
-/* Local: a CSS module renames every animation it names, so a @keyframes in
-   globals.css is out of its reach. */
+/* Here, not in globals.css: a module renames the animations it names. */
 @keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }

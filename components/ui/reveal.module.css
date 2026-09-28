@@ -1,11 +1,7 @@
-/* A section eases in as it scrolls into view. The animation's clock is the
-   element's own position in the viewport (a view timeline), so it costs no
-   JavaScript and no main-thread work: opacity and transform run on the
-   compositor.
-
-   Visible by default. Only a browser that has view timelines, for a visitor
-   who has not asked for less motion, starts it faded — so a browser without
-   the feature, a printout or a crawler always sees the content. */
+/* A section eases in as it scrolls into view, timed by a view timeline: no
+   JavaScript, only opacity and transform on the compositor (§37). Visible by
+   default — only a browser with view timelines, without reduced motion,
+   starts it faded, so everyone else always sees the content. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     .reveal {

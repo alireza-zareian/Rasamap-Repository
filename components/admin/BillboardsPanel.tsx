@@ -18,10 +18,9 @@ import styles from "./admin.module.css";
 import own from "./BillboardsPanel.module.css";
 
 /**
- * The media table: search, filters, paging, and the create / edit / photos /
- * delete actions. `initialQuery` prefills the search from `?q=`, so "edit this
- * listing" on the staff bar lands on the row the person was just looking at
- * rather than on page one of 3,536.
+ * The media table: search, filters, paging, create, edit, photos, delete.
+ * `initialQuery` prefills the search from `?q=`, so the staff bar's "edit"
+ * lands on the row in question.
  */
 export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
   canEdit: boolean; canManage: boolean; initialQuery: string;
@@ -45,7 +44,7 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
   const [visibilityNote, setVisibilityNote] = useState("");
   const [visibilityBusy, setVisibilityBusy] = useState(false);
   const [visibilityError, setVisibilityError] = useState("");
-  // Shown in place of "nothing found", which a failed load used to claim.
+  // Shown instead of "nothing found" when the load failed.
   const [loadError, setLoadError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const { notice, deny } = usePermissionNotice();

@@ -53,8 +53,7 @@ export function PhotoPicker({ photos, onChange, max, onError }: {
           </div>
         ))}
         {photos.length < max && (
-          // A button, not a clickable div: the file input is hidden, so this is
-          // the only way to add a photo and it has to be reachable by keyboard.
+          // A button: with the file input hidden, this is the keyboard's way in.
           <button type="button" className={styles.add} onClick={() => input.current?.click()} disabled={preparing}>
             <ImagePlus size={22} /> {preparing ? "در حال آماده‌سازی…" : "افزودن تصویر"}
           </button>

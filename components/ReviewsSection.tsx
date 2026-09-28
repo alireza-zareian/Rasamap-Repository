@@ -48,9 +48,7 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
             onClick={() => onChange?.(n)}
             onMouseEnter={() => onChange && setHover(n)}
             onMouseLeave={() => onChange && setHover(0)}
-            // Read-only when there is no onChange — it is then a rating being
-            // displayed, not asked for, so it leaves the tab order rather than
-            // offering five stops that do nothing.
+            // Without onChange it only displays, so it stays out of the tab order.
             aria-label={`${n} ستاره از ۵`}
             aria-pressed={onChange ? n === value : undefined}
             disabled={!onChange}
@@ -80,16 +78,13 @@ export default function ReviewsSection({ billboardId }: Props) {
   const [editing, setEditing] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Reply state, keyed by the review being answered — only one box is open at a
-  // time, but the draft has to survive while the request is in flight.
+  // One reply box at a time; its draft survives the request in flight.
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [replyBody, setReplyBody] = useState("");
   const [replyBusy, setReplyBusy] = useState(false);
   const [busyReplyId, setBusyReplyId] = useState<number | null>(null);
 
-  // A failure is shown, not swallowed: an empty catch here used to answer a
-  // server error with "no reviews yet — be the first", which is a false
-  // statement about the media rather than a message about the request.
+  // A failure is shown: swallowed, it read as "no reviews yet".
   const fetchReviews = useCallback(() => {
     fetchJson<{ reviews?: Review[]; avg: number | null; total: number }>(`/api/reviews?billboardId=${billboardId}`)
       .then(d => { setReviews(d.reviews ?? []); setAvg(d.avg); setTotal(d.total); setLoadError(""); })
@@ -101,11 +96,7 @@ export default function ReviewsSection({ billboardId }: Props) {
     fetchReviews();
   }, [fetchReviews]);
 
-  // The signed-in account comes from the shared provider rather than a fourth
-  // copy of the same request: this component sits on the media page beside
-  // StaffBar, Topbar and BillboardContact, and all four used to ask separately.
-  // The shape differs — this file wants a numeric id to match review.userId
-  // against — so it is narrowed here rather than at the source.
+  // From the shared provider, narrowed to what matching review.userId needs.
   const { user: currentUser } = useCurrentUser();
   const user = currentUser
     ? {
@@ -117,8 +108,7 @@ export default function ReviewsSection({ billboardId }: Props) {
       }
     : currentUser;   // null when signed out, undefined while still asking
 
-  // One review per account per media (a unique index enforces it), so there is
-  // at most one of these — it is what the edit and delete buttons act on.
+  // At most one per account (a unique index); the edit and delete buttons act on it.
   const mine = user && !user.isStaff ? reviews.find(r => r.userId === user.id) ?? null : null;
 
   const startEdit = () => {
@@ -204,9 +194,7 @@ export default function ReviewsSection({ billboardId }: Props) {
     finally { setSubmitting(false); }
   };
 
-  // The form is on screen either to write a first review or to edit the one
-  // this account already left. Named once so the error banner below can ask the
-  // opposite question without repeating the expression.
+  // Open to write a first review or edit this account's own.
   const formOpen = !!user && (editing || (!mine && !success));
 
   const date = (iso: string) => new Date(iso).toLocaleDateString("fa-IR");
@@ -287,10 +275,9 @@ export default function ReviewsSection({ billboardId }: Props) {
                 </div>
               </div>
               <p className={styles.body}>{r.comment}</p>
-              {/* Editing and deleting belong to the author, deleting also to an
-                  editor; replying is open to anyone signed in. Staff and
-                  customer ids come from different tables and overlap, so a
-                  staff member is never matched as an author. */}
+              {/* Edit and delete for the author, delete also for an editor, reply
+                  for anyone signed in. Staff ids are another table's, so staff
+                  never match as a review's author. */}
               {user && (
                 <div className={styles.actions}>
                   {r.userId === user.id && !user.isStaff && (

@@ -1,9 +1,7 @@
 import { Megaphone, Monitor, Milestone, Train, Bus } from "lucide-react";
 import type { BillboardType } from "@/lib/types";
 
-// The project's own media-type marks (Lucide icons, matching BillboardCard's
-// no-image placeholder). Use this everywhere a type needs an icon instead of a
-// keyboard emoji.
+// The media-type icons, the same ones the no-photo placeholder uses.
 const MAP: Record<BillboardType, React.ComponentType<{ size?: number; color?: string }>> = {
   billboard: Megaphone,
   digital: Monitor,

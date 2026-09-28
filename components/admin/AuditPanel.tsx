@@ -32,9 +32,7 @@ export function AuditPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // A failure is said out loud: an empty catch here used to show "no records
-  // yet" for a log that could not be read — the one screen where "nothing
-  // happened" and "we cannot tell you what happened" must not look alike.
+  // A failed read is shown as one, never as "no records yet".
   useEffect(() => {
     fetchJson<{ logs: Row[]; persisted: Row[] }>("/api/admin/audit")
       .then(d => { setLogs(d.logs); setPersisted(d.persisted); })

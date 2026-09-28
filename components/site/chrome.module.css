@@ -1,6 +1,4 @@
-/* The site's frame: the top bar, the phone tab bar and the footer.
-   --topbar-h and --bottomnav-h are declared in app/globals.css, where the
-   page padding that makes room for them lives too. */
+/* The top bar, the phone tab bar and the footer. Their heights are tokens in app/globals.css. */
 
 /* ── Logo ── */
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-main); }
@@ -61,8 +59,7 @@
 @media (max-width: 768px) {
   .topbar { padding: 0 12px; }
   .tabs, .desktopOnly { display: none; }
-  /* The bar is 62px tall, so every control in it gets the 44px target Apple
-     and Google publish; the icons stay the size they are. */
+  /* 44px touch targets in the 62px bar; the icons keep their size. */
   .topbar a, .topbar button { min-height: 44px; }
   .domain { display: none; }
 

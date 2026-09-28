@@ -37,15 +37,13 @@ export default function EditListingModal({
     setSaving(true);
     try {
       const data = await fetchJson<{ listing: Record<string, unknown> }>(`/api/listings/${existing.id}`, {
-        // Photographs travel with this request, so it gets the upload budget.
         timeoutMs: TIMEOUT_MS.upload,
         method: "PATCH",
         body: listing.toFormData(),
       });
       onSaved(data.listing);
     } catch (err) {
-      // A session that expired while this was open — a full reload, not a soft
-      // push, because the dashboard behind it is now showing stale state.
+      // Expired session: a full reload, since the dashboard behind is stale.
       if (err instanceof FetchError && err.status === 401) {
         window.location.href = "/login?next=/dashboard";
         return;

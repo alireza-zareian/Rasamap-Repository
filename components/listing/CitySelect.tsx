@@ -4,11 +4,7 @@ import { provinces, findProvinceOfCity } from "@/lib/geo/iran-cities";
 import form from "@/components/ui/form.module.css";
 import styles from "./listing.module.css";
 
-/**
- * Province, then city — every city the catalogue lists (lib/geo/iran-cities.ts),
- * so a board in Karaj or Khorramabad can be listed. The form used to offer
- * seven cities and nothing else.
- */
+/** Province, then city, from every city the catalogue lists (lib/geo/iran-cities.ts). */
 export function CitySelect({ city, onChange }: { city: string; onChange: (city: string) => void }) {
   const id = useId();
   const [province, setProvince] = useState(() => findProvinceOfCity(city)?.name ?? provinces[0].name);

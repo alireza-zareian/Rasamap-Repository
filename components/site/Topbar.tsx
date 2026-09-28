@@ -28,12 +28,8 @@ export function isCurrent(pathname: string, section: { href: string; within?: re
 }
 
 /**
- * The bar across the top of every public page. On the landing page it starts
- * transparent over the hero and turns solid once the visitor scrolls; there
- * used to be a second, hand-built header there that drifted from this one.
- *
- * On a phone the section links move to the tab bar at the bottom (BottomNav),
- * where a thumb reaches them, and this keeps the logo, the theme and the account.
+ * The bar across every public page; on the landing it starts transparent and
+ * turns solid on scroll. On a phone the section links move to BottomNav.
  */
 export default function Topbar() {
   const pathname = usePathname() ?? "/";

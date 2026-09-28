@@ -46,20 +46,17 @@
 .slot svg { flex-shrink: 0; color: var(--text-muted); }
 .emptySlot { justify-content: center; border: 1px dashed var(--border); color: var(--text-muted); font-size: 0.75rem; }
 .barActions { display: flex; gap: 8px; flex-shrink: 0; }
-/* Nested, and repeated for hover, so the warm fill outranks the secondary
-   button's own rules whatever order the two sheets load in. */
+/* Nested (and for hover too) to outrank Button's rules whatever the load order. */
 .barActions .go, .barActions .go:hover:not(:disabled) { background: var(--accent-warm); color: #111; border: none; }
 .barActions .go:disabled { background: var(--border); color: var(--text-muted); }
 
 @media (max-width: 768px) {
   .bar { padding: 10px 14px; gap: 8px; }
-  /* The two slots on their own row above the buttons: side by side with them
-     they pushed the buttons off the left edge. */
+  /* Slots on their own row, or they push the buttons off screen. */
   .slots { order: 3; flex-basis: 100%; }
   .barActions { margin-inline-start: auto; }
 }
 
-/* Local: a CSS module renames every animation it names, so a @keyframes in
-   globals.css is out of its reach. */
+/* Here, not in globals.css: a module renames the animations it names. */
 @keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 @keyframes slideUp  { from { transform:translateY(100%); } to { transform:translateY(0); } }

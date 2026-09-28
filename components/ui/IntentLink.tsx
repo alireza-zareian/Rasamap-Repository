@@ -3,20 +3,15 @@ import Link from "next/link";
 import { useState, type ComponentProps } from "react";
 
 /**
- * A link that prefetches when the visitor shows intent — a pointer arriving, a
- * finger touching down, keyboard focus — instead of when it scrolls into view.
+ * A link that prefetches on intent — a pointer, a touch, keyboard focus —
+ * rather than on sight. For links in lists (cards, slides, ticker, pager,
+ * footer): a plain <Link> prefetches each one it sees, and each is a request
+ * the server renders. One visit to the catalogue, loaded and scrolled: 91
+ * background requests before, 22 after; server CPU 660 → 440 ms (§38). The
+ * header's links stay plain <Link>s, to keep main navigation instant.
  *
- * For links that come in lists: cards, carousel slides, the ticker, the pager,
- * the footer. A plain <Link> prefetches every one of them on sight, and each
- * prefetch is a request the server renders. Measured with a real browser
- * loading a page and scrolling it once: 63 background requests on the landing,
- * 91 on the catalogue, almost all for media pages nobody opened — about 95% of
- * the server time one visit cost. The header's handful of links stay plain
- * <Link>s: those are the navigations worth having instant.
- *
- * This is the "hover-triggered prefetch" pattern from Next's own prefetching
- * guide; `prefetch={null}` restores the default once intent is shown. A touch
- * lands roughly 100 ms before its click, which is when a phone starts fetching.
+ * The "hover-triggered prefetch" pattern from Next's prefetching guide;
+ * `prefetch={null}` restores the default once intent is shown.
  */
 export default function IntentLink({ onPointerEnter, onTouchStart, onFocus, ...props }: ComponentProps<typeof Link>) {
   const [intent, setIntent] = useState(false);

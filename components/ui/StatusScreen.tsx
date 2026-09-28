@@ -3,10 +3,9 @@ import { cssVar } from "./css-var";
 import styles from "./status.module.css";
 
 /**
- * The page a visitor sees instead of the one they asked for: 403, 404, a
- * failed render. §5 asks for a calm Persian message and a short reference —
- * the internals go to the log, never here. `inline` is the smaller variant a
- * panel section shows while the panel around it keeps working.
+ * What a visitor sees instead of the page asked for — 403, 404, a failed
+ * render: a calm Persian message and a reference, internals only in the log.
+ * `inline` is the smaller variant inside a panel section.
  */
 export function StatusScreen({
   icon, code, tone, title, children, reference, actions, inline = false,

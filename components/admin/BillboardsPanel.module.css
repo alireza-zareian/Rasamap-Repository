@@ -2,6 +2,5 @@
 .name { display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .name svg { flex-shrink: 0; color: var(--text-muted); }
 .place { font-size: 0.68rem; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
-/* Wider than a phone on purpose: the table scrolls sideways there instead of
-   folding every row into a tall block. */
+/* Wider than a phone on purpose: the table scrolls sideways instead of folding rows. */
 .wide { min-width: 860px; }

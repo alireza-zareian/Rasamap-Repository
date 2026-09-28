@@ -61,9 +61,8 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
     <div data-testid="billboard-card" style={tone}
       className={`${styles.card} ${isCompared ? styles.compared : ""} ${b.featured ? "gradient-frame" : ""}`}>
       <div className={styles.photo}>
-        {/* The same name as the media page's gallery: opening the card morphs
-            this photo into the page's large one. One card per slug on the
-            catalogue, so the name is unique there. */}
+        {/* Shares its name with the media page's gallery, so opening the card
+            morphs the photo (§37). One card per slug, so the name is unique. */}
         <ViewTransition name={mediaPhotoTransition(b.slug)} share="media-morph">
           <div className={`${styles.zoom} card-photo-zoom`}>
             {/* A grid card is 320–400 CSS px wide: the 384 variant at 1x, the

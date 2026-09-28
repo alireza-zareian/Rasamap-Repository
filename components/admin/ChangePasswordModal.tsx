@@ -9,9 +9,8 @@ import { Dialog } from "@/components/ui/Dialog";
 import field from "@/components/ui/form.module.css";
 
 /**
- * A staff member changes their own password (PATCH /api/admin/auth/me).
- * Every other session of the account ends; this one is re-issued by the
- * response, so the panel keeps working without a fresh sign-in.
+ * A staff member changes their own password (PATCH /api/admin/auth/me). Every
+ * other session of the account ends; this one is kept, so the panel keeps working.
  */
 export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });

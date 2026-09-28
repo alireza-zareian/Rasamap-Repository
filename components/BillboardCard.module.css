@@ -1,5 +1,4 @@
-/* A catalogue card, in the grid and in the list. Hover is CSS — it used to be
-   React state, two renders per pointer crossing. */
+/* A catalogue card, in the grid and the list. Hover is pure CSS. */
 
 .card {
   position: relative; overflow: hidden;
@@ -8,17 +7,14 @@
   border-radius: 12px;
   transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
 }
-/* Only where a pointer can hover: on a touch screen a tap would leave the card
-   lifted until the next tap elsewhere. */
+/* Hover only: on a touch screen a tap would leave the card lifted. */
 @media (hover: hover) {
   .card:hover { border-color: var(--border-hi); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38), 0 4px 18px var(--accent-glow); }
     }
 .compared, .compared:hover { border-color: var(--accent-warm); }
 
 .photo { position: relative; aspect-ratio: 1 / 1; background: var(--bg-card); overflow: hidden; }
-/* The photo drifts in while the badges stay put, so the wrapper moves.
-   .card-photo-zoom in globals.css carries the transition, which
-   prefers-reduced-motion switches off. */
+/* The wrapper moves, not the badges; its transition is .card-photo-zoom (globals.css). */
 .zoom { position: absolute; inset: 0; }
 
 .badge {
@@ -69,8 +65,7 @@
 .rowStatus { font-size: 0.68rem; font-weight: 600; color: var(--tone); white-space: nowrap; }
 .row .foot { margin-top: 8px; }
 
-/* A square photo filled a phone's whole screen per card, so a page of results
-   was a long scroll of one card at a time. Wider than tall on a phone. */
+/* Wider than tall on a phone, or one square card fills the screen. */
 @media (max-width: 640px) {
   .photo { aspect-ratio: 16 / 10; }
   .action { min-height: 44px; }

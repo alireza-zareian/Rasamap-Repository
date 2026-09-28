@@ -14,9 +14,7 @@ import { cssVar } from "@/components/ui/css-var";
 import form from "@/components/ui/form.module.css";
 import styles from "./DashboardClient.module.css";
 
-// One of the user's own submissions, in whatever state the review left it.
-// The editable fields are carried too so a "needs_revision" listing can be
-// fixed in place without a second fetch.
+// One of the customer's own submissions, with its editable fields for a revision.
 export interface Listing {
   id: number;
   slug: string;
@@ -50,8 +48,7 @@ const STATUS_TONE: Record<string, string> = {
   needs_revision:   "#f97316",
   suspended:        "var(--text-muted)",
 };
-// What the submitter should do next, per state — a status badge alone doesn't
-// tell someone whether the ball is in their court.
+// What the submitter should do next, per state.
 const STATUS_HINT: Record<string, string> = {
   pending:          "کارشناسان رسامپ در حال بررسی محتوای آگهی هستند.",
   awaiting_payment: "برای فعال شدن پلن ویژه، هزینه را واریز کنید و رسید را برای پشتیبانی بفرستید.",
@@ -71,10 +68,8 @@ const TABS: [string, Tab, React.ComponentType<{ size?: number }>][] = [
 ];
 
 /**
- * The customer's own dashboard: their listings and their profile. The page
- * above it (app/dashboard/page.tsx) reads both on the server, so this renders
- * with them already in hand; it only talks to the API when the customer
- * changes something.
+ * The customer's dashboard: listings and profile, read on the server by
+ * app/(site)/dashboard/page.tsx; the API is called only for changes.
  */
 export default function DashboardClient({ account, initialListings }: {
   account: { name: string; phone: string };
@@ -129,8 +124,7 @@ export default function DashboardClient({ account, initialListings }: {
         </div>
       </div>
 
-      {/* Two sections. They used to sit in a sidebar that became a hamburger
-          menu on a phone — a menu to reach one of two buttons. */}
+      {/* Two sections, as tabs. */}
       <div className={styles.tabs} role="tablist" aria-label="بخش‌های داشبورد">
         {TABS.map(([label, key, Icon]) => (
           <button key={key} type="button" role="tab" id={`dash-${key}`} aria-selected={tab === key} className={styles.tab} onClick={() => setTab(key)}>

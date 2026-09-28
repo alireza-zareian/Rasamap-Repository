@@ -22,18 +22,14 @@ const SWIPE_PX = 45;
 export default function BillboardGallery({ images, name, type, slug }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(false);
-  // Crawled photos live on the sources' servers and some of them are gone.
-  // A photo that fails is drawn as the media's placeholder everywhere it
-  // appears — main view, thumbnail and lightbox — instead of the browser's
-  // torn-image icon.
+  // A photo that fails to load becomes the placeholder everywhere it appears.
   const [broken, setBroken] = useState<ReadonlySet<number>>(new Set());
   const markBroken = useCallback((i: number) => setBroken(b => new Set(b).add(i)), []);
 
   const prev = useCallback(() => setActive(i => (i - 1 + images.length) % images.length), [images.length]);
   const next = useCallback(() => setActive(i => (i + 1) % images.length), [images.length]);
 
-  // Touch swipe — the only way to move between images on a phone, where the
-  // lightbox arrows sit at the screen edge and there is no keyboard.
+  // Swipe, for a phone.
   const touchX = useRef<number | null>(null);
   const swipedAt = useRef(0);
   const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX; };
@@ -43,12 +39,10 @@ export default function BillboardGallery({ images, name, type, slug }: Props) {
     touchX.current = null;
     if (Math.abs(dx) < SWIPE_PX) return;
     swipedAt.current = Date.now();
-    // Drag left → next image, drag right → previous — the convention every
-    // photo viewer uses, RTL page or not.
+    // Left → next, as in every photo viewer, RTL or not.
     (dx < 0 ? next : prev)();
   };
-  // A swipe ends in a synthetic click; on the main image that would pop the
-  // lightbox open, so swallow the click that lands right after one.
+  // A swipe ends in a synthetic click; ignore it, or the lightbox opens.
   const openLightbox = () => { if (Date.now() - swipedAt.current > 250) setLightbox(true); };
 
   if (!images.length) {
@@ -79,9 +73,7 @@ export default function BillboardGallery({ images, name, type, slug }: Props) {
           {images.map((src, i) => (
             <button key={i} type="button" className={styles.thumb} onClick={() => setActive(i)}
               aria-label={`نمایش تصویر ${i + 1} از ${images.length}`} aria-current={i === active}>
-              {/* Eager: a gallery has a handful of photos, and a lazy image
-                  inside a horizontal scroller is one a phone may never ask for
-                  (AGENTS.md rule 9). */}
+              {/* Eager: in a horizontal scroller a phone may never load a lazy image (rule 9). */}
               {broken.has(i)
                 ? <NoImagePlaceholder type={type} iconSize={16} />
                 : <Image src={src} alt="" fill sizes="72px" loading="eager" decoding="async" onError={() => markBroken(i)} />}
@@ -110,19 +102,8 @@ export default function BillboardGallery({ images, name, type, slug }: Props) {
 }
 
 /**
- * The enlarged image, as a component of its own rather than a branch.
- *
- * That is what lets it use `useModalA11y`: the hook wires itself up once, when
- * the element it is given exists, so a dialog that appears and disappears has
- * to mount and unmount with it — which is why every other dialog in the app is
- * built this way.
- *
- * This was the last one that was not, and it showed. It had its own Escape key
- * bound to `window`, no focus trap — Tab wandered into the page behind the
- * overlay, reading out a catalogue the visitor could not see — and no way back
- * to the button that opened it, so closing dropped focus at the top of the
- * document. The arrow keys stay here, because moving between photographs is
- * this dialog's own business and not something every dialog needs.
+ * The enlarged image, a component of its own so it mounts with the dialog and
+ * `useModalA11y` wires up once. The arrow keys are its own addition.
  */
 function GalleryLightbox({
   images, name, type, active, broken, onBroken, onPrev, onNext, onClose, onTouchStart, onTouchEnd,

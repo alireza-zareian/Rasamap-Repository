@@ -5,12 +5,9 @@ import type { LatLng } from "@/lib/domain/location";
 import { photoForm } from "@/lib/client/photos";
 
 /**
- * The state behind a listing form — the submission wizard and the
- * resubmission modal hold exactly the same thing, so they hold it here.
- *
- * Fields are kept as the strings the inputs produce; the shared schema
- * (lib/domain/listing.ts) coerces them, in the browser for each step and again
- * on the server, so the two cannot disagree about what is valid.
+ * The state behind both listing forms (the wizard and the resubmission modal).
+ * Fields stay as the inputs' strings; the shared schema (lib/domain/listing.ts)
+ * coerces them in the browser and again on the server.
  */
 
 /** A photo in the form: one the listing already has, or a new file with its preview. */

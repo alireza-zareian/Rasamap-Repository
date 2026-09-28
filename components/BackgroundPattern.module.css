@@ -1,6 +1,5 @@
-/* The decorative backdrop: four slowly drifting blurred orbs and three vines
-   drawn once. The orbs' colours live in globals.css under .bg-orb-N, where the
-   light theme and the hidden-tab pause list also name them. */
+/* The backdrop: four drifting orbs and three vines drawn once. The orbs'
+   colours are .bg-orb-N in globals.css, beside the hidden-tab pause list. */
 
 .decor { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .anchor { position: absolute; }
@@ -19,20 +18,16 @@
 .vines { position: absolute; inset: -15% 0 0 0; }
 .vines svg { position: absolute; inset: 0; width: 100%; height: 130%; }
 
-/* Pure decoration, and four large blurred layers are a real GPU cost on a
-   phone — so a phone keeps only the body's dot grid. */
+/* Four large blurred layers cost a phone's GPU; a phone keeps only the dot grid. */
 @media (max-width: 768px) {
   .decor { display: none; }
 }
 
-/* The rule in globals.css named a `.bg-orb` class nothing carried, so the orbs
-   kept drifting for a visitor who had asked for less motion. */
 @media (prefers-reduced-motion: reduce) {
   .orb { animation: none !important; }
 }
 
-/* Local: a CSS module renames every animation it names, so a @keyframes in
-   globals.css is out of its reach. */
+/* Here, not in globals.css: a module renames the animations it names. */
 @keyframes orb-drift-1 {
   0%,100% { transform: translate(0,0) scale(1); }
   33%     { transform: translate(70px,-50px) scale(1.06); }

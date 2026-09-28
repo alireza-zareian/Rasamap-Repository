@@ -3,8 +3,7 @@
 .clickable { cursor: pointer; }
 .label { font-size: 15px; font-weight: 700; fill: var(--text-main); pointer-events: none; }
 
-/* One floating label for whatever the pointer is on — a convenience over the
-   <title> elements, which are what a screen reader and a touch device get. */
+/* The pointer's floating label; screen readers and touch get the <title>s. */
 .tip {
   position: absolute; top: 10px; inset-inline-start: 10px; pointer-events: none; max-width: 60%;
   background: var(--bg-card); border: 1px solid var(--border); border-radius: 9px;

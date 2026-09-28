@@ -13,12 +13,8 @@ interface Props {
 }
 
 /**
- * The owner's phone number, revealed on request.
- *
- * The number used to be fetched as soon as the page mounted. It is now behind
- * an explicit click, for two reasons: a render is not a statement of interest,
- * and POST /api/billboards/[slug]/contact records the reveal as a lead — so
- * what gets recorded has to be something the user actually chose to do.
+ * The owner's phone, revealed on a click — the reveal is recorded as a lead,
+ * so it must be something the visitor chose, not a page render.
  */
 export default function BillboardContact({ hasPhone, agency, slug }: Props) {
   const { user, loading } = useCurrentUser();

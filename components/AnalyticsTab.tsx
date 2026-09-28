@@ -21,8 +21,6 @@ interface AnalyticsData {
   coverage: { withImage: number; geocoded: number };
 }
 
-// Shared label maps, so a type or status never reads differently here than on
-// a card or in the admin panel.
 const TYPE_FA = typeLabels as Record<string, string>;
 const STATUS_FA = availabilityLabels;
 
@@ -44,11 +42,7 @@ function Bar({ label, value, max, color = "var(--accent)" }: {
 
 export type { AnalyticsData };
 
-/**
- * The market figures, for the whole country or one city. The page renders the
- * country-wide view on the server and hands it in as `initial`; only choosing a
- * city asks the API again.
- */
+/** Market figures for the country (from the server) or one city (from the API). */
 export default function AnalyticsTab({ initial }: { initial: AnalyticsData }) {
   const [city, setCity] = useState("");
   const [data, setData] = useState<AnalyticsData>(initial);
@@ -60,10 +54,7 @@ export default function AnalyticsTab({ initial }: { initial: AnalyticsData }) {
   useEffect(() => {
     // The first render already has the country-wide figures from the server.
     if (firstRender.current) { firstRender.current = false; return; }
-    // The figures on screen stay until the new ones arrive, and stay if the
-    // request fails: the filter must remain on screen so the visitor can pick
-    // another city or try again. It used to replace the whole tab with an
-    // error line and no way back.
+    // The current figures stay until new ones arrive, and on failure, so the filter stays usable.
     let active = true;
     setPending(true);
     const url = city ? `/api/analytics?city=${encodeURIComponent(city)}` : "/api/analytics";

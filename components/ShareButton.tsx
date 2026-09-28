@@ -9,15 +9,7 @@ type State = "idle" | "copied" | "failed";
 export default function ShareButton({ title }: { title: string }) {
   const [state, setState] = useState<State>("idle");
 
-  /**
-   * Share, or fall back to copying the link.
-   *
-   * Both `navigator.share` and `navigator.clipboard` require a secure context.
-   * `localhost` is treated as one, so this always worked while developing; a
-   * phone opening the same server over `http://<lan-ip>` gets neither, and the
-   * old code called `navigator.clipboard.writeText` unguarded — it threw inside
-   * the handler and the button did nothing at all, with no message.
-   */
+  /** Share, else copy the link. Both need a secure context, absent over http on the LAN (rule 9). */
   const share = async () => {
     const url = window.location.href;
 

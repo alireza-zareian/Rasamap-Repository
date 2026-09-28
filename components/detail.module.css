@@ -1,6 +1,4 @@
-/* The pieces of a media page that live outside its route folder: the gallery,
-   the traffic estimate, the contact card, the share button and the related
-   strip. One sheet, because they are only ever drawn on that page. */
+/* The media page's components (gallery, traffic, contact, share, related strip), drawn only there. */
 
 /* ── Gallery ── */
 .stage {
@@ -45,8 +43,7 @@
 .close { top: -16px; left: -16px; width: 32px; height: 32px; background: rgba(255, 255, 255, 0.15); }
 .lightboxCount { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); font-size: 0.72rem; color: rgba(255, 255, 255, 0.6); }
 
-/* On a phone the arrows outside the photo are off-screen; bring them in over
-   its edges. Swiping works too. */
+/* On a phone the arrows move over the photo's edges. */
 @media (max-width: 640px) {
   .prev { right: 6px; background: rgba(0, 0, 0, 0.45); }
   .next { left: 6px; background: rgba(0, 0, 0, 0.45); }
@@ -142,6 +139,5 @@
 .relatedPrice strong { font-size: 0.95rem; font-weight: 800; color: var(--accent); }
 .relatedPrice span { font-size: 0.62rem; color: var(--text-muted); }
 
-/* Local: a CSS module renames every animation it names, so a @keyframes in
-   globals.css is out of its reach. */
+/* Here, not in globals.css: a module renames the animations it names. */
 @keyframes relatedScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }

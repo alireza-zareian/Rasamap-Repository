@@ -8,10 +8,8 @@ import styles from "./dialog.module.css";
 export { styles as dialogStyles };
 
 /**
- * A modal dialog. Escape, the close button and a click on the backdrop all
- * close it; focus moves in on open, stays inside, and returns to the opener on
- * close (useModalA11y). Every modal is built on this, so none of them can
- * forget one of those — the admin confirm dialogs had forgotten all three.
+ * Every modal. Escape, the close button or the backdrop closes it; focus moves
+ * in, stays inside and returns to the opener (useModalA11y).
  */
 export function Dialog({
   title, icon, onClose, size = "md", footer, children,
