@@ -1,3 +1,4 @@
+import { isInIran } from "@/lib/domain/location";
 import { coordsForCity, findProvinceOfCity } from "./iran-cities";
 
 /**
@@ -43,8 +44,6 @@ export function distanceKm(
 /** How far from its city a pin may sit. Tehran to Karaj is about 40 km. */
 export const MAX_CITY_RADIUS_KM = 40;
 
-const IRAN = { minLng: 43, maxLng: 64, minLat: 24, maxLat: 40 };
-
 /**
  * Whether a row's point can be believed. About one in six crawled points is far
  * from its own city (a تهران row 490 km away); the row stays in the catalogue,
@@ -55,8 +54,7 @@ export function isPlottable(
   city: string, lat: number | null | undefined, lng: number | null | undefined,
 ): lat is number {
   if (typeof lat !== "number" || typeof lng !== "number") return false;
-  if (lat < IRAN.minLat || lat > IRAN.maxLat) return false;
-  if (lng < IRAN.minLng || lng > IRAN.maxLng) return false;
+  if (!isInIran(lat, lng)) return false;
   const centre = coordsForCity(city);
   if (!centre) return true;
   return distanceKm(lat, lng, centre.lat, centre.lng) <= MAX_CITY_RADIUS_KM;
