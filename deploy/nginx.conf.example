@@ -1,99 +1,133 @@
 # ============================================================================
-# RASAMAP — nginx in front of `next start`
+# RASAMAP — nginx in front of `npm run start` (server.mjs)
 #
 #   sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/rasamap
 #   sudo ln -s /etc/nginx/sites-available/rasamap /etc/nginx/sites-enabled/
+#   sudo mkdir -p /var/cache/nginx/rasamap
 #   sudo certbot --nginx -d rasamap.ir -d www.rasamap.ir
 #   sudo nginx -t && sudo systemctl reload nginx
 #
-# certbot rewrites this file to add the TLS block and the :80 → :443 redirect.
+# certbot adds the TLS block and the :80 → :443 redirect; add `http2 on;` to
+# the TLS server block it writes. What each part buys is in RUNBOOK.md,
+# "Production: what nginx takes off the app".
 #
 # ── The three headers that are not optional ─────────────────────────────────
-# Rule 9 in AGENTS.md exists because the app must never infer a property of the
-# *connection* from the environment it was built in. It reads these instead, so
-# a proxy that does not set them breaks things that look unrelated:
+# The app reads the connection from these, never from how it was built (rule 9
+# in AGENTS.md, §24). A proxy that does not set them breaks unrelated things:
 #
-#   X-Forwarded-Proto  the session cookie's Secure flag (lib/auth/…). Missing →
-#                      the cookie is sent without Secure over a real HTTPS site.
-#   X-Forwarded-Host   the origin check on state-changing requests. Missing →
-#                      the app compares against its own bind address and refuses
-#                      legitimate form posts.
-#   X-Forwarded-For    the client IP behind every rate limit and audit line.
-#                      Missing → every visitor shares one bucket, and the first
-#                      burst locks out the rest.
+#   X-Forwarded-Proto  the session cookie's Secure flag
+#   X-Forwarded-Host   the origin check on every state-changing request
+#   X-Forwarded-For    the client address behind rate limits and the audit log
 #
-# Set TRUSTED_PROXY_COUNT=1 in the app's environment to match exactly one proxy
-# in front. See §24.
+# Set TRUSTED_PROXY_COUNT=1 in the app's environment: exactly one proxy.
 # ============================================================================
+
+# One set of kept-alive connections to Node, instead of a new TCP handshake
+# per request.
+upstream rasamap_app {
+    server 127.0.0.1:3000;
+    keepalive 16;
+}
+
+# Pages the app itself marks shareable (`s-maxage`: the landing page, /about)
+# are kept here for as long as it says, so a burst of visitors costs Node one
+# render. Anything `private` or `no-store` — the catalogue, every API answer
+# with a session — is never stored: nginx obeys the app's Cache-Control.
+proxy_cache_path /var/cache/nginx/rasamap levels=1:2 keys_zone=rasamap:10m
+                 max_size=200m inactive=10m use_temp_path=off;
 
 server {
     listen 80;
     server_name rasamap.ir www.rasamap.ir;
 
-    # Scraped photos are large and immutable; let nginx serve them so Node never
-    # wakes up for a picture. Paths are relative to the checkout. Uploaded
-    # photos live outside public/ (UPLOAD_DIR) and are served by the app, which
-    # applies the hotlink check.
+    # Scraped photos and the build output are served from disk; Node never
+    # wakes up for them. Uploaded photos live outside public/ (UPLOAD_DIR) and
+    # go through the app, which applies the hotlink check.
     root /srv/rasamap/public;
 
-    # Above the largest body the app itself accepts: an admin's ten-photo batch
-    # (maxUploadBodyBytes in lib/domain/listing.ts, about 20 MB). Below it, nginx
-    # would answer a legitimate upload with its own HTML 413, which the form
-    # cannot read. The app still enforces its own, per-route limits.
+    # Above the largest body the app accepts (an admin's ten-photo batch,
+    # maxUploadBodyBytes in lib/domain/listing.ts, about 20 MB), so nginx never
+    # answers a real upload with its own HTML 413. The app keeps its own limits.
     client_max_body_size 24M;
 
-    # Next's build output is content-hashed, so it can be cached forever.
+    # Compression here rather than in Node. Next already gzips what it sends,
+    # and nginx leaves an encoded body alone; to move that work off the Node
+    # thread, set `compress: false` in next.config.ts on this host (RUNBOOK).
+    gzip on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_vary on;
+    gzip_types text/css application/javascript application/json image/svg+xml
+               text/plain text/x-component application/manifest+json;
+
+    # Content-hashed build output: cached for good.
     location /_next/static/ {
         alias /srv/rasamap/.next/static/;
         access_log off;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
-    # The pre-built image variants (npm run images:variants). Same story.
+    # Scraped photos and their pre-built variants (npm run images:variants).
     location /images/ {
-        # proxy.ts refuses a photo embedded by another site, but only when Node
-        # answers — and here it never does. This is the same rule in nginx: a
-        # missing Referer passes (direct opens, privacy modes), our own host
-        # passes, any other host gets 403.
+        # The hotlink rule proxy.ts applies, which never runs here: no Referer
+        # (a direct open, a privacy mode) or our own host passes; others get 403.
         valid_referers none server_names;
         if ($invalid_referer) { return 403; }
         try_files $uri @app;
         access_log off;
-        expires 30d;
-        add_header Cache-Control "public";
+        add_header Cache-Control "public, max-age=604800, stale-while-revalidate=86400";
     }
 
-    # Kept out of the access log: it is polled every few seconds forever.
+    # Polled by monitoring: kept out of the access log.
     location = /api/health {
         access_log off;
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host              $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host  $host;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_pass http://rasamap_app;
+        include /etc/nginx/snippets/rasamap-proxy.conf;
+    }
+
+    # The API is never cached here: every call must reach its rate limit and
+    # the JSON catalogue's copy budget (§20b).
+    location /api/ {
+        proxy_pass http://rasamap_app;
+        include /etc/nginx/snippets/rasamap-proxy.conf;
+        proxy_read_timeout 60s;
     }
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
+        proxy_pass http://rasamap_app;
+        include /etc/nginx/snippets/rasamap-proxy.conf;
 
-        proxy_set_header Host              $host;
-        proxy_set_header Upgrade           $http_upgrade;
-        proxy_set_header Connection        "upgrade";
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host  $host;
+        proxy_cache rasamap;
+        # `rsc` is one of the headers the app's Vary names: a page and its RSC
+        # payload share a URL and must not share an entry.
+        proxy_cache_key "$scheme$host$request_uri|$http_rsc|$http_next_router_prefetch";
+        proxy_cache_use_stale updating error timeout http_502 http_503;
+        proxy_cache_background_update on;
+        proxy_cache_lock on;
+        # A signed-in visitor always reaches the app.
+        proxy_cache_bypass $cookie_rasamap_session;
+        proxy_no_cache     $cookie_rasamap_session;
+        add_header X-Cache $upstream_cache_status always;
 
         proxy_read_timeout 60s;
     }
 
     location @app {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host              $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host  $host;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_pass http://rasamap_app;
+        include /etc/nginx/snippets/rasamap-proxy.conf;
     }
 }
+
+# ── /etc/nginx/snippets/rasamap-proxy.conf ──────────────────────────────────
+# Save these lines on their own in that file. They are the headers above, plus
+# the empty Connection that lets the upstream keepalive work (the app serves
+# no WebSocket in production).
+#
+#   proxy_http_version 1.1;
+#   proxy_set_header Connection        "";
+#   proxy_set_header Host              $host;
+#   proxy_set_header X-Real-IP         $remote_addr;
+#   proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+#   proxy_set_header X-Forwarded-Proto $scheme;
+#   proxy_set_header X-Forwarded-Host  $host;

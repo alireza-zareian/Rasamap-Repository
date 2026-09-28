@@ -150,7 +150,7 @@ cp .env.example /etc/rasamap/env && chmod 640 /etc/rasamap/env
 #          TRUSTED_PROXY_COUNT=1        ← exactly one nginx in front
 chown root:rasamap /etc/rasamap/env
 
-npm run db:migrate && npm run db:seed
+npx prisma migrate deploy && npm run db:seed    # `db:migrate` is `migrate dev`: never on a server
 npm run build
 
 cp deploy/rasamap.service /etc/systemd/system/
@@ -158,8 +158,13 @@ systemctl daemon-reload && systemctl enable --now rasamap
 
 cp deploy/nginx.conf.example /etc/nginx/sites-available/rasamap
 ln -s /etc/nginx/sites-available/rasamap /etc/nginx/sites-enabled/
+# the proxy headers: the commented block at the end of that file, on its own
+sed -n 's/^#   //p' deploy/nginx.conf.example | sed -n '/proxy_http_version/,$p' \
+  > /etc/nginx/snippets/rasamap-proxy.conf
+mkdir -p /var/cache/nginx/rasamap
 nginx -t && systemctl reload nginx
 certbot --nginx -d <your domain>        # HTTPS, and the :80 redirect
+# then add `http2 on;` to the :443 server block certbot wrote, and reload
 
 cp deploy/rasamap-backup.* /etc/systemd/system/
 systemctl daemon-reload && systemctl enable --now rasamap-backup.timer
@@ -205,6 +210,54 @@ curl -sI https://<domain>/ | grep -i strict-transport # HTTPS really terminated
 - [ ] submitting a listing works — if it 403s, `X-Forwarded-Host` is missing
 - [ ] `npm run images:check https://<domain>` passes against the live site
 - [ ] restore a backup into a scratch file and count the rows (drill below)
+- [ ] `curl -sI https://<domain>/ | grep -i x-cache` twice: `MISS`, then `HIT`
+
+### Production: what nginx takes off the app
+
+The demo laptop runs Node alone, and should. On a real host, everything that
+is the same for every visitor can be answered before Node wakes up.
+`deploy/nginx.conf.example` does each of these; this is what each one buys and
+what it costs.
+
+| In nginx | What it saves | Cost / limit |
+|---|---|---|
+| `/_next/static/` and `/images/` from disk | Node never serves a file | the hotlink rule is repeated in nginx, because proxy.ts never sees these requests |
+| page cache (`proxy_cache`) | a page the app marks `s-maxage` (the landing page, `/about`) costs one render per 5 minutes, not one per visitor | see below |
+| `gzip` | compression moves off the Node thread once `compress: false` is set in `next.config.ts` | only on this host: the laptop has no nginx and must keep compressing |
+| upstream `keepalive` | no new TCP connection to Node per request | — |
+| `http2 on` | one connection per visitor for all assets | added by hand after certbot |
+
+**Measured** (this project, one sandbox machine, `test/bench.mjs`, 20
+concurrent, 5 s): the landing page straight from Node served **226 req/s,
+p50 85 ms**; through the nginx cache **1,079 req/s, p50 17 ms**. §38 measured
+compression at 30–40 % of a request's CPU in Node; moving it to nginx was not
+measured separately.
+
+**What the page cache does not do.** It stores only what the app itself calls
+shareable — `/explore`, anything `private`/`no-store`, and every `/api/` call
+always reach Node, so rate limits and the JSON catalogue's copy budget (§20b)
+still see every request. A signed-in visitor (`rasamap_session` cookie)
+bypasses it. The one real trade-off: a cached page is answered without
+proxy.ts, so the bot user-agent filter does not see those hits — they are
+public pages, the same for everyone, and cost nothing to serve.
+
+**The rest of the host:**
+
+- `BIND_ADDRESS=127.0.0.1` (already in `rasamap.service`): nginx is the only
+  way in, so nobody can skip it and forge `X-Forwarded-For`.
+- `TRUSTED_PROXY_COUNT=1`: exactly one proxy. Two (a CDN in front of nginx)
+  means `2`; a wrong number either trusts a forged address or rate-limits
+  every visitor as one.
+- **Restarts.** `systemctl restart rasamap` sends SIGTERM; `server.mjs` stops
+  taking connections, lets requests in flight finish, and exits within 10 s.
+  During those seconds nginx keeps serving cached pages
+  (`proxy_cache_use_stale`); everything else answers 502 until Node is back.
+- **SQLite stays one process** (§14). Do not start a second `npm run start`
+  on the same file to "use more cores" — each process keeps its own cache and
+  rate-limit counters (§25). The database file belongs on a local disk, never
+  a network mount (WAL needs shared memory). Past one process, §27 moves it to
+  PostgreSQL.
+- Not used: brotli (not in stock nginx), a CDN (paid or unreachable from Iran).
 
 ### Images — after any fresh clone or restore
 
