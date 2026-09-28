@@ -41,12 +41,16 @@ const SEARCH_DEBOUNCE_MS = 350;
 
 const SORTED_PROVINCES = [...provinces].sort((a, b) => a.name.localeCompare(b.name, "fa"));
 
-/** Push a filter change to the URL; any change but paging returns to page one. */
+/**
+ * Write a filter change to the URL; any change but paging returns to page one.
+ * `replace` rewrites the current history entry instead of adding one.
+ */
 function useFilterNavigation(filters: ExploreFilters) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const apply = useCallback((patch: Partial<ExploreFilters>) => {
-    startTransition(() => router.push(exploreHref({ ...filters, page: 1, ...patch }), { scroll: false }));
+  const apply = useCallback((patch: Partial<ExploreFilters>, { replace = false } = {}) => {
+    const href = exploreHref({ ...filters, page: 1, ...patch });
+    startTransition(() => (replace ? router.replace : router.push)(href, { scroll: false }));
   }, [filters, router]);
   return { apply, pending };
 }
@@ -69,9 +73,28 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
   useEffect(() => { setPrice(filters.maxPrice); }, [filters.maxPrice]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const applyDebounced = useCallback((patch: Partial<ExploreFilters>) => {
+  // The field whose typing produced the current history entry. Every pause in
+  // typing navigates, and each used to push: three pauses on «ونک» left Back
+  // on «ون». The first pause of a burst pushes, the rest replace it, so Back
+  // leaves the search in one step.
+  const typingRef = useRef<keyof ExploreFilters | null>(null);
+  // Typing not yet sent. A click meanwhile carries it along rather than
+  // navigating without it and then being overtaken by the timer.
+  const unsentRef = useRef<Partial<ExploreFilters>>({});
+  const applyNow = useCallback((patch: Partial<ExploreFilters>) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => apply(patch), SEARCH_DEBOUNCE_MS);
+    typingRef.current = null;
+    apply({ ...unsentRef.current, ...patch });
+    unsentRef.current = {};
+  }, [apply]);
+  const applyDebounced = useCallback((field: "search" | "maxPrice", patch: Partial<ExploreFilters>) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    unsentRef.current = { ...unsentRef.current, ...patch };
+    debounceRef.current = setTimeout(() => {
+      apply(unsentRef.current, { replace: typingRef.current === field });
+      unsentRef.current = {};
+      typingRef.current = field;
+    }, SEARCH_DEBOUNCE_MS);
   }, [apply]);
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
@@ -87,7 +110,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
         <div className={styles.views}>
           {(["grid", "list"] as const).map(m => (
             <button key={m} type="button" className={styles.viewButton} aria-pressed={filters.view === m}
-              onClick={() => apply({ view: m, page: filters.page })} aria-label={m === "grid" ? "نمایش شبکه‌ای" : "نمایش فهرستی"}>
+              onClick={() => applyNow({ view: m, page: filters.page })} aria-label={m === "grid" ? "نمایش شبکه‌ای" : "نمایش فهرستی"}>
               {m === "grid" ? <LayoutGrid size={15} /> : <List size={15} />}
             </button>
           ))}
@@ -99,13 +122,13 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
         <input
           className={styles.searchInput}
           value={text}
-          onChange={e => { setText(e.target.value); applyDebounced({ search: e.target.value }); }}
+          onChange={e => { setText(e.target.value); applyDebounced("search", { search: e.target.value }); }}
           placeholder="جستجو — نام، منطقه، خیابان، شهر…"
           aria-label="جستجو"
           enterKeyHint="search"
         />
         {text && (
-          <button type="button" className={styles.bare} onClick={() => { setText(""); apply({ search: "" }); }} aria-label="پاک کردن جستجو">
+          <button type="button" className={styles.bare} onClick={() => { setText(""); applyNow({ search: "" }); }} aria-label="پاک کردن جستجو">
             <X size={15} />
           </button>
         )}
@@ -121,11 +144,11 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
 
       <div className={locOpen ? styles.secondaryOpen : styles.secondary}>
         <div className={styles.pair}>
-          <select className={styles.select} value={filters.province} onChange={e => apply({ province: e.target.value, city: "" })} aria-label="استان">
+          <select className={styles.select} value={filters.province} onChange={e => applyNow({ province: e.target.value, city: "" })} aria-label="استان">
             <option value="">همه استان‌ها</option>
             {SORTED_PROVINCES.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
           </select>
-          <select className={styles.select} value={filters.city} onChange={e => apply({ city: e.target.value })} disabled={!filters.province} aria-label="شهر">
+          <select className={styles.select} value={filters.city} onChange={e => applyNow({ city: e.target.value })} disabled={!filters.province} aria-label="شهر">
             <option value="">{filters.province ? "همه شهرها" : "ابتدا استان انتخاب کنید"}</option>
             {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
           </select>
@@ -133,7 +156,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
 
         <div className={styles.chips}>
           {TYPE_CHIPS.map(c => (
-            <button key={c.value} type="button" className={styles.chip} aria-pressed={filters.type === c.value} onClick={() => apply({ type: c.value })}>
+            <button key={c.value} type="button" className={styles.chip} aria-pressed={filters.type === c.value} onClick={() => applyNow({ type: c.value })}>
               {c.Icon && <c.Icon size={12} />}
               {c.label}
             </button>
@@ -145,10 +168,10 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
               <Crosshair size={13} />
               <span>تا {faNum(filters.near.radiusKm)} کیلومتر از این نقطه</span>
               <select value={filters.near.radiusKm} aria-label="شعاع جست‌وجو به کیلومتر"
-                onChange={e => apply({ near: { ...filters.near!, radiusKm: Number(e.target.value) } })}>
+                onChange={e => applyNow({ near: { ...filters.near!, radiusKm: Number(e.target.value) } })}>
                 {RADIUS_CHOICES.map(km => <option key={km} value={km}>{faNum(km)} کیلومتر</option>)}
               </select>
-              <button type="button" className={styles.bare} onClick={() => apply({ near: null })} aria-label="برداشتن محدودهٔ مکانی">
+              <button type="button" className={styles.bare} onClick={() => applyNow({ near: null })} aria-label="برداشتن محدودهٔ مکانی">
                 <X size={13} />
               </button>
             </div>
@@ -165,7 +188,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
             <div>
               <label htmlFor="explore-availability" className={styles.label}>وضعیت</label>
               <select id="explore-availability" className={styles.select} value={filters.availability}
-                onChange={e => apply({ availability: e.target.value as ExploreFilters["availability"] })}>
+                onChange={e => applyNow({ availability: e.target.value as ExploreFilters["availability"] })}>
                 <option value="">همه وضعیت‌ها</option>
                 {AVAILABILITIES.map(a => <option key={a} value={a}>{availabilityLabels[a]}</option>)}
               </select>
@@ -176,12 +199,12 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
                 <span className={styles.priceValue}>{faNum(price)}M تومان/ماه</span>
               </div>
               <input id="explore-price" className={styles.range} type="range" min={MIN_PRICE} max={MAX_PRICE} step={10} value={price}
-                onChange={e => { setPrice(+e.target.value); applyDebounced({ maxPrice: +e.target.value }); }} />
+                onChange={e => { setPrice(+e.target.value); applyDebounced("maxPrice", { maxPrice: +e.target.value }); }} />
             </div>
             {hasActiveFilters(filters) && (
               <div>
                 <button type="button" className={styles.chip}
-                  onClick={() => apply({ search: "", type: "all", availability: "", province: "", city: "", maxPrice: MAX_PRICE, near: null })}>
+                  onClick={() => applyNow({ search: "", type: "all", availability: "", province: "", city: "", maxPrice: MAX_PRICE, near: null })}>
                   <RotateCcw size={13} /> پاک کردن همهٔ فیلترها
                 </button>
               </div>
