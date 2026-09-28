@@ -35,7 +35,9 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
         aria-label={isCompared ? "حذف از مقایسه" : "افزودن به مقایسه"} aria-pressed={isCompared}>
         <Scale size={12} /> مقایسه
       </button>
-      <IntentLink href={`/billboard/${b.slug}`} className={`${styles.action} ${listMode ? "" : styles.primary}`}>مشخصات</IntentLink>
+      {/* The name's link already covers the card; this one is the visible cue, so it is skipped by keyboards and screen readers. */}
+      <IntentLink href={`/billboard/${b.slug}`} className={`${styles.action} ${listMode ? "" : styles.primary}`}
+        tabIndex={-1} aria-hidden="true">مشخصات</IntentLink>
     </div>
   );
 
@@ -48,7 +50,7 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
         </div>
         <div className={styles.rowBody}>
           <div className={styles.rowHead}>
-            <div className={styles.name}>{b.name}</div>
+            <IntentLink href={`/billboard/${b.slug}`} className={`${styles.name} ${styles.stretch}`}>{b.name}</IntentLink>
             <span className={styles.rowStatus}>{status}</span>
           </div>
           <div className={styles.foot}>{figures}{actions}</div>
@@ -81,7 +83,7 @@ export default function BillboardCard({ billboard: b, isCompared, onCompare, lis
         )}
       </div>
       <div className={styles.body}>
-        <div className={styles.name}>{b.name}</div>
+        <IntentLink href={`/billboard/${b.slug}`} className={`${styles.name} ${styles.stretch}`}>{b.name}</IntentLink>
         <div className={styles.foot}>{figures}{actions}</div>
       </div>
     </div>
