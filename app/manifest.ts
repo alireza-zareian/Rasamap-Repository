@@ -11,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     dir: "rtl",
     lang: "fa-IR",
-    // The dark theme's page colour; the default theme is light (app/layout.tsx).
-    background_color: "#0A0E1A",
+    // The light theme's page colour (--bg-deep in globals.css), the default theme.
+    background_color: "#E8EDF8",
     theme_color: "#3B7BF5",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
