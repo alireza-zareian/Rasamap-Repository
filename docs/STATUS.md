@@ -27,6 +27,15 @@
 > خواننده تأکید کن. عدد ۹۷ برابر قابل‌استناد است و در `docs/engineering-decisions.md`
 > §۲۲ مستند شده.
 
+> 🧭 **۶ مهر ۱۴۰۵ — بازبینی پنجم: ناوبری، بارِ گوشی، صفحهٔ رسانهٔ کش‌شده (§۳۹).**
+> جستجو دیگر با هر مکث یک قدم به «برگشت» اضافه نمی‌کند؛ «بازگشت به جستجو» فیلترها را نگه
+> می‌دارد؛ کلِ کارت لینک است؛ اسلایدرِ پنهانِ `/explore` روی گوشی دیگر هر ۵.۵ ثانیه عکس
+> نمی‌گیرد. صفحهٔ رسانه برای بازدیدکننده از کش داده می‌شود (CPU هر بازدید ۲۲ → حدود ۸ms) و
+> آدرسِ ساختگی روی دیسک نمی‌ماند؛ کارمند پیش‌نمایشِ بدون کش را می‌بیند. نقشهٔ گوگل با کلیک باز
+> می‌شود؛ Tailwind حذف شد و فقط reset ماند (۳۱ از ۳۲ تصویرِ صفحه پیکسل‌به‌پیکسل یکسان)؛ عنوان و
+> canonical برای هر نمای کاتالوگ؛ آزمون‌های مرورگر در CI؛ `components/` پوشه‌بندیِ قابلیتی شد
+> (جدولِ «Where things moved» در §۳۹). **۱۸ + ۱۸۷ + ۸ آزمون و ۱۱ جریانِ مرورگر سبز.**
+
 > 🔎 **۶ مهر ۱۴۰۵ — بازبینی چهارم و بازخوانی همهٔ کامنت‌ها (§۳۷–۳۸).**
 > هزینهٔ یک *بازدید* اندازه گرفته شد، نه یک درخواست: لینک‌های فهرست‌ها حالا فقط با
 > قصدِ کاربر prefetch می‌کنند (کاتالوگ: ۹۱ → ۲۲ درخواست پس‌زمینه، CPU سرور ۶۶۰ → ۴۴۰ ms)؛
@@ -512,7 +521,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 | F4 | `project-ai.zip` (265 KB) tracked at repo root; `.DS_Store` scattered. → **fixed** — `.gitignore` updated and neither is tracked. | Low |
 | F5 | No `PRE_DEPLOY_CHECKLIST.md` / `RUNBOOK.md`. → **fixed** | Med |
 | F6 | No `LICENSE`. → **fixed** — MIT. | Low |
-| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 209 tests (`npm test`, on a production build) plus 11 browser flows (`npm run test:e2e`). | Med |
+| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 213 tests (`npm test`, on a production build) plus 11 browser flows (`npm run test:e2e`), all run by CI on every push. | Med |
 | F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. → **fixed** — every live count now reads the same (3,536 rows, 3,532 published, 101 cities, 3,020 geocoded, verified against `dev.db`); older figures survive only in dated history entries. The module split is stated in `AGENTS.md` rule 1 and F15: `lib/types.ts` is data-free, `lib/data.ts` holds the dataset and is imported only by `prisma/seed.ts`. | Low |
 | F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |

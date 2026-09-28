@@ -1670,7 +1670,7 @@ on screen answered every question below in one look.
    photograph, and only the catalogue card had a placeholder for that. The hero
    carousel, the landing gallery, the related strip and the detail gallery all
    rendered the browser's torn-page icon. §5 says the unhappy path is a designed
-   screen; `components/MediaImage.tsx` now holds the one definition of it, for
+   screen; `components/media/MediaImage.tsx` now holds the one definition of it, for
    a record with no photo and for a photo that fails to load.
 3. *Latin digits in a Persian interface.* A screenshot showed "4000M تومان"
    directly beneath "۴ رسانه یافت شد". The detail page, the related strip and
@@ -2350,6 +2350,87 @@ all — is a product decision. Under `next dev` there is no `x-rasamap-peer`, bu
 the address then falls back to the X-Forwarded-For entry Next writes from the
 socket, so dev rate limits still see real addresses; nothing to change.
 
+## 39. Fifth review: navigation, what a phone downloads, and the cached media page
+
+**Context.** Asked to look again, adversarially, at what the four reviews had
+not: how a visitor moves through the site, what the browser does after the
+page has loaded, what the server repeats for nothing, and how the tree reads.
+Measured in Chromium at 390 px and 1440 px against the production build, and
+by the server process's own CPU counter.
+
+**What was wrong, and what replaced it.**
+
+| Finding | Evidence | Change |
+|---|---|---|
+| Each pause in typing a search added a history entry | three pauses on «ونک»: history 2 → 4, Back landed on «ون» | the first pause of a burst pushes, the rest replace; a click while typing carries the unsent text (`ExploreControls.tsx`) |
+| "Back to search" from a media page dropped every filter | both links pointed at a bare `/explore` | the catalogue records its address per tab; `SearchBackLink` reads it after hydration (`lib/client/last-search.ts`) |
+| Only a small button on a card was a link | the photo and the name did nothing; no "open in new tab" | the name is the card's one link, stretched over it; the compare button sits above |
+| On a phone the hidden showcase kept downloading | a new photo at 6.0, 11.5, 17.0, 22.5 s after load, for as long as the page stayed open | the timer runs only while displayed and visible; the photo is lazy, which a hidden image never loads |
+| The admin table searched on every keystroke, answers out of order | five requests for «تهران»; nothing stopped «ت» landing last | 300 ms debounce; `fetchJson` takes an `AbortSignal` and the previous load is aborted |
+| Hand-typed figures | «۲۸۰۰ … ۸۷ شهر» against 3,545 in 100; the review minimum written three times | read from `getCachedSiteStats()`; `REVIEW_COMMENT`/`REVIEW_REPLY` in `lib/domain/rating.ts` |
+| Seven layouts existed only to export metadata | one (`explore/map`) was already overridden by its page | each Server Component page exports its own; layouts remain only for client pages |
+| Tailwind was imported though no class uses it | 58 global utilities (`.hidden`, `.table`, `.transform!`) and a theme on every page | `app/reset.css` holds its preflight as compiled here, in the same layer; global CSS 6,030 → 4,316 bytes gzipped; 31 of 32 screenshots pixel-identical, the 32nd differing by its own log row |
+| Every media page was rendered per request | one cookie read, for the staff preview, made all 3,532 dynamic: 22 ms CPU per view | see below — 22 → ~8 ms |
+| Google's map loaded with every media page | a third-party frame and its scripts before the visitor asked; often unreachable in Iran | a same-size "نمایش نقشه" button that becomes the frame (`MapEmbed`); no request to Google until clicked |
+| A malformed address was a 500 | `/billboard/%E0%A4%A`, `/uploads/%E0%A4%A` threw in Next's param decoding | `proxy.ts` rewrites an undecodable path to the not-found page |
+| `/api/auth/me` sent `id` as a string, the page read a number | `ReviewsSection` converted it by hand; `fetchJson<T>` is only a cast | `CurrentUser` in `lib/types.ts`, built by the route and read by the page |
+| No canonical address; every catalogue view titled the same | any filter, sort, layout or page: «جستجوی رسانه» | titles per type and place, canonical without sort/layout, noindex for free text, a circle, a price or availability (`exploreSeo`); canonical and BreadcrumbList on media pages; four pages added to the sitemap |
+| The browser tests ran only on one Mac | the runner looked for Chrome at its macOS path | CI runs them on Ubuntu's Chrome (green on GitHub) |
+| 25 components loose at the top of `components/` | two unrelated `detail.module.css` | feature folders (`media`, `compare`, `account`, `site`, `ui`, `listing`, `analytics`, `map`); moves only, 31/32 screenshots identical |
+
+**The cached media page, and the trap in it.** The page is now
+`MediaPage.tsx` behind two routes. `/billboard/[slug]` reads no cookie and is
+incremental static: rendered on its first request, then served from the cache
+until the catalogue tag is dropped by a write or the 300 s TTL passes.
+`/billboard/[slug]/preview` is dynamic and does the staff check; `proxy.ts`
+rewrites a staff session there, so the address bar and every link keep the
+public URL and the existing preview tests pass unchanged.
+
+The first version cached 404s too: twenty made-up slugs left 300 files, about
+104 KB each, so a loop over invented addresses would have filled the disk — the
+same attack §20 closed for the data cache. `proxy.ts` now looks the slug up
+(one read on a unique index; proxy runs on Node in Next 16) and sends an
+unknown one to the uncached route, where it is a plain 404. Tests pin all
+three: a visitor's second request is a cache HIT, a staff session's never is,
+and a made-up slug never is.
+
+**Measured and left alone.**
+
+- *One stylesheet for every page's modules.* Turbopack merges all CSS modules
+  into one ~16 KB (gzipped) file loaded by every page, admin styles included,
+  to keep one global order. `experimental.cssChunking: "strict"` changed
+  nothing under Turbopack; a webpack build still produced a 59 KB shared file
+  and broke the SQLite driver's bindings. The file is hashed and cached for a
+  year after the first visit, so the cost is one download per visitor.
+- *`/api/auth/me` on every page load for anonymous visitors.* 17 of 19 API log
+  lines in a browsing session were its 401s, but each costs the server under
+  a millisecond. Avoiding it needs a second, readable cookie kept in step with
+  the session in four places, and a path for sessions that predate it; the
+  saving does not pay for that.
+- *Uploaded photos served at 1600 px into 300 px cards.* A resize at upload
+  needs an image library the project does not carry; listings are few and
+  the browser already shrinks each photo before sending (`lib/client/photos.ts`).
+
+### Where things moved
+
+| Before | After |
+|---|---|
+| `app/(site)/billboard/[slug]/page.tsx` (the whole page) | `…/[slug]/MediaPage.tsx`, rendered by `…/[slug]/page.tsx` and `…/[slug]/preview/page.tsx` |
+| `components/{BillboardCard,BillboardContact,BillboardGallery,MediaImage,RelatedBillboards,ReviewsSection,ShareButton,TrafficMeter,TypeIcon}` | `components/media/` |
+| `components/detail.module.css` | `components/media/media.module.css` |
+| `components/{CompareBar,CompareModal}` | `components/compare/` |
+| `components/{DashboardClient,EditListingModal,UserAvatar}` | `components/account/` |
+| `components/{StaffBar,BackgroundPattern}` | `components/site/` |
+| `components/{PageSkeleton,SwipeMarquee,Toast}` | `components/ui/` |
+| `components/LocationInput` | `components/listing/` |
+| `components/AnalyticsTab` · `components/IranMap` | `components/analytics/` · `components/map/` |
+| Tailwind preflight via `@import "tailwindcss"` | `app/reset.css` |
+
+### Verified
+
+`tsc`, ESLint, 18 unit + 187 API + 8 importer tests and 11 browser flows, all
+passing locally and on GitHub Actions (which now runs the browser flows too).
+
 ---
 
 ## Milestone log (outputs, not diffs)
@@ -2406,3 +2487,4 @@ socket, so dev rate limits still see real addresses; nothing to change.
 | 2026-09-27 | **Fourth review — cost of a visit** | §38 — list links prefetch on intent (a catalogue visit's background requests 91 → 22, server CPU 660 → 440 ms); the shimmer no longer repaints forever; photos cached a week; gigantic-image uploads refused; graceful shutdown. Seven attacks on existing defences, all held. |
 | 2026-09-28 | **Every comment against its code; nginx proven** | §38 — comment pass over lib, app, components, tests, prisma, scripts and scraper, each commit proved comment-only by a stripping diff; a hardcoded Neshan key moved to the environment; the invisible `/explore` loop removed; `migrate dev` taken out of the deployment steps; the nginx example run in front of the production build (landing 226 → 1,079 req/s) and corrected to never cache `/api/`. |
 | 2026-09-27 | **3D hero street** | §37 — CSS 3D street of real media on the landing, one-shot arrival + scroll-linked approach; no server cost, load time within noise; a 300 ms 3D floor plane and a flattening opacity found by measurement and designed out. Card spotlight removed. |
+| 2026-09-28 | **Fifth review — navigation and the cached media page** | §39 — search history, back-to-results, whole-card links, the hidden showcase that kept downloading, an admin search race; media pages cached (22 → ~8 ms CPU) without caching made-up slugs; Google's map on demand; Tailwind dropped for its reset; canonical addresses and per-view titles; browser tests in CI; components/ in feature folders. |

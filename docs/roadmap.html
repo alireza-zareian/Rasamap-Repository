@@ -987,7 +987,7 @@ sequenceDiagram
 <section class="chapter" id="c8">
   <div class="chead">
     <div class="cn">فصل ۸</div>
-    <div><h3>تاریخچهٔ ساخت</h3><p>۱۰۳ گام کار، دسته‌بندی‌شده در شش دوره — روی هر دوره کلیک کن تا باز شود</p></div>
+    <div><h3>تاریخچهٔ ساخت</h3><p>۱۰۴ گام کار، دسته‌بندی‌شده در شش دوره — روی هر دوره کلیک کن تا باز شود</p></div>
   </div>
 
   <div class="note info">
@@ -2142,7 +2142,7 @@ sequenceDiagram
   </details>
 
   <details class="fold">
-    <summary>دورهٔ ۶ — آماده‌سازی ارائه، و سخت‌سازیِ پس از آن<span class="tag">۴۶ گام · چک‌لیست روز دفاع، سپس مجموعهٔ V (استقرار، CSP، آزمونِ مرورگر)، مجموعهٔ B (ممیزی و رفعِ یافته‌ها) و مجموعهٔ A (دسترس‌پذیری و معماری)</span></summary>
+    <summary>دورهٔ ۶ — آماده‌سازی ارائه، و سخت‌سازیِ پس از آن<span class="tag">۴۷ گام · چک‌لیست روز دفاع، سپس مجموعهٔ V (استقرار، CSP، آزمونِ مرورگر)، مجموعهٔ B (ممیزی و رفعِ یافته‌ها) و مجموعهٔ A (دسترس‌پذیری و معماری)</span></summary>
     <div class="foldbody"><div class="phases">
   <!-- ─── MOB3 — sticky theme, harsh rate limit, map referrer ─── -->
   <div class="phase-card is-done">
@@ -4252,6 +4252,29 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
         <div class="task done-t"><div class="tick">✓</div><div><strong><code>billboards/index.ts</code></strong> — همان مسیرِ import قبلی را حفظ می‌کند، پس <strong>هیچ‌کدام از ۱۸ محلِ فراخوانی تغییر نکرد</strong>. <code>core.ts</code> به‌جایِ <code>export *</code> با نامِ صریح دوباره صادر می‌شود تا <code>fromRow</code>، که لوله‌کشیِ داخلیِ پوشه است، وارد سطحِ عمومی نشود</div></div>
       </div>
       <div class="proof">معادل‌بودن اثبات شد نه ادعا: متنِ پروندهٔ اصلی با مجموعِ سه پروندهٔ تازه به‌صورت خط‌به‌خط مقایسه شد (<code>comm -23</code>) و <strong>صفر خط</strong> از نسخهٔ اصلی گم شده؛ تنها تفاوت‌ها کامنت‌های سرپروندهٔ تازه و خطوطِ <code>import</code>اند. سپس <code>tsc --noEmit</code> و <code>npm run lint</code> تمیز، <code>npm run build</code> موفق، و <code>npm test</code> <strong>۱۴۲/۱۴۲</strong> (۱۳۷ API + ۵ واردکننده). در میانهٔ کار دو خطایِ مرزیِ برش (یک کامنتِ دونیم‌شده و یک <code>/**</code> یتیم) را همین بررسی‌ها گرفتند — که خودش دلیلِ اجرای آن‌هاست. سپس <code>npm run demo</code> بالا آمد و <strong>از رویِ آدرسِ LAN</strong> (نه <code>localhost</code>) آزموده شد: ۱۹ مسیرِ عمومی، ورودِ کاربر و ادمین، داشبورد، افشایِ شمارهٔ تماس، و RBAC. کوکیِ نشست روی HTTP ساده <code>HttpOnly; SameSite=Strict</code> و بدونِ <code>Secure</code> بود (قانون ۹)؛ شمارهٔ مالک در HTML عمومی نشت نکرد — یعنی همان <code>toPublicBillboard()</code>ی که در این بازآرایی به <code>core.ts</code> منتقل شد، سرِ جایش کار می‌کند. ۲۴۰ درخواستِ هم‌زمان: همه ۲۰۰، صفر ۴۲۹، صفر خطا در لاگ، و CPU پس از آرام‌شدن به ۰٪ برگشت.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">NAV</div>
+      <div class="ph-title"><h3>بازبینی پنجم — ناوبری، بارِ گوشی و صفحهٔ رسانهٔ کش‌شده</h3><p>۶ مهر ۱۴۰۵ · §۳۹ در سندِ تصمیم‌ها؛ هر یافته در Chromium روی ساختِ تولیدی اندازه گرفته شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تاریخچهٔ جستجو</strong> — سه مکث در تایپِ «ونک» سه قدم به «برگشت» اضافه می‌کرد؛ حالا یک قدم، و کلیک در میانهٔ تایپ متن را هم می‌برد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>«بازگشت به نتایج جستجو»</strong> از صفحهٔ رسانه همان فیلتر و صفحه را برمی‌گرداند (<code>lib/client/last-search.ts</code>)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>کلِ کارت لینک است</strong> — عکس و نام هم صفحه را باز می‌کنند و در تبِ تازه هم باز می‌شوند؛ دکمهٔ مقایسه کارِ خودش را می‌کند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>اسلایدرِ پنهان روی گوشی</strong> هر ۵.۵ ثانیه یک عکس دانلود می‌کرد؛ حالا هیچ</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>جستجوی پنلِ مدیریت</strong> — یک درخواست به‌جای یکی برای هر حرف، و جوابِ کهنه دیگر روی جوابِ تازه نمی‌نشیند (<code>AbortSignal</code> در <code>fetchJson</code>)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>صفحهٔ رسانه از کش</strong> — CPU هر بازدید ۲۲ → حدود ۸ میلی‌ثانیه؛ کارمند با rewrite در <code>proxy.ts</code> پیش‌نمایشِ بدون کش را می‌بیند؛ نشانیِ ساختگی (۱۰۴ کیلوبایت روی دیسک برای هر کدام) دیگر ذخیره نمی‌شود؛ نشانیِ خراب ۴۰۴ است نه ۵۰۰</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نقشهٔ گوگل با کلیک</strong> — هیچ درخواستی به گوگل تا وقتی کاربر نخواهد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>Tailwind حذف شد</strong> — ۵۸ کلاسِ سراسریِ بی‌استفاده رفت و reset ماند؛ CSS سراسری ۶٬۰۳۰ → ۴٬۳۱۶ بایتِ فشرده</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>عددهای دستی و تکراری</strong> — «۲۸۰۰ بیلبورد در ۸۷ شهر» از خودِ کاتالوگ خوانده می‌شود؛ حداقلِ طولِ نظر یک جا تعریف شد؛ هفت layoutِ فقط‌metadata حذف شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>سئو</strong> — عنوان برای هر نوع و شهر، canonical، noindex برای جستجوی آزاد، BreadcrumbList، چهار صفحهٔ جاافتاده در sitemap</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ساختار</strong> — نوعِ مشترکِ <code>CurrentUser</code> بینِ route و صفحه؛ <code>components/</code> در پوشه‌های قابلیتی؛ آزمون‌های مرورگر در CI</div></div>
+      </div>
+      <div class="proof">هر تغییرِ ظاهری با عکسِ کاملِ ۳۲ صفحه (۱۲ صفحهٔ عمومی در ۱۴۴۰ و ۳۹۰ پیکسل و ۸ صفحهٔ پنل) پیش و پس مقایسه شد: ۳۱ پیکسل‌به‌پیکسل یکسان، و سی‌ودومی فقط در ردیفِ ورودی که خودِ اجرا در لاگ نوشت. <code>tsc</code> و ESLint تمیز؛ <strong>۱۸ واحد + ۱۸۷ API + ۸ واردکننده</strong> و <strong>۱۱ جریانِ مرورگر</strong> موفق، هم محلی و هم در GitHub Actions. سه آزمونِ تازه کش را می‌پایند: بازدیدِ دومِ مهمان HIT است، کارمند هرگز، نشانیِ ساختگی هرگز. آنچه اندازه گرفته شد و عوض نشد (یک فایلِ CSS برای همهٔ ماژول‌ها زیرِ Turbopack، <code>/api/auth/me</code> برای مهمان، اندازهٔ عکسِ آپلودی) با دلیل در §۳۹ آمده است.</div>
     </div>
   </div>
 <div class="phase-card is-done open">
