@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import styles from "../info-pages.module.css";
+
+export const metadata: Metadata = {
+  title: "قوانین و شرایط استفاده | رسامپ",
+  description: "شرایط استفاده از رسامپ، مسئولیتِ صحتِ آگهی‌ها، و سیاستِ حریم خصوصی.",
+};
 
 const sections = [
   { title: "۱. پذیرش شرایط", body: "با استفاده از پلتفرم رسامپ، کاربر تمامی شرایط و قوانین مندرج در این سند را می‌پذیرد. استفاده از خدمات به معنای موافقت با این شرایط است." },

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { Mail, Send, Building2, Clock } from "lucide-react";
 import styles from "../info-pages.module.css";
 import button from "@/components/ui/button.module.css";
+
+export const metadata: Metadata = {
+  title: "تماس با ما | رسامپ",
+  description: "راه‌های تماس با تیم رسامپ برای صاحبان رسانه، آژانس‌های تبلیغاتی و تبلیغ‌دهندگان.",
+};
 
 const contacts = [
   {

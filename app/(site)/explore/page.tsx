@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import IntentLink from "@/components/ui/IntentLink";
 import { SearchX, Map as MapIcon } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
@@ -8,6 +9,11 @@ import { ExploreControls, SortSelect } from "./ExploreControls";
 import ExploreShowcase from "./ExploreShowcase";
 import ExploreResults from "./ExploreResults";
 import styles from "./explore.module.css";
+
+export const metadata: Metadata = {
+  title: "جستجوی رسانه | رسامپ",
+  description: "جستجو و فیلتر بیش از ۲۸۰۰ بیلبورد، تلویزیون شهری، عرشه پل و ایستگاه در ۸۷ شهر ایران.",
+};
 
 /**
  * The catalogue, a Server Component: the results are in the HTML a search

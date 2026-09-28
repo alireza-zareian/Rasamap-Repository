@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Search, Scale, MapPin, Shield, Zap, TrendingUp } from "lucide-react";
 import { getCachedSiteStats } from "@/lib/db/cached";
 import { logger } from "@/lib/logger";
@@ -6,6 +7,11 @@ import { ButtonLink } from "@/components/ui/Button";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "../info-pages.module.css";
 import reveal from "@/components/ui/reveal.module.css";
+
+export const metadata: Metadata = {
+  title: "دربارهٔ رسامپ",
+  description: "رسامپ چیست، داده‌هایش از کجا می‌آید، و مدلِ تخمینِ بازدید چطور کار می‌کند.",
+};
 
 const advantages = [
   {

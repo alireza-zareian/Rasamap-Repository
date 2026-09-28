@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getActor } from "@/lib/auth/actor";
 import { listOwnListings } from "@/lib/db/listings";
 import DashboardClient from "@/components/DashboardClient";
+
+export const metadata: Metadata = {
+  title: "داشبورد من | رسامپ",
+  description: "آگهی‌های من، وضعیت انتشار و تنظیمات حساب کاربری.",
+};
 
 /**
  * A customer's dashboard, with their listings read on the server.
