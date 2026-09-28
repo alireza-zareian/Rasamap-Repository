@@ -1,0 +1,12 @@
+/* Both states take the same box, so opening the map does not move the page. */
+.facade, .frame { display: block; width: 100%; height: 260px; border: none; }
+
+.facade {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 700;
+  color: var(--accent);
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 14%, transparent) 1px, transparent 1px) 0 0 / 18px 18px,
+    var(--bg-surface);
+}
+.facade:hover, .facade:focus-visible { background-color: var(--bg-surf2); }

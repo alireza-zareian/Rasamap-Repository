@@ -12,6 +12,7 @@ import ReviewsSection from "@/components/ReviewsSection";
 import SearchBackLink from "@/components/SearchBackLink";
 import TrafficMeter from "@/components/TrafficMeter";
 import BillboardContact from "@/components/BillboardContact";
+import MapEmbed from "@/components/MapEmbed";
 import { typeLabels, availabilityLabels, moderationLabels, DATA_SOURCES, type Billboard } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-url";
 import { faNum, faCompact } from "@/lib/format";
@@ -289,14 +290,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
             {at && links && (
               <div className={styles.map}>
                 <div className={styles.mapHead}>موقعیت</div>
-                <iframe
-                  src={`https://maps.google.com/maps?q=${at.lat},${at.lng}&z=15&output=embed&hl=fa`}
-                  /* Not lazy: just below the fold on a phone, a lazy frame was never loaded (rule 9). */
-                  allowFullScreen
-                  /* no-referrer: over http on the LAN the default sent Google a private host. */
-                  referrerPolicy="no-referrer"
-                  title="موقعیت رسانه روی نقشه"
-                />
+                <MapEmbed lat={at.lat} lng={at.lng} />
                 {/* Google's embed is often unreachable from an Iranian mobile
                     line, and a failed frame cannot be detected — so the
                     coordinates and the Iranian map apps are always shown. */}
