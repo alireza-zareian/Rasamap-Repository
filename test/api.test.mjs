@@ -287,6 +287,29 @@ test("the staff preview does not open the API as a side door", async () => {
   assert.equal((await api("/api/billboards/pending-listing", { token: staff })).status, 404);
 });
 
+test("a media page is kept for visitors, and a made-up slug is not", async () => {
+  // §39: the public route reads no cookie, so its second answer is the stored one.
+  await api("/billboard/valiasr-tower");
+  const again = await api("/billboard/valiasr-tower");
+  assert.equal(again.status, 200);
+  assert.equal(again.headers.get("x-nextjs-cache"), "HIT", "a visitor's media page must come from the cache");
+
+  // Every stored 404 is a file; proxy.ts sends unknown slugs the uncached way.
+  for (let i = 0; i < 2; i++) {
+    const missing = await api("/billboard/no-such-media-anywhere");
+    assert.equal(missing.status, 404);
+    assert.equal(missing.headers.get("x-nextjs-cache"), null, "a made-up slug must not be stored");
+  }
+});
+
+test("a staff session is never handed the visitors' cached copy", async () => {
+  const staff = await mintSession({ role: "viewer" });
+  await api("/billboard/valiasr-tower");
+  const res = await api("/billboard/valiasr-tower", { token: staff });
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("x-nextjs-cache"), null, "staff must get the uncached preview route");
+});
+
 test("admin search finds a row by its slug", async () => {
   const staff = await mintSession({ role: "editor" });
   const { status, json } = await api("/api/admin/billboards?q=valiasr-tower&limit=20", { token: staff });

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sessionHint } from "@/lib/auth/session";
+import { slugExists } from "@/lib/db/billboards";
 
 const ADMIN_PAGE_PATTERN = /^\/admin(\/|$)/;
 /** Exempt from the bot filter — see "Health" in proxy(). */
@@ -15,6 +16,9 @@ const LEGACY_ADMIN_TABS  = ["billboards", "listings", "leads", "quality", "scrap
 
 // The only pages that carry listing data.
 const CATALOGUE_PAGE = /^\/(explore|billboard)(\/|$)/;
+
+/** A media page itself, not its /preview. */
+const MEDIA_PAGE = /^\/billboard\/[^/]+$/;
 
 // Photos: bandwidth, and what a copy site would want.
 const PROTECTED_ASSET = /^\/(images\/scraped|uploads)\//;
@@ -79,6 +83,22 @@ export async function proxy(req: NextRequest) {
   // one office or demo network, not scrapers, who rotate addresses. The data is
   // guarded by what costs a person nothing — the 48-row page cap, the phone
   // behind a session, hotlink protection, and limits on writes and sign-in.
+
+  // A media page is cached for visitors and reads no cookie (§39); a staff
+  // session is sent to the uncached preview beside it, which checks the account
+  // again. A rewrite, so the address bar and every link keep the public URL.
+  //
+  // The cache stores whatever it renders, a 404 included — about 104 KB per
+  // address — so a loop over made-up slugs would fill the disk. An unknown slug
+  // goes the uncached way too, where it is a plain 404 (one indexed lookup).
+  if (MEDIA_PAGE.test(pathname)) {
+    const slug = decodeURIComponent(pathname.slice("/billboard/".length));
+    if (sessionHint(req) === "staff" || !(await slugExists(slug))) {
+      const preview = req.nextUrl.clone();
+      preview.pathname = `${pathname}/preview`;
+      return NextResponse.rewrite(preview);
+    }
+  }
 
   // Old `/admin?tab=` links forward to the section's own address.
   if (pathname === "/admin") {
