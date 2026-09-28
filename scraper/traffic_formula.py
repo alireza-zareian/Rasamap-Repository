@@ -138,15 +138,10 @@ _TYPE: dict[str, dict] = {
 _TYPE_DEFAULT = {"see": 1.0, "price": 1.0}
 
 # Price per square metre per month, million tomans, for an ordinary street in
-# that city. Not guessed: each value is the city's own published prices divided
-# by what the rest of this model predicts for those same faces, taken as a
-# median over every scraped record in that city — 39 cities and 2,500 prices.
-# So the model carries the shape (size, format, road class) and the market
-# supplies the level.
-#
-# Tehran reads lower here than a hand-written guess would put it (2.78, not 6.0)
-# because the premium that used to be buried in this number now sits where it
-# belongs: on the road class, where a freeway face earns 1.55x an ordinary one.
+# that city: the median of the city's published prices over what the rest of
+# this model predicts for the same faces (39 cities, 2,500 prices). The model
+# gives the shape (size, format, road class), the market the level; a freeway
+# premium sits on the road class, not here.
 _PRICE_PER_SQM: dict[str, float] = {
     "تبریز": 2.91, "کرج": 2.9, "اهواز": 2.84, "تهران": 2.78,
     "آمل": 2.39, "بابل": 2.36, "چالوس": 2.23, "اصفهان": 2.2,
@@ -171,12 +166,8 @@ _CLASS_PRICE_MULT: dict[str, float] = {
 _OCCUPANCY = 1.55          # persons per vehicle, urban Iranian average
 _REFERENCE_POP = 1_000_000  # the population the road-class volumes describe
 
-# Above this, a "metre" is not a metre. Eleven records arrived from irbillboard
-# reading 2040 x 310 — a face two kilometres wide — because that source
-# publishes some sizes in centimetres. Left alone they poisoned everything
-# downstream: an area of 632,400 m², a model price in the millions, and, worst,
-# a *correct* published price of 170M judged implausible against it. The largest
-# real face in the rest of the catalogue is 41 m, so 60 is a safe line.
+# Above this, a "metre" is a centimetre: irbillboard publishes some sizes that
+# way (2040 x 310). The largest real face in the catalogue is 41 m.
 _MAX_REASONABLE_M = 60.0
 
 

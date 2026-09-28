@@ -234,13 +234,9 @@ def looks_like_challenge_page(html: str) -> bool:
 
 
 # ── Per-site scraper module imports ───────────────────────────────
-# Imported here (not at the top of the file) so that scraper_billboardiha.py
-# and scraper_aradholding.py can do `from scraper import _stealth_headers,
-# make_stealth_session, fetch_with_retry, ...` without hitting a circular
-# import. If those imports happened before this point, Python would still
-# be mid-way through loading this module — the names above wouldn't exist
-# yet, the sub-module's import would silently fail, and it would fall back
-# to non-stealth requests without any error being raised.
+# Here, not at the top: the site modules import fetch_with_retry and friends
+# from this one, and above this line those names do not exist yet — the import
+# would fail silently and the modules would fall back to plain requests.
 try:
     from scraper_billboardiha import scrape_billboardiha as _scrape_billboardiha
     HAS_BILLBOARDIHA = True
@@ -941,22 +937,11 @@ def scrape_irbillboard(existing_files: set[str], max_pages: int = 4) -> list[dic
     return results
 
 # ── Cross-source dedup (runs BEFORE the intra-source dedup() below) ──
-# dedup() only catches duplicates within a single source, because each
-# source hashes its own id (e.g. "divar-<token>" vs "sheypoor-<token>").
-# The same physical billboard posted on two different sites therefore
-# gets two different ids and sails straight through dedup() untouched.
-#
-# NOTE: an earlier version of this matched by GPS distance (<50m). That
-# was dropped — two *different* billboards on opposite sides of the same
-# street, or at a nearby intersection, can easily be under 50m apart, so
-# distance alone produced false positives. This version instead matches
-# on content signals: identical photo, near-identical address text, or
-# near-identical title — same city is required as a first, cheap filter.
-# One side effect (expected, not a bug): a two-sided/double-faced board
-# that got scraped once per face usually shares the same address+name
-# across sources, so this also collapses those down to a single row —
-# which is fine, since it's one physical structure either way.
-# First-seen item in a matching group wins — same policy as dedup().
+# Each source ids its own posts, so one board on two sites passes dedup().
+# Matched on content — same city, plus an identical photo, a near-identical
+# address or a near-identical title — not on distance: two boards across a
+# street are under 50 m apart. A board scraped once per face collapses to one
+# row, which is right. The first-seen item in a group wins, as in dedup().
 _ADDRESS_NOISE_WORDS = [
     "خیابان", "بلوار", "میدان", "کوچه", "پلاک", "طبقه",
     "نبش", "جنب", "روبروی", "نرسیده به", "کوی",
@@ -1394,15 +1379,10 @@ def to_rasamap_format(raw: dict, index: int) -> dict:
     price = raw["price"]
     # Use MD5 of raw["id"] — gives a full 32-char hex, stable across runs.
     full_hex = hashlib.md5(raw["id"].encode()).hexdigest()
-    # Seven fields below are invented because the source does not state them
-    # (dimensions when the ad omits them, faces, age, the decorative map
-    # coordinates, rating, review count). Drawing them from the module-level
-    # `random` gave every listing a NEW value on every run, which made the whole
-    # dataset look changed to anything comparing two runs — the database sync
-    # (prisma/sync-scraped.ts) would have rewritten 3,528 rows nightly and
-    # invalidated the catalogue cache for nothing. A generator seeded from the
-    # listing's own id keeps the same distribution and the same value per
-    # listing, for as long as that listing exists.
+    # Fields the source does not state (size when omitted, faces, age, mapX/Y,
+    # rating, review count) are invented from a generator seeded by the
+    # listing's id, so a rerun yields the same values and prisma/sync-scraped.ts
+    # sees no change. The importer ignores mapX/Y and never updates the rating.
     invented = random.Random(raw["id"])
     # Try successive 8-char windows until we find an unused ID (handles rare collisions).
     for offset in range(0, 25, 8):

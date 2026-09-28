@@ -718,13 +718,9 @@ def scrape_billboardiha(fresh_start: bool = False) -> list[dict]:
         print("  WARNING: no cards found")
         return []
 
-    # Step 2: split cards into "need detail fetch" vs "already have data".
-    # A listing can be skipped only when ALL three conditions hold:
-    #   a) we scraped it before (id in previous state), AND
-    #   b) its image file is still on disk (download wasn't lost), AND
-    #   c) the previous record had a non-empty images list — guards against
-    #      the case where a DB cleanup cleared images but disk files remain,
-    #      which would otherwise cause the scraper to reuse stale image paths.
+    # Step 2: a card skips the detail fetch only if it was scraped before, its
+    # image is still on disk, and the previous record listed images (a cleanup
+    # may have cleared them while the files remain).
     needs_fetch:  list[dict] = []
     can_skip:     list[dict] = []
     for card in cards:
