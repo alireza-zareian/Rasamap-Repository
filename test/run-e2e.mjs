@@ -144,7 +144,8 @@ if (!up) {
 step("run the browser tests");
 let failed = false;
 try {
-  execSync("node --test test/e2e.test.mjs", { stdio: "inherit", env });
+  // A test that hangs fails after two minutes instead of holding the run open.
+  execSync("node --test --test-timeout=120000 test/e2e.test.mjs", { stdio: "inherit", env, timeout: 15 * 60_000 });
 } catch {
   failed = true;
 }

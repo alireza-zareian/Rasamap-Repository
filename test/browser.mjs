@@ -75,6 +75,23 @@ export class Browser {
       ],
       { stdio: "ignore" },
     );
+    // A Chrome that will not die must not keep this process alive. CI run 28
+    // sat in the browser step for over an hour; a child outliving its test
+    // holds Node's event loop open in exactly that way.
+    b.#proc.unref();
+
+    try {
+      await b.#connect(width, height);
+    } catch (err) {
+      await b.close();
+      throw err;
+    }
+    return b;
+  }
+
+  /** Find Chrome's page target and open the DevTools socket; every wait is bounded. */
+  async #connect(width, height) {
+    const b = this;
 
     // Chrome writes DevToolsActivePort once it has bound; poll for it rather
     // than guessing how long that takes on a loaded machine.
@@ -83,7 +100,7 @@ export class Browser {
     for (let i = 0; i < 100; i++) {
       try {
         const port = readFileSync(portFile, "utf8").split("\n")[0].trim();
-        const res = await fetch(`http://127.0.0.1:${port}/json/list`);
+        const res = await fetch(`http://127.0.0.1:${port}/json/list`, { signal: AbortSignal.timeout(2_000) });
         const pages = (await res.json()).filter((t) => t.type === "page");
         if (pages.length) { target = pages[0]; break; }
       } catch { /* not up yet */ }
@@ -101,8 +118,9 @@ export class Browser {
       else waiter.resolve(msg.result);
     });
     await new Promise((resolve, reject) => {
-      b.#ws.addEventListener("open", resolve, { once: true });
-      b.#ws.addEventListener("error", () => reject(new Error("CDP socket failed")), { once: true });
+      const late = setTimeout(() => reject(new Error("CDP socket did not open")), 10_000);
+      b.#ws.addEventListener("open", () => { clearTimeout(late); resolve(); }, { once: true });
+      b.#ws.addEventListener("error", () => { clearTimeout(late); reject(new Error("CDP socket failed")); }, { once: true });
     });
 
     await b.send("Page.enable");
@@ -115,7 +133,6 @@ export class Browser {
     await b.send("Emulation.setDeviceMetricsOverride", {
       width, height, deviceScaleFactor: 1, mobile: width < 700,
     });
-    return b;
   }
 
   send(method, params = {}) {
@@ -292,12 +309,20 @@ export class Browser {
 
     // Wait for Chrome to exit: deleting a profile it is still flushing fails
     // with ENOTEMPTY.
-    if (this.#proc && this.#proc.exitCode === null) {
-      this.#proc.kill();
-      await new Promise((resolve) => {
-        const done = setTimeout(resolve, 5_000);
-        this.#proc.once("exit", () => { clearTimeout(done); resolve(); });
-      });
+    // SIGTERM first, then SIGKILL if it is still there after five seconds.
+    const exited = () => this.#proc.exitCode !== null || this.#proc.signalCode !== null;
+    const waitExit = (ms) => new Promise((resolve) => {
+      if (exited()) return resolve();
+      const done = setTimeout(resolve, ms);
+      this.#proc.once("exit", () => { clearTimeout(done); resolve(); });
+    });
+    if (this.#proc && !exited()) {
+      this.#proc.kill("SIGTERM");
+      await waitExit(5_000);
+      if (!exited()) {
+        this.#proc.kill("SIGKILL");
+        await waitExit(2_000);
+      }
     }
 
     // Best effort: a leftover directory in /tmp is untidy, never a test result.

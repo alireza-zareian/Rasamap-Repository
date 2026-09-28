@@ -35,6 +35,8 @@ jobs:
       # drives it over DevTools, with no Playwright download. Screenshots of a
       # failure are kept as an artifact.
       - name: Browser tests
+        # A hang is a failure, not a six-hour wait.
+        timeout-minutes: 15
         run: CHROME_PATH="$(command -v google-chrome)" npm run test:e2e
 
       - name: Keep failure screenshots
