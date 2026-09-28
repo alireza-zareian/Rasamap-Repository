@@ -2300,8 +2300,9 @@ off the app".
 **Not done, and why.** Compression happens inside Node, 30–40 % of each
 request's CPU; `compress: false` behind nginx would move it, but the demo
 laptop has no nginx and must keep it, so the switch is documented rather than
-made. SQLite `synchronous=NORMAL` would save a sync per write; the Prisma
-adapter opens its own connection, and 200 concurrent writes already finish in
+made. SQLite needed no tuning: read through Prisma's own connection, it runs
+`journal_mode=wal`, `synchronous=NORMAL` (better-sqlite3's default under WAL),
+`foreign_keys=ON` and a 5 s busy timeout, and 200 concurrent writes finish in
 1.5 s.
 
 ### Every comment, read against its code

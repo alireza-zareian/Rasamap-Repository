@@ -27,6 +27,17 @@
 > خواننده تأکید کن. عدد ۹۷ برابر قابل‌استناد است و در `docs/engineering-decisions.md`
 > §۲۲ مستند شده.
 
+> 🔎 **۶ مهر ۱۴۰۵ — بازبینی چهارم و بازخوانی همهٔ کامنت‌ها (§۳۷–۳۸).**
+> هزینهٔ یک *بازدید* اندازه گرفته شد، نه یک درخواست: لینک‌های فهرست‌ها حالا فقط با
+> قصدِ کاربر prefetch می‌کنند (کاتالوگ: ۹۱ → ۲۲ درخواست پس‌زمینه، CPU سرور ۶۶۰ → ۴۴۰ ms)؛
+> حلقهٔ نامرئیِ ۶۰ فریم در ثانیهٔ `/explore` (SnakeScroll) حذف شد؛ عکس‌ها یک هفته کش
+> می‌شوند؛ تصویرِ کم‌حجم با ابعادِ غول‌آسا رد می‌شود؛ خاموش‌شدنِ سرور درخواست‌های در جریان را
+> تمام می‌کند. همهٔ کامنت‌ها با کدِ زیرشان خوانده و کوتاه و درست شدند (هر commit با
+> مقایسهٔ بدون‌کامنت ثابت شد که کد را تغییر نداده). یک کلید Neshan در
+> `scripts/geocode-billboards.mjs` بود — به متغیر محیطی رفت و **باید در پنل نشان باطل
+> شود**. نمونهٔ nginx جلوی ساختِ تولیدی اجرا و اصلاح شد (صفحهٔ اول ۲۲۶ → ۱۰۷۹ درخواست در
+> ثانیه) و راهنمای استقرارش در `RUNBOOK.md` است.
+
 > 🧭 **۵ مهر ۱۴۰۵ — بازبینی سوم (§۳۶ در `engineering-decisions.md`).**
 > نشست‌ها حالا ردیف دیتابیس‌اند (نه JWT)، عکس‌ها فایل multipart و بیرون از `public/`
 > ذخیره می‌شوند، `TRUSTED_PROXY_COUNT` پیش‌فرض ۰ است، ردیف‌های خزنده «استعلام از مالک»
@@ -107,7 +118,7 @@
 
 #### ✅ بهبودهای پرفورمنس — کامل (۲۰۲۶ standards)
 
-- [x] **P1** — WAL mode + synchronous=NORMAL + foreign_keys=ON روی SQLite connection (`lib/db/client.ts`)
+- [x] **P1** — WAL (`lib/db/client.ts`)؛ synchronous=NORMAL و foreign_keys=ON پیش‌فرضِ درایور better-sqlite3 است — روی اتصالِ خودِ Prisma خوانده و تأیید شد (§38)
   - concurrent reads بدون SQLITE_BUSY — ضروری برای ارائه با چند داور همزمان
 - [x] **P2** — Composite indexes: `(city,status)`, `(city,type)`, `(type,price)` در `prisma/schema.prisma`
   - ⚠️ نیاز به اجرا: `npx prisma db push`
@@ -385,7 +396,7 @@ npm run dev              # فقط هنگام کدنویسی (۹۷ برابر CPU
 npm run build            # باید بدون خطا پاس شود
 npm run lint
 npm test                 # ۲۰۸ آزمون روی یک ساخت تولیدی
-npm run bench            # بنچمارک بار (سرور dev باید بالا باشد)
+npm run bench            # بنچمارک بار (سرورِ `npm run demo` باید بالا باشد)
 npm run db:migrate
 npm run db:seed          # 3545 رکورد
 npm run db:seed:demo # حساب‌های دموی کامل (RUNBOOK.md) — idempotent
@@ -393,8 +404,8 @@ npm run db:backup        # بکاپ آنلاین SQLite → backups/
 npm run db:studio        # Prisma Studio
 ```
 
-**Env لازم:** `DATABASE_URL` · `AUTH_SECRET` · `ADMIN_EMAIL` · `ADMIN_PASSWORD_HASH` · `ADMIN_NAME` · `NESHAN_API_KEY`
-**Env اختیاری:** `LOG_DIR` / `LOG_LEVEL` (لاگ به فایل) · `KAVENEGAR_API_KEY` + `KAVENEGAR_SENDER` / `KAVENEGAR_OTP_TEMPLATE` (SMS — تا وقتی خالی باشد کل لایه SMS خاموش است) · `OTP_DEV_ECHO` (کدِ پیامک روی صفحه؛ فقط وقتی خطِ پیامک نیست و فقط برای بازدیدِ شبکهٔ محلی)
+**Env لازم:** `DATABASE_URL` · `AUTH_SECRET` · `ADMIN_EMAIL` · `ADMIN_PASSWORD_HASH` · `ADMIN_NAME`
+**Env اختیاری:** `NESHAN_API_KEY` (فقط اسکریپت‌های geocode، §۲۹) · `UPLOAD_DIR` · `TRUSTED_PROXY_COUNT` (فقط پشتِ پروکسیِ واقعی) · `LOG_DIR` / `LOG_LEVEL` (لاگ به فایل) · `KAVENEGAR_API_KEY` + `KAVENEGAR_SENDER` / `KAVENEGAR_OTP_TEMPLATE` (SMS — تا وقتی خالی باشد کل لایه SMS خاموش است) · `OTP_DEV_ECHO` (کدِ پیامک روی صفحه؛ فقط وقتی خطِ پیامک نیست و فقط برای بازدیدِ شبکهٔ محلی)
 
 ---
 

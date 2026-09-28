@@ -15,7 +15,7 @@ Collects billboard listings from live Iranian websites and saves them to
 | **divar.ir** | ❌ بلاک | ❌ | 0 | API v8 بلاک می‌کنه، response خالی |
 | **sheypoor.com** | ❌ بلاک | ❌ | 0 | ساختار HTML تغییر کرده |
 
-**آمار کل آخرین run:** 7249 رسانه — 6470 با GPS (89%)
+**آمار کل آخرین run:** 7249 آگهیِ خام — پس از حذفِ تکراری‌ها بین منابع، `data/billboards.json` **3528 رسانه** دارد که 3032 تا مختصات دارند (۸۶٪).
 
 ---
 
@@ -30,9 +30,10 @@ python3 scraper.py
 
 بعد از اتمام scraper:
 ```bash
-# بارگذاری در DB
 cd ..
-npm run db:seed
+npm run db:sync-scraped             # دیتابیسِ زنده: اول dry run، گزارش را بخوان
+npm run db:sync-scraped -- --apply  # ادغامِ سه‌طرفه؛ ویرایشِ ادمین هرگز بازنویسی نمی‌شود (§33)
+# یا فقط روی دیتابیسِ خالی:  npm run db:seed   (بازسازیِ کامل)
 ```
 
 ---
@@ -67,9 +68,9 @@ scraper.py
           ↓
   billboards.json
           ↓
-  npm run db:seed               →  SQLite via Prisma
+  npm run db:sync-scraped       →  SQLite via Prisma (یا db:seed روی دیتابیسِ خالی)
           ↓
-  node scripts/geocode-billboards.mjs  →  geocode اضافی از DB
+  npm run db:backfill-coords    →  geocode اضافی از DB (NESHAN_API_KEY)
 ```
 
 ---
@@ -124,8 +125,8 @@ scraper.py
 ## آماده‌سازی برای ارائه
 
 1. آخرین scrape: `cd scraper && python3 scraper.py`
-2. Seed DB: `npm run db:seed`
-3. Geocode باقی‌مانده‌ها از DB: `node scripts/geocode-billboards.mjs --all`
-4. Check: `npm run build`
+2. ورود به DB: `npm run db:sync-scraped -- --apply` (یا `npm run db:seed` روی دیتابیسِ خالی)
+3. Geocode باقی‌مانده‌ها از DB: `npm run db:backfill-coords`
+4. دیدن: `npm run demo` — نه `npm run dev` (۹۷ برابر CPU، §22)
 
-**نکته ارائه:** 7000+ رسانه، GPS روی نقشه، از ۳ سایت واقعی ایرانی — billboardiha.com اصلی‌ترین منبع با ~6254 رسانه.
+**نکته ارائه:** ۷۲۴۹ آگهیِ خام از ۳ سایت واقعی ایرانی جمع شد؛ پس از حذفِ تکراری‌ها ۳۵۲۸ رسانه ماند که ۳۰۳۲ تا روی نقشه‌اند. billboardiha.com بزرگ‌ترین منبع است.
