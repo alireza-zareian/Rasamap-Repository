@@ -91,11 +91,10 @@ export class Browser {
 
   /** Find Chrome's page target and open the DevTools socket; every wait is bounded. */
   async #connect(width, height) {
-    const b = this;
 
     // Chrome writes DevToolsActivePort once it has bound; poll for it rather
     // than guessing how long that takes on a loaded machine.
-    const portFile = join(b.#profileDir, "DevToolsActivePort");
+    const portFile = join(this.#profileDir, "DevToolsActivePort");
     let target;
     for (let i = 0; i < 100; i++) {
       try {
@@ -108,29 +107,29 @@ export class Browser {
     }
     if (!target) throw new Error("Chrome did not expose a debugging target");
 
-    b.#ws = new WebSocket(target.webSocketDebuggerUrl);
-    b.#ws.addEventListener("message", (ev) => {
+    this.#ws = new WebSocket(target.webSocketDebuggerUrl);
+    this.#ws.addEventListener("message", (ev) => {
       const msg = JSON.parse(ev.data);
-      const waiter = b.#pending.get(msg.id);
+      const waiter = this.#pending.get(msg.id);
       if (!waiter) return;
-      b.#pending.delete(msg.id);
+      this.#pending.delete(msg.id);
       if (msg.error) waiter.reject(new Error(msg.error.message));
       else waiter.resolve(msg.result);
     });
     await new Promise((resolve, reject) => {
       const late = setTimeout(() => reject(new Error("CDP socket did not open")), 10_000);
-      b.#ws.addEventListener("open", () => { clearTimeout(late); resolve(); }, { once: true });
-      b.#ws.addEventListener("error", () => { clearTimeout(late); reject(new Error("CDP socket failed")); }, { once: true });
+      this.#ws.addEventListener("open", () => { clearTimeout(late); resolve(); }, { once: true });
+      this.#ws.addEventListener("error", () => { clearTimeout(late); reject(new Error("CDP socket failed")); }, { once: true });
     });
 
-    await b.send("Page.enable");
-    await b.send("Runtime.enable");
-    await b.send("Network.setUserAgentOverride", { userAgent: VISITOR_UA });
-    await b.send("Network.enable");
-    await b.send("Network.setExtraHTTPHeaders", { headers: { "x-forwarded-for": uniqueIp() } });
+    await this.send("Page.enable");
+    await this.send("Runtime.enable");
+    await this.send("Network.setUserAgentOverride", { userAgent: VISITOR_UA });
+    await this.send("Network.enable");
+    await this.send("Network.setExtraHTTPHeaders", { headers: { "x-forwarded-for": uniqueIp() } });
     // The window-size flag sets the OS window; the *layout* viewport is what
     // media queries read, and it has to be set explicitly in headless.
-    await b.send("Emulation.setDeviceMetricsOverride", {
+    await this.send("Emulation.setDeviceMetricsOverride", {
       width, height, deviceScaleFactor: 1, mobile: width < 700,
     });
   }
