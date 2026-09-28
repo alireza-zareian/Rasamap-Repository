@@ -27,6 +27,15 @@
 > خواننده تأکید کن. عدد ۹۷ برابر قابل‌استناد است و در `docs/engineering-decisions.md`
 > §۲۲ مستند شده.
 
+> ✨ **۶ مهر ۱۴۰۵ — قابلیت‌های تازه (§۴۰).** ذخیره‌شده‌ها (قلب روی هر کارت و صفحهٔ
+> رسانه، صفحهٔ `/saved`، ذخیرهٔ مهمان پس از ورود خودکار انجام می‌شود)؛ **طرح کمپین** به‌جای
+> مقایسهٔ دوتایی (تا ۸ رسانه، دورهٔ هفته/ماه/سه‌ماه/سال، هزینهٔ کل، بیننده، هزینهٔ هر هزار نمایش،
+> نقشه، لینک اشتراکی، چاپ/PDF؛ `/compare` به آن هدایت می‌شود)؛ **نقشهٔ نتایج کنار فهرست** با
+> حباب قیمت و hover دوطرفه؛ **نوار ثابت پایینِ صفحهٔ رسانه روی گوشی**. کنارش دو باگ: تم تاریک پس
+> از هر بارگذاری فراموش می‌شد، و هر صفحه برای مهمان یک خطای ۴۰۱ در کنسول داشت.
+> **۱۹ + ۱۹۳ + ۸ آزمون و ۱۲ جریان مرورگر سبز؛ ۱۰۱ بارگذاری صفحه در شش حالت بدون هیچ خطا.**
+> پس از pull: `npm run demo` خودش migration جدولِ `favorites` را اجرا می‌کند.
+
 > 🧭 **۶ مهر ۱۴۰۵ — بازبینی پنجم: ناوبری، بارِ گوشی، صفحهٔ رسانهٔ کش‌شده (§۳۹).**
 > جستجو دیگر با هر مکث یک قدم به «برگشت» اضافه نمی‌کند؛ «بازگشت به جستجو» فیلترها را نگه
 > می‌دارد؛ کلِ کارت لینک است؛ اسلایدرِ پنهانِ `/explore` روی گوشی دیگر هر ۵.۵ ثانیه عکس
@@ -297,11 +306,11 @@
 #### U10 — Map-First Explore (بلندمدت)
 > **اولویت: بعد از MAP issues** | بزرگ‌ترین فرصت رقابتی — مثل AdQuick/Blip
 
-- [ ] Map view به عنوان default در explore
-- [ ] Price pins روی نقشه (مثل Zillow)
+- [x] Map view به عنوان default در explore — روی صفحهٔ پهن نقشهٔ نتایج کنار فهرست باز است و بستنش به یاد می‌ماند (§۴۰)
+- [x] Price pins روی نقشه (مثل Zillow) — حباب قیمت؛ جایی که جا نیست نقطه، و حباب با hover (§۴۰)
 - [ ] «جستجو با حرکت نقشه» toggle (مثل Airbnb)
-- [ ] در موبایل: list-first با sticky «نمایش نقشه»
-- [ ] Card hover ↔ pin highlight sync (از backlog U2)
+- [ ] در موبایل: list-first با sticky «نمایش نقشه» — **عمداً نه:** روی گوشی نقشهٔ صفحه‌ای جدا (`/explore/map`) هست و کارت‌ها جای نقشهٔ دوم را ندارند
+- [x] Card hover ↔ pin highlight sync (از backlog U2) — دوطرفه، در کاوش و در طرح کمپین (§۴۰)
 - [ ] Filter pills horizontal scroll بالای صفحه
 
 **وابسته به:** حل MAP-A, MAP-B, MAP-C اول
@@ -521,7 +530,7 @@ admins review, approve and publish them through a separate RBAC-gated panel.
 | F4 | `project-ai.zip` (265 KB) tracked at repo root; `.DS_Store` scattered. → **fixed** — `.gitignore` updated and neither is tracked. | Low |
 | F5 | No `PRE_DEPLOY_CHECKLIST.md` / `RUNBOOK.md`. → **fixed** | Med |
 | F6 | No `LICENSE`. → **fixed** — MIT. | Low |
-| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 213 tests (`npm test`, on a production build) plus 11 browser flows (`npm run test:e2e`), all run by CI on every push. | Med |
+| F7 | No automated tests at all — nothing to run in CI or pre-deploy. → **fixed** — 220 tests (`npm test`, on a production build) plus 12 browser flows (`npm run test:e2e`), all run by CI on every push. | Med |
 | F8 | Docs disagree on row count (2,808 vs 3,545) and on whether `lib/data.ts` is types-only or imports `billboards.json`. Reviewer-confusing. → **fixed** — every live count now reads the same (3,536 rows, 3,532 published, 101 cities, 3,020 geocoded, verified against `dev.db`); older figures survive only in dated history entries. The module split is stated in `AGENTS.md` rule 1 and F15: `lib/types.ts` is data-free, `lib/data.ts` holds the dataset and is imported only by `prisma/seed.ts`. | Low |
 | F9 | Reservation overlap check is inside `$transaction`. Test T1.5 fires two identical concurrent POSTs → exactly one 201, one 409, so the guard holds on this single-process + single-writer-SQLite setup. Still no DB-level exclusion constraint, so it would need revisiting on a multi-instance / different DB. | Low — verified OK for now |
 | F10 | Rate limiter + audit log are in-memory → reset on restart, not multi-instance. Acceptable for single-instance demo; state it out loud. | Low (accepted) |

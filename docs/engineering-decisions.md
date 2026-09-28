@@ -2431,6 +2431,65 @@ and a made-up slug never is.
 `tsc`, ESLint, 18 unit + 187 API + 8 importer tests and 11 browser flows, all
 passing locally and on GitHub Actions (which now runs the browser flows too).
 
+## 40. Saved media, the campaign planner, the results map, and the phone's action bar
+
+**Context.** Asked to build what §39 compared the site against — what the best
+marketplaces (Airbnb, Zillow, Divar; AdQuick and Billups among outdoor-media
+sellers) give a buyer — and to check afterwards that everything runs without
+an error.
+
+**What was built.**
+
+| Feature | Where | Shape, and why |
+|---|---|---|
+| **Saved media** | `favorites` table, `lib/db/favorites.ts`, `PUT`/`DELETE /api/favorites/[slug]`, `GET /api/favorites`, `/saved`, `components/favorites/` | One row per (account, media), the pair being the primary key, so a double tap or two tabs is still one row (ten simultaneous `PUT`s are tested). `PUT`/`DELETE` rather than a toggle, so a repeated or reordered request cannot flip the state the wrong way. A ceiling of 200 per account is checked *after* the insert in the same transaction, so two saves at once cannot both slip under it. Only published media can be saved. The hearts are optimistic and roll back with a toast if the server refuses. A guest's tap is kept for the tab and sends them to sign in; back on the page, the save is made for them — the pattern that turns a browse into a sign-up without making the first tap useless. Staff accounts have no list. |
+| **Campaign planner** (replaces the two-item compare) | `lib/domain/campaign.ts`, `/campaign`, `components/campaign/`, `lib/client/use-campaign.tsx` | Up to 8 media priced for a week, a month, a quarter or a year, with the total cost, daily viewers, impressions over the period and the cost per thousand impressions — the unit outdoor media is bought in — plus each board's share of the budget, a map and the side-by-side table (now any number of columns, row names pinned while it scrolls). The address is the whole plan (`?m=slugs&p=period`): the page renders from the server at today's prices rather than from a browser's saved copy, a shared link opens the same plan elsewhere, and "share" copies the address — or opens the phone's share sheet. A link that differs from the visitor's own plan offers to replace it rather than doing so silently. Print and PDF drop the site's frame. `/compare` redirects here. The arithmetic is pure and unit-tested. |
+| **Results beside their map** | `app/(site)/explore/ResultsMap.tsx`, `components/map/PinMap.tsx` | On a screen of 1100 px and more the page's results sit beside a map with price bubbles; a card and its pin light each other. In a dense city a bubble is drawn only where it has room and the rest are dots that open on hover. The map is its own chunk, loaded only where it is drawn, so a phone never downloads the province outlines for it. Closing it is remembered. |
+| **The phone's action bar** | `components/media/MediaActionBar.tsx` | Price, save, add-to-campaign and "contact" under the thumb on a media page; it slides in only while the price card is off screen, and "contact" scrolls to that card and focuses its first action. |
+| **Add to campaign from a media page** | `components/campaign/AddToCampaign.tsx` | §39 N5: the only way in had been the catalogue. |
+
+`CatalogueItem` now carries `lat`/`lng` for a point that passes `isPlottable`,
+and the two longer prices. The coordinates were kept out in §20 as "a bulk
+copy"; the map view already publishes every such point a province at a time,
+so a page of 24 adds nothing a copier could not take there.
+
+**Found on the way, and fixed.**
+
+- *A dark theme was forgotten on every page load.* The root layout, a Server
+  Component, imported the storage key from `lib/client/theme.tsx`, a
+  `"use client"` module; a plain value imported that way arrives as
+  `undefined`, so the pre-paint script read `localStorage.getItem(undefined)`.
+  The key has its own module now; a test reads it from the rendered page, and
+  a scan found no other value crossing that boundary.
+- *Every guest page load printed a red 401 in the console.* §39 left
+  `/api/auth/me` alone because each costs under a millisecond; the sweep below
+  counted 42 console errors from it, which an examiner opening DevTools sees
+  first. `GET /api/auth/session` answers `{ user: null }` for a guest; `/api/auth/me`
+  keeps its 401, which the sign-out tests read.
+
+**How "no errors" was checked.** Beyond the suites, a sweep loaded 101 pages
+as a guest, a customer and staff, at 390, 1024 and 1440 px: no console error
+(other than the 404s of photos absent from a fresh checkout), no uncaught
+exception, no hydration warning, no 5xx and no horizontal overflow, and the
+server log held no error or warning. An interaction script then hovered cards
+and pins, closed and reopened the map across a reload, toggled hearts,
+switched periods, removed a board and used the phone's bar. Light and dark
+themes were both looked at.
+
+**Deliberately not built.** A second map on a phone's catalogue (the map has
+its own page there); "search as the map moves" (needs a map that pans, which
+the provider-free map of §32 does not); saved-search alerts (need SMS or
+e-mail switched on, §16); availability calendars and booking (§17).
+
+### Verified
+
+`tsc`, ESLint, 19 unit + 193 API + 8 importer tests and 12 browser flows —
+new among them: the campaign arithmetic, favorites' idempotence under a burst,
+access by account kind, `/saved` for a guest and a customer, a shared campaign
+that names an unpublished listing, the `/compare` redirect, `/api/auth/session`
+for a guest, the theme key, a guest's heart surviving the sign-in it asks for,
+and a campaign rebuilt from its link alone.
+
 ---
 
 ## Milestone log (outputs, not diffs)
@@ -2488,3 +2547,4 @@ passing locally and on GitHub Actions (which now runs the browser flows too).
 | 2026-09-28 | **Every comment against its code; nginx proven** | §38 — comment pass over lib, app, components, tests, prisma, scripts and scraper, each commit proved comment-only by a stripping diff; a hardcoded Neshan key moved to the environment; the invisible `/explore` loop removed; `migrate dev` taken out of the deployment steps; the nginx example run in front of the production build (landing 226 → 1,079 req/s) and corrected to never cache `/api/`. |
 | 2026-09-27 | **3D hero street** | §37 — CSS 3D street of real media on the landing, one-shot arrival + scroll-linked approach; no server cost, load time within noise; a 300 ms 3D floor plane and a flattening opacity found by measurement and designed out. Card spotlight removed. |
 | 2026-09-28 | **Fifth review — navigation and the cached media page** | §39 — search history, back-to-results, whole-card links, the hidden showcase that kept downloading, an admin search race; media pages cached (22 → ~8 ms CPU) without caching made-up slugs; Google's map on demand; Tailwind dropped for its reset; canonical addresses and per-view titles; browser tests in CI; components/ in feature folders. |
+| 2026-09-28 | **Saved media, campaign planner, results map** | §40 — favorites with a guest's tap carried through sign-in; up to eight media priced per period with CPM, a map, a shareable address and print; price pins beside the results with two-way hover; the phone's action bar on a media page; a dark theme remembered again; no 401 in a guest's console. |

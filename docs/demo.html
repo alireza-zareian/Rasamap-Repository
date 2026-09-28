@@ -241,8 +241,8 @@ body {
           <div class="step-num">2</div>
           <div class="step-content">
             <div class="step-title">جستجو و فیلتر — Explore</div>
-            <div class="step-sub">فیلتر شهر → نوع → بازه قیمت. مرتب‌سازی. نمای کارت/لیست. مقایسه دو بیلبورد</div>
-            <div class="step-badge"><span class="chip chip-blue">/explore</span><span class="chip chip-orange">مقایسه ← کلیک روی ⊕</span></div>
+            <div class="step-sub">فیلتر شهر → نوع → بازه قیمت. مرتب‌سازی. نمای کارت/لیست. نقشهٔ نتایج کنار فهرست. افزودن به کمپین</div>
+            <div class="step-badge"><span class="chip chip-blue">/explore</span><span class="chip chip-orange">کمپین ← «+ کمپین» روی کارت</span></div>
           </div>
         </div>
 
@@ -761,7 +761,7 @@ body {
     <div class="step-header" onclick="toggle(this.parentElement)">
       <div class="step-num blue">۲</div>
       <div>
-        <div class="step-title">Detail + Compare — جزئیات و مقایسه</div>
+        <div class="step-title">Detail + Campaign — جزئیات، ذخیره و طرح کمپین</div>
         <div class="step-url">localhost:3000/billboard/[slug]</div>
       </div>
       <div class="step-toggle">◀</div>
@@ -770,9 +770,10 @@ body {
       <ul class="action-list">
         <li><span class="icon">📌</span><span>روی یک بیلبورد تهران کلیک کنید — صفحه detail باز می‌شود</span></li>
         <li><span class="icon">📈</span><span>TrafficMeter را نشان دهید — تخمین ترافیک روزانه</span></li>
-        <li><span class="icon">🆚</span><span>دکمه «مقایسه» بزنید — کارت به CompareBar اضافه می‌شود</span></li>
-        <li><span class="icon">🆚</span><span>برگردید Explore، یک بیلبورد دیگر «مقایسه» کنید — دکمه «مقایسه کن» در CompareBar فعال می‌شود</span></li>
-        <li><span class="icon">📊</span><span>CompareModal را باز کنید — جدول مقایسه جانب‌به‌جانب (قیمت، نوع، ترافیک)</span></li>
+        <li><span class="icon">❤️</span><span>قلبِ «ذخیره» را بزنید — مهمان به ورود می‌رود و پس از ورود، رسانه خودکار ذخیره می‌شود؛ در <code>/saved</code> پیداست</span></li>
+        <li><span class="icon">📣</span><span>«افزودن به کمپین» را بزنید، در Explore دو رسانهٔ دیگر هم «+ کمپین» کنید — نوارِ کمپین پایین صفحه جمعِ ماهانه را نشان می‌دهد</span></li>
+        <li><span class="icon">📊</span><span>«طرح کمپین» — دوره را از ماه به سال عوض کنید: هزینهٔ کل، بیننده، هزینهٔ هر هزار نمایش، نقشه و جدولِ کنار هم؛ «اشتراک» لینکِ همین طرح را می‌دهد</span></li>
+        <li><span class="icon">📱</span><span>روی گوشی صفحهٔ رسانه را پایین بکشید — نوارِ ثابت با قیمت، ذخیره، کمپین و «تماس» ظاهر می‌شود</span></li>
       </ul>
     </div>
   </div>

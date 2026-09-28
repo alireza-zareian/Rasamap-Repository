@@ -987,7 +987,7 @@ sequenceDiagram
 <section class="chapter" id="c8">
   <div class="chead">
     <div class="cn">فصل ۸</div>
-    <div><h3>تاریخچهٔ ساخت</h3><p>۱۰۴ گام کار، دسته‌بندی‌شده در شش دوره — روی هر دوره کلیک کن تا باز شود</p></div>
+    <div><h3>تاریخچهٔ ساخت</h3><p>۱۰۵ گام کار، دسته‌بندی‌شده در شش دوره — روی هر دوره کلیک کن تا باز شود</p></div>
   </div>
 
   <div class="note info">
@@ -2142,7 +2142,7 @@ sequenceDiagram
   </details>
 
   <details class="fold">
-    <summary>دورهٔ ۶ — آماده‌سازی ارائه، و سخت‌سازیِ پس از آن<span class="tag">۴۷ گام · چک‌لیست روز دفاع، سپس مجموعهٔ V (استقرار، CSP، آزمونِ مرورگر)، مجموعهٔ B (ممیزی و رفعِ یافته‌ها) و مجموعهٔ A (دسترس‌پذیری و معماری)</span></summary>
+    <summary>دورهٔ ۶ — آماده‌سازی ارائه، و سخت‌سازیِ پس از آن<span class="tag">۴۸ گام · چک‌لیست روز دفاع، سپس مجموعهٔ V (استقرار، CSP، آزمونِ مرورگر)، مجموعهٔ B (ممیزی و رفعِ یافته‌ها) و مجموعهٔ A (دسترس‌پذیری و معماری)</span></summary>
     <div class="foldbody"><div class="phases">
   <!-- ─── MOB3 — sticky theme, harsh rate limit, map referrer ─── -->
   <div class="phase-card is-done">
@@ -4252,6 +4252,23 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
         <div class="task done-t"><div class="tick">✓</div><div><strong><code>billboards/index.ts</code></strong> — همان مسیرِ import قبلی را حفظ می‌کند، پس <strong>هیچ‌کدام از ۱۸ محلِ فراخوانی تغییر نکرد</strong>. <code>core.ts</code> به‌جایِ <code>export *</code> با نامِ صریح دوباره صادر می‌شود تا <code>fromRow</code>، که لوله‌کشیِ داخلیِ پوشه است، وارد سطحِ عمومی نشود</div></div>
       </div>
       <div class="proof">معادل‌بودن اثبات شد نه ادعا: متنِ پروندهٔ اصلی با مجموعِ سه پروندهٔ تازه به‌صورت خط‌به‌خط مقایسه شد (<code>comm -23</code>) و <strong>صفر خط</strong> از نسخهٔ اصلی گم شده؛ تنها تفاوت‌ها کامنت‌های سرپروندهٔ تازه و خطوطِ <code>import</code>اند. سپس <code>tsc --noEmit</code> و <code>npm run lint</code> تمیز، <code>npm run build</code> موفق، و <code>npm test</code> <strong>۱۴۲/۱۴۲</strong> (۱۳۷ API + ۵ واردکننده). در میانهٔ کار دو خطایِ مرزیِ برش (یک کامنتِ دونیم‌شده و یک <code>/**</code> یتیم) را همین بررسی‌ها گرفتند — که خودش دلیلِ اجرای آن‌هاست. سپس <code>npm run demo</code> بالا آمد و <strong>از رویِ آدرسِ LAN</strong> (نه <code>localhost</code>) آزموده شد: ۱۹ مسیرِ عمومی، ورودِ کاربر و ادمین، داشبورد، افشایِ شمارهٔ تماس، و RBAC. کوکیِ نشست روی HTTP ساده <code>HttpOnly; SameSite=Strict</code> و بدونِ <code>Secure</code> بود (قانون ۹)؛ شمارهٔ مالک در HTML عمومی نشت نکرد — یعنی همان <code>toPublicBillboard()</code>ی که در این بازآرایی به <code>core.ts</code> منتقل شد، سرِ جایش کار می‌کند. ۲۴۰ درخواستِ هم‌زمان: همه ۲۰۰، صفر ۴۲۹، صفر خطا در لاگ، و CPU پس از آرام‌شدن به ۰٪ برگشت.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">FEAT</div>
+      <div class="ph-title"><h3>ذخیره‌شده‌ها، طرح کمپین، نقشهٔ نتایج و نوار گوشی</h3><p>۶ مهر ۱۴۰۵ · §۴۰ در سندِ تصمیم‌ها؛ آنچه بهترین بازارها به خریدار می‌دهند</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ذخیره‌شده‌ها</strong> — قلب روی هر کارت و صفحهٔ رسانه، صفحهٔ <code>/saved</code>، جدولِ <code>favorites</code> با کلیدِ (حساب، رسانه)؛ ذخیرهٔ مهمان پس از ورود خودکار انجام می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>طرح کمپین</strong> به‌جای مقایسهٔ دوتایی — تا ۸ رسانه، دورهٔ هفته/ماه/سه‌ماه/سال، هزینهٔ کل، بیننده، نمایش، هزینهٔ هر هزار نمایش، سهمِ بودجه، نقشه، جدولِ کنار هم، لینکِ اشتراکی و چاپ/PDF</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نقشهٔ نتایج کنار فهرست</strong> — حبابِ قیمت، hover دوطرفهٔ کارت و پین، فقط روی صفحهٔ پهن و در chunkِ جدا</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نوار ثابتِ گوشی در صفحهٔ رسانه</strong> — قیمت، ذخیره، کمپین و «تماس» زیرِ انگشت؛ فقط وقتی کارتِ قیمت از دید بیرون است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>دو باگِ پیداشده</strong> — تمِ تاریک پس از هر بارگذاری فراموش می‌شد (کلید در Server Component <code>undefined</code> بود)؛ و هر صفحهٔ مهمان یک ۴۰۱ در کنسول داشت (<code>/api/auth/session</code>)</div></div>
+      </div>
+      <div class="proof"><code>tsc</code> و ESLint تمیز؛ <strong>۱۹ واحد + ۱۹۳ API + ۸ واردکننده</strong> و <strong>۱۲ جریانِ مرورگر</strong> موفق. یک پیمایشِ ۱۰۱ بارگذاریِ صفحه — مهمان، مشتری و کارمند؛ ۳۹۰، ۱۰۲۴ و ۱۴۴۰ پیکسل — بدونِ هیچ خطای کنسول، استثنا، هشدارِ hydration، ۵xx یا اسکرولِ افقی؛ لاگِ سرور بدونِ خطا. اسکریپتِ تعاملی: hover کارت و پین، بستن و بازکردنِ نقشه پس از بارگذاری، قلب، تغییرِ دوره، حذف از طرح و نوارِ گوشی — همه درست. هر دو تمِ روشن و تاریک دیده شد.</div>
     </div>
   </div>
 <div class="phase-card is-done open">

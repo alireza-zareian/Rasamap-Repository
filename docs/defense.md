@@ -256,7 +256,7 @@ Public site:
       the owner's number and writes a lead row ★
 - [ ] List-media wizard `/list-media` — submit a listing with a photo and watch
       it reach the admin queue ★
-- [ ] Compare `/compare` with 2 boards + the CompareModal
+- [ ] Campaign `/campaign` with 3 boards: switch the period, share the link, print; save a board with the heart and open `/saved`
 - [ ] Login `/login` and the `/reset-password` 3-step flow (step 2 shows the
       "کد تست" line only because `OTP_DEV_ECHO=1` locally)
 - [ ] Dashboard `/dashboard` — a user with listings in several states (pending / awaiting payment / published / rejected)
@@ -448,7 +448,7 @@ is git-tracked-friendly (images aren't in `.gitignore` there).
 
 #### چه شد
 کل زیرسیستم رزرو حذف شد (جدول، دو API، مودال، تب داشبورد، پنل ادمین).
-مسیر خریدار: جست‌وجو ← مقایسه ← صفحه‌ی جزئیات ← ورود ← دیدن شماره‌ی صاحب رسانه.
+مسیر خریدار: جست‌وجو ← ذخیره یا طرح کمپین ← صفحه‌ی جزئیات ← ورود ← دیدن شماره‌ی صاحب رسانه.
 مسیر فروشنده (**محصولِ اصلی**): ثبت رسانه ← بررسی ادمین ← انتشار.
 
 #### چه چیزی از دست رفت و کجا جبران شد
