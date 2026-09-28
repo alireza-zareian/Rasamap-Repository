@@ -1,15 +1,9 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { fetchJson } from "@/lib/client/fetch-json";
+import type { CurrentUser } from "@/lib/types";
 
-export interface CurrentUser {
-  id: number;
-  name: string;
-  phone: string;
-  /** A member of the team rather than a customer — see GET /api/auth/me. */
-  isStaff?: boolean;
-  role?: string;
-}
+export type { CurrentUser };
 
 interface CurrentUserValue {
   /** undefined = still asking, null = nobody signed in. */

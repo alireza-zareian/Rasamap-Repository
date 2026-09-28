@@ -101,11 +101,11 @@ export default function ReviewsSection({ billboardId }: Props) {
   const { user: currentUser } = useCurrentUser();
   const user = currentUser
     ? {
-        id: Number(currentUser.id),
+        id: currentUser.id,
         name: currentUser.name,
-        isStaff: !!currentUser.isStaff,
+        isStaff: currentUser.isStaff,
         // An editor or above may remove any review; the server checks the same.
-        canModerate: !!currentUser.isStaff && isStaffRole(currentUser.role) && hasRole(currentUser.role, "editor"),
+        canModerate: currentUser.isStaff && isStaffRole(currentUser.role) && hasRole(currentUser.role, "editor"),
       }
     : currentUser;   // null when signed out, undefined while still asking
 

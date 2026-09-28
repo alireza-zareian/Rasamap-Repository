@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/http/route";
 import { userApiRateLimit, publicApiRateLimit } from "@/lib/rate-limit";
 import { updateOwnProfile } from "@/lib/db/customers";
 import { GivenPassword, NewPassword } from "@/lib/domain/password";
+import type { CurrentUser } from "@/lib/types";
 
 /**
  * GET /api/auth/me — who is signed in, staff included, so the public site
@@ -13,16 +14,15 @@ export const GET = defineRoute(
   { name: "auth/me", access: "signed-in", rateLimit: publicApiRateLimit },
   async ({ actor }) => {
     const isStaff = actor.kind === "staff";
-    return NextResponse.json({
-      user: {
-        id:    String(actor.id),
-        name:  actor.name,
-        phone: isStaff ? "" : actor.phone,
-        email: isStaff ? actor.email : "",
-        role:  isStaff ? actor.role : "user",
-        isStaff,
-      },
-    });
+    const user: CurrentUser = {
+      id:    actor.id,
+      name:  actor.name,
+      phone: isStaff ? "" : actor.phone,
+      email: isStaff ? actor.email : "",
+      role:  isStaff ? actor.role : "user",
+      isStaff,
+    };
+    return NextResponse.json({ user });
   },
 );
 

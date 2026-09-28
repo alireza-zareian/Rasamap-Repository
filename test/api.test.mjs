@@ -434,6 +434,8 @@ test("GET /api/auth/me answers for a staff session with isStaff", async () => {
 
   const customer = await api("/api/auth/me", { token: await mintSession({ userId: "1", role: "user" }) });
   assert.equal(customer.json.user.isStaff, false);
+  // A number, as lib/types.ts CurrentUser says; it was once a string the page had to convert.
+  assert.equal(customer.json.user.id, 1);
 });
 
 // ── Related media ───────────────────────────────────────────────

@@ -159,3 +159,20 @@ export function sourceLabel(key: string | null | undefined): string {
   if (key === "listing") return "ثبت‌شده توسط کاربران";
   return DATA_SOURCES[key]?.name ?? key;
 }
+
+/**
+ * The account GET /api/auth/me describes, staff included. The route builds
+ * its answer as this type and the browser reads it as this type, so the two
+ * cannot drift apart: `id` was once sent as a string and read as a number.
+ */
+export interface CurrentUser {
+  id: number;
+  name: string;
+  /** Empty for staff. */
+  phone: string;
+  /** Empty for a customer. */
+  email: string;
+  /** A staff role, or "user" for a customer. */
+  role: string;
+  isStaff: boolean;
+}

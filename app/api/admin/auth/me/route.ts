@@ -9,7 +9,7 @@ import { GivenPassword, NewPassword } from "@/lib/domain/password";
 export const GET = defineRoute(
   { name: "admin/auth/me", access: { staff: "viewer" }, rateLimit: adminApiRateLimit },
   async ({ actor }) => NextResponse.json({
-    user: { id: String(actor.id), email: actor.email, name: actor.name, role: actor.role },
+    user: { id: actor.id, email: actor.email, name: actor.name, role: actor.role },
   }),
 );
 
