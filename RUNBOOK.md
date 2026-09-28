@@ -386,8 +386,7 @@ Run through this every time before deploying or before a live demo. Tick each li
 - [ ] Admin panel: hitting `/admin` and `/api/admin/billboards` while logged out
       redirects / returns 401.
 - [ ] Rate limiting active: 6 rapid wrong logins to `/api/auth/login` → 429 + lockout.
-- [ ] Object-level check: logged in as user A, `GET /api/listings` never returns user B's submissions
-      does not return B's data.
+- [ ] Object-level check: logged in as user A, `GET /api/listings` never returns user B's submissions.
 - [ ] `npm audit` reviewed; no unpatched High/Critical, or each one is written down with
       a reason.
 

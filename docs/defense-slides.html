@@ -230,9 +230,9 @@ td b{color:var(--accent)}
   <h2>پروژه در یک نگاه</h2>
   <div class="stats">
     <div class="stat"><b>۳٬۵۳۶</b><span>رسانه در ۱۰۱ شهر</span></div>
-    <div class="stat"><b>۴۴</b><span>نقطهٔ پایانی HTTP</span></div>
-    <div class="stat"><b>۲۰۳</b><span>فایل TypeScript</span></div>
-    <div class="stat"><b>۲۰٬۰۸۵</b><span>خط کد</span></div>
+    <div class="stat"><b>۴۵</b><span>نقطهٔ پایانی HTTP</span></div>
+    <div class="stat"><b>۲۳۲</b><span>فایل TypeScript</span></div>
+    <div class="stat"><b>۱۷٬۴۴۹</b><span>خط TypeScript</span></div>
   </div>
   <div class="stats">
     <div class="stat"><b>۲۰۸/۲۰۸</b><span>آزمون خودکار موفق</span></div>
@@ -474,23 +474,23 @@ erDiagram
 <section class="slide">
   <p class="kick">۱۳ · سازمان‌دهی کد</p>
   <h2>معماری در خودِ گراف دیده می‌شود</h2>
-  <p class="sub" style="font-size:19px">۲۰۳ فایل، ۵۲۶ پیوند <code>import</code>، استخراج‌شده
+  <p class="sub" style="font-size:19px">۲۳۲ فایل، ۶۶۷ پیوند <code>import</code>، استخراج‌شده
   با پیمایش خودکار مخزن — نه توصیف آرزوشده، بلکه اندازه‌گیری وضع موجود. صفر چرخه، صفر پیوندِ رو به بالا.</p>
   <div class="cols">
     <table>
       <thead><tr><th style="width:26%">وابسته</th><th>فایل</th></tr></thead>
       <tbody>
-        <tr><td><b>۳۵</b></td><td><code>lib/http/route.ts</code></td></tr>
+        <tr><td><b>۳۶</b></td><td><code>lib/http/route.ts</code></td></tr>
         <tr><td><b>۳۵</b></td><td><code>lib/rate-limit/index.ts</code></td></tr>
-        <tr><td><b>۱۹</b></td><td><code>lib/auth/actor.ts</code></td></tr>
-        <tr><td><b>۱۶</b></td><td><code>lib/db/billboards/index.ts</code></td></tr>
-        <tr><td><b>۱۳</b></td><td><code>lib/db/client.ts</code> — همه درون <code>lib/db/</code></td></tr>
+        <tr><td><b>۱۸</b></td><td><code>lib/http/params.ts</code></td></tr>
+        <tr><td><b>۱۷</b></td><td><code>lib/db/billboards/index.ts</code></td></tr>
+        <tr><td><b>۱۴</b></td><td><code>lib/db/client.ts</code> — همه درون <code>lib/db/</code></td></tr>
       </tbody>
     </table>
     <div class="quote g">
-      هر ۳۵ مسیر API از <b>یک خط لوله</b> می‌گذرند (<code>lib/http/route.ts</code>): ترتیب
-      «نشست ← سقف نرخ ← نقش ← اعتبارسنجی ← منطق» یک بار نوشته شده، نه ۳۵ بار.<br><br>
-      اتصال پایگاه داده را فقط <b>۱۳ فایلِ لایهٔ داده</b> وارد می‌کنند (پیش‌تر ۳۰ فایل، از جمله
+      هر ۳۶ مسیر API از <b>یک خط لوله</b> می‌گذرند (<code>lib/http/route.ts</code>): ترتیب
+      «نشست ← سقف نرخ ← نقش ← اعتبارسنجی ← منطق» یک بار نوشته شده، نه ۳۶ بار.<br><br>
+      اتصال پایگاه داده را فقط <b>۱۴ فایلِ لایهٔ داده</b> وارد می‌کنند (پیش‌تر ۳۰ فایل، از جمله
       خودِ مسیرها) و قاعدهٔ ESLint ورود آن را جای دیگر <b>رد می‌کند</b> — ادعای «یک نقطهٔ ورود
       به پایگاه داده» <b>قابل بررسی است، نه شعار</b>.
     </div>

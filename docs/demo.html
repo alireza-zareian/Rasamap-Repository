@@ -249,9 +249,9 @@ body {
         <div class="step" onclick="this.classList.toggle('done');this.querySelector('.step-num').textContent=this.classList.contains('done')?'✓':this.dataset.n" data-n="3">
           <div class="step-num">3</div>
           <div class="step-content">
-            <div class="step-title">نقشه واقعی — Leaflet</div>
-            <div class="step-sub">۲۰۰۱ پین با مختصات واقعی. Marker clustering. کلیک روی پین = دیتیل</div>
-            <div class="step-badge"><span class="chip chip-blue">/explore/map</span><span class="chip chip-green">زوم روی تهران</span></div>
+            <div class="step-title">نقشهٔ ایران — بدون هیچ ارائه‌دهنده</div>
+            <div class="step-sub">۳۱ استان به رنگِ موجودی‌شان؛ کلیک روی استان = پین‌های آن؛ کلیک روی پین = صفحهٔ رسانه</div>
+            <div class="step-badge"><span class="chip chip-blue">/explore/map</span><span class="chip chip-green">کلیک روی تهران</span></div>
           </div>
         </div>
 
@@ -313,9 +313,9 @@ body {
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <div style="font-size:0.7rem;color:var(--muted);font-weight:700;margin-bottom:2px">👤 کاربر عادی (پیش‌سید)</div>
         <div class="creds">
-          <div class="cred-row"><span class="cred-label">موبایل</span><span class="cred-val">09123456789</span></div>
+          <div class="cred-row"><span class="cred-label">موبایل</span><span class="cred-val">09120000101</span></div>
           <div class="cred-row"><span class="cred-label">رمز عبور</span><span class="cred-val">demo1234</span></div>
-          <div class="cred-row"><span class="cred-label">آگهی‌ها</span><span class="cred-val" style="color:var(--blue)">۸ آگهی در همه وضعیت‌ها</span></div>
+          <div class="cred-row"><span class="cred-label">آگهی‌ها</span><span class="cred-val" style="color:var(--blue)">دو آگهیِ منتشرشده + یک نظر</span></div>
         </div>
         <div style="font-size:0.7rem;color:var(--muted);font-weight:700;margin-top:4px;margin-bottom:2px">🛡 ادمین سیستم</div>
         <div class="creds">
@@ -413,7 +413,7 @@ body {
         </div>
         <div class="phase-card done">
           <div class="phase-num">فاز ۷b</div>
-          <div class="phase-name">Reservation API + Dashboard</div>
+          <div class="phase-name">Reservation API + Dashboard (رزرو بعداً عمداً حذف شد — §۱۷)</div>
           <div class="phase-status">✓ تکمیل</div>
         </div>
         <div class="phase-card done">
@@ -462,8 +462,8 @@ body {
             </tr>
             <tr>
               <td class="layer">Maps</td>
-              <td class="tech-name">Leaflet 1.9 · Neshan geocoding</td>
-              <td class="why">Open-source · CDN tiles · Marker clustering. Neshan API ایرانی برای geocode آدرس فارسی به lat/lng.</td>
+              <td class="tech-name">SVG استان‌ها (geoBoundaries) · Neshan geocoding</td>
+              <td class="why">مرزها درونِ مخزن: بدونِ کلید، بدونِ کاشی، بدونِ درخواستِ بیرونی (§32). Neshan فقط یک بار، آفلاین، آدرس فارسی را به lat/lng تبدیل کرد.</td>
             </tr>
             <tr>
               <td class="layer">Validation</td>
@@ -717,7 +717,7 @@ body {
   <div class="creds-box">
     <div>
       <div class="label">کاربر دمو</div>
-      <div class="val">09123456789</div>
+      <div class="val">09120000101</div>
       <div class="note">رمز: demo1234</div>
     </div>
     <div class="creds-sep"></div>
@@ -789,11 +789,11 @@ body {
     </div>
     <div class="step-body">
       <ul class="action-list">
-        <li><span class="icon">🗺️</span><span>تب «نقشه» را بزنید — Leaflet با pin‌های واقعی بارگذاری می‌شود</span></li>
-        <li><span class="icon">📍</span><span>روی یک pin کلیک کنید — popup با نام، قیمت، نوع</span></li>
-        <li><span class="icon">🔍</span><span>Zoom کنید به تهران — تراکم pin در مناطق پرترافیک مشخص است</span></li>
+        <li><span class="icon">🗺️</span><span>«نمای نقشه» را بزنید — ۳۱ استان، هر کدام به رنگِ تعدادِ رسانه‌اش</span></li>
+        <li><span class="icon">📍</span><span>روی تهران کلیک کنید — پین‌های همان استان؛ پالایه‌های کاتالوگ در نشانی می‌مانند</span></li>
+        <li><span class="icon">🔍</span><span>روی یک پین کلیک کنید — صفحهٔ همان رسانه باز می‌شود</span></li>
       </ul>
-      <div class="tip">💡 نکته: Leaflet client-only load می‌شود (dynamic import) — SSR مشکلی ندارد.</div>
+      <div class="tip">💡 نکته: نقشه هیچ کلید، کاشی یا درخواستِ بیرونی ندارد، پس روی شبکهٔ محلیِ دمو هم کار می‌کند. مختصاتی که از شهرِ خودش دور است نشان داده نمی‌شود و تعدادش روی نقشه نوشته شده (§32).</div>
     </div>
   </div>
 
@@ -809,11 +809,10 @@ body {
     </div>
     <div class="step-body">
       <ul class="action-list">
-        <li><span class="icon">👤</span><span>با اعتبارسنجی دمو وارد شوید: <span class="cmd">09123456789 / demo1234</span></span></li>
+        <li><span class="icon">👤</span><span>با اعتبارسنجی دمو وارد شوید: <span class="cmd">09120000101 / demo1234</span></span></li>
         <li><span class="icon">🏢</span><span>یک بیلبورد انتخاب کنید — در صفحه جزئیات «برای دیدن اطلاعات تماس وارد شوید»؛ بعد از ورود شماره صاحب رسانه ظاهر می‌شود</span></li>
-        <li><span class="icon">📅</span><span>BookingModal: تاریخ شروع و پایان بزنید — API overlap را چک می‌کند</span></li>
         <li><span class="icon">✅</span><span><b>/list-media</b> — پنج مرحله: اطلاعات، موقعیت، قیمت، آپلود عکس، انتخاب پلن. ثبت کنید و به <b>/dashboard</b> بروید — آگهی با وضعیت «در انتظار تأیید» در لیست است</span></li>
-        <li><span class="icon">📋</span><span>آگهی‌های demo در وضعیت‌های دیگر (در انتظار پرداخت / منتشر شده / رد شده) هم نمایش داده می‌شوند</span></li>
+        <li><span class="icon">📋</span><span>هر حسابِ دیگرِ دمو یک وضعیت را نشان می‌دهد — در انتظار بررسی ۰۹۱۲۰۰۰۰۱۰۲، ردشده ۰۹۱۲۰۰۰۰۱۰۴، در انتظار پرداخت ۰۹۱۲۰۰۰۰۱۰۶ (فهرستِ کامل در RUNBOOK.md)</span></li>
       </ul>
       <div class="tip">💡 نکته امنیتی: توکنِ نشست در HttpOnly cookie است — XSS نمی‌تواند آن را بدزدد، و دیتابیس فقط هشِ آن را دارد.</div>
     </div>
@@ -917,7 +916,7 @@ body {
   <div class="warn-box">
     <b>⚠️ قبل از ارائه چک کنید:</b>
     ۱. <code>npm run db:seed:demo</code> اجرا شده باشد
-    · ۲. سرور با <code>npm run dev</code> یا <code>npm run build && npm start</code> روشن باشد
+    · ۲. سرور با <code>npm run demo</code> روشن باشد — نه <code>npm run dev</code> (۹۷ برابر CPU؛ لپ‌تاپ داغ می‌شود)
     · ۳. در مرورگر logout کامل انجام شده باشد (session قدیمی نماند)
     · ۴. یک tab برای demo user و یک tab incognito برای admin باز کنید
   </div>
