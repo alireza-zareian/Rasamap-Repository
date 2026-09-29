@@ -131,11 +131,25 @@
 .brandList span { font-size: 1.05rem; font-weight: 800; color: var(--text-muted); opacity: 0.55; }
 
 /* Closing call to action */
-.cta { padding: 100px 28px; text-align: center; }
+/* The last invitation is a panel in the brand gradient, so the page ends on
+   a clear step rather than trailing off. Its light is painted once: no
+   animation, no backdrop filter. */
+.cta {
+  width: min(1080px, calc(100% - 32px)); margin: 40px auto 96px; padding: 72px 28px;
+  text-align: center; color: #fff; border-radius: 24px;
+  background: radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.2), transparent 45%), var(--accent-grad);
+  box-shadow: var(--shadow-accent);
+}
 .ctaTitle { font-size: 2.2rem; font-weight: 900; margin: 0 0 16px; }
-.ctaText { color: var(--text-muted); margin: 0 0 36px; font-size: 0.95rem; }
+.ctaText { color: rgba(255, 255, 255, 0.86); margin: 0 0 36px; font-size: 0.95rem; }
 .ctaButtons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 .ctaButtons .ctaButton { padding: 14px 36px; font-size: 1rem; border-radius: 10px; }
+/* On the gradient the primary turns white and the secondary an outline;
+   nested so they outrank the Button's own intents, hover included. */
+.cta .ctaButtons .ctaPrimary { background: #fff; color: var(--accent-d); }
+.cta .ctaButtons .ctaPrimary:hover { background: rgba(255, 255, 255, 0.9); }
+.cta .ctaButtons .ctaSecondary { color: #fff; border-color: rgba(255, 255, 255, 0.55); background: transparent; }
+.cta .ctaButtons .ctaSecondary:hover { background: rgba(255, 255, 255, 0.12); border-color: #fff; }
 
 @media (max-width: 640px) {
   /* The headline wraps to three lines here, which eats the street's room. */
@@ -146,6 +160,7 @@
   .typesGrid, .howGrid, .quotes { grid-template-columns: 1fr; }
   .featuredInner { padding: 0 18px; }
   .ctaTitle { font-size: 1.7rem; }
+  .cta { padding: 52px 20px; margin-bottom: 64px; }
 }
 
 /* ── Search (LandingSearch) ── */

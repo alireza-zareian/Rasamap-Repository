@@ -203,12 +203,12 @@ export default async function LandingPage() {
         <div className={styles.brandList}>{BRANDS.map(b => <span key={b}>{b}</span>)}</div>
       </section>
 
-      <section className={`${styles.cta} section-halo ${reveal.reveal}`}>
+      <section className={`${styles.cta} ${reveal.reveal}`}>
         <h2 className={styles.ctaTitle}>آماده‌ای شروع کنی؟</h2>
         <p className={styles.ctaText}>بیش از {faNum(stats.total)} رسانه منتظرته — رایگان شروع کن</p>
         <div className={styles.ctaButtons}>
-          <ButtonLink href="/explore" intent="primary" className={`${styles.ctaButton} btn-sheen`}><Map size={18} /> ورود به پلتفرم</ButtonLink>
-          <ButtonLink href="/list-media" className={styles.ctaButton}>ثبت رسانهٔ شما</ButtonLink>
+          <ButtonLink href="/explore" intent="primary" className={`${styles.ctaButton} ${styles.ctaPrimary}`}><Map size={18} /> ورود به پلتفرم</ButtonLink>
+          <ButtonLink href="/list-media" className={`${styles.ctaButton} ${styles.ctaSecondary}`}>ثبت رسانهٔ شما</ButtonLink>
         </div>
       </section>
     </main>
