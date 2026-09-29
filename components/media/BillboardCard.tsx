@@ -75,7 +75,7 @@ export default function BillboardCard({ billboard: b, isPicked, onPick, listMode
         {/* Shares its name with the media page's gallery, so opening the card
             morphs the photo (§37). One card per slug, so the name is unique. */}
         <ViewTransition name={mediaPhotoTransition(b.slug)} share="media-morph">
-          <div className={`${styles.zoom} card-photo-zoom`}>
+          <div className={styles.zoom}>
             {/* A grid card is 320–400 CSS px wide: the 384 variant at 1x, the
                 500-wide source at 2x. */}
             <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="(max-width: 700px) 100vw, 384px" />

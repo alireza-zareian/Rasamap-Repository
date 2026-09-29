@@ -10,14 +10,17 @@
 /* Hover only: on a touch screen a tap would leave the card lifted. */
 @media (hover: hover) {
   .card:hover { border-color: var(--border-hi); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38), 0 4px 18px var(--accent-glow); }
-    }
+}
 .picked, .picked:hover { border-color: var(--accent-warm); }
 /* Its pin is under the pointer on the results map. */
 .lit { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 
 .photo { position: relative; aspect-ratio: 1 / 1; background: var(--bg-card); overflow: hidden; }
-/* The wrapper moves, not the badges; its transition is .card-photo-zoom (globals.css). */
-.zoom { position: absolute; inset: 0; }
+/* The wrapper moves, not the badges. A slow ease-out reads as a camera
+   settling rather than a jump; transform only, so the compositor draws it. */
+.zoom { position: absolute; inset: 0; transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@media (hover: hover) { .card:hover .zoom { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .zoom { transition: none; } .card:hover .zoom { transform: none; } }
 
 .badge {
   position: absolute; display: flex; align-items: center; gap: 4px;

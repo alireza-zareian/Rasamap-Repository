@@ -334,13 +334,8 @@ html.page-hidden .skeleton {
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────── */
-/* A card's photo eases in on hover; a touch screen never hovers. */
-.card-photo-zoom { transition: transform 0.4s ease; will-change: transform; }
-
 @media (prefers-reduced-motion: reduce) {
   .btn-sheen::after { display: none !important; }
-  /* The movement itself, not just its easing. */
-  .card-photo-zoom { transition: none !important; transform: none !important; }
 }
 
 /* ── Page transitions ──────────────────────────────────────────────
