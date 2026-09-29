@@ -63,7 +63,7 @@
   cursor: pointer; text-decoration: none;
 }
 .action[aria-pressed="true"] { background: var(--accent-warm); border-color: var(--accent-warm); color: #111; }
-.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; padding: 6px 12px; }
+.primary { background: var(--accent-grad); border-color: var(--accent); color: #fff; font-weight: 700; padding: 6px 12px; }
 
 /* ── List mode ── */
 .row {

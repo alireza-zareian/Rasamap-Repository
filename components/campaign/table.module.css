@@ -19,5 +19,5 @@
 .cta td { border-bottom: none; padding-top: 14px; }
 .cta a {
   display: block; padding: 9px 0; border-radius: 8px;
-  background: var(--accent); color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
+  background: var(--accent-grad); color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
 }

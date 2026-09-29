@@ -94,7 +94,7 @@
   .navCta { color: #fff; }
   .navCta svg {
     width: 36px; height: 36px; padding: 8px; border-radius: 12px;
-    background: var(--accent); box-shadow: var(--shadow-accent);
+    background: var(--accent-grad); box-shadow: var(--shadow-accent);
   }
   .navCta span { color: var(--text-main); }
 }

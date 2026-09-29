@@ -11,13 +11,22 @@
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.15s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.15s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .button:disabled { opacity: 0.6; cursor: not-allowed; }
 .button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.primary { background: var(--accent); color: #fff; }
-.primary:hover:not(:disabled) { background: var(--accent-d); }
+.primary { background: var(--accent-grad); color: #fff; }
+/* A gradient cannot fade into another one, so hover shades it (a dark layer
+   on top) and lifts the button — transform and shadow, drawn once per hover.
+   `sm` does not lift: in a dense row a moving button reads as a jitter. */
+.primary:hover:not(:disabled) {
+  background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), var(--accent-grad);
+  box-shadow: var(--shadow-accent);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .primary:hover:not(:disabled):not(.sm) { transform: translateY(-2px); }
+}
 
 .secondary { background: none; border-color: var(--border); color: var(--text-main); }
 .secondary:hover:not(:disabled) { border-color: var(--border-hi); background: var(--bg-surface); }
