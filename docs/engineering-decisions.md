@@ -2244,6 +2244,41 @@ live in its own module (the guard test enforces that); in 3D, no large plane
 (its raster cost is its full size) and no opacity on a `preserve-3d` box; and a
 before/after measurement like the one above goes in the commit.
 
+**Taken from a reference site (tadrisino.org).** A site the author works on
+was read for its buttons and card motion: a React SPA over 2.4 MB of
+JavaScript whose first HTML is an empty `<div id="root">`, so its build was not
+the model — only four of its looks were. The brand gradient (`--accent-grad`)
+now fills calls to action and nothing else; a primary button lifts 2 px on
+hover; the top bar floats off the edges once the page scrolls; the landing ends
+on a gradient panel. Its rotating conic border was not taken: it animates a
+registered custom property, which repaints on the main thread every frame for
+as long as the page is open.
+
+Reading it turned up a fault of ours: the card photo's hover zoom, recorded on
+the roadmap as `scale(1.03)`, had lost its rule — `.card-photo-zoom` kept a
+transition and `will-change` and nothing moved. It is back in the card's module
+at `scale(1.06)`.
+
+Measured against a build of the commit before, alternated three times on the
+same machine (Chrome's main-thread task time, median of five): landing load
+910–948 → 863–903 ms, landing scroll 212–234 → 236–242 ms, catalogue load
+834–982 → 865–907 ms, catalogue scroll 201–217 → 251–278 ms, eight button
+hovers 154–162 → 192–214 ms. The catalogue's scroll is the one real cost,
+about 3 ms per wheel step and well under a frame; the float accounts for part
+of it and no single change for all of it (each, switched off alone, moved the
+figure less than the spread between runs). Hover costs more because hover now
+does something. The server does not see any of it — the changes are CSS and one
+boolean in the top bar.
+
+**Agent skills (`.claude/skills/`).** Four published skills were added after
+reading them whole: Anthropic's `frontend-design` and Vercel's
+`web-design-guidelines`, `react-best-practices` and `react-view-transitions`,
+each pinned to a commit with a block naming where it meets a rule here. The
+guidelines skill fetched its rules from GitHub on every run; they are a copy
+now, so no review follows text nobody here has read. The view-transitions skill
+says not to set `experimental.viewTransition`; the guide in the installed
+Next.js 16.2.11 says to, so the flag stays.
+
 ---
 
 ## 38. Fourth review: what one visitor costs the server
