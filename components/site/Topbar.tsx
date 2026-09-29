@@ -39,8 +39,9 @@ export function useSectionCounts(): Record<string, number> {
 }
 
 /**
- * The bar across every public page; on the landing it starts transparent and
- * turns solid on scroll. On a phone the section links move to BottomNav.
+ * The bar across every public page. Scrolled, it floats off the edges; on the
+ * landing it is transparent until then. On a phone the section links move to
+ * BottomNav.
  */
 export default function Topbar() {
   const pathname = usePathname() ?? "/";
@@ -52,16 +53,17 @@ export default function Topbar() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    if (!overHero) return;
-    // Flips state twice in all, not on every scroll frame.
+    // Renders only when the answer flips, not on every scroll frame: React
+    // skips a set to the value it already holds.
     const onScroll = () => setScrolled(window.scrollY > 60);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [overHero]);
+  }, []);
 
+  const shape = scrolled ? styles.floating : overHero ? styles.overlay : "";
   return (
-    <header className={`${styles.topbar} ${overHero && !scrolled ? styles.overlay : ""}`}>
+    <header className={`${styles.topbar} ${shape}`}>
       <Logo sub />
 
       <nav className={styles.tabs} aria-label="بخش‌های سایت">

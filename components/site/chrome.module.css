@@ -21,10 +21,20 @@
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(16px);
-  transition: background-color 0.35s ease, border-color 0.35s ease;
+  transition: background-color 0.35s ease, border-color 0.35s ease,
+    top 0.35s ease, right 0.35s ease, left 0.35s ease, height 0.35s ease, border-radius 0.35s ease, box-shadow 0.35s ease;
 }
 /* The landing page's hero shows through until the visitor scrolls. */
 .overlay { background: transparent; border-bottom-color: transparent; backdrop-filter: none; }
+/* Once the page scrolls, the bar lifts off the edges into a floating panel.
+   Its bottom stays above --topbar-h, where sticky toolbars pin themselves.
+   The geometry is laid out once per crossing, not per frame (Topbar). */
+.floating {
+  top: 8px; right: 16px; left: 16px; height: calc(var(--topbar-h) - 12px);
+  border: 1px solid var(--border); border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+@media (prefers-reduced-motion: reduce) { .topbar { transition: none; } }
 
 .tabs { display: flex; gap: 4px; }
 .tab {
@@ -64,6 +74,8 @@
 
 @media (max-width: 768px) {
   .topbar { padding: 0 12px; }
+  /* Taller than on a desktop: its links are 44px touch targets. */
+  .floating { top: 4px; right: 6px; left: 6px; height: calc(var(--topbar-h) - 8px); padding: 0 8px; }
   .tabs, .desktopOnly { display: none; }
   /* 44px touch targets in the 62px bar; the icons keep their size. */
   .topbar a, .topbar button { min-height: 44px; }
