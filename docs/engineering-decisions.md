@@ -2250,7 +2250,10 @@ JavaScript whose first HTML is an empty `<div id="root">`, so its build was not
 the model — only four of its looks were. The brand gradient (`--accent-grad`)
 now fills calls to action and nothing else; a primary button lifts 2 px on
 hover; the top bar floats off the edges once the page scrolls; the landing ends
-on a gradient panel. Its rotating conic border was not taken: it animates a
+on a gradient panel. The gradient is one hue, the accent deepening into
+`--accent-d`: it began as blue into violet, and that pairing — the reference
+site's own buttons — is the stock look of generated sites, so the violet went
+the next day. Its rotating conic border was not taken: it animates a
 registered custom property, which repaints on the main thread every frame for
 as long as the page is open.
 

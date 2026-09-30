@@ -14,9 +14,12 @@
   --accent-d:    #2A64D8;
   --accent-warm: #F5A623;
   --accent-glow: rgba(59,123,245,0.16);
-  /* A filled call to action: the accent leaning into violet. No stop is lighter
-     than --accent, so white text keeps the contrast the flat button had. */
-  --accent-grad: linear-gradient(135deg, var(--accent) 0%, var(--accent-d) 55%, #5B4FE0 100%);
+  /* A filled call to action: the brand blue deepening into its own dark shade.
+     One hue, not blue into violet — that pairing is the stock look of generated
+     sites (the reference site's buttons wear it), and a second hue here would be
+     decoration. No stop is lighter than --accent, so white text keeps the
+     contrast the flat button had. */
+  --accent-grad: linear-gradient(135deg, var(--accent) 0%, var(--accent-d) 100%);
 
   /* Green */
   --green-accent: #00D17A;
