@@ -43,9 +43,9 @@ Next.js 16.2.11 App Router · React 19 · TypeScript 5 strict · SQLite via Pris
 npm run demo    # ← migrate + build + start. USE THIS to view or demo the site.
 npm run dev     # ONLY while writing code (hot-reload). 97× more CPU.
 npm run build | lint
-npm test          # 19 unit + 193 API + 8 importer tests on a production build (~1 min)
+npm test          # 20 unit + 193 API + 8 importer tests on a production build (~1 min)
 npm run test:unit # the pure rules in lib/domain only — no build, ~0.5 s
-npm run test:e2e  # 12 browser flows over the installed Chrome; screenshots on failure
+npm run test:e2e  # 13 browser flows over the installed Chrome; screenshots on failure
 npm run db:migrate | db:seed | db:studio | db:dedupe | db:backfill-coords
 npm run db:sync-scraped    # merge the crawler's feed into a live DB (§33) — dry run without --apply
 npm run images:variants   # pre-build the image sizes next/image serves (git-ignored)
