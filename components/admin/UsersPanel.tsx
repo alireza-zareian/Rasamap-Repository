@@ -124,7 +124,7 @@ function AdminAccounts() {
       {error && <div role="alert" className={`${form.error} ${styles.banner}`}><AlertTriangle size={13} /> {error}</div>}
 
       {loading ? (
-        <div className={styles.state}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری…</div>
       ) : (
         <div className={`${styles.tableCard} ${styles.scroll}`}>
           <table className={`${styles.table} ${own.wide}`}>
@@ -223,7 +223,7 @@ function CustomersSection({ canManageAccess }: { canManageAccess: boolean }) {
 
       <form className={styles.toolbar} onSubmit={e => { e.preventDefault(); runSearch(); }}>
         <div className={own.searchRow}>
-          <input className={styles.control} value={q} onChange={e => setQ(e.target.value)} aria-label="جستجوی کاربر" placeholder="جستجوی نام یا شماره..." />
+          <input className={styles.control} value={q} onChange={e => setQ(e.target.value)} aria-label="جستجوی کاربر" placeholder="جستجوی نام یا شماره…" />
           <Button type="submit" size="sm"><Search size={13} /> جستجو</Button>
         </div>
         <select className={styles.control} aria-label="مرتب‌سازی" value={sort} onChange={e => { setSort(e.target.value); setPage(1); }}>
@@ -234,7 +234,7 @@ function CustomersSection({ canManageAccess }: { canManageAccess: boolean }) {
       {error && <div role="alert" className={`${form.error} ${styles.banner}`}><AlertTriangle size={13} /> {error}</div>}
 
       {loading ? (
-        <div className={styles.state}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری…</div>
       ) : rows.length === 0 ? (
         <div className={styles.state}>کاربری یافت نشد</div>
       ) : (
@@ -311,7 +311,7 @@ function AddAdminModal({ onClose, onCreated }: { onClose: () => void; onCreated:
         <div className={form.field}><label htmlFor="admn-password" className={form.label}>رمز عبور (حداقل {faNum(MIN_PASSWORD_LENGTH)} نویسه)</label><input id="admn-password" className={`${form.input} ${form.ltr}`} value={draft.password} onChange={set("password")} type="password" autoComplete="new-password" /></div>
         {error && <div role="alert" className={form.error}><AlertTriangle size={13} /> {error}</div>}
         <div className={form.row}>
-          <Button type="submit" intent="primary" disabled={saving}>{saving ? "در حال ساخت..." : "ساخت کاربر"}</Button>
+          <Button type="submit" intent="primary" disabled={saving}>{saving ? "در حال ساخت…" : "ساخت کاربر"}</Button>
           <Button intent="quiet" onClick={onClose}>انصراف</Button>
         </div>
       </form>

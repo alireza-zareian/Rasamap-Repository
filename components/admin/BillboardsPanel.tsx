@@ -138,7 +138,7 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
         {canEdit && <Button intent="success" onClick={() => setShowCreate(true)}><Plus size={15} /> بیلبورد جدید</Button>}
       </div>
       <div className={styles.toolbar}>
-        <input className={`${styles.control} ${styles.search}`} placeholder="جستجو..." aria-label="جستجو" value={searchInput} onChange={e => setSearchInput(e.target.value)} />
+        <input className={`${styles.control} ${styles.search}`} placeholder="جستجو…" aria-label="جستجو" value={searchInput} onChange={e => setSearchInput(e.target.value)} />
         <select className={styles.control} aria-label="نوع رسانه" value={filterType} onChange={e => resetPage(setFilterType)(e.target.value)}>
           <option value="">همه انواع</option>
           {Object.entries(TYPE_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
@@ -167,7 +167,7 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
             </thead>
             <tbody>
               {loading
-                ? <tr><td colSpan={COLUMNS.length} className={styles.stateCell}>در حال بارگذاری...</td></tr>
+                ? <tr><td colSpan={COLUMNS.length} className={styles.stateCell}>در حال بارگذاری…</td></tr>
                 : loadError
                   ? <tr><td colSpan={COLUMNS.length} role="alert" className={`${styles.stateCell} ${styles.errorCell}`}>فهرست خوانده نشد. {loadError}</td></tr>
                 : billboards.length === 0
@@ -242,7 +242,7 @@ export function BillboardsPanel({ canEdit, canManage, initialQuery }: {
           title="حذف بیلبورد"
           onClose={() => setDeleteTarget(null)}
           footer={<>
-            <Button intent="danger" onClick={handleDeleteConfirm} disabled={deleting}>{deleting ? "در حال حذف..." : "بله، حذف شود"}</Button>
+            <Button intent="danger" onClick={handleDeleteConfirm} disabled={deleting}>{deleting ? "در حال حذف…" : "بله، حذف شود"}</Button>
             <Button intent="quiet" onClick={() => setDeleteTarget(null)}>انصراف</Button>
           </>}
         >

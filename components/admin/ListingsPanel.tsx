@@ -153,7 +153,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
       {error && <div role="alert" className={`${form.error} ${styles.banner}`}>{error}</div>}
 
       {loading ? (
-        <div className={styles.state}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری…</div>
       ) : error && listings.length === 0 ? (
         <div className={styles.state}><Button onClick={load}>تلاش دوباره</Button></div>
       ) : listings.length === 0 ? (
@@ -218,7 +218,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                     <button type="button" className={`${styles.toneButton} ${styles.solid}`} style={cssVar("--tone", "var(--green)")}
                       onClick={() => decide(l.id, l.updatedAt, "approve")} disabled={anyBusy}>
                       {l.plan === "featured" ? <Sparkles size={13} /> : <Check size={13} />}
-                      {busy ? "..." : l.plan === "featured" ? "تأیید پرداخت و انتشار" : "تأیید و انتشار"}
+                      {busy ? "…" : l.plan === "featured" ? "تأیید پرداخت و انتشار" : "تأیید و انتشار"}
                     </button>
                     <button type="button" className={styles.toneButton} style={cssVar("--tone", "#f97316")}
                       onClick={() => decide(l.id, l.updatedAt, "revision")} disabled={anyBusy}>
@@ -235,7 +235,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
           })}
           {page < pages && (
             <Button className={styles.more} onClick={loadMore} disabled={loadingMore}>
-              {loadingMore ? "در حال بارگذاری..." : `نمایش بیشتر (${faNum(total - listings.length)} مورد دیگر)`}
+              {loadingMore ? "در حال بارگذاری…" : `نمایش بیشتر (${faNum(total - listings.length)} مورد دیگر)`}
             </Button>
           )}
         </div>

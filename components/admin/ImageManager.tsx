@@ -68,7 +68,7 @@ export function ImageManager({ billboard, onClose }: { billboard: Billboard; onC
       onClose={onClose}
       footer={<>
         <Button intent="primary" onClick={handleSave} disabled={saving || uploading}>
-          {saving ? "در حال ذخیره..." : `ذخیره (${faNum(images.length)} تصویر)`}
+          {saving ? "در حال ذخیره…" : `ذخیره (${faNum(images.length)} تصویر)`}
         </Button>
         <Button intent="quiet" onClick={onClose}>انصراف</Button>
       </>}

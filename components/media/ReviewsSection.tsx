@@ -233,7 +233,7 @@ export default function ReviewsSection({ billboardId }: Props) {
           />
           {error && <div role="alert" className={form.error}>{error}</div>}
           <Button type="submit" intent="primary" disabled={submitting} className={styles.submit}>
-            <Send size={14} /> {submitting ? "در حال ارسال..." : editing ? "ذخیرهٔ تغییرات" : "ثبت نظر"}
+            <Send size={14} /> {submitting ? "در حال ارسال…" : editing ? "ذخیرهٔ تغییرات" : "ثبت نظر"}
           </Button>
         </form>
       )}
@@ -251,7 +251,7 @@ export default function ReviewsSection({ billboardId }: Props) {
       {error && !formOpen && <div role="alert" className={`${form.error} ${styles.notice}`}>{error}</div>}
 
       {loading ? (
-        <div className={styles.state}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری…</div>
       ) : loadError ? (
         <div role="alert" className={styles.state}>
           <div>نظرها بارگذاری نشد. {loadError}</div>

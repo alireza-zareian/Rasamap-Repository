@@ -99,7 +99,7 @@ export function CustomerModal({ userId, canManageAccess, onClose, onSaved }: {
       {error && <div role="alert" className={form.error}><AlertTriangle size={13} /> {error}</div>}
 
       {loading ? (
-        <div className={styles.state}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری…</div>
       ) : data ? (
         <>
           <div className={own.fields}>
@@ -122,10 +122,10 @@ export function CustomerModal({ userId, canManageAccess, onClose, onSaved }: {
 
           <div className={own.buttons}>
             <Button intent="primary" onClick={save} disabled={!dirty || saving}>
-              {savedOk && !dirty ? <><Check size={14} /> ذخیره شد</> : saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+              {savedOk && !dirty ? <><Check size={14} /> ذخیره شد</> : saving ? "در حال ذخیره…" : "ذخیره تغییرات"}
             </Button>
             {canManageAccess && (
-              <Button onClick={resetPassword} disabled={resetting}><KeyRound size={14} /> {resetting ? "..." : "بازنشانی رمز"}</Button>
+              <Button onClick={resetPassword} disabled={resetting}><KeyRound size={14} /> {resetting ? "…" : "بازنشانی رمز"}</Button>
             )}
           </div>
 

@@ -234,7 +234,7 @@ export default function DashboardClient({ account, initialListings }: {
                 value={editNewPass} onChange={e => setEditNewPass(e.target.value)} placeholder="••••••••" />
             </div>
             <Button type="submit" intent="primary" className={styles.save} disabled={profileSaving}>
-              {profileSaving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+              {profileSaving ? "در حال ذخیره…" : "ذخیره تغییرات"}
             </Button>
           </form>
         </section>

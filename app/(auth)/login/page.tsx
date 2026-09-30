@@ -209,7 +209,7 @@ function LoginForm() {
           {detailsStep && passInp(form.confirm, v => s("confirm", v), "تکرار رمز", showConfirm, setShowConfirm, "new-password")}
           {error && <div role="alert" className={field.error}><AlertTriangle size={13} /> {error}</div>}
           <button type="submit" className={styles.submit} disabled={loading}>
-            {loading ? "در حال پردازش..."
+            {loading ? "در حال پردازش…"
               : staff ? "ورود به پنل مدیریت"
               : tab === "login" ? "ورود به حساب"
               : askingForCode ? "ارسال کد تأیید"

@@ -54,7 +54,7 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
           <div className={field.field}><label htmlFor="pw-confirm" className={field.label}>تکرار رمز جدید</label><input id="pw-confirm" className={input} value={form.confirm} onChange={set("confirm")} type="password" autoComplete="new-password" /></div>
           {error && <div role="alert" className={field.error}><AlertTriangle size={13} /> {error}</div>}
           <div className={field.row}>
-            <Button type="submit" intent="primary" disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیرهٔ رمز جدید"}</Button>
+            <Button type="submit" intent="primary" disabled={saving}>{saving ? "در حال ذخیره…" : "ذخیرهٔ رمز جدید"}</Button>
             <Button intent="quiet" onClick={onClose}>انصراف</Button>
           </div>
         </form>

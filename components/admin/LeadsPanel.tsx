@@ -137,7 +137,7 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
       {error && <div role="alert" className={`${form.error} ${styles.banner}`}>{error}</div>}
 
       {loading ? (
-        <div className={styles.state}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری…</div>
       ) : error && leads.length === 0 ? (
         <div className={styles.state}><Button onClick={load}>تلاش دوباره</Button></div>
       ) : leads.length === 0 ? (
@@ -178,7 +178,7 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
                         placeholder="یادداشت داخلی (فقط برای تیم مدیریت)"
                       />
                       <Button size="sm" onClick={() => patch(l.id, { note: (draft ?? l.note ?? "").trim() })} disabled={busy || draft === undefined}>
-                        <Save size={12} /> {busy ? "..." : "ذخیرهٔ یادداشت"}
+                        <Save size={12} /> {busy ? "…" : "ذخیرهٔ یادداشت"}
                       </Button>
                     </div>
                   ) : l.note ? (
@@ -191,7 +191,7 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
                     {LEAD_STATUSES.filter(s => s !== l.status).map(s => (
                       <button key={s} type="button" className={styles.toneButton} style={cssVar("--tone", statusTone(s))}
                         onClick={() => patch(l.id, { status: s })} disabled={busy}>
-                        {busy ? "..." : `→ ${leadStatusLabels[s]}`}
+                        {busy ? "…" : `→ ${leadStatusLabels[s]}`}
                       </button>
                     ))}
                   </div>
@@ -201,7 +201,7 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
           })}
           {page < pages && (
             <Button className={styles.more} onClick={loadMore} disabled={loadingMore}>
-              {loadingMore ? "در حال بارگذاری..." : `نمایش بیشتر (${faNum(Math.max(0, total - leads.length))} مورد دیگر)`}
+              {loadingMore ? "در حال بارگذاری…" : `نمایش بیشتر (${faNum(Math.max(0, total - leads.length))} مورد دیگر)`}
             </Button>
           )}
         </div>

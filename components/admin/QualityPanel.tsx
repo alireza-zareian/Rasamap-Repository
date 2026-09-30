@@ -80,7 +80,7 @@ export function QualityPanel({ billboards, onFix }: Props) {
               </div>
             </li>
           ))}
-          {warnings.length > SHOWN && <li className={own.rest}>و {faNum(warnings.length - SHOWN)} مورد دیگر...</li>}
+          {warnings.length > SHOWN && <li className={own.rest}>و {faNum(warnings.length - SHOWN)} مورد دیگر…</li>}
         </ul>
       )}
     </div>

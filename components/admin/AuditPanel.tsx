@@ -65,7 +65,7 @@ export function AuditPanel() {
       </p>
 
       {loading ? (
-        <div className={styles.state}>در حال بارگذاری...</div>
+        <div className={styles.state}>در حال بارگذاری…</div>
       ) : error ? (
         <div role="alert" className={form.error}>لاگ خوانده نشد. {error}</div>
       ) : rows.length === 0 ? (

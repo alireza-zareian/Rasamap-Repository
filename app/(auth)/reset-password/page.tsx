@@ -83,7 +83,7 @@ export default function ResetPasswordPage() {
                   <input id="reset-phone" className={`${input} ${field.ltr}`} value={phone} onChange={e => setPhone(latinDigits(e.target.value))}
                     type="tel" inputMode="tel" dir="ltr" lang="en" autoComplete="tel" placeholder="09123456789" />
                 </div>
-                <button type="submit" className={styles.submit} disabled={loading}>{loading ? "در حال ارسال..." : "ارسال کد تأیید"}</button>
+                <button type="submit" className={styles.submit} disabled={loading}>{loading ? "در حال ارسال…" : "ارسال کد تأیید"}</button>
               </>
             ) : (
               <>
@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
                 </div>
                 <input aria-label="تکرار رمز عبور جدید" className={input} value={confirm} onChange={e => setConfirm(latinDigits(e.target.value))}
                   type="password" autoComplete="new-password" placeholder="تکرار رمز عبور جدید" />
-                <button type="submit" className={styles.submit} disabled={loading}>{loading ? "در حال ثبت..." : "ثبت رمز جدید"}</button>
+                <button type="submit" className={styles.submit} disabled={loading}>{loading ? "در حال ثبت…" : "ثبت رمز جدید"}</button>
                 <button type="button" className={styles.textButton} onClick={() => { setStep(1); setError(""); }}>شماره را اشتباه وارد کردم</button>
               </>
             )}

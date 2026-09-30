@@ -61,8 +61,8 @@ export function CreateModal({ onClose, onCreated }: { onClose: () => void; onCre
     <Dialog icon={<Plus size={17} />} title="بیلبورد جدید" onClose={onClose}>
       <form className={field.stack} onSubmit={create}>
         <div className={styles.grid}>
-          <div className={`${field.field} ${styles.full}`}><label htmlFor="cm-name" className={field.label}>نام {req}</label><input id="cm-name" className={field.input} value={form.name} onChange={set("name")} placeholder="بیلبورد اتوبان..." /></div>
-          <div className={`${field.field} ${styles.full}`}><label htmlFor="cm-location" className={field.label}>آدرس {req}</label><input id="cm-location" className={field.input} value={form.location} onChange={set("location")} placeholder="اتوبان همت، تقاطع..." /></div>
+          <div className={`${field.field} ${styles.full}`}><label htmlFor="cm-name" className={field.label}>نام {req}</label><input id="cm-name" className={field.input} value={form.name} onChange={set("name")} placeholder="بیلبورد اتوبان…" /></div>
+          <div className={`${field.field} ${styles.full}`}><label htmlFor="cm-location" className={field.label}>آدرس {req}</label><input id="cm-location" className={field.input} value={form.location} onChange={set("location")} placeholder="اتوبان همت، تقاطع…" /></div>
           <div className={styles.full}><CitySelect city={form.city} onChange={city => setForm(f => ({ ...f, city }))} /></div>
           <div className={field.field}><label htmlFor="cm-price" className={field.label}>قیمت ماهانه (میلیون تومان) {req}</label><input id="cm-price" className={field.input} value={form.price} onChange={set("price")} type="number" min="0" placeholder="15" /></div>
           <div className={field.field}><label htmlFor="cm-type" className={field.label}>نوع</label><select id="cm-type" className={field.input} value={form.type} onChange={set("type")}>{Object.entries(TYPE_LABEL).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></div>
@@ -71,14 +71,14 @@ export function CreateModal({ onClose, onCreated }: { onClose: () => void; onCre
             <div className={field.field}><label htmlFor="cm-height" className={field.label}>ارتفاع (متر)</label><input id="cm-height" className={field.input} value={form.height} onChange={set("height")} type="number" min="1" /></div>
             <div className={field.field}><label htmlFor="cm-faces" className={field.label}>وجه</label><input id="cm-faces" className={field.input} value={form.faces} onChange={set("faces")} type="number" min="1" /></div>
           </div>
-          <div className={field.field}><label htmlFor="cm-agency" className={field.label}>آژانس</label><input id="cm-agency" className={field.input} value={form.agency} onChange={set("agency")} placeholder="آژانس رسانه‌ای..." /></div>
+          <div className={field.field}><label htmlFor="cm-agency" className={field.label}>آژانس</label><input id="cm-agency" className={field.input} value={form.agency} onChange={set("agency")} placeholder="آژانس رسانه‌ای…" /></div>
           <div className={field.field}><label htmlFor="cm-phone" className={field.label}>تلفن</label><input id="cm-phone" className={`${field.input} ${field.ltr}`} value={form.phone} onChange={set("phone")} placeholder="021-XXXXXXXX" /></div>
           <div className={styles.full}><LocationInput value={place} onChange={setPlace} preview /></div>
-          <div className={`${field.field} ${styles.full}`}><label htmlFor="cm-description" className={field.label}>توضیحات</label><textarea id="cm-description" className={field.input} rows={3} value={form.description} onChange={set("description")} placeholder="موقعیت ممتاز..." /></div>
+          <div className={`${field.field} ${styles.full}`}><label htmlFor="cm-description" className={field.label}>توضیحات</label><textarea id="cm-description" className={field.input} rows={3} value={form.description} onChange={set("description")} placeholder="موقعیت ممتاز…" /></div>
         </div>
         {error && <div role="alert" className={field.error}><AlertTriangle size={13} /> {error}</div>}
         <div className={field.row}>
-          <Button type="submit" intent="success" disabled={saving}>{saving ? "در حال ایجاد..." : "ایجاد بیلبورد"}</Button>
+          <Button type="submit" intent="success" disabled={saving}>{saving ? "در حال ایجاد…" : "ایجاد بیلبورد"}</Button>
           <Button intent="quiet" onClick={onClose}>انصراف</Button>
         </div>
       </form>

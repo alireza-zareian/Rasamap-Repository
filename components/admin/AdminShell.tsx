@@ -58,7 +58,7 @@ export function AdminShell({ user, children }: { user: { name: string; role: Sta
             <Globe size={13} /> <span className={styles.siteLabel}>مشاهده سایت</span>
           </Link>
           <Button size="sm" intent="quiet" onClick={() => setChangingPassword(true)} aria-label="تغییر رمز" title="تغییر رمز"><KeyRound size={14} /></Button>
-          <Button size="sm" intent="quiet" onClick={handleLogout} disabled={loggingOut}>{loggingOut ? "..." : "خروج"}</Button>
+          <Button size="sm" intent="quiet" onClick={handleLogout} disabled={loggingOut}>{loggingOut ? "…" : "خروج"}</Button>
         </div>
       </header>
 

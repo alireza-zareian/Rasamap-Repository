@@ -80,7 +80,7 @@ export function EditModal({ billboard, onClose, onSaved, onImageManager }: {
         </div>
         {error && <div role="alert" className={field.error}><AlertTriangle size={13} /> {error}</div>}
         <div className={field.row}>
-          <Button type="submit" intent="primary" disabled={saving}>{saved ? "ذخیره شد" : saving ? "در حال ذخیره..." : "ذخیره"}</Button>
+          <Button type="submit" intent="primary" disabled={saving}>{saved ? "ذخیره شد" : saving ? "در حال ذخیره…" : "ذخیره"}</Button>
           <Button intent="quiet" onClick={onClose}>انصراف</Button>
         </div>
         <p className={styles.caution}>
