@@ -18,6 +18,8 @@ const CHROME =
 
 /** How long any single wait may take before the test is called failed. */
 const DEFAULT_TIMEOUT_MS = 15_000;
+/** 300 polls 100 ms apart: how long a cold Chrome gets to open its debugging port. */
+const CHROME_START_POLLS = 300;
 
 /**
  * A distinct client address per browser, as test/helpers.mjs gives each API
@@ -93,10 +95,12 @@ export class Browser {
   async #connect(width, height) {
 
     // Chrome writes DevToolsActivePort once it has bound; poll for it rather
-    // than guessing how long that takes on a loaded machine.
+    // than guessing how long that takes on a loaded machine. The first launch
+    // on a CI runner is the slow one: 9.6 s in run 33, over the 10 s this used
+    // to allow in run 36. Still bounded, at 30 s.
     const portFile = join(this.#profileDir, "DevToolsActivePort");
     let target;
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < CHROME_START_POLLS; i++) {
       try {
         const port = readFileSync(portFile, "utf8").split("\n")[0].trim();
         const res = await fetch(`http://127.0.0.1:${port}/json/list`, { signal: AbortSignal.timeout(2_000) });
