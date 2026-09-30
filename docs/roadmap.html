@@ -4257,7 +4257,7 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">LOOK</div>
-      <div class="ph-title"><h3>ظاهر از روی یک سایتِ مرجع، و چهار مهارتِ عامل</h3><p>۸ مهر ۱۴۰۵ · §۳۷ در سندِ تصمیم‌ها؛ فقط CSS، هیچ بارِ تازه‌ای روی سرور</p></div>
+      <div class="ph-title"><h3>ظاهر از روی یک سایتِ مرجع، و چهار مهارتِ عامل</h3><p>۸–۹ مهر ۱۴۰۵ · §۳۷ در سندِ تصمیم‌ها؛ فقط CSS، هیچ بارِ تازه‌ای روی سرور</p></div>
       <div class="ph-badge done">✓ تموم شده</div>
     </div>
     <div class="ph-body">
@@ -4266,9 +4266,12 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
         <div class="task done-t"><div class="tick">✓</div><div><strong>گرادیانِ برند برای دکمه‌های اقدام</strong> — <code>--accent-grad</code>؛ دکمهٔ اصلی با هاور ۲ پیکسل بالا می‌آید؛ نشان‌ها و حالت‌های انتخاب تخت ماندند</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>نوارِ بالای شناور</strong> — پس از اسکرول از لبه‌ها جدا می‌شود؛ نوارهای چسبانِ زیرش پوشیده نمی‌شوند؛ روی گوشی ۵۴ پیکسل برای هدف‌های لمسیِ ۴۴ پیکسلی</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>پنلِ رنگیِ «آماده‌ای شروع کنی؟»</strong> در پایانِ صفحهٔ اول</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>بازبینی با web-design-guidelines</strong> — فوکوسِ نامرئی در جستجو و selectها، لینکِ «پرش به محتوای اصلی»، <code>scroll-padding-top</code> زیرِ نوارِ ثابت، <code>transition: all</code> حذف شد، ۳۴ رشته با «…»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>جستجوی کاتالوگ دیگر حرف گم نمی‌کند</strong> — تایپ هنگامِ بارگذاری «تهران ونک» را «تهرانک» می‌کرد؛ فیلد غیرکنترل‌شده و صفِ مقدارهای در راه؛ آزمونِ مرورگرِ تازه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>ضربهٔ زودهنگام روی قلب</strong> — پیش از پاسخِ <code>/api/auth/me</code> دور ریخته می‌شد؛ حالا نگه داشته و انجام می‌شود</div></div>
         <div class="task done-t"><div class="tick">✓</div><div><strong>چهار مهارتِ عامل در <code>.claude/skills/</code></strong> — frontend-design (Anthropic) و web-design-guidelines، react-best-practices، react-view-transitions (Vercel)؛ هر کدام کامل خوانده و به یک commit سنجاق شد</div></div>
       </div>
-      <div class="proof">در برابرِ ساختِ commitِ قبلی، سه بار یک‌درمیان روی یک ماشین: تنها هزینهٔ واقعی اسکرولِ کاتالوگ است، حدودِ ۳ میلی‌ثانیه در هر گامِ چرخ (۲۰۱–۲۱۷ → ۲۵۱–۲۷۸)، بسیار کمتر از یک فریم. عکسِ صفحه در دو تم و روی گوشیِ ۳۹۰ پیکسلی بازبینی شد. ESLint تمیز؛ <strong>۱۹ واحد + ۱۹۳ API + ۸ واردکننده</strong> و <strong>۱۲ جریانِ مرورگر</strong> موفق.</div>
+      <div class="proof">در برابرِ ساختِ commitِ قبلی، سه بار یک‌درمیان روی یک ماشین: تنها هزینهٔ واقعی اسکرولِ کاتالوگ است، حدودِ ۳ میلی‌ثانیه در هر گامِ چرخ (۲۰۱–۲۱۷ → ۲۵۱–۲۷۸)، بسیار کمتر از یک فریم. عکسِ صفحه در دو تم و روی گوشیِ ۳۹۰ پیکسلی بازبینی شد. ESLint تمیز؛ <strong>۲۰ واحد + ۱۹۳ API + ۸ واردکننده</strong> و <strong>۱۳ جریانِ مرورگر</strong> موفق؛ آزمونِ تایپ روی کدِ قدیم شکست خورد و روی کدِ تازه ۱۲ از ۱۲ گذشت.</div>
     </div>
   </div>
 <div class="phase-card is-done open">
@@ -5402,7 +5405,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۸ مهر ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۹ مهر ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>

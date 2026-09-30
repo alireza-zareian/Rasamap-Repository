@@ -2279,6 +2279,27 @@ now, so no review follows text nobody here has read. The view-transitions skill
 says not to set `experimental.viewTransition`; the guide in the installed
 Next.js 16.2.11 says to, so the flag stays.
 
+**What the skills found when they were run.** `web-design-guidelines` over
+`app/` and `components/`: five controls with `outline: none` and nothing in its
+place (the landing search, the catalogue's search box, selects and sort), four
+`transition: all`, no skip link, a fixed bar that could cover a focused field
+(`scroll-padding-top` now), a dialog backdrop that scrolled the page behind it,
+and 34 strings with `...` for `…`. `react-best-practices`: no request waterfall
+in any page (every sequential `await` depends on the one before), and the one
+library in a browser bundle that looked out of place — zod, 14 KB — loads only
+on the form pages that validate with the server's own schemas, on purpose.
+`react-view-transitions`: the reduced-motion rule was already there.
+
+Two real bugs came out of following one finding to its end. The catalogue's
+search box copied the URL back into itself after every navigation, and a key
+typed while React applied one never reached a handler: on a 700 ms connection
+«تهران ونک» became «تهرانک». The box is uncontrolled now, listens natively, and
+tells its own navigations from outside ones with a queue of values in flight
+(browser test "keeps every keystroke", which failed on the old code). Running
+the suite then showed the heart test failing four times in five: a guest's tap
+made before `/api/auth/me` answered was dropped. It is held and made when the
+answer comes.
+
 ---
 
 ## 38. Fourth review: what one visitor costs the server
