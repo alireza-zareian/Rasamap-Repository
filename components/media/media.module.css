@@ -107,7 +107,7 @@
 /* ── Share ── */
 .share {
   display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px;
-  font-size: 0.72rem; font-family: inherit; cursor: pointer; transition: all 0.2s;
+  font-size: 0.72rem; font-family: inherit; cursor: pointer; transition: color 0.2s, background-color 0.2s;
   background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border);
 }
 .share[data-state="copied"] { background: rgba(34, 197, 94, 0.12); color: var(--green); }

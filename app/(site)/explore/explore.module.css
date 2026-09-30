@@ -30,6 +30,9 @@
   font-family: inherit; font-size: 0.82rem; padding: 8px 12px; border-radius: 8px; outline: none; cursor: pointer;
 }
 .select:disabled { opacity: 0.5; cursor: not-allowed; }
+/* The outline is dropped above; these put the keyboard's place back. */
+.select:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.searchBox:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
 
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -106,6 +109,7 @@
 .barNear { color: var(--accent-warm); }
 .barActions { display: flex; align-items: center; gap: 8px; }
 .sort { background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.78rem; cursor: pointer; outline: none; }
+.sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
 .grid { padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 .list { padding: 16px 20px; display: flex; flex-direction: column; }
