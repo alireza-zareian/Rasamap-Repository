@@ -53,6 +53,9 @@
 
 /* One stray wide element must not scroll the page sideways; `clip` keeps sticky working. */
 html, body { overflow-x: clip; max-width: 100%; }
+/* The top bar is fixed: an anchor or a focused field scrolled into view stops
+   below it instead of under it. */
+html { scroll-padding-top: calc(var(--topbar-h) + 12px); }
 
 body {
   font-family: 'Vazirmatn Variable', 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;

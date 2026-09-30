@@ -151,7 +151,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
   const links = at ? mapLinks(at) : null;
 
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       {/* "<" escaped, or a name containing "</script>" would end the tag. */}
       <script
         type="application/ld+json"

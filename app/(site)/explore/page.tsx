@@ -55,7 +55,7 @@ export default async function ExplorePage({
   const pastEnd = total > 0 && filters.page > totalPages;
 
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <div className={styles.hero}>
         <ExploreControls filters={filters} total={total} />
         <ExploreShowcase items={showcase} />

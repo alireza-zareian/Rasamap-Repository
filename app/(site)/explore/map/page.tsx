@@ -38,7 +38,7 @@ export default async function MapPage({
   const listHref = exploreHref(filters);
 
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <div className={styles.head}>
         <h1 className={styles.title}>
           <MapIcon size={20} />

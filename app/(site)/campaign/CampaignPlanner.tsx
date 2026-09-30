@@ -116,7 +116,7 @@ export default function CampaignPlanner({ items, requested, period }: {
   ];
 
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <header className={styles.head}>
         <div>
           <h1 className={styles.title}><Megaphone size={24} /> طرح کمپین</h1>

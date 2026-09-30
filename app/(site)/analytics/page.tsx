@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function AnalyticsPage() {
   const initial = await getCachedCatalogueAnalytics();
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <h1 className={styles.title}><BarChart2 size={22} /> تحلیل بازار</h1>
       <p className={styles.lede}>نمای کلی از وضعیت رسانه‌های تبلیغاتی فضای باز در ایران</p>
       <AnalyticsTab initial={initial} />

@@ -69,7 +69,7 @@ export default async function LandingPage() {
   ];
 
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.heroBg}><HeroScene items={featured} /></div>
         <div className={styles.heroGlow} />

@@ -147,7 +147,7 @@ export default function ListMediaPage() {
 
   return (
     <div className={styles.page}>
-      <main className={styles.main}>
+      <main id="main" className={styles.main}>
         <nav className={styles.crumbs} aria-label="مسیر">
           <Link href="/"><ArrowRight size={13} /> رسامپ</Link>
           <span className={styles.crumbSep}><ChevronLeft size={13} /></span>

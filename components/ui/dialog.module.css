@@ -4,6 +4,8 @@
   position: fixed; inset: 0; z-index: 1000;
   display: flex; align-items: flex-start; justify-content: center;
   padding: 20px; overflow-y: auto;
+  /* Scrolling past the end of a tall form does not scroll the page behind. */
+  overscroll-behavior: contain;
   background: rgba(6, 10, 18, 0.7);
 }
 .box {

@@ -56,7 +56,7 @@ export default async function AboutPage() {
     logger.error("about: site stats unavailable", { error: String(err) });
   }
   return (
-    <main>
+    <main id="main">
       <section className={`${styles.hero} section-halo`}>
         <div className={styles.pill}>پروژه دانشگاهی</div>
         <h1 className={styles.heroTitle}>

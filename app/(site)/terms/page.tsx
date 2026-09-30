@@ -21,7 +21,7 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <div className={styles.narrow}>
         <h1 className={styles.h1}>قوانین و مقررات</h1>
         <div className={styles.rule} />

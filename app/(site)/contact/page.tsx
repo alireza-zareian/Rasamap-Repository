@@ -41,7 +41,7 @@ const contacts = [
 
 export default function ContactPage() {
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <div className={styles.narrow}>
         <div className="section-halo">
           <h1 className={styles.h1}>تماس با ما</h1>

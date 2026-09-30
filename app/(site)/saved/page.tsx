@@ -20,7 +20,7 @@ export default async function SavedPage() {
   const items = actor?.kind === "customer" ? await listFavorites(actor) : [];
 
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <h1 className={styles.title}><Heart size={22} /> ذخیره‌شده‌ها</h1>
       <p className={styles.lede}>رسانه‌هایی که برای بعد نگه داشته‌اید، تازه‌ترین در اول</p>
 

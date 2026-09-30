@@ -2,6 +2,15 @@
 /* width: a flex item with auto margins would shrink to its content. */
 .site > :global(main) { flex: 1; width: 100%; }
 
+/* Off screen until a keyboard reaches it, then above the fixed top bar. */
+.skip {
+  position: fixed; top: 8px; right: 8px; z-index: 300;
+  padding: 10px 16px; border-radius: 10px;
+  background: var(--accent); color: #fff; font-weight: 700; text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip:focus-visible { transform: none; outline: 2px solid #fff; outline-offset: 2px; }
+
 /* Room for the phone's fixed tab bar. The staff bar, the compare tray and toasts
    read --bottomnav-offset to sit above it. */
 @media (max-width: 768px) {
