@@ -56,6 +56,17 @@ function useFilterNavigation(filters: ExploreFilters) {
   return { apply, pending };
 }
 
+/**
+ * Whether `value` is one of ours landing: if so, drop the entries older than it
+ * (they will not land after it matters) and say yes.
+ */
+function landed<T>(queue: T[], value: T): boolean {
+  const i = queue.lastIndexOf(value);
+  if (i < 0) return false;
+  queue.splice(0, i);
+  return true;
+}
+
 export function ExploreControls({ filters, total }: { filters: ExploreFilters; total: number }) {
   const { apply, pending } = useFilterNavigation(filters);
   useRememberSearch(useSearchParams().toString());
@@ -65,15 +76,45 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
   // hasActiveFilters, which also counts the search box and the slider.
   const folded = [filters.province, filters.city, filters.type !== "all" ? filters.type : "", filters.availability].filter(Boolean).length;
 
-  const [text, setText] = useState(filters.search);
+  // The search box is uncontrolled: the browser owns what is typed. As a
+  // controlled input, a key that arrived while a navigation was being applied
+  // never reached onChange, and the re-render then wrote the old value over it
+  // — a space or the last letters vanished mid-word (test/e2e.test.mjs, "keeps
+  // every keystroke"). It listens with a native listener, not onChange or
+  // onInput: a key typed while React applied a navigation reached neither (one
+  // run in eight lost the last letter with onInput). Only whether it is empty is
+  // state, for the clear button.
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [hasText, setHasText] = useState(filters.search !== "");
   const [price, setPrice] = useState(filters.maxPrice);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // The URL can change without these inputs (back button, reset link).
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => { setText(filters.search); }, [filters.search]);
-  useEffect(() => { setPrice(filters.maxPrice); }, [filters.maxPrice]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  // What these two fields have sent to the URL and not yet seen arrive, oldest
+  // first. A URL value in that queue is our own navigation landing, and the
+  // field may already hold more: copying it back erased what was typed while
+  // the request was out («تهران ونک» ended as «تهرانک» at 700 ms per
+  // navigation). An older one can land after a newer one was sent, so the whole
+  // queue counts, not only the last entry. Any other value came from outside
+  // (back button, reset link) and replaces the field.
+  const inFlight = useRef({ search: [filters.search], maxPrice: [filters.maxPrice] });
+  useEffect(() => {
+    if (landed(inFlight.current.search, filters.search)) return;
+    inFlight.current.search = [filters.search];
+    if (searchRef.current) searchRef.current.value = filters.search;
+    setHasText(filters.search !== "");
+  }, [filters.search]);
+  useEffect(() => {
+    if (landed(inFlight.current.maxPrice, filters.maxPrice)) return;
+    inFlight.current.maxPrice = [filters.maxPrice];
+    setPrice(filters.maxPrice);
+  }, [filters.maxPrice]);
+  const send = useCallback((patch: Partial<ExploreFilters>, options?: { replace?: boolean }) => {
+    // The field, not the last onChange, is what the visitor typed.
+    if (patch.search !== undefined && searchRef.current) patch = { ...patch, search: searchRef.current.value };
+    if (patch.search !== undefined) inFlight.current.search.push(patch.search);
+    if (patch.maxPrice !== undefined) inFlight.current.maxPrice.push(patch.maxPrice);
+    apply(patch, options);
+  }, [apply]);
 
   // The field whose typing produced the current history entry. Every pause in
   // typing navigates, and each used to push: three pauses on «ونک» left Back
@@ -86,19 +127,26 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
   const applyNow = useCallback((patch: Partial<ExploreFilters>) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     typingRef.current = null;
-    apply({ ...unsentRef.current, ...patch });
+    send({ ...unsentRef.current, ...patch });
     unsentRef.current = {};
-  }, [apply]);
+  }, [send]);
   const applyDebounced = useCallback((field: "search" | "maxPrice", patch: Partial<ExploreFilters>) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     unsentRef.current = { ...unsentRef.current, ...patch };
     debounceRef.current = setTimeout(() => {
-      apply(unsentRef.current, { replace: typingRef.current === field });
+      send(unsentRef.current, { replace: typingRef.current === field });
       unsentRef.current = {};
       typingRef.current = field;
     }, SEARCH_DEBOUNCE_MS);
-  }, [apply]);
+  }, [send]);
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
+  useEffect(() => {
+    const field = searchRef.current;
+    if (!field) return;
+    const onInput = () => { setHasText(field.value !== ""); applyDebounced("search", { search: field.value }); };
+    field.addEventListener("input", onInput);
+    return () => field.removeEventListener("input", onInput);
+  }, [applyDebounced]);
 
   const cities = filters.province ? (getProvince(filters.province)?.cities ?? []) : [];
 
@@ -123,14 +171,18 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
         <Search size={16} />
         <input
           className={styles.searchInput}
-          value={text}
-          onChange={e => { setText(e.target.value); applyDebounced("search", { search: e.target.value }); }}
+          ref={searchRef}
+          defaultValue={filters.search}
           placeholder="جستجو — نام، منطقه، خیابان، شهر…"
           aria-label="جستجو"
           enterKeyHint="search"
         />
-        {text && (
-          <button type="button" className={styles.bare} onClick={() => { setText(""); applyNow({ search: "" }); }} aria-label="پاک کردن جستجو">
+        {hasText && (
+          <button type="button" className={styles.bare} onClick={() => {
+            if (searchRef.current) searchRef.current.value = "";
+            setHasText(false);
+            applyNow({ search: "" });
+          }} aria-label="پاک کردن جستجو">
             <X size={15} />
           </button>
         )}

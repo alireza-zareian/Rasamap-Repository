@@ -64,6 +64,29 @@ test("the catalogue renders media, and a filter narrows it", async () => {
   });
 });
 
+test("typing on while a search is still loading keeps every keystroke", async () => {
+  await withBrowser("catalogue-typing", async (b) => {
+    await b.goto(`${BASE}/explore`);
+    await b.waitForInteractive("input[aria-label='جستجو']");
+    // A phone on a weak connection: each navigation lands 700 ms after it leaves.
+    await b.send("Network.emulateNetworkConditions", { offline: false, latency: 700, downloadThroughput: -1, uploadThroughput: -1 });
+    // Text input as a phone keyboard sends it, one character at a time.
+    await b.evaluate(`document.querySelector("input[aria-label='جستجو']").focus(); return true;`);
+    const type = async (text, gap) => {
+      for (const ch of text) {
+        await b.send("Input.insertText", { text: ch });
+        await new Promise(r => setTimeout(r, gap));
+      }
+    };
+    await type("تهران", 50);
+    await new Promise(r => setTimeout(r, 500)); // the pause sends «تهران»; it is still in flight
+    await type(" ونک", 250);                    // and lands while these keys go in
+    await b.waitFor("new URLSearchParams(location.search).get('search') === 'تهران ونک'", { label: "the whole search in the URL" });
+    const value = await b.evaluate(`return document.querySelector("input[aria-label='جستجو']").value;`);
+    assert.equal(value, "تهران ونک");
+  });
+});
+
 test("an unpublished listing is not in the catalogue", async () => {
   await withBrowser("unpublished-hidden", async (b) => {
     await b.goto(`${BASE}/explore`);
