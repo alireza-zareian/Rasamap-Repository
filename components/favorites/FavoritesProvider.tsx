@@ -110,8 +110,14 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, [customer]);
 
+  // A tap made while the page is still asking who this is. It used to be
+  // dropped, so a guest's first tap on a slow connection did nothing at all
+  // (the e2e heart test failed the same way, four runs in five); it is acted on
+  // when the answer comes. The heart it was drawn on was empty, so it saves.
+  const earlyTap = useRef<{ slug: string; name: string } | null>(null);
+
   const toggle = useCallback((slug: string, name: string) => {
-    if (user === undefined) return; // still asking who this is
+    if (user === undefined) { earlyTap.current = { slug, name }; return; }
     if (user === null) {
       try { sessionStorage.setItem(PENDING_KEY, JSON.stringify({ slug, name })); } catch { /* the sign-in still helps */ }
       const here = window.location.pathname + window.location.search;
@@ -133,6 +139,13 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => mark(setBusy, slug, false));
   }, [user, router]);
+
+  useEffect(() => {
+    if (user === undefined || !earlyTap.current) return;
+    const { slug, name } = earlyTap.current;
+    earlyTap.current = null;
+    toggle(slug, name);
+  }, [user, toggle]);
 
   const value: FavoritesValue = {
     enabled: !user?.isStaff,
