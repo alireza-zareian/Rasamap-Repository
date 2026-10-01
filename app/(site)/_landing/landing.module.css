@@ -2,7 +2,7 @@
 
 /* ── Hero ── */
 /* `clip`, not `hidden` (see hero-scene.module.css). The min-height leaves room for the street. */
-.hero { position: relative; overflow: clip; padding-top: var(--topbar-h); min-height: calc(var(--topbar-h) + 470px); }
+.hero { position: relative; overflow: clip; padding-top: var(--topbar-h); min-height: calc(var(--topbar-h) + 540px); }
 .heroBg { position: absolute; inset: 0; background: linear-gradient(135deg, #0A0E1A 0%, #0f1829 50%, #0A0E1A 100%); }
 :global([data-theme="light"]) .heroBg { background: linear-gradient(135deg, #E8EBF4 0%, #F0F2F8 50%, #E8EBF4 100%); }
 .heroGlow {
@@ -13,24 +13,32 @@
 }
 .heroInner { position: relative; max-width: 900px; margin: 0 auto; padding: 28px 28px 20px; text-align: center; }
 
-.headline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 18px; font-weight: inherit; font-size: inherit; }
-.headlineText { font-size: clamp(1.15rem, 2.8vw, 1.65rem); font-weight: 900; letter-spacing: -0.3px; white-space: nowrap; }
-.dash { color: var(--border); font-size: 1.1rem; font-weight: 300; }
+.headline {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 5.6vw, 3.6rem); font-weight: 900; line-height: 1.15; letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.subhead {
+  max-width: 620px; margin: 0 auto 22px;
+  font-size: clamp(0.88rem, 1.6vw, 1.05rem); line-height: 1.9; color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.chipRow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; }
 .typeChip {
-  font-size: clamp(0.75rem, 1.7vw, 1rem); font-weight: 700; white-space: nowrap; text-decoration: none;
+  font-size: 0.78rem; font-weight: 700; white-space: nowrap; text-decoration: none;
   padding: 4px 12px; border-radius: 20px;
   color: var(--chip);
   background: color-mix(in srgb, var(--chip) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--chip) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chip) 22%, transparent);
 }
-.tagline { font-size: clamp(0.7rem, 1.4vw, 0.88rem); font-weight: 600; color: var(--text-muted); white-space: nowrap; }
-
-.quickChips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
-.quickChips a {
-  font-size: 0.7rem; color: var(--text-muted); text-decoration: none;
-  border: 1px solid var(--border); border-radius: 20px; padding: 3px 11px;
+.typeChip:hover { background: color-mix(in srgb, var(--chip) 14%, transparent); }
+.chipSep { width: 1px; height: 18px; margin: 0 4px; background: var(--border); }
+.quickChip {
+  font-size: 0.72rem; color: var(--text-muted); text-decoration: none; white-space: nowrap;
+  border: 1px solid var(--border); border-radius: 20px; padding: 4px 11px;
 }
-.quickChips a:hover { color: var(--text-main); border-color: var(--border-hi); }
+.quickChip:hover { color: var(--text-main); border-color: var(--border-hi); }
 
 .ticker {
   display: inline-flex; align-items: center; gap: 8px;
@@ -53,7 +61,7 @@
 .band { background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .sectionHead { text-align: center; margin-bottom: 48px; }
 .eyebrow { font-size: 0.75rem; color: var(--accent); font-weight: 700; letter-spacing: 2px; margin-bottom: 12px; }
-.sectionTitle { font-size: 2rem; font-weight: 800; margin: 0; }
+.sectionTitle { font-size: 2rem; font-weight: 800; margin: 0; text-wrap: balance; }
 
 /* Featured strip */
 .featured { padding: 24px 0 56px; overflow: hidden; }
@@ -108,27 +116,31 @@
 .howTitle { font-weight: 700; margin-bottom: 8px; }
 .howText { font-size: 0.8rem; color: var(--text-muted); line-height: 1.7; }
 
-/* Testimonials */
-.quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.quote { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin: 0; }
-.quoteMark { font-size: 1.8rem; line-height: 1; margin-bottom: 14px; color: color-mix(in srgb, var(--tone) 38%, transparent); }
-.quote blockquote { margin: 0 0 20px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.9; font-weight: 300; }
-.quote figcaption { display: flex; align-items: center; gap: 12px; }
-.avatar {
-  width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; font-weight: 800;
-  color: var(--tone);
-  background: color-mix(in srgb, var(--tone) 12%, transparent);
-  border: 2px solid color-mix(in srgb, var(--tone) 31%, transparent);
+/* Coverage: the busiest cities, each bar its share of the busiest. */
+.cities { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.city {
+  position: relative; display: flex; flex-direction: column; gap: 4px; overflow: hidden;
+  padding: 16px 16px 20px; border-radius: 14px; text-decoration: none; color: var(--text-main);
+  background: var(--bg-card); border: 1px solid var(--border);
 }
-.quoteName { font-weight: 700; font-size: 0.88rem; }
-.quoteCompany { font-size: 0.7rem; color: var(--text-muted); }
+.city:hover { border-color: var(--border-hi); }
+.cityName { display: flex; align-items: center; gap: 6px; font-weight: 800; }
+.cityName svg { color: var(--accent); }
+.cityCount { font-size: 0.75rem; color: var(--text-muted); }
+.cityBar { position: absolute; right: 0; bottom: 0; height: 4px; width: var(--share); border-radius: 4px 0 0 4px; background: var(--accent-grad); }
+.moreRow { display: flex; justify-content: center; margin-top: 28px; }
+.sectionLede { max-width: 560px; margin: 14px auto 0; font-size: 0.88rem; line-height: 1.9; color: var(--text-muted); }
 
-/* Brands */
-.brands { padding: 36px 28px; text-align: center; }
-.brandsLabel { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 20px; letter-spacing: 1px; }
-.brandList { display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; }
-.brandList span { font-size: 1.05rem; font-weight: 800; color: var(--text-muted); opacity: 0.55; }
+/* For owners: the two listing plans, the paid one framed. */
+.plans { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; max-width: 760px; margin: 0 auto; }
+.plan { padding: 26px 24px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); }
+.planFeatured { border-color: color-mix(in srgb, var(--accent-warm) 55%, transparent); box-shadow: 0 8px 30px color-mix(in srgb, var(--accent-warm) 14%, transparent); }
+.planName { font-weight: 800; margin-bottom: 6px; }
+.planPrice { font-size: 1.35rem; font-weight: 900; color: var(--accent); margin-bottom: 16px; }
+.planFeatured .planPrice { color: var(--accent-warm); }
+.planPerks { display: flex; flex-direction: column; gap: 10px; font-size: 0.82rem; color: var(--text-muted); }
+.planPerks li { display: flex; align-items: center; gap: 8px; }
+.planPerks svg { flex-shrink: 0; color: var(--green-accent); }
 
 /* Closing call to action */
 /* The last invitation is a panel in the brand gradient, so the page ends on
@@ -151,13 +163,23 @@
 .cta .ctaButtons .ctaSecondary { color: #fff; border-color: rgba(255, 255, 255, 0.55); background: transparent; }
 .cta .ctaButtons .ctaSecondary:hover { background: rgba(255, 255, 255, 0.12); border-color: #fff; }
 
+@media (max-width: 860px) {
+  .cities { grid-template-columns: repeat(2, 1fr); }
+}
+
 @media (max-width: 640px) {
-  /* The headline wraps to three lines here, which eats the street's room. */
-  .hero { min-height: calc(var(--topbar-h) + 510px); }
+  /* Headline, two lines of subhead, the search and one chip row: room for the street below them. */
+  .hero { min-height: calc(var(--topbar-h) + 550px); }
+  /* One sideways-scrolling row, edge to edge, rather than three wrapped ones. */
+  .chipRow {
+    flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none;
+    margin-inline: -28px; padding-inline: 28px;
+  }
+  .chipRow::-webkit-scrollbar { display: none; }
   .section { padding: 56px 18px; }
   .sectionTitle { font-size: 1.6rem; }
   .statsGrid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .typesGrid, .howGrid, .quotes { grid-template-columns: 1fr; }
+  .typesGrid, .howGrid, .plans { grid-template-columns: 1fr; }
   .featuredInner { padding: 0 18px; }
   .ctaTitle { font-size: 1.7rem; }
   .cta { padding: 52px 20px; margin-bottom: 64px; }

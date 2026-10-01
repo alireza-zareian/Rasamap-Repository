@@ -16,13 +16,13 @@ export const metadata: Metadata = {
 const advantages = [
   {
     Icon: Search,
-    title: "جستجوی هوشمند",
-    desc: "فیلتر بر اساس شهر، نوع، قیمت و ترافیک — بدون تماس تلفنی با آژانس‌های مختلف.",
+    title: "جستجو و فیلتر",
+    desc: "بر اساس شهر، نوع، قیمت و ترافیک — به‌جای تماس با ده‌ها آژانس برای یک فهرست.",
   },
   {
     Icon: Scale,
-    title: "مقایسه شفاف",
-    desc: "مشخصات، قیمت و ترافیک رسانه‌ها را کنار هم ببینید و بهترین تصمیم را بگیرید.",
+    title: "طرح کمپین",
+    desc: "تا هشت رسانه را کنار هم بگذارید و هزینهٔ کل، بیننده و هزینهٔ هر هزار نمایش را یکجا ببینید.",
   },
   {
     Icon: MapPin,
@@ -31,8 +31,8 @@ const advantages = [
   },
   {
     Icon: Shield,
-    title: "اطلاعات معتبر",
-    desc: "داده‌ها از منابع واقعی بازار جمع‌آوری و بروزرسانی می‌شوند.",
+    title: "منبع روشن",
+    desc: "هر رسانه‌ای که از سایت دیگری آمده نام، لینک و تاریخ آخرین به‌روزرسانیِ منبعش را کنار خودش دارد.",
   },
   {
     Icon: Zap,
@@ -65,7 +65,7 @@ export default async function AboutPage() {
         </h1>
         <p className={styles.heroText}>
           رسامپ یک پلتفرم دیجیتال برای جستجو و مقایسهٔ رسانه‌های تبلیغاتی محیطی ایران است —
-          بدون تماس تلفنی، بدون واسطه، با قیمت شفاف.
+          یک‌جا ببینید، کنار هم بگذارید و مستقیم با صاحب رسانه تماس بگیرید؛ بدون واسطه.
         </p>
         <div className={`${styles.actions} ${styles.center}`}>
           <ButtonLink href="/explore" intent="primary" className={styles.cta}>جستجوی رسانه</ButtonLink>
@@ -95,7 +95,8 @@ export default async function AboutPage() {
           {[
             { num: `${faNum(total)}+`, label: "رسانه ثبت‌شده", color: "var(--accent)" },
             { num: `${faNum(cityCount)}+`, label: "شهر پوشش‌داده", color: "var(--green-accent)" },
-            { num: "۱۰۰٪", label: "آنلاین و رایگان", color: "var(--accent-warm)" },
+            // Advertisers pay nothing: the revenue is the owners' listing plans (§18).
+            { num: "رایگان", label: "برای تبلیغ‌دهنده", color: "var(--accent-warm)" },
           ].map(s => (
             <div key={s.label} className={`${styles.stat} ${reveal.reveal}`} style={cssVar("--tone", s.color)}>
               <strong>{s.num}</strong>

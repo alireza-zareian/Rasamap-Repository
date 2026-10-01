@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import IntentLink from "@/components/ui/IntentLink";
-import { Megaphone, Eye, Building2, CheckCircle2, Search, Scale, Phone, Monitor, Milestone, Train, Map } from "lucide-react";
+import { Megaphone, Eye, Building2, BadgeCheck, Search, Scale, Phone, Monitor, Milestone, Train, Map, MapPin, Check, Plus } from "lucide-react";
 import { getCachedSiteStats, getCachedShowcaseBillboards } from "@/lib/db/cached";
 import type { BillboardType } from "@/lib/types";
 import { faNum } from "@/lib/format";
@@ -9,6 +9,7 @@ import SwipeMarquee from "@/components/ui/SwipeMarquee";
 import LandingSearch from "./_landing/LandingSearch";
 import FeaturedCarousel from "./_landing/FeaturedCarousel";
 import HeroScene from "./_landing/HeroScene";
+import { PLANS } from "@/components/listing/plans";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "./_landing/landing.module.css";
 import reveal from "@/components/ui/reveal.module.css";
@@ -23,6 +24,9 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 /** Cards in the featured gallery. */
 const GALLERY_CARDS = 12;
+
+/** Cities in the coverage section: enough to show the reach, few enough to scan. */
+const COVERAGE_CITIES = 8;
 
 const HEADLINE_TYPES = [
   { label: "بیلبورد",        type: "billboard", color: "#3B7BF5" },
@@ -46,26 +50,21 @@ const STEPS = [
   { Icon: Phone, title: "تماس بگیر", text: "شمارهٔ صاحب رسانه را بگیر و مستقیم توافق کن — بدون واسطه" },
 ];
 
-const TESTIMONIALS = [
-  { name: "علی رضایی", company: "آژانس تبلیغاتی آرتا", color: "#3B7BF5", text: "با رسامپ توانستم در کمتر از ۱۰ دقیقه بیلبوردهای خیابان ولیعصر رو مقایسه کنم و بهترین قیمت رو پیدا کنم. دیگه نیازی به تماس تلفنی نیست." },
-  { name: "مریم کریمی", company: "برند پوشاک کاج", color: "#00D17A", text: "رسامپ کارمون رو خیلی آسون کرد. موقعیت دقیق هر بیلبورد رو می‌بینیم و تراکم رقبا رو بررسی می‌کنیم قبل از تماس." },
-  { name: "حسین موسوی", company: "شرکت داروسازی پارسیان", color: "#9B72F5", text: "قیمت‌گذاری شفاف رسامپ باورنکردنیه. می‌دونیم دقیقاً چقدر باید بپردازیم — بدون مذاکره، بدون سورپرایز." },
-];
-
-const BRANDS = ["دیجی‌کالا", "اسنپ‌فود", "آپارات", "همراه اول", "ایرانسل"];
-
 export default async function LandingPage() {
   const [stats, featured] = await Promise.all([
     getCachedSiteStats(),
     getCachedShowcaseBillboards(GALLERY_CARDS),
   ]);
   const cities = Object.entries(stats.byCity).sort((a, b) => b[1] - a[1]);
+  const coverage = cities.slice(0, COVERAGE_CITIES);
+  const busiest = coverage[0]?.[1] ?? 1;
 
   const figures = [
     { num: faNum(stats.total) + "+", label: "رسانه ثبت‌شده", Icon: Megaphone, tone: "var(--accent)" },
     { num: faNum(Math.round(stats.totalDailyReach / 1_000_000)) + "M+", label: "تردد روزانه بازار", Icon: Eye, tone: "var(--green-accent)" },
     { num: faNum(stats.cityCount), label: "شهر پوشش‌داده", Icon: Building2, tone: "var(--accent-warm)" },
-    { num: "۱۰۰٪", label: "آنلاین و بدون تماس", Icon: CheckCircle2, tone: "var(--green-accent)" },
+    // Advertisers pay nothing: the revenue is the owners' listing plans (§18).
+    { num: "رایگان", label: "جستجو و تماس برای تبلیغ‌دهنده", Icon: BadgeCheck, tone: "var(--green-accent)" },
   ];
 
   return (
@@ -75,19 +74,27 @@ export default async function LandingPage() {
         <div className={styles.heroGlow} />
         <div className={styles.heroInner}>
           <h1 className={styles.headline}>
-            <span className={`${styles.headlineText} shimmer-heading`}>رسانه‌ات رو پیدا کن</span>
-            <span className={styles.dash} aria-hidden="true">—</span>
+            <span className="shimmer-heading">رسانه‌ات رو پیدا کن</span>
+          </h1>
+          <p className={styles.subhead}>
+            {faNum(stats.total)} رسانهٔ محیطی در {faNum(stats.cityCount)} شهر — یک‌جا ببین، کنار هم بذار
+            و مستقیم با صاحبش تماس بگیر.
+          </p>
+
+          <LandingSearch cities={cities} />
+
+          {/* One row under the search: the four media types, then a few Tehran
+              districts. It scrolls sideways on a phone instead of wrapping into
+              the street behind it. */}
+          <div className={styles.chipRow}>
             {HEADLINE_TYPES.map(item => (
               <IntentLink key={item.type} href={`/explore?type=${item.type}`} title={`دیدن همهٔ ${item.label}‌ها`}
                 className={styles.typeChip} style={cssVar("--chip", item.color)}>{item.label}</IntentLink>
             ))}
-            <span className={styles.tagline}>— آنلاین، بدون واسطه</span>
-          </h1>
-
-          <LandingSearch cities={cities} />
-
-          <div className={styles.quickChips}>
-            {QUICK_SEARCHES.map(q => <IntentLink key={q} href={`/explore?search=${encodeURIComponent(q)}`}>{q}</IntentLink>)}
+            <span className={styles.chipSep} aria-hidden="true" />
+            {QUICK_SEARCHES.map(q => (
+              <IntentLink key={q} href={`/explore?search=${encodeURIComponent(q)}`} className={styles.quickChip}>{q}</IntentLink>
+            ))}
           </div>
 
           {featured.length > 0 && (
@@ -174,33 +181,57 @@ export default async function LandingPage() {
         </ol>
       </section>
 
-      <section className={styles.section}>
+      {coverage.length > 0 && (
+        <section className={styles.section} id="coverage">
+          <div className={styles.sectionInner}>
+            <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
+              <div className={styles.eyebrow}>پوشش</div>
+              <h2 className={styles.sectionTitle}>رسانه در {faNum(stats.cityCount)} شهر ایران</h2>
+              <p className={styles.sectionLede}>شهرهایی که بیشترین رسانه را دارند؛ هر کدام مستقیم به فهرست همان شهر می‌رود.</p>
+            </div>
+            <ul className={styles.cities}>
+              {coverage.map(([city, n]) => (
+                <li key={city} className={reveal.reveal}>
+                  <IntentLink href={`/explore?city=${encodeURIComponent(city)}`} className={styles.city}
+                    style={cssVar("--share", `${Math.max(4, Math.round((n / busiest) * 100))}%`)}>
+                    <span className={styles.cityName}><MapPin size={14} /> {city}</span>
+                    <span className={styles.cityCount}>{faNum(n)} رسانه</span>
+                    <span className={styles.cityBar} aria-hidden="true" />
+                  </IntentLink>
+                </li>
+              ))}
+            </ul>
+            <div className={styles.moreRow}>
+              <ButtonLink href="/explore/map" size="sm"><Map size={14} /> همهٔ شهرها روی نقشه</ButtonLink>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className={`${styles.section} ${styles.band}`} id="owners">
         <div className={styles.sectionInner}>
           <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
-            <div className={styles.eyebrow}>تجربه مشتریان</div>
-            <h2 className={styles.sectionTitle}>آن‌ها از رسامپ استفاده کردند</h2>
+            <div className={styles.eyebrow}>برای صاحبان رسانه</div>
+            <h2 className={styles.sectionTitle}>رسانه‌ات رو جلوی تبلیغ‌دهنده‌ها بذار</h2>
+            <p className={styles.sectionLede}>
+              ثبت رایگان است. کارشناس رسامپ آگهی را بررسی و منتشر می‌کند و تبلیغ‌دهنده مستقیم با خودت تماس می‌گیرد — بدون کمیسیون.
+            </p>
           </div>
-          <div className={styles.quotes}>
-            {TESTIMONIALS.map(t => (
-              <figure key={t.name} className={`${styles.quote} ${reveal.reveal}`} style={cssVar("--tone", t.color)}>
-                <div className={styles.quoteMark} aria-hidden="true">&ldquo;</div>
-                <blockquote>{t.text}</blockquote>
-                <figcaption>
-                  <div className={styles.avatar} aria-hidden="true">{t.name[0]}</div>
-                  <div>
-                    <div className={styles.quoteName}>{t.name}</div>
-                    <div className={styles.quoteCompany}>{t.company}</div>
-                  </div>
-                </figcaption>
-              </figure>
+          <div className={styles.plans}>
+            {PLANS.map(p => (
+              <div key={p.key} className={`${styles.plan} ${p.key === "featured" ? styles.planFeatured : ""} ${reveal.reveal}`}>
+                <div className={styles.planName}>پلن {p.title}</div>
+                <div className={styles.planPrice}>{p.price}</div>
+                <ul className={styles.planPerks}>
+                  {p.perks.map(perk => <li key={perk}><Check size={14} /> {perk}</li>)}
+                </ul>
+              </div>
             ))}
           </div>
+          <div className={styles.moreRow}>
+            <ButtonLink href="/list-media" intent="primary"><Plus size={16} /> ثبت رسانه</ButtonLink>
+          </div>
         </div>
-      </section>
-
-      <section className={`${styles.brands} ${styles.band}`}>
-        <div className={styles.brandsLabel}>همراه برندهایی مثل</div>
-        <div className={styles.brandList}>{BRANDS.map(b => <span key={b}>{b}</span>)}</div>
       </section>
 
       <section className={`${styles.cta} ${reveal.reveal}`}>

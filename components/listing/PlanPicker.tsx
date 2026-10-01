@@ -1,22 +1,8 @@
 "use client";
 import { Check, Lightbulb } from "lucide-react";
 import type { ListingPlan } from "@/lib/domain/listing";
+import { PLANS } from "./plans";
 import styles from "./listing.module.css";
-
-const PLANS: { key: ListingPlan; title: string; price: string; perks: string[] }[] = [
-  {
-    key: "free",
-    title: "رایگان",
-    price: "۰ تومان",
-    perks: ["نمایش در جستجو و صفحهٔ رسانه", "نمایش شمارهٔ تماس به کاربران عضو", "تأیید توسط کارشناس رسامپ"],
-  },
-  {
-    key: "featured",
-    title: "ویژه",
-    price: "۴۹۰٬۰۰۰ تومان / ۳۰ روز",
-    perks: ["همهٔ امکانات پلن رایگان", "نمایش در ابتدای نتایج جستجو", "نشان «ویژه» روی کارت رسانه"],
-  },
-];
 
 /** Free or featured. There is no payment gateway — §18 — so featured waits for a transfer staff confirm. */
 export function PlanPicker({ plan, onChange }: { plan: ListingPlan; onChange: (plan: ListingPlan) => void }) {
