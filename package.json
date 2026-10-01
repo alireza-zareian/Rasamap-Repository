@@ -38,7 +38,6 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@fontsource-variable/vazirmatn": "^5.3.0",
     "@prisma/adapter-better-sqlite3": "^7.9.1",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.9.1",

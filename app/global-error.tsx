@@ -14,7 +14,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
     <html lang="fa" dir="rtl">
       <body style={{ margin: 0 }}>
         <title>خطای غیرمنتظره | رسامپ</title>
-        <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Vazirmatn Variable, Vazirmatn, system-ui, sans-serif", direction: "rtl", color: "#E6EAF3", padding: 20 }}>
+        <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Tahoma, system-ui, sans-serif", direction: "rtl", color: "#E6EAF3", padding: 20 }}>
           <div style={{ textAlign: "center", maxWidth: 420 }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 16, color: "#F5A623" }}>
               <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

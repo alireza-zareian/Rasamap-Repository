@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/vazirmatn";
 import "./reset.css";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site-url";
+import { vazirFa, vazirLatin } from "./fonts";
 import { ThemeProvider } from "@/lib/client/theme";
 import { THEME_STORAGE_KEY } from "@/lib/client/theme-key";
 import { CurrentUserProvider } from "@/lib/client/use-current-user";
@@ -29,7 +29,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     // Light by default; the <head> script may switch it before paint, hence
     // suppressHydrationWarning.
-    <html lang="fa" dir="rtl" data-theme="light" style={{ colorScheme: "light" }} suppressHydrationWarning>
+    <html lang="fa" dir="rtl" data-theme="light" style={{ colorScheme: "light" }}
+      className={`${vazirFa.variable} ${vazirLatin.variable}`} suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="light" />
         <meta name="supported-color-schemes" content="light" />

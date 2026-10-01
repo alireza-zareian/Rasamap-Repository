@@ -63,7 +63,8 @@ html, body { overflow-x: clip; max-width: 100%; }
 html { scroll-padding-top: calc(var(--topbar-h) + 12px); }
 
 body {
-  font-family: 'Vazirmatn Variable', 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+  /* The two files of app/fonts.ts, then what the device has. */
+  font-family: var(--font-fa), var(--font-latin), 'Segoe UI', Tahoma, sans-serif;
   background: var(--bg-deep);
   color: var(--text-main);
   direction: rtl;
