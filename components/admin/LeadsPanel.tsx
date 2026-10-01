@@ -5,7 +5,7 @@ import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/media/TypeIcon";
 import { leadStatusLabels, LEAD_STATUSES } from "@/lib/types";
 import { Handshake, Inbox, Repeat, Save } from "lucide-react";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { cssVar } from "@/components/ui/css-var";
 import form from "@/components/ui/form.module.css";
@@ -161,7 +161,7 @@ export function LeadsPanel({ canEdit }: { canEdit: boolean }) {
                     )}
                   </div>
                   <div className={styles.itemMeta}>
-                    {l.billboard ? `${l.billboard.city} · ${faNum(l.billboard.price)}M تومان/ماه · صاحب رسانه: ${l.billboard.agency || "—"} ${l.billboard.phone || ""}` : "—"}<br />
+                    {l.billboard ? `${l.billboard.city} · ${faMillions(l.billboard.price)} تومان/ماه · صاحب رسانه: ${l.billboard.agency || "—"} ${l.billboard.phone || ""}` : "—"}<br />
                     متقاضی: <b>{l.user?.name ?? "حساب حذف‌شده"}</b>
                     {l.user?.phone ? ` (${l.user.phone})` : ""} · آخرین درخواست: {fmt(l.lastRequestedAt)}
                   </div>

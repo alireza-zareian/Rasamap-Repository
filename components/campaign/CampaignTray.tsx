@@ -6,7 +6,7 @@ import { TypeIcon } from "@/components/media/TypeIcon";
 import { Button } from "@/components/ui/Button";
 import { MAX_PICKED } from "@/lib/client/use-campaign";
 import { campaignHref } from "./campaign-href";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import styles from "./tray.module.css";
 
 /**
@@ -38,7 +38,7 @@ export default function CampaignTray({ items, onRemove, onClear }: {
         ))}
       </ul>
       <div className={styles.total}>
-        <strong>{faNum(monthly)}M</strong>
+        <strong>{faMillions(monthly)}</strong>
         <span>تومان / ماه</span>
       </div>
       <div className={styles.actions}>

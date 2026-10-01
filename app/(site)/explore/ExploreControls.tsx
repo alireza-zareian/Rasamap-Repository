@@ -5,7 +5,7 @@ import { useRememberSearch } from "@/lib/client/last-search";
 import { Search, X, LayoutGrid, List, SlidersHorizontal, RotateCcw, Megaphone, Monitor, Milestone, Train, MapPin, ChevronDown, Crosshair } from "lucide-react";
 import { AVAILABILITIES, availabilityLabels, type BillboardType } from "@/lib/types";
 import { provinces, getProvince } from "@/lib/geo/iran-cities";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import {
   type ExploreFilters, type SortKey, ALLOWED_SORT,
   MIN_PRICE, MAX_PRICE, exploreHref, hasActiveFilters,
@@ -251,7 +251,7 @@ export function ExploreControls({ filters, heading }: { filters: ExploreFilters;
             <div>
               <div className={styles.priceRow}>
                 <label htmlFor="explore-price" className={styles.label}>حداکثر قیمت</label>
-                <span className={styles.priceValue}>{faNum(price)}M تومان/ماه</span>
+                <span className={styles.priceValue}>{faMillions(price)} تومان/ماه</span>
               </div>
               <input id="explore-price" className={styles.range} type="range" min={MIN_PRICE} max={MAX_PRICE} step={10} value={price}
                 onChange={e => { setPrice(+e.target.value); applyDebounced("maxPrice", { maxPrice: +e.target.value }); }} />

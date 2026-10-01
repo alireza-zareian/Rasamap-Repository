@@ -1,6 +1,6 @@
 import { sourceLabel, type Billboard } from "@/lib/types";
 import { Check, AlertTriangle } from "lucide-react";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { TypeIcon } from "@/components/media/TypeIcon";
 import { Button } from "@/components/ui/Button";
 import { availabilityTone } from "@/components/ui/availability";
@@ -30,7 +30,7 @@ export function BillboardRow({ b, onEdit, onDelete, onVisibility }: {
       </td>
       <td className={styles.muted}>{TYPE_LABEL[b.type] ?? b.type}</td>
       <td><Badge text={label ?? b.moderation} tone={tone} /></td>
-      <td>{faNum(b.price)}M</td>
+      <td>{faMillions(b.price)}</td>
       <td>
         {b.lat != null && b.lng != null
           ? <span className={styles.ok}><Check size={12} /> {b.lat.toFixed(4)}</span>

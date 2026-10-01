@@ -7,6 +7,14 @@ export function faNum(n: number): string {
   return n.toLocaleString("fa-IR");
 }
 
+/**
+ * A price as the catalogue stores it — millions of toman — in its short form,
+ * ۴۲۸M: one spelling for every card, pin, tray and table that shows one.
+ */
+export function faMillions(n: number): string {
+  return `${faNum(n)}M`;
+}
+
 /** Latin digits inside a string ("07:30-09:00") as Persian ones; the rest untouched. */
 export function faDigits(s: string): string {
   return s.replace(/[0-9]/g, d => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);

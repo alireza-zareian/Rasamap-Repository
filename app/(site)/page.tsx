@@ -3,7 +3,7 @@ import IntentLink from "@/components/ui/IntentLink";
 import { Megaphone, Eye, Building2, BadgeCheck, Search, Scale, Phone, Monitor, Milestone, Train, Map, MapPin, Check, Plus } from "lucide-react";
 import { getCachedSiteStats, getCachedShowcaseBillboards } from "@/lib/db/cached";
 import type { BillboardType } from "@/lib/types";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { ButtonLink } from "@/components/ui/Button";
 import SwipeMarquee from "@/components/ui/SwipeMarquee";
 import LandingSearch from "./_landing/LandingSearch";
@@ -105,7 +105,7 @@ export default async function LandingPage() {
                 <div className={`${styles.tickerStrip} ticker-strip`}>
                   {[...featured, ...featured].map((b, i) => (
                     <IntentLink key={i} href={`/billboard/${b.slug}`} className={styles.tickerItem} tabIndex={i >= featured.length ? -1 : undefined}>
-                      <span className={styles.tickerPrice}>{faNum(b.price)}M</span>
+                      <span className={styles.tickerPrice}>{faMillions(b.price)}</span>
                       {b.name.substring(0, 22)}
                       <span className={styles.tickerSep}>·</span>
                     </IntentLink>

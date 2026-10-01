@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PieChart, LayoutGrid, Building2, Wallet, Database, X } from "lucide-react";
 import { typeLabels, availabilityLabels } from "@/lib/types";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { availabilityTone } from "@/components/ui/availability";
 import { Button } from "@/components/ui/Button";
@@ -92,7 +92,7 @@ export default function AnalyticsTab({ initial }: { initial: AnalyticsData }) {
         {[
           { num: faNum(data.total), label: "کل رسانه ثبت‌شده", color: "var(--accent)" },
           { num: `${faNum(available)} / ${faNum(data.total)}`, label: "خالی / کل", color: "var(--green)" },
-          { num: `${faNum(data.price.avg)}M`, label: "میانگین قیمت (تومان/ماه)", color: "var(--accent-warm)" },
+          { num: faMillions(data.price.avg), label: "میانگین قیمت (تومان/ماه)", color: "var(--accent-warm)" },
           { num: faNum(data.coverage.geocoded), label: "رسانه با مختصات GPS", color: "#06b6d4" },
         ].map(k => (
           <div key={k.label} className={styles.kpi} style={cssVar("--tone", k.color)}>
@@ -126,7 +126,7 @@ export default function AnalyticsTab({ initial }: { initial: AnalyticsData }) {
       <section className={styles.panel}>
         <h2 className={styles.panelTitle}><Wallet size={14} /> محدوده قیمتی</h2>
         <p className={styles.panelNote}>
-          کمینه {faNum(data.price.min)}M · بیشینه {faNum(data.price.max)}M · میانگین {faNum(data.price.avg)}M
+          کمینه {faMillions(data.price.min)} · بیشینه {faMillions(data.price.max)} · میانگین {faMillions(data.price.avg)}
         </p>
         {data.priceBrackets.map((b, i) => (
           <Bar key={b.label} label={b.label} value={b.count} max={maxBracket} color={TYPE_COLORS[i % TYPE_COLORS.length]} />

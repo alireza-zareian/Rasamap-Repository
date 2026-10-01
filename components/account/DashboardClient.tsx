@@ -8,7 +8,7 @@ import { moderationLabels, planLabels } from "@/lib/types";
 import EditListingModal from "@/components/account/EditListingModal";
 import UserAvatar from "@/components/account/UserAvatar";
 import { useCurrentUser } from "@/lib/client/use-current-user";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { MIN_PASSWORD_LENGTH } from "@/lib/domain/password";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { cssVar } from "@/components/ui/css-var";
@@ -185,7 +185,7 @@ export default function DashboardClient({ account, initialListings }: {
                           {isPublished
                             ? <Link href={`/billboard/${l.slug}`} className={styles.name}>{l.name}</Link>
                             : <div className={styles.name}>{l.name}</div>}
-                          <div className={styles.meta}>{l.city} · {faNum(l.price)}M تومان/ماه · {new Date(l.createdAt).toLocaleDateString("fa-IR")}</div>
+                          <div className={styles.meta}>{l.city} · {faMillions(l.price)} تومان/ماه · {new Date(l.createdAt).toLocaleDateString("fa-IR")}</div>
                         </div>
                         <div className={styles.state}>
                           <span className={styles.badge} style={cssVar("--tone", STATUS_TONE[l.moderation] ?? "var(--text-muted)")}>

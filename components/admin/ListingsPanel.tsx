@@ -7,7 +7,7 @@ import { Badge } from "./Badge";
 import { TypeIcon } from "@/components/media/TypeIcon";
 import { planLabels } from "@/lib/types";
 import { ClipboardCheck, Check, X, Sparkles, ImageOff, PencilLine } from "lucide-react";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { cssVar } from "@/components/ui/css-var";
 import form from "@/components/ui/form.module.css";
@@ -189,7 +189,7 @@ export function ListingsPanel({ canDecide }: { canDecide: boolean }) {
                   </div>
                   <div className={styles.itemMeta}>
                     {l.city}{l.region ? ` · ${l.region}` : ""} · {l.location}<br />
-                    {faNum(l.width)}×{faNum(l.height)} متر · {faNum(l.faces)} وجه · {faNum(l.price)}M تومان/ماه<br />
+                    {faNum(l.width)}×{faNum(l.height)} متر · {faNum(l.faces)} وجه · {faMillions(l.price)} تومان/ماه<br />
                     فرستنده: {l.submittedBy ? <>{l.submittedBy.name} (<span className={own.ltr}>{l.submittedBy.phone}</span>)</> : "نامشخص"} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}<br />
                     {/* The number buyers will get. Only the submitter's own was proven
                         by a code; any other could be a stranger's, so it is flagged. */}

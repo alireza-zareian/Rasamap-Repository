@@ -4,7 +4,7 @@ import IntentLink from "@/components/ui/IntentLink";
 import { MapPin, Building2 } from "lucide-react";
 import MediaImage from "@/components/media/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import styles from "./explore.module.css";
 
 /** How long each slide is held before the next one fades in. */
@@ -63,7 +63,7 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
         <div className={styles.slideFoot}>
           <div className={styles.slidePlace}><MapPin size={11} /> {current.region} · {current.location}</div>
           <div className={styles.slideCta}>
-            <strong>{faNum(current.price)}M تومان</strong>
+            <strong>{faMillions(current.price)} تومان</strong>
             <IntentLink href={`/billboard/${current.slug}`}>مشاهدهٔ رسانه ←</IntentLink>
           </div>
         </div>

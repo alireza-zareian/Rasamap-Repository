@@ -2,7 +2,7 @@
 import { X } from "lucide-react";
 import type { CatalogueItem } from "@/lib/types";
 import PinMap, { type MapPoint } from "@/components/map/PinMap";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import styles from "./explore.module.css";
 
 /**
@@ -20,7 +20,7 @@ export default function ResultsMap({ items, active, onHover, onClose }: {
   onClose: () => void;
 }) {
   const points: MapPoint[] = items.flatMap(b =>
-    b.lat != null && b.lng != null ? [{ slug: b.slug, name: b.name, lat: b.lat, lng: b.lng, label: `${faNum(b.price)}M` }] : []);
+    b.lat != null && b.lng != null ? [{ slug: b.slug, name: b.name, lat: b.lat, lng: b.lng, label: faMillions(b.price) }] : []);
   const unplaced = items.length - points.length;
 
   return (

@@ -5,7 +5,7 @@ import { copyText } from "@/lib/client/clipboard";
 import { MODERATION_LABEL, moderationTone } from "./constants";
 import { Badge } from "./Badge";
 import { User, AlertTriangle, KeyRound, Check, Copy } from "lucide-react";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import form from "@/components/ui/form.module.css";
@@ -153,7 +153,7 @@ export function CustomerModal({ userId, canManageAccess, onClose, onSaved }: {
                 <li key={l.id} className={own.listing}>
                   <div>
                     <strong>{l.name}</strong>
-                    <span>{l.city} · {faNum(l.price)}M تومان/ماه · {fmt(l.createdAt)}{l.featured ? " · ویژه" : ""}</span>
+                    <span>{l.city} · {faMillions(l.price)} تومان/ماه · {fmt(l.createdAt)}{l.featured ? " · ویژه" : ""}</span>
                   </div>
                   <Badge text={MODERATION_LABEL[l.moderation] ?? l.moderation} tone={moderationTone(l.moderation)} />
                 </li>

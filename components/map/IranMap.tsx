@@ -6,7 +6,7 @@ import { PROVINCE_RINGS, IRAN_BOUNDS, type Ring } from "@/lib/geo/iran-provinces
 import { fitBounds, project, type Bounds } from "@/lib/geo/distance";
 import type { MapPin } from "@/lib/db/billboards";
 import { exploreHref, type ExploreFilters } from "@/lib/explore-query";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import styles from "./IranMap.module.css";
 
@@ -186,7 +186,7 @@ export default function IranMap({
             onMouseLeave={() => setHoverPin((p) => (p?.slug === pin.slug ? null : p))}
             onClick={() => router.push(`/billboard/${pin.slug}`)}
           >
-            <title>{`${pin.name} — ${faNum(pin.price)}M تومان/ماه`}</title>
+            <title>{`${pin.name} — ${faMillions(pin.price)} تومان/ماه`}</title>
           </circle>
         ))}
       </svg>
@@ -197,7 +197,7 @@ export default function IranMap({
           {hoverPin ? (
             <>
               <strong>{hoverPin.name}</strong>
-              <div className={styles.tipMeta}>{hoverPin.city} · <b>{faNum(hoverPin.price)}M تومان/ماه</b></div>
+              <div className={styles.tipMeta}>{hoverPin.city} · <b>{faMillions(hoverPin.price)} تومان/ماه</b></div>
             </>
           ) : (
             <><strong>{hoverProvince}</strong><span className={styles.tipMeta}> — {faNum(hoveredCount)} رسانه</span></>

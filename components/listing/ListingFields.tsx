@@ -3,7 +3,7 @@ import { useId } from "react";
 import { Lightbulb } from "lucide-react";
 import { typeLabels } from "@/lib/types";
 import { derivedPrices } from "@/lib/domain/pricing";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import { LocationInput } from "@/components/listing/LocationInput";
 import form from "@/components/ui/form.module.css";
 import { CitySelect } from "./CitySelect";
@@ -74,7 +74,7 @@ export function ListingFields({ group, listing }: { group: FieldGroup; listing: 
       {text("price", "قیمت پایهٔ ماهانه (میلیون تومان)", { placeholder: "85", inputMode: "numeric" })}
       {prices && (
         <div className={styles.priceHint}>
-          <Lightbulb size={14} /> هفتگی ~{faNum(prices.priceWeekly)}M · سه‌ماهه ~{faNum(prices.priceQuarterly)}M · سالانه ~{faNum(prices.priceYearly)}M
+          <Lightbulb size={14} /> هفتگی ~{faMillions(prices.priceWeekly)} · سه‌ماهه ~{faMillions(prices.priceQuarterly)} · سالانه ~{faMillions(prices.priceYearly)}
         </div>
       )}
     </div>

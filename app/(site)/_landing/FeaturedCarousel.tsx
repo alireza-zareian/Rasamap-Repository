@@ -4,7 +4,7 @@ import IntentLink from "@/components/ui/IntentLink";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import MediaImage from "@/components/media/MediaImage";
 import type { CatalogueItem } from "@/lib/types";
-import { faNum } from "@/lib/format";
+import { faNum, faMillions } from "@/lib/format";
 import styles from "./landing.module.css";
 
 /** How long each card holds before the strip moves on. */
@@ -66,7 +66,7 @@ export default function FeaturedCarousel({ items }: { items: CatalogueItem[] }) 
                 <div className={styles.slideCity}><MapPin size={10} /> {b.city}</div>
                 <div className={styles.slideName}>{b.name}</div>
                 <div className={styles.slidePrice}>
-                  <strong>{faNum(b.price)}M</strong>
+                  <strong>{faMillions(b.price)}</strong>
                   <span>تومان/ماه</span>
                 </div>
               </div>
