@@ -17,6 +17,7 @@ import PinMap, { type MapPoint } from "@/components/map/PinMap";
 import MediaImage from "@/components/media/MediaImage";
 import SearchBackLink from "@/components/media/SearchBackLink";
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "./campaign.module.css";
 
@@ -156,15 +157,11 @@ export default function CampaignPlanner({ items, requested, period }: {
       )}
 
       {shown.length === 0 ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}><Megaphone size={44} strokeWidth={1.4} /></div>
-          <h2 className={styles.emptyTitle}>هنوز رسانه‌ای در طرح نیست</h2>
-          <p className={styles.emptyText}>
-            در صفحهٔ جستجو دکمهٔ «+ کمپین» را روی هر رسانه بزنید — تا {faNum(MAX_PICKED)} رسانه.
-            این‌جا هزینهٔ کل، بازدید روزانه، هزینهٔ هر هزار نمایش و موقعیتشان روی نقشه را یکجا می‌بینید.
-          </p>
-          <ButtonLink href="/explore" intent="primary">رفتن به جستجو</ButtonLink>
-        </div>
+        <EmptyState icon={<Megaphone size={44} strokeWidth={1.4} />} tone="var(--accent-warm)" title="هنوز رسانه‌ای در طرح نیست"
+          action={<ButtonLink href="/explore" intent="primary">رفتن به جستجو</ButtonLink>}>
+          در صفحهٔ جستجو دکمهٔ «+ کمپین» را روی هر رسانه بزنید — تا {faNum(MAX_PICKED)} رسانه.
+          این‌جا هزینهٔ کل، بازدید روزانه، هزینهٔ هر هزار نمایش و موقعیتشان روی نقشه را یکجا می‌بینید.
+        </EmptyState>
       ) : (
         <div className={pending ? styles.busy : undefined}>
           <div className={`${styles.periods} ${styles.noPrint}`} role="radiogroup" aria-label="دورهٔ اکران">

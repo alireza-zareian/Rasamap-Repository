@@ -79,11 +79,6 @@
 
 .fine { font-size: 0.72rem; line-height: 1.9; color: var(--text-muted); margin: 0; }
 
-.empty { text-align: center; padding: 64px 20px; background: var(--bg-card); border: 1px dashed var(--border-hi); border-radius: 18px; }
-.emptyIcon { display: flex; justify-content: center; margin-bottom: 14px; color: var(--accent-warm); }
-.emptyTitle { font-size: 1.1rem; font-weight: 800; margin: 0 0 8px; }
-.emptyText { max-width: 460px; margin: 0 auto 22px; font-size: 0.85rem; line-height: 1.9; color: var(--text-muted); }
-
 /* While a removal is on its way: the page stays usable, and says it is working. */
 .busy { opacity: 0.7; transition: opacity 0.2s ease; }
 

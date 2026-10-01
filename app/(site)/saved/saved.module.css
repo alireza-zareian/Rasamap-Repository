@@ -1,9 +1,6 @@
 .page { max-width: 1280px; margin: 0 auto; padding: calc(var(--topbar-h) + 26px) 0 48px; }
 .title { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 900; margin: 0 20px 6px; }
-.title svg { color: #f43f5e; }
+.title svg { color: var(--heart); }
 .lede { font-size: 0.85rem; color: var(--text-muted); margin: 0 20px 8px; }
 
-.empty { text-align: center; margin: 20px; padding: 64px 20px; background: var(--bg-card); border: 1px dashed var(--border-hi); border-radius: 18px; }
-.emptyIcon { color: #f43f5e; margin-bottom: 14px; }
-.emptyTitle { font-size: 1.1rem; font-weight: 800; margin: 0 0 8px; }
-.emptyText { max-width: 440px; margin: 0 auto 22px; font-size: 0.85rem; line-height: 1.9; color: var(--text-muted); }
+.panel { margin: 20px; }

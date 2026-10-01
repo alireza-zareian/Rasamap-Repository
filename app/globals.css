@@ -26,6 +26,8 @@
   --green:  #22C55E;
   --red:    #EF4444;
   --purple: #9B72F5;
+  /* A saved heart, wherever one is drawn. */
+  --heart:  #F43F5E;
 
   /* Text */
   --text-main:  #D8E4F8;
@@ -350,7 +352,7 @@ html.page-hidden .skeleton {
 }
 
 /* ── Page transitions ──────────────────────────────────────────────
-   Navigations are view transitions (next.config.ts, §37): a short crossfade,
+   The App Router runs navigations as view transitions (§37): a short crossfade,
    and a card's photo morphing into the media page's gallery. The compositor
    draws both from snapshots; the mid-flight blur hides the square-to-wide stretch. */
 ::view-transition-old(root),

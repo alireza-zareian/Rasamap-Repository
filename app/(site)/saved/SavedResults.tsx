@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import type { CatalogueItem } from "@/lib/types";
 import { useFavorites } from "@/components/favorites/FavoritesProvider";
 import { ButtonLink } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import ExploreResults from "../explore/ExploreResults";
 import styles from "./saved.module.css";
 
@@ -17,11 +18,11 @@ export default function SavedResults({ items }: { items: CatalogueItem[] }) {
 
   if (shown.length === 0) {
     return (
-      <div className={styles.empty}>
-        <Heart size={44} strokeWidth={1.4} className={styles.emptyIcon} />
-        <h2 className={styles.emptyTitle}>هنوز چیزی ذخیره نکرده‌اید</h2>
-        <p className={styles.emptyText}>در جستجو روی قلبِ هر رسانه بزنید تا این‌جا بماند.</p>
-        <ButtonLink href="/explore" intent="primary">رفتن به جستجو</ButtonLink>
+      <div className={styles.panel}>
+        <EmptyState icon={<Heart size={44} strokeWidth={1.4} />} tone="var(--heart)" title="هنوز چیزی ذخیره نکرده‌اید"
+          action={<ButtonLink href="/explore" intent="primary">رفتن به جستجو</ButtonLink>}>
+          در جستجو روی قلبِ هر رسانه بزنید تا این‌جا بماند.
+        </EmptyState>
       </div>
     );
   }

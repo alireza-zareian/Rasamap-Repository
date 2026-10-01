@@ -3,6 +3,7 @@ import { Heart, LogIn } from "lucide-react";
 import { getActor } from "@/lib/auth/actor";
 import { listFavorites } from "@/lib/db/favorites";
 import { ButtonLink } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import SavedResults from "./SavedResults";
 import styles from "./saved.module.css";
 
@@ -27,13 +28,15 @@ export default async function SavedPage() {
       {actor?.kind === "customer" ? (
         <SavedResults items={items} />
       ) : (
-        <div className={styles.empty}>
-          <Heart size={44} strokeWidth={1.4} className={styles.emptyIcon} />
-          <h2 className={styles.emptyTitle}>{actor ? "حساب همکاران فهرست ذخیره ندارد" : "برای ذخیرهٔ رسانه وارد شوید"}</h2>
-          <p className={styles.emptyText}>
+        <div className={styles.panel}>
+          <EmptyState
+            icon={<Heart size={44} strokeWidth={1.4} />}
+            tone="var(--heart)"
+            title={actor ? "حساب همکاران فهرست ذخیره ندارد" : "برای ذخیرهٔ رسانه وارد شوید"}
+            action={!actor && <ButtonLink href="/login?next=/saved" intent="primary"><LogIn size={15} /> ورود یا ثبت‌نام</ButtonLink>}
+          >
             روی قلبِ هر رسانه بزنید تا این‌جا بماند. فهرست به حسابتان بسته است، پس از هر دستگاهی که وارد شوید همراهتان است.
-          </p>
-          {!actor && <ButtonLink href="/login?next=/saved" intent="primary"><LogIn size={15} /> ورود یا ثبت‌نام</ButtonLink>}
+          </EmptyState>
         </div>
       )}
     </main>
