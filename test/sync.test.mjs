@@ -81,6 +81,10 @@ test("a feed row the database does not have is inserted", async () => {
     // The denormalised sort keys are computed on the way in, not left at zero.
     assert.equal(row?.area, 40);
     assert.equal(row?.estimatedViews, 700);
+    // The feed's rating is the crawler's invention: a row starts unrated, and
+    // only the reviews table ever gives it stars.
+    assert.equal(row?.rating, 0);
+    assert.equal(row?.reviewCount, 0);
   } finally { await db.$disconnect(); }
 });
 

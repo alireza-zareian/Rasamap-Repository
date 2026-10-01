@@ -1379,10 +1379,11 @@ def to_rasamap_format(raw: dict, index: int) -> dict:
     price = raw["price"]
     # Use MD5 of raw["id"] — gives a full 32-char hex, stable across runs.
     full_hex = hashlib.md5(raw["id"].encode()).hexdigest()
-    # Fields the source does not state (size when omitted, faces, age, mapX/Y,
-    # rating, review count) are invented from a generator seeded by the
-    # listing's id, so a rerun yields the same values and prisma/sync-scraped.ts
-    # sees no change. The importer ignores mapX/Y and never updates the rating.
+    # Fields the source does not state (size when omitted, faces, age, mapX/Y)
+    # are invented from a generator seeded by the listing's id, so a rerun
+    # yields the same values and prisma/sync-scraped.ts sees no change. The
+    # importer ignores mapX/Y. A rating is never invented: stars come only from
+    # the site's own reviews table, so a crawled row starts unrated.
     invented = random.Random(raw["id"])
     # Try successive 8-char windows until we find an unused ID (handles rare collisions).
     for offset in range(0, 25, 8):
@@ -1418,8 +1419,8 @@ def to_rasamap_format(raw: dict, index: int) -> dict:
         "description": raw["name"],
         "features": [],
         "nearbyLandmarks": [],
-        "rating": round(invented.uniform(3.8, 5.0), 1),
-        "reviewCount": invented.randint(1, 40),
+        "rating": 0,
+        "reviewCount": 0,
         "source": raw.get("source", "manual"),
         "scrapedAt": raw.get("scrapedAt"),
     }

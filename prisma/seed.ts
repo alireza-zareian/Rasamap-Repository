@@ -61,8 +61,10 @@ function toRow(b: StaticBillboard) {
     description: b.description,
     features: b.features as unknown as object,
     nearbyLandmarks: b.nearbyLandmarks as unknown as object,
-    rating: b.rating,
-    reviewCount: b.reviewCount,
+    // Unrated, whatever the dataset says: its figures were invented, and the
+    // reviews table is the only source of a rating (lib/db/reviews.ts).
+    rating: 0,
+    reviewCount: 0,
     source: b.source ?? null,
   };
 }

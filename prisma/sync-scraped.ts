@@ -110,8 +110,6 @@ const FeedRowSchema = z.object({
   description:    Text(5000),
   features:       StringListSchema,
   nearbyLandmarks: StringListSchema,
-  rating:         z.number().min(0).max(5).optional(),
-  reviewCount:    z.number().int().nonnegative().optional(),
   url:            z.string().nullish(),
   structureCode:  z.string().nullish(),
 }).passthrough();
@@ -434,10 +432,10 @@ async function insert(feed: FeedRow) {
       description: String(feed.description ?? ""),
       features: (feed.features ?? []) as Prisma.InputJsonValue,
       nearbyLandmarks: (feed.nearbyLandmarks ?? []) as Prisma.InputJsonValue,
-      // Invented by the crawler for a new row and never synced afterwards —
-      // once the row exists these come from the reviews table.
-      rating: Number(feed.rating ?? 0),
-      reviewCount: Number(feed.reviewCount ?? 0),
+      // Unrated: the feed's figures are the crawler's invention, and a star
+      // shown on a card must be one somebody gave (the reviews table).
+      rating: 0,
+      reviewCount: 0,
       source: feed.source ?? null,
       sourceRecord: {
         create: {
