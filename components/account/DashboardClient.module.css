@@ -2,6 +2,7 @@
 
 .head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .who { min-width: 0; }
+.signOut { margin-right: auto; flex-shrink: 0; }
 .greeting { font-size: 1.2rem; font-weight: 700; margin: 0 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .phone { font-size: 0.8rem; color: var(--text-muted); direction: ltr; unicode-bidi: isolate; }
 

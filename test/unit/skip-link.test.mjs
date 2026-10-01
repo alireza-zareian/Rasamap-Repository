@@ -17,7 +17,11 @@ function tsx(dir) {
 test("every public page's <main> is the skip link's target", () => {
   const layout = readFileSync("app/(site)/layout.tsx", "utf8");
   assert.match(layout, /href="#main"/);
-  const missing = tsx("app/(site)")
+  // Pages, and the components a page renders its <main> through (the
+  // dashboard's lived in components/account and had lost the id). The panel's
+  // shell is outside the public layout and has no skip link to point at it.
+  const files = [...tsx("app/(site)"), ...tsx("components").filter(f => !f.startsWith(join("components", "admin")))];
+  const missing = files
     .flatMap(file => [...readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/<main\b[^>]*>/g)]
       .filter(m => !/\bid="main"/.test(m[0]))
       .map(() => file));

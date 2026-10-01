@@ -171,7 +171,7 @@ function LoginForm() {
         autoComplete={autoComplete}
       />
       <button type="button" className={styles.reveal} onClick={() => setShow(!show)}
-        aria-label={show ? "پنهان کردن رمز" : "نمایش رمز"} tabIndex={-1}>
+        aria-label={show ? "پنهان کردن رمز" : "نمایش رمز"} aria-pressed={show}>
         {show ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>
     </div>

@@ -3,10 +3,11 @@ import { useState } from "react";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import Image from "next/image";
 import Link from "next/link";
-import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2, CheckCircle2, Plus, Sparkles, ArrowLeft } from "lucide-react";
+import { Megaphone, Monitor, Milestone, Train, Bus, LayoutList, Clock, Settings2, CheckCircle2, Plus, Sparkles, ArrowLeft, LogOut } from "lucide-react";
 import { moderationLabels, planLabels } from "@/lib/types";
 import EditListingModal from "@/components/account/EditListingModal";
 import UserAvatar from "@/components/account/UserAvatar";
+import { useCurrentUser } from "@/lib/client/use-current-user";
 import { faNum } from "@/lib/format";
 import { MIN_PASSWORD_LENGTH } from "@/lib/domain/password";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -75,6 +76,7 @@ export default function DashboardClient({ account, initialListings }: {
   account: { name: string; phone: string };
   initialListings: Listing[];
 }) {
+  const { logout } = useCurrentUser();
   const [tab, setTab] = useState<Tab>("listings");
   const [user, setUser] = useState(account);
   const [listings, setListings] = useState<Listing[]>(initialListings);
@@ -115,13 +117,17 @@ export default function DashboardClient({ account, initialListings }: {
   const published   = listings.filter(l => l.moderation === "approved").length;
 
   return (
-    <main className={styles.page}>
+    <main id="main" className={styles.page}>
       <div className={styles.head}>
         <UserAvatar name={user.name} size={44} />
         <div className={styles.who}>
           <h1 className={styles.greeting}>خوش آمدید، {user.name}</h1>
           <div className={styles.phone}>{user.phone}</div>
         </div>
+        {/* The one sign-out a phone has: the top bar's button is desktop-only. */}
+        <Button intent="quiet" size="sm" className={styles.signOut} onClick={logout} aria-label="خروج از حساب کاربری">
+          <LogOut size={13} /> خروج
+        </Button>
       </div>
 
       {/* Two sections, as tabs. */}
