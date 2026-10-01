@@ -18,7 +18,7 @@ import SaveButton from "@/components/favorites/SaveButton";
 import AddToCampaign from "@/components/campaign/AddToCampaign";
 import { typeLabels, availabilityLabels, moderationLabels, DATA_SOURCES, type Billboard } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-url";
-import { faNum, faCompact } from "@/lib/format";
+import { faNum } from "@/lib/format";
 import { mapLinks } from "@/lib/domain/location";
 import { availabilityTone } from "@/components/ui/availability";
 import { cssVar } from "@/components/ui/css-var";
@@ -216,26 +216,9 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
               {b.traffic && (
                 <section>
                   <h2 className={styles.sectionHead}>
-                    آنالیز ترافیک <span className={styles.estimate}>تخمین هوشمند</span>
+                    آنالیز ترافیک <span className={styles.estimate}>تخمینی</span>
                   </h2>
-                  <div className={styles.traffic}>
-                    <div className={styles.meter}><TrafficMeter traffic={b.traffic} /></div>
-                    <div className={styles.stats}>
-                      {[
-                        { label: "تردد روزانه", val: b.traffic.daily ? faCompact(b.traffic.daily) : "—" },
-                        { label: "بینندگان تخمینی", val: b.traffic.estimatedViews ? faCompact(b.traffic.estimatedViews) : "—" },
-                        { label: "امتیاز دیده شدن", val: b.traffic.viewabilityScore ? `${faNum(b.traffic.viewabilityScore)}/۱۰۰` : "—" },
-                        { label: "اوج ترافیک", val: b.traffic.peakHour || "—" },
-                        { label: "سطح تراکم", val: b.traffic.congestionLevel ? `${faNum(b.traffic.congestionLevel)}/۱۰` : "—" },
-                        { label: "عابران پیاده", val: b.traffic.pedestrian ? faCompact(b.traffic.pedestrian) : "—" },
-                      ].map(item => (
-                        <div key={item.label} className={styles.stat}>
-                          <strong>{item.val}</strong>
-                          <span>{item.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <TrafficMeter traffic={b.traffic} />
                   <p className={styles.footnote}>
                     * اعداد ترافیک بر اساس جمعیت شهر، نوع رسانه، و موقعیت مکانی تخمین زده شده‌اند — داده واقعی ممکن است متفاوت باشد.
                   </p>
@@ -277,7 +260,9 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
                 <div className={styles.priceLine}>
                   <span className={styles.price}>{faNum(b.price)}</span>
                   <span className={styles.priceUnit}>میلیون تومان / ماه</span>
-                  <span className={styles.priceNote}>حدسی · متغیر</span>
+                  {/* Only an owner's own listing quotes its price; any other row
+                      carries its source's figure or the crawler's estimate. */}
+                  {b.source !== "listing" && <span className={styles.priceNote}>تقریبی</span>}
                 </div>
 
                 <div className={styles.tiers}>

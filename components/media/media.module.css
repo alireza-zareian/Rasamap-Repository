@@ -50,29 +50,26 @@
 }
 
 /* ── Traffic estimate ── */
-.meter { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-.meterHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 14px; }
-.meterTitle { font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.meter { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.meterTitle { font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
 .meterTitle svg { color: var(--accent); }
-.score {
-  font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; color: var(--tone);
-  background: color-mix(in srgb, var(--tone) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tone) 27%, transparent);
-}
-.meterMain { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+/* Gauge and headline figure side by side; the facts take the rest of a wide
+   row, or wrap under them on a phone. */
+.meterMain { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-bottom: 16px; }
 .gauge { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
 .gauge svg { width: 80px; height: 80px; transform: rotate(-90deg); }
-.gauge circle { transition: stroke-dasharray 1s ease; }
 .gaugeValue {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-size: 1.1rem; font-weight: 800; color: var(--tone);
 }
 .gaugeValue small { font-size: 0.55rem; color: var(--text-muted); font-weight: 400; }
-.views { flex: 1; }
-.viewsValue { font-size: 1.4rem; font-weight: 800; color: var(--tone); }
-.viewsLabel { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
-.facts { display: flex; flex-direction: column; gap: 4px; font-size: 0.72rem; color: var(--text-muted); list-style: none; margin: 0; padding: 0; }
-.facts li { display: flex; align-items: center; gap: 5px; }
+.views { flex-shrink: 0; }
+.viewsValue { font-size: 1.6rem; font-weight: 800; color: var(--tone); line-height: 1.2; }
+.viewsLabel { font-size: 0.75rem; color: var(--text-muted); }
+.facts { flex: 1 1 220px; display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem; color: var(--text-muted); list-style: none; margin: 0; padding: 0; }
+.facts li { display: flex; align-items: center; gap: 6px; }
+.facts b { color: var(--text-main); font-weight: 700; }
+.hours { direction: ltr; unicode-bidi: isolate; }
 .congestion { margin-bottom: 10px; }
 .congestionHead { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 5px; }
 .congestionHigh { color: var(--accent); }

@@ -7,6 +7,11 @@ export function faNum(n: number): string {
   return n.toLocaleString("fa-IR");
 }
 
+/** Latin digits inside a string ("07:30-09:00") as Persian ones; the rest untouched. */
+export function faDigits(s: string): string {
+  return s.replace(/[0-9]/g, d => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
+}
+
 /**
  * A large number shortened for a tight space (۱٫۲M, ۵K). The suffixes stay
  * Latin: read as symbols, like "km", on Persian price tags too.

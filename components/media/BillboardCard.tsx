@@ -88,7 +88,7 @@ export default function BillboardCard({ billboard: b, isPicked, onPick, listMode
         {b.featured && <div className={`${styles.badge} ${styles.featured}`}><Sparkles size={11} /> ویژه</div>}
         {b.reviewCount > 0 && (
           <div className={`${styles.badge} ${styles.glass} ${styles.rating}`}>
-            <Star size={11} fill="currentColor" /> {b.rating} ({b.reviewCount})
+            <Star size={11} fill="currentColor" /> {faNum(b.rating)} ({faNum(b.reviewCount)})
           </div>
         )}
       </div>

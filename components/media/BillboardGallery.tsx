@@ -5,6 +5,7 @@ import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useModalA11y } from "@/lib/client/use-modal-a11y";
 import { NoImagePlaceholder } from "@/components/media/MediaImage";
 import { mediaPhotoTransition } from "@/components/ui/transitions";
+import { faNum } from "@/lib/format";
 import styles from "./media.module.css";
 
 interface Props {
@@ -63,7 +64,7 @@ export default function BillboardGallery({ images, name, type, slug }: Props) {
             ? <NoImagePlaceholder type={type} iconSize={48} />
             : <Image key={active} src={images[active]} alt={name} fill sizes="(max-width: 900px) 100vw, 640px"
                 decoding="async" loading="eager" fetchPriority="high" onError={() => markBroken(active)} />}
-          {images.length > 1 && <span className={`${styles.pill} ${styles.counter}`}>{active + 1} / {images.length}</span>}
+          {images.length > 1 && <span className={`${styles.pill} ${styles.counter}`}>{faNum(active + 1)} / {faNum(images.length)}</span>}
           <span className={`${styles.pill} ${styles.zoom}`}><Search size={12} /> بزرگ‌نمایی</span>
         </button>
       </ViewTransition>
@@ -147,7 +148,7 @@ function GalleryLightbox({
           </>
         )}
         <button type="button" onClick={onClose} aria-label="بستن نمای بزرگ" className={`${styles.round} ${styles.close}`}><X size={16} /></button>
-        <div className={styles.lightboxCount}>{active + 1} / {images.length}</div>
+        <div className={styles.lightboxCount}>{faNum(active + 1)} / {faNum(images.length)}</div>
       </div>
     </div>
   );
