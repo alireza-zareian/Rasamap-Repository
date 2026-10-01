@@ -6,7 +6,10 @@ export default function NotFound() {
     <StatusScreen
       code="۴۰۴"
       title="صفحه یافت نشد"
-      actions={<ButtonLink href="/" intent="primary">بازگشت به خانه</ButtonLink>}
+      actions={<>
+        <ButtonLink href="/" intent="primary">بازگشت به خانه</ButtonLink>
+        <ButtonLink href="/explore">جستجوی رسانه</ButtonLink>
+      </>}
     >
       صفحه‌ای که دنبالش می‌گردید وجود ندارد یا جابه‌جا شده است.
     </StatusScreen>
