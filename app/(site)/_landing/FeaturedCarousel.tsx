@@ -15,31 +15,46 @@ const STEP = "(var(--slide-w, 280px) + 16px)";
 /**
  * The busiest photographed media, sliding by one card every few seconds. The
  * strip repeats its first four so the last step lands on a full row.
+ *
+ * It moves on its own only while nobody is reading it (WCAG 2.2.2): not under
+ * a pointer or keyboard focus, not off screen or in a hidden tab, never with
+ * reduced motion, and not again once the visitor has used the arrows or dots —
+ * it used to rotate every four seconds whatever anyone was doing.
  */
 export default function FeaturedCarousel({ items }: { items: CatalogueItem[] }) {
   const [index, setIndex] = useState(0);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const restart = () => {
-    if (timer.current) clearInterval(timer.current);
-    timer.current = setInterval(() => setIndex(i => (i + 1) % items.length), HOLD_MS);
-  };
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [onScreen, setOnScreen] = useState(false);
+  const [held, setHeld] = useState(false);
+  const [userDriven, setUserDriven] = useState(false);
 
   useEffect(() => {
-    if (items.length < 2) return;
-    restart();
-    return () => { if (timer.current) clearInterval(timer.current); };
-    // restart only reads refs and the length
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length]);
+    const root = rootRef.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(([e]) => setOnScreen(e.isIntersecting));
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, []);
 
-  const go = (dir: 1 | -1) => {
-    setIndex(i => (i + dir + items.length) % items.length);
-    restart();
+  const rotating = items.length > 1 && onScreen && !held && !userDriven;
+  useEffect(() => {
+    if (!rotating || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = setInterval(() => {
+      if (!document.hidden) setIndex(i => (i + 1) % items.length);
+    }, HOLD_MS);
+    return () => clearInterval(timer);
+  }, [rotating, items.length]);
+
+  const show = (i: number) => {
+    setIndex((i + items.length) % items.length);
+    setUserDriven(true);
   };
 
   return (
-    <div className={styles.carousel}>
+    <div className={styles.carousel} ref={rootRef}
+      onPointerEnter={() => setHeld(true)} onPointerLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)}
+      onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setHeld(false); }}>
       <div className={styles.viewport}>
         <div className={styles.track} style={{ transform: `translateX(calc(${index} * ${STEP}))` }}>
           {[...items, ...items.slice(0, 4)].map((b, i) => (
@@ -60,12 +75,12 @@ export default function FeaturedCarousel({ items }: { items: CatalogueItem[] }) 
         </div>
       </div>
 
-      <button type="button" className={`${styles.arrow} ${styles.prev}`} onClick={() => go(-1)} aria-label="رسانهٔ قبلی"><ChevronRight size={22} /></button>
-      <button type="button" className={`${styles.arrow} ${styles.next}`} onClick={() => go(1)} aria-label="رسانهٔ بعدی"><ChevronLeft size={22} /></button>
+      <button type="button" className={`${styles.arrow} ${styles.prev}`} onClick={() => show(index - 1)} aria-label="رسانهٔ قبلی"><ChevronRight size={22} /></button>
+      <button type="button" className={`${styles.arrow} ${styles.next}`} onClick={() => show(index + 1)} aria-label="رسانهٔ بعدی"><ChevronLeft size={22} /></button>
 
       <div className={styles.dots}>
         {items.map((b, i) => (
-          <button key={b.id} type="button" onClick={() => { setIndex(i); restart(); }}
+          <button key={b.id} type="button" onClick={() => show(i)}
             className={`${styles.dot} ${i === index ? styles.dotActive : ""} carousel-dot`}
             aria-label={`نمایش رسانهٔ ${faNum(i + 1)}`} aria-current={i === index} />
         ))}

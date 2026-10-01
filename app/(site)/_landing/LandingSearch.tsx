@@ -32,6 +32,8 @@ export default function LandingSearch({ cities }: { cities: [name: string, count
       </select>
       <input
         className={styles.searchInput}
+        type="search"
+        name="search"
         value={search}
         onChange={e => setSearch(e.target.value)}
         placeholder="منطقه، خیابان، نوع رسانه…"

@@ -209,6 +209,7 @@
 .carousel { position: relative; --slide-w: 280px; }
 .viewport { overflow: hidden; border-radius: 16px; }
 .track { display: flex; gap: 16px; transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) { .track { transition: none; } }
 .slide {
   position: relative; flex-shrink: 0; width: var(--slide-w); aspect-ratio: 1 / 1;
   display: block; overflow: hidden; border-radius: 16px; text-decoration: none;

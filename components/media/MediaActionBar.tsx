@@ -35,14 +35,15 @@ export default function MediaActionBar({ item, contactId }: { item: CatalogueIte
   };
 
   return (
-    <div className={`${styles.bar} ${cardInView ? styles.hidden : ""}`} aria-hidden={cardInView || undefined}>
+    // `inert` while hidden: aria-hidden alone left its buttons in the tab order.
+    <div className={`${styles.bar} ${cardInView ? styles.hidden : ""}`} inert={cardInView}>
       <div className={styles.price}>
         <strong>{faNum(item.price)}</strong>
         <span>میلیون / ماه</span>
       </div>
       <SaveButton slug={item.slug} name={item.name} variant="icon" />
       <AddToCampaign item={item} compact />
-      <button type="button" className={styles.call} onClick={toContact} tabIndex={cardInView ? -1 : undefined}>
+      <button type="button" className={styles.call} onClick={toContact}>
         <Phone size={16} /> تماس
       </button>
     </div>

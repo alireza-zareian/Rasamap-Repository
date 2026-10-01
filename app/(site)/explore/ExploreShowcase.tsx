@@ -25,15 +25,18 @@ const SLIDE_MS = 5500;
 export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
   const [idx, setIdx] = useState(0);
   const root = useRef<HTMLDivElement>(null);
+  // Held while a pointer or keyboard focus is on it, and never turning under
+  // reduced motion (WCAG 2.2.2), like the landing carousel.
+  const [held, setHeld] = useState(false);
 
   useEffect(() => {
-    if (items.length < 2) return;
+    if (items.length < 2 || held || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = setInterval(() => {
       const shown = root.current?.offsetParent != null;
       if (shown && !document.hidden) setIdx(i => (i + 1) % items.length);
     }, SLIDE_MS);
     return () => clearInterval(id);
-  }, [items.length]);
+  }, [items.length, held]);
 
   const current = items[idx];
   if (!current) {
@@ -45,7 +48,10 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
   }
 
   return (
-    <div ref={root} className={styles.showcase}>
+    <div ref={root} className={styles.showcase}
+      onPointerEnter={() => setHeld(true)} onPointerLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)}
+      onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setHeld(false); }}>
       {/* key restarts the fade on each slide */}
       <div key={idx} className={styles.slide}>
         <MediaImage src={current.images?.[0]} alt={current.name} type={current.type} sizes="(max-width: 900px) 100vw, 360px" />
