@@ -21,8 +21,12 @@ import { dirname, join, resolve, sep } from "node:path";
 import { faNum } from "@/lib/format";
 import { MAX_IMAGE_BYTES, MAX_LISTING_IMAGES } from "@/lib/domain/listing";
 
+// The paths below are runtime data, not code: `turbopackIgnore` keeps the
+// build's file tracer from following them, which otherwise pulled the whole
+// checkout — public/ and every photo in it — into the server's trace.
+
 /** Where new uploads are written. */
-const UPLOAD_ROOT = resolve(process.env.UPLOAD_DIR || join(process.cwd(), "storage", "uploads"));
+const UPLOAD_ROOT = resolve(process.env.UPLOAD_DIR || join(/*turbopackIgnore: true*/ process.cwd(), "storage", "uploads"));
 /** Where uploads were written before they left public/ — read and cleaned, never written. */
 const LEGACY_ROOT = resolve(process.cwd(), "public", "uploads");
 
@@ -132,13 +136,13 @@ export async function saveImages(scope: string, files: File[], max: number = MAX
   }
 
   const folder = randomUUID();
-  const dir = join(UPLOAD_ROOT, scope, folder);
+  const dir = join(/*turbopackIgnore: true*/ UPLOAD_ROOT, scope, folder);
   try {
     await mkdir(dir, { recursive: true });
     const urls: string[] = [];
     for (let i = 0; i < checked.length; i++) {
       const name = `${i + 1}.${checked[i].ext}`;
-      await writeFile(join(dir, name), checked[i].buffer);
+      await writeFile(join(/*turbopackIgnore: true*/ dir, name), checked[i].buffer);
       urls.push(`/uploads/${scope}/${folder}/${name}`);
     }
     return { ok: true, urls, dir };
