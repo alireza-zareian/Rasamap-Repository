@@ -4,13 +4,13 @@
 .title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 0.9rem; font-weight: 700; }
 .title svg { color: var(--accent); }
 .summary { display: flex; align-items: center; gap: 6px; }
-.average { font-size: 1rem; font-weight: 800; color: #f59e0b; }
+.average { font-size: 1rem; font-weight: 800; color: var(--accent-warm); }
 .count { font-size: 0.72rem; color: var(--text-muted); }
 
 .stars { display: flex; gap: 4px; }
 .star { background: none; border: none; padding: 0; line-height: 1; display: flex; color: var(--border); cursor: pointer; }
-.star:disabled { cursor: default; }
-.star[data-on] { color: #f59e0b; }
+span.star { cursor: default; }
+.star[data-on] { color: var(--accent-warm); }
 
 .form { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
 .formHead { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: 600; }
@@ -49,7 +49,6 @@
   background: rgba(59, 123, 245, 0.12); border: 1px solid rgba(59, 123, 245, 0.3); border-radius: 20px; padding: 1px 7px;
 }
 .replyDate { font-size: 0.64rem; font-weight: 400; color: var(--text-muted); margin-right: auto; }
-.replyDelete { background: none; border: none; padding: 0; color: var(--red); cursor: pointer; display: inline-flex; align-items: center; gap: 3px; font-family: inherit; font-size: 0.64rem; }
 .replyBody { margin: 0; font-size: 0.77rem; color: var(--text-muted); line-height: 1.75; }
 .compose { display: flex; gap: 6px; align-items: flex-start; }
 .compose textarea { flex: 1; background: var(--bg-card); font-size: 0.78rem; padding: 8px 10px; }

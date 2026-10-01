@@ -9,6 +9,7 @@ import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, Sh
 import { hasRole, isStaffRole } from "@/lib/domain/roles";
 import { REVIEW_COMMENT, REVIEW_REPLY } from "@/lib/domain/rating";
 import { Button } from "@/components/ui/Button";
+import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import form from "@/components/ui/form.module.css";
 import styles from "./ReviewsSection.module.css";
 import reveal from "@/components/ui/reveal.module.css";
@@ -36,6 +37,19 @@ interface Props { billboardId: number; }
 
 function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
   const [hover, setHover] = useState(0);
+  // Read-only: one picture with one name, not five disabled buttons a screen
+  // reader would list one by one.
+  if (!onChange) {
+    return (
+      <div className={styles.stars} role="img" aria-label={`${faNum(value)} ستاره از ۵`}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <span key={n} className={styles.star} data-on={n <= value || undefined}>
+            <Star size={17} fill={n <= value ? "currentColor" : "none"} aria-hidden />
+          </span>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className={styles.stars}>
       {[1,2,3,4,5].map(n => {
@@ -46,13 +60,11 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
             type="button"
             className={styles.star}
             data-on={active || undefined}
-            onClick={() => onChange?.(n)}
-            onMouseEnter={() => onChange && setHover(n)}
-            onMouseLeave={() => onChange && setHover(0)}
-            // Without onChange it only displays, so it stays out of the tab order.
-            aria-label={`${n} ستاره از ۵`}
-            aria-pressed={onChange ? n === value : undefined}
-            disabled={!onChange}
+            onClick={() => onChange(n)}
+            onMouseEnter={() => setHover(n)}
+            onMouseLeave={() => setHover(0)}
+            aria-label={`${faNum(n)} ستاره از ۵`}
+            aria-pressed={n === value}
           >
             <Star size={17} fill={active ? "currentColor" : "none"} />
           </button>
@@ -226,7 +238,7 @@ export default function ReviewsSection({ billboardId }: Props) {
           <textarea
             className={form.input}
             value={comment} onChange={e => setComment(e.target.value)}
-            placeholder={`تجربه خود از استفاده از این رسانه را بنویسید... (حداقل ${faNum(REVIEW_COMMENT.min)} کاراکتر)`}
+            placeholder={`تجربهٔ خود از این رسانه را بنویسید… (حداقل ${faNum(REVIEW_COMMENT.min)} کاراکتر)`}
             maxLength={REVIEW_COMMENT.max}
             aria-label="متن نظر"
             rows={3}
@@ -285,15 +297,15 @@ export default function ReviewsSection({ billboardId }: Props) {
                   {r.userId === user.id && !user.isStaff && (
                     <>
                       <Button size="sm" onClick={startEdit} disabled={deletingId === r.id}><Pencil size={11} /> ویرایش</Button>
-                      <Button size="sm" intent="danger" onClick={() => handleDelete(r.id)} disabled={deletingId === r.id}>
+                      <ConfirmButton onConfirm={() => handleDelete(r.id)} busy={deletingId === r.id} question="این نظر حذف شود؟">
                         <Trash2 size={11} /> {deletingId === r.id ? "در حال حذف…" : "حذف"}
-                      </Button>
+                      </ConfirmButton>
                     </>
                   )}
                   {user.canModerate && (
-                    <Button size="sm" intent="danger" onClick={() => handleDelete(r.id)} disabled={deletingId === r.id}>
+                    <ConfirmButton onConfirm={() => handleDelete(r.id)} busy={deletingId === r.id} question="این نظر حذف شود؟">
                       <Trash2 size={11} /> {deletingId === r.id ? "در حال حذف…" : "حذف (مدیریت)"}
-                    </Button>
+                    </ConfirmButton>
                   )}
                   <Button size="sm" intent="quiet" onClick={() => openReply(r.id)}><CornerDownLeft size={11} /> پاسخ</Button>
                 </div>
@@ -308,9 +320,9 @@ export default function ReviewsSection({ billboardId }: Props) {
                         {rp.isStaff && <span className={styles.team}><ShieldCheck size={9} /> تیم رسامپ</span>}
                         <span className={styles.replyDate}>{date(rp.createdAt)}</span>
                         {user && (user.canModerate || (!user.isStaff && rp.userId !== null && rp.userId === user.id)) && (
-                          <button type="button" className={styles.replyDelete} onClick={() => deleteReply(r.id, rp.id)} disabled={busyReplyId === rp.id}>
+                          <ConfirmButton onConfirm={() => deleteReply(r.id, rp.id)} busy={busyReplyId === rp.id} question="این پاسخ حذف شود؟">
                             <Trash2 size={10} /> {busyReplyId === rp.id ? "…" : "حذف"}
-                          </button>
+                          </ConfirmButton>
                         )}
                       </div>
                       <p className={styles.replyBody}>{rp.body}</p>
