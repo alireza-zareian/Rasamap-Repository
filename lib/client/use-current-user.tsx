@@ -61,7 +61,9 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
       // row may survive on the server until it expires.
     }
     setUser(null);
-    // A full reload, so no client state from the session is left for the next person.
+    // A full reload, so no client state from the session is left for the next
+    // person — the router's cache still holds pages rendered for this account.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- the reload is the point
     window.location.href = "/";
   }, []);
 

@@ -45,6 +45,7 @@ export default function EditListingModal({
     } catch (err) {
       // Expired session: a full reload, since the dashboard behind is stale.
       if (err instanceof FetchError && err.status === 401) {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- the reload is the point
         window.location.href = "/login?next=/dashboard";
         return;
       }

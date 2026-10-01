@@ -93,9 +93,9 @@ const nextConfig: NextConfig = {
     // Proxy buffers at most 10 MB of a body by default and passes on only that,
     // so a larger upload arrived cut short. This is the largest any route accepts.
     proxyClientMaxBodySize: maxUploadBodyBytes(MAX_BILLBOARD_IMAGES),
-    // Navigations as view transitions, so a card's photo morphs into the media
-    // page's gallery (§37). A browser without the API simply navigates.
-    viewTransition: true,
+    // No `viewTransition` flag: since 16.3 the App Router runs navigations as
+    // view transitions on its own, which is what lets a card's photo morph into
+    // the media page's gallery (§37). A browser without the API simply navigates.
   },
   // Files read at runtime from outside app/ and public/, which the tracer would leave behind.
   outputFileTracingIncludes: {

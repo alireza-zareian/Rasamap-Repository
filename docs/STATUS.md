@@ -959,6 +959,33 @@ Run `npm audit` and review this file monthly, and before every release.
 Lockfile: `package-lock.json` is committed and pins exact versions, so every
 machine installs the same tree.
 
+### 2026-10-01
+
+Bumped **`next` 16.2.11 → 16.3.8** (and `eslint-config-next` with it), then
+`npm audit fix` without `--force`. The minor bump is no longer optional: one
+critical advisory sits on a path this app serves.
+
+| Advisory | Severity | Relevance |
+|---|---|---|
+| Remote code execution in `next/og` `ImageResponse` | critical | **Directly relevant** — `app/opengraph-image.tsx` renders through it on every share preview. |
+| RCE in the image optimisation API with AVIF | critical | Not reachable: `images.loader` is custom, there is no `/_next/image` endpoint (§22c). Fixed anyway. |
+| `postcss`, `sharp`, `fast-uri`, `js-yaml`, `nanoid`, `brace-expansion`, `browserslist`, `baseline-browser-mapping` | high / moderate | Build tooling or framework internals; all cleared by the bump and the audit fix. |
+
+What 16.3 changed for this code: `experimental.viewTransition` no longer
+exists (navigations are view transitions by default, so the flag is simply
+gone from `next.config.ts`), and `eslint-config-next` gained
+`no-location-assign-relative-destination`, which names the two deliberate
+full reloads (sign-out, and an expired session while editing a listing) —
+both kept and marked with the reason.
+
+Remaining: **4 high, all in the `prisma` CLI's own config loader**
+(`deepmerge-ts`, and `mysql2` as an optional driver). The CLI runs only at
+build, migrate and seed time on trusted files, and the MySQL driver is never
+loaded by a SQLite/PostgreSQL project. Clearing them needs `prisma@6` (a
+downgrade `npm audit fix --force` proposes) — not taken.
+
+Lint, `tsc`, 20 + 193 + 8 tests and the 13 browser flows pass on 16.3.8.
+
 ### 2026-09-02
 
 Bumped **`next` 16.2.9 → 16.2.11** (a patch inside the pinned minor). That
