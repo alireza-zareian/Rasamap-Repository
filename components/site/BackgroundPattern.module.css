@@ -1,5 +1,5 @@
-/* The backdrop: four drifting orbs and three vines drawn once. The orbs'
-   colours are .bg-orb-N in globals.css, beside the hidden-tab pause list. */
+/* The backdrop: four drifting orbs. Their colours are .bg-orb-N in
+   globals.css, beside the hidden-tab pause list. */
 
 .decor { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .anchor { position: absolute; }
@@ -14,9 +14,6 @@
 .two .orb   { width: 780px; height: 780px; animation: orb-drift-2 26s ease-in-out infinite -10s; }
 .three .orb { width: 560px; height: 560px; animation: orb-drift-3 20s ease-in-out infinite -4s; }
 .four .orb  { width: 640px; height: 640px; animation: orb-drift-1 28s ease-in-out infinite -16s; }
-
-.vines { position: absolute; inset: -15% 0 0 0; }
-.vines svg { position: absolute; inset: 0; width: 100%; height: 130%; }
 
 /* Four large blurred layers cost a phone's GPU; a phone keeps only the dot grid. */
 @media (max-width: 768px) {
