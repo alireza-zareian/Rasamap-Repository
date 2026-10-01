@@ -7,8 +7,9 @@ import { useState, type ComponentProps } from "react";
  * rather than on sight. For links in lists (cards, slides, ticker, pager,
  * footer): a plain <Link> prefetches each one it sees, and each is a request
  * the server renders. One visit to the catalogue, loaded and scrolled: 91
- * background requests before, 22 after; server CPU 660 → 440 ms (§38). The
- * header's links stay plain <Link>s, to keep main navigation instant.
+ * background requests before, 22 after; server CPU 660 → 440 ms (§38). Every
+ * ButtonLink is one too (§41). The header's section tabs stay plain <Link>s,
+ * to keep main navigation instant.
  *
  * The "hover-triggered prefetch" pattern from Next's prefetching guide;
  * `prefetch={null}` restores the default once intent is shown.

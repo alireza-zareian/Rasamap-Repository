@@ -1,5 +1,6 @@
-import Link from "next/link";
+import type Link from "next/link";
 import type { ComponentProps } from "react";
+import IntentLink from "./IntentLink";
 import styles from "./button.module.css";
 
 type Intent = "primary" | "secondary" | "quiet" | "danger" | "success";
@@ -21,7 +22,12 @@ export function Button({ intent, size, block, className, type = "button", ...res
   return <button type={type} className={classes({ intent, size, block }, className)} {...rest} />;
 }
 
-/** A link that looks like a button. */
+/**
+ * A link that looks like a button. It prefetches on intent (IntentLink), not
+ * on sight: a page shows several, and each prefetch is a render on the server.
+ * The header's "list media" button alone, prefetched for a signed-out visitor,
+ * was a redirect to the sign-in page and that page's payload on every view.
+ */
 export function ButtonLink({ intent, size, block, className, ...rest }: Look & ComponentProps<typeof Link>) {
-  return <Link className={classes({ intent, size, block }, className)} {...rest} />;
+  return <IntentLink className={classes({ intent, size, block }, className)} {...rest} />;
 }
