@@ -57,7 +57,7 @@ export default async function ExplorePage({
   return (
     <main id="main" className={styles.page}>
       <div className={styles.hero}>
-        <ExploreControls filters={filters} total={total} />
+        <ExploreControls filters={filters} heading={exploreSeo(filters).heading} />
         <ExploreShowcase items={showcase} />
       </div>
 

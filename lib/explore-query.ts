@@ -173,12 +173,13 @@ export function hasActiveFilters(f: ExploreFilters): boolean {
  * so the media pages they list are still found). The canonical address drops
  * what only changes the presentation, the sort and the layout.
  */
-export function exploreSeo(f: ExploreFilters): { title: string; canonical: string; indexable: boolean } {
+export function exploreSeo(f: ExploreFilters): { heading: string; title: string; canonical: string; indexable: boolean } {
   const place = f.city || f.province;
   const what = f.type !== "all" ? typeLabels[f.type] : "رسانه‌های تبلیغاتی";
   const heading = f.type === "all" && !place ? "جستجوی رسانه" : `${what} در ${place || "ایران"}`;
   const title = f.page > 1 ? `${heading} — صفحهٔ ${faNum(f.page)}` : heading;
   return {
+    heading,
     title,
     canonical: exploreHref({ ...f, sortBy: DEFAULT_FILTERS.sortBy, view: DEFAULT_FILTERS.view }),
     indexable: !f.search && !f.near && f.maxPrice >= MAX_PRICE && !f.availability,

@@ -67,7 +67,11 @@ function landed<T>(queue: T[], value: T): boolean {
   return true;
 }
 
-export function ExploreControls({ filters, total }: { filters: ExploreFilters; total: number }) {
+/**
+ * `heading` names the view («بیلبورد در مشهد»), as its title does; the count
+ * lives once, in the results bar under it.
+ */
+export function ExploreControls({ filters, heading }: { filters: ExploreFilters; heading: string }) {
   const { apply, pending } = useFilterNavigation(filters);
   useRememberSearch(useSearchParams().toString());
   const [showMore, setShowMore] = useState(false);
@@ -153,10 +157,7 @@ export function ExploreControls({ filters, total }: { filters: ExploreFilters; t
   return (
     <div className={styles.controls}>
       <div className={styles.controlsHead}>
-        <div>
-          <h1 className={styles.title}>جستجوی رسانهٔ تبلیغاتی</h1>
-          <div className={styles.subtitle}>{total > 0 ? `${faNum(total)} رسانه یافت شد` : "جستجو در پایگاه دادهٔ رسانه‌های ایران"}</div>
-        </div>
+        <h1 className={styles.title}>{heading}</h1>
         <div className={styles.views}>
           {(["grid", "list"] as const).map(m => (
             <button key={m} type="button" className={styles.viewButton} aria-pressed={filters.view === m}

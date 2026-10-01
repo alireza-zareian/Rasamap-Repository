@@ -5,8 +5,7 @@
 
 .controls { padding: 20px 24px 16px; background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-deep) 100%); border-left: 1px solid var(--border); }
 .controlsHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.title { font-size: 1.1rem; font-weight: 700; margin: 0; }
-.subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+.title { font-size: 1.25rem; font-weight: 800; margin: 0; }
 .views { display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: var(--bg-surface); }
 .viewButton {
   width: 30px; height: 30px; border: none; border-radius: 6px; cursor: pointer;
