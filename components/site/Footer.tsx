@@ -1,6 +1,7 @@
 import IntentLink from "@/components/ui/IntentLink";
 import { Logo } from "./Logo";
 import styles from "./chrome.module.css";
+import defer from "@/components/ui/defer.module.css";
 
 const COLUMNS = [
   { title: "پلتفرم", links: [["جستجوی رسانه", "/explore"], ["نقشهٔ رسانه‌ها", "/explore/map"], ["طرح کمپین", "/campaign"], ["تحلیل بازار", "/analytics"]] },
@@ -10,7 +11,7 @@ const COLUMNS = [
 
 export default function Footer() {
   return (
-    <footer className={styles.footer}>
+    <footer className={`${styles.footer} ${defer.defer}`}>
       <div className={styles.footerInner}>
         <div className={styles.footerGrid}>
           <div>

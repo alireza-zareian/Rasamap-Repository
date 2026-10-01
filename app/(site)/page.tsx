@@ -13,6 +13,7 @@ import { PLANS } from "@/components/listing/plans";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "./_landing/landing.module.css";
 import reveal from "@/components/ui/reveal.module.css";
+import defer from "@/components/ui/defer.module.css";
 
 /**
  * The landing page, a Server Component over the catalogue's cached queries.
@@ -132,7 +133,7 @@ export default async function LandingPage() {
         </section>
       )}
 
-      <section className={`${styles.stats} ${styles.band}`}>
+      <section className={`${styles.stats} ${styles.band} ${defer.defer}`}>
         <div className={styles.statsGrid}>
           {figures.map(s => (
             <div key={s.label} className={`${styles.stat} ${reveal.reveal}`} style={cssVar("--tone", s.tone)}>
@@ -144,7 +145,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className={styles.section} id="types">
+      <section className={`${styles.section} ${defer.defer}`} id="types">
         <div className={styles.sectionInner}>
           <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
             <div className={styles.eyebrow}>انواع رسانه</div>
@@ -165,7 +166,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className={`${styles.section} ${styles.band}`} id="how">
+      <section className={`${styles.section} ${styles.band} ${defer.defer}`} id="how">
         <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
           <div className={styles.eyebrow}>چطور کار می‌کنه؟</div>
           <h2 className={styles.sectionTitle}>سه قدم تا اکران تبلیغ</h2>
@@ -182,7 +183,7 @@ export default async function LandingPage() {
       </section>
 
       {coverage.length > 0 && (
-        <section className={styles.section} id="coverage">
+        <section className={`${styles.section} ${defer.defer}`} id="coverage">
           <div className={styles.sectionInner}>
             <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
               <div className={styles.eyebrow}>پوشش</div>
@@ -208,7 +209,7 @@ export default async function LandingPage() {
         </section>
       )}
 
-      <section className={`${styles.section} ${styles.band}`} id="owners">
+      <section className={`${styles.section} ${styles.band} ${defer.defer}`} id="owners">
         <div className={styles.sectionInner}>
           <div className={`${styles.sectionHead} section-halo ${reveal.reveal}`}>
             <div className={styles.eyebrow}>برای صاحبان رسانه</div>

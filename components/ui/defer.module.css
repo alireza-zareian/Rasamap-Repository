@@ -1,0 +1,12 @@
+/* A block the visitor has not scrolled to yet: the browser skips its layout
+   and paint on load and does them as it comes near. `auto` in the size makes
+   it remember the height it really had, so the scrollbar settles after one
+   pass; the number is only the first guess.
+
+   Measured on the landing page, a phone profile at 4× CPU: first layout and
+   paint were most of the 700 ms the main thread was blocked on load. Text
+   inside stays searchable and in the accessibility tree.
+
+   Never on something that must be measured before it is seen — a view
+   timeline's own subject (reveal.module.css) works, because it is a child. */
+.defer { content-visibility: auto; contain-intrinsic-size: auto var(--defer-h, 600px); }

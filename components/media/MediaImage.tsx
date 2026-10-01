@@ -55,7 +55,11 @@ export default function MediaImage({
   alt: string;
   type: string;
   sizes: string;
-  /** Carousels and marquees must not be lazy — they never scroll into view (§24). */
+  /**
+   * Carousels, marquees and the hero's backdrop must not be lazy — they never
+   * scroll into view (§24). They load at low priority instead: none of them is
+   * what the page was opened for, so they wait behind its photo and scripts.
+   */
   eager?: boolean;
   iconSize?: number;
 }) {
@@ -71,6 +75,7 @@ export default function MediaImage({
       sizes={sizes}
       decoding="async"
       loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "low" : undefined}
       onError={() => setFailed(true)}
       className={styles.photo}
     />

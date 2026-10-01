@@ -7,6 +7,7 @@ import SwipeMarquee from "@/components/ui/SwipeMarquee";
 import { faNum } from "@/lib/format";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "./media.module.css";
+import defer from "@/components/ui/defer.module.css";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
 
@@ -22,7 +23,8 @@ export default function RelatedBillboards({ items }: { items: CatalogueItem[] })
   const duration = Math.max(18, items.length * 4);
 
   return (
-    <section className={styles.related}>
+    // Deferred: at the foot of the page, its layout, paint and slide wait until it is near.
+    <section className={`${styles.related} ${defer.defer}`}>
       <div className={styles.relatedHead}>
         <h2>رسانه‌های مرتبط</h2>
         <p>در همین منطقه یا از همین نوع رسانه</p>

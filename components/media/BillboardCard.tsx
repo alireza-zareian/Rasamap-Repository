@@ -10,6 +10,7 @@ import { availabilityTone } from "@/components/ui/availability";
 import { cssVar } from "@/components/ui/css-var";
 import { mediaPhotoTransition } from "@/components/ui/transitions";
 import styles from "./BillboardCard.module.css";
+import defer from "@/components/ui/defer.module.css";
 
 interface BillboardCardProps {
   billboard: CatalogueItem;
@@ -51,7 +52,7 @@ export default function BillboardCard({ billboard: b, isPicked, onPick, listMode
 
   if (listMode) {
     return (
-      <div data-testid="billboard-card" className={`${styles.row} ${isPicked ? styles.picked : ""} ${highlighted ? styles.lit : ""}`} style={tone} {...hover}>
+      <div data-testid="billboard-card" className={`${styles.row} ${defer.defer} ${isPicked ? styles.picked : ""} ${highlighted ? styles.lit : ""}`} style={tone} {...hover}>
         <div className={styles.thumb}>
           {/* 88 CSS pixels, so the loader hands over the 256-wide variant. */}
           <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="88px" iconSize={26} />
@@ -70,7 +71,7 @@ export default function BillboardCard({ billboard: b, isPicked, onPick, listMode
 
   return (
     <div data-testid="billboard-card" style={tone} {...hover}
-      className={`${styles.card} ${isPicked ? styles.picked : ""} ${highlighted ? styles.lit : ""} ${b.featured ? "gradient-frame" : ""}`}>
+      className={`${styles.card} ${defer.defer} ${isPicked ? styles.picked : ""} ${highlighted ? styles.lit : ""} ${b.featured ? "gradient-frame" : ""}`}>
       <div className={styles.photo}>
         {/* Shares its name with the media page's gallery, so opening the card
             morphs the photo (§37). One card per slug, so the name is unique. */}
