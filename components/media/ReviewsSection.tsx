@@ -7,7 +7,7 @@ import { faNum } from "@/lib/format";
 import { fetchJson, errorMessage } from "@/lib/client/fetch-json";
 import { Star, MessageSquare, Send, Check, Pencil, Trash2, X, CornerDownLeft, ShieldCheck } from "lucide-react";
 import { hasRole, isStaffRole } from "@/lib/domain/roles";
-import { REVIEW_COMMENT, REVIEW_REPLY } from "@/lib/domain/rating";
+import { REVIEW_COMMENT, REVIEW_REPLY, combineRatings, type RatingSummary } from "@/lib/domain/rating";
 import { Button } from "@/components/ui/Button";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import form from "@/components/ui/form.module.css";
@@ -33,7 +33,11 @@ interface Review {
   replies: Reply[];
 }
 
-interface Props { billboardId: number; }
+interface Props {
+  billboardId: number;
+  /** The demonstration part of the rating (§42), joined with the reviews below in the header. */
+  baseline?: RatingSummary;
+}
 
 function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
   const [hover, setHover] = useState(0);
@@ -74,7 +78,7 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
   );
 }
 
-export default function ReviewsSection({ billboardId }: Props) {
+export default function ReviewsSection({ billboardId, baseline }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [avg, setAvg] = useState<number | null>(null);
   const [total, setTotal] = useState(0);
@@ -212,15 +216,20 @@ export default function ReviewsSection({ billboardId }: Props) {
 
   const date = (iso: string) => new Date(iso).toLocaleDateString("fa-IR");
 
+  // The header is the same figure the card showed: the written reviews, plus
+  // the demonstration ratings while they are on. Live, so a new review moves it.
+  const written: RatingSummary = { rating: avg ?? 0, count: total };
+  const summary = baseline ? combineRatings(baseline, written) : written;
+
   return (
     <section className={`${styles.section} ${reveal.reveal}`}>
       <div className={styles.head}>
         <h2 className={styles.title}><MessageSquare size={16} /> نظرات و امتیاز</h2>
-        {avg !== null && (
+        {summary.count > 0 && (
           <div className={styles.summary}>
-            <StarRating value={Math.round(avg)} />
-            <span className={styles.average}>{faNum(avg)}</span>
-            <span className={styles.count}>({faNum(total)} نظر)</span>
+            <StarRating value={Math.round(summary.rating)} />
+            <span className={styles.average}>{faNum(summary.rating)}</span>
+            <span className={styles.count}>({faNum(summary.count)} امتیاز)</span>
           </div>
         )}
       </div>
@@ -272,7 +281,7 @@ export default function ReviewsSection({ billboardId }: Props) {
       ) : reviews.length === 0 ? (
         <div className={`${styles.state} ${styles.empty}`}>
           <Star size={28} />
-          هنوز نظری ثبت نشده — اولین نفر باشید!
+          هنوز نظری نوشته نشده — اولین نفر باشید!
         </div>
       ) : (
         <ul className={styles.list}>

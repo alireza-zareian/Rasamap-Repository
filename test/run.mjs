@@ -35,6 +35,9 @@ const env = {
   UPLOAD_DIR: "storage/test-uploads",
   // No SMS and no on-screen echo: helpers.recoverOtpCode() finds the code.
   OTP_DEV_ECHO: "0",
+  // The suite checks the reviews' own arithmetic (an average recomputed, not
+  // incremented); the demonstration baseline is tested in test/unit.
+  DEMO_RATINGS: "off",
   // Every test request names its own address in X-Forwarded-For, so buckets do
   // not collide across tests; that is the behind-a-proxy reading. The demo's
   // own .env says 0, where server.mjs's socket address is used instead.

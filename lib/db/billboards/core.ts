@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import type { ZodType } from "zod";
 import type { Billboard, CatalogueItem, Moderation } from "../../types";
 import { NO_TRAFFIC, StringListSchema, TrafficSchema } from "@/lib/domain/billboard";
+import { combineRatings, demoRating, type RatingSummary } from "@/lib/domain/rating";
 import { logger } from "@/lib/logger";
 import { isPlottable } from "@/lib/geo/distance";
 
@@ -37,12 +38,33 @@ function jsonColumn<T>(schema: ZodType<T>, value: unknown, empty: T, id: number,
   return empty;
 }
 
+/**
+ * Whether ratings carry a demonstration baseline (§42). The catalogue has no
+ * reviews of its own yet, and an empty star slot on every card is not what the
+ * product will look like; DEMO_RATINGS=off is the switch for the day it has.
+ * Read once at start, so changing it needs a restart (and up to the catalogue
+ * cache's five minutes).
+ */
+const DEMO_RATINGS = process.env.DEMO_RATINGS !== "off";
+
+/**
+ * The demonstration part of a row's rating, or none. An owner's own listing
+ * gets none: it is someone's real submission, shown as it stands.
+ */
+function ratingBaseline(id: number, source: string | null): RatingSummary | undefined {
+  return DEMO_RATINGS && source !== "listing" ? demoRating(id) : undefined;
+}
+
 /** A row as read, with the crawler's timestamp when the query asked for it. */
 type RowWithSource = Row & { sourceRecord?: { scrapedAt: string | null } | null };
 
 /** Prisma row → domain record. Internal to this folder; not re-exported by ./index.ts. */
 export function fromRow(row: RowWithSource): Billboard {
   const { id } = row;
+  // rating/reviewCount in the table are the reviews' own summary (lib/db/reviews.ts).
+  const reviews = { rating: row.rating, count: row.reviewCount };
+  const baseline = ratingBaseline(id, row.source);
+  const shown = baseline ? combineRatings(baseline, reviews) : reviews;
   return {
     id,
     name: row.name,
@@ -71,8 +93,9 @@ export function fromRow(row: RowWithSource): Billboard {
     description: row.description,
     features: jsonColumn(StringListSchema, row.features, [], id, "features"),
     nearbyLandmarks: jsonColumn(StringListSchema, row.nearbyLandmarks, [], id, "nearbyLandmarks"),
-    rating: row.rating,
-    reviewCount: row.reviewCount,
+    rating: shown.rating,
+    reviewCount: shown.count,
+    ...(baseline ? { ratingBaseline: baseline } : {}),
     plan: row.plan,
     featured: row.featured,
     source: row.source ?? undefined,

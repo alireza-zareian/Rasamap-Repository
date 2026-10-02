@@ -60,8 +60,15 @@ export interface Billboard {
   description: string;
   features: string[];
   nearbyLandmarks: string[];
+  /**
+   * The rating a visitor is shown. While demonstration ratings are on (§42)
+   * it is `ratingBaseline` combined with the real reviews; otherwise only the
+   * reviews.
+   */
   rating: number;
   reviewCount: number;
+  /** The demonstration part of `rating`, when there is one. Never sent as structured data. */
+  ratingBaseline?: { rating: number; count: number };
   // `plan` is what the submitter asked for; `featured` is what staff granted
   // after confirming payment, and the only one that affects ordering (§18).
   plan: ListingPlan;

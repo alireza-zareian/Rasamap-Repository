@@ -73,8 +73,9 @@ function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
       areaServed: { "@type": "City", name: b.city },
       ...(phoneAvailable ? { seller: { "@type": "Organization", name: b.agency || "رسامپ" } } : {}),
     },
-    // Only from real reviews.
-    ...(b.reviewCount > 0
+    // Only from real reviews: a figure with a demonstration part (§42) is
+    // never handed to a search engine as people's ratings.
+    ...(b.reviewCount > 0 && !b.ratingBaseline
       ? {
           aggregateRating: {
             "@type": "AggregateRating",
@@ -251,7 +252,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
                 </section>
               )}
 
-              <ReviewsSection billboardId={b.id} />
+              <ReviewsSection billboardId={b.id} baseline={b.ratingBaseline} />
             </div>
           </div>
 

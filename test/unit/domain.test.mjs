@@ -9,7 +9,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { derivedPrices } from "../../lib/domain/pricing.ts";
-import { averageRating } from "../../lib/domain/rating.ts";
+import { averageRating, combineRatings, demoRating } from "../../lib/domain/rating.ts";
 import { hasRole, isStaffRole } from "../../lib/domain/roles.ts";
 import { DomainError, isUniqueViolation, notFound } from "../../lib/domain/errors.ts";
 import { NO_TRAFFIC, StringListSchema, TrafficSchema } from "../../lib/domain/billboard.ts";
@@ -27,6 +27,25 @@ test("the three longer prices follow from the monthly one", () => {
 test("a rating shows one decimal, and an unrated item shows 0", () => {
   assert.equal(averageRating(4.25), 4.3);
   assert.equal(averageRating(null), 0);
+});
+
+test("a demonstration rating is stable per item, in range, and varies between items", () => {
+  const seen = new Set();
+  for (let id = 1; id <= 2000; id++) {
+    const r = demoRating(id);
+    assert.deepEqual(demoRating(id), r, "same id, same figures");
+    assert.ok(r.rating >= 3.8 && r.rating <= 5, `rating ${r.rating} out of range`);
+    assert.equal(Math.round(r.rating * 10), r.rating * 10, "one decimal place");
+    assert.ok(Number.isInteger(r.count) && r.count >= 3 && r.count <= 42, `count ${r.count} out of range`);
+    seen.add(`${r.rating}/${r.count}`);
+  }
+  assert.ok(seen.size > 300, "neighbouring ids must not share their figures");
+});
+
+test("a real review joins the demonstration figures instead of replacing them", () => {
+  assert.deepEqual(combineRatings({ rating: 4.5, count: 34 }, { rating: 1, count: 1 }), { rating: 4.4, count: 35 });
+  assert.deepEqual(combineRatings({ rating: 4, count: 3 }, { rating: 0, count: 0 }), { rating: 4, count: 3 });
+  assert.deepEqual(combineRatings({ rating: 0, count: 0 }, { rating: 0, count: 0 }), { rating: 0, count: 0 });
 });
 
 test("roles form a ladder, and a customer is not on it", () => {
