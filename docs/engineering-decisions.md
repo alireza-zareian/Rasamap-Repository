@@ -2652,6 +2652,9 @@ scroll in on a view timeline; the help page's plus turns into a cross.
 | A media page's own 404, inside the site's frame | A board taken down was a bare screen with one way home. |
 | "Recently viewed" on `/saved` | The boards this browser opened last, kept in localStorage — so a guest has it and the cached media page stays identical for everyone. |
 
+*The ratings part of this was reversed in §42: the demonstration figures came
+back as a read-time layer, with structured data still from real reviews only.*
+
 **Tidied.** `faMillions()` instead of fifteen hand-built `${faNum(p)}M`; one
 `--heart` colour; `PLANS` shared; the dropped `@fontsource` dependency.
 
@@ -2666,6 +2669,80 @@ ESLint and `tsc` clean, the build warning-free; 20 unit + 193 API + 8 importer
 tests and 13 browser flows. A crawl of 220 internal addresses as a guest and as
 a customer found no broken link. The traces and timings above were taken
 before and after each change on the same machine.
+
+---
+
+## 42. Demonstration ratings, done properly — and a second research pass
+
+**Context.** After §41 the project's owner asked for the demo ratings back: the
+catalogue has no reviews of its own yet, and cards without stars do not show
+the product as it will look. Replacing the invented customers and brands on the
+landing page stood. They also asked for a second, wider search of current
+practice, and for screenshots of the pages.
+
+**How the ratings came back.** Not as stored numbers again. §41's objections to
+those still hold — they went to search engines as people's ratings, and the
+first real review collapsed "(34)" to "(1)" — so the demonstration figures are a
+separate, read-time layer:
+
+| Piece | Where | What it does |
+|---|---|---|
+| `demoRating(id)` | `lib/domain/rating.ts` | 3.8–5 stars over 3–42 ratings (the crawler's old range) from a hash of the id: the same on every page, machine and restart, and nothing in the table |
+| `combineRatings` | same | a real review *joins* the figures, weighted by count: "(34)" → "(35)" |
+| baseline in `fromRow` | `lib/db/billboards/core.ts` | every public read shows the combined figure; an owner's own listing gets none; `ratingBaseline` travels with the record |
+| structured data | `MediaPage.tsx` | `AggregateRating` only when there is no baseline — real reviews alone |
+| reviews header | `ReviewsSection.tsx` | the same combined figure as the card, live, with "(n امتیاز)"; the list below is the written reviews |
+| `DEMO_RATINGS=off` | `lib/env.ts`, `.env.example` | the switch for launch; the table already holds only the reviews' summary, so turning it off needs no migration |
+
+The API suite runs with the switch off and still checks the reviews'
+arithmetic; the baseline's range, stability (2,000 ids, >300 distinct figures)
+and blending are unit tests.
+
+**Found on the way.** README's setup copies `.env.example`, which leaves the
+optional variables blank; Next loads `LOG_LEVEL=` as an empty string and the
+startup check refused it as an invalid value — a server set up exactly as
+documented would not start. A blank value now means unset; a wrong one is
+still refused.
+
+**What the second search found, and what came of it.**
+
+| Finding | Decision |
+|---|---|
+| The outdoor-media marketplaces (AdQuick, Blip) lead with planning to a budget | **Built:** a budget on the campaign planner (below) |
+| Lazy-loading the image that is the largest paint delays it | **Fixed:** the first two catalogue cards load their photo eagerly at high priority |
+| Brand names should carry `translate="no"` (Web Interface Guidelines) | **Done** on the logo |
+| Speculation-rules prerendering cuts navigation LCP 30–50 % | **Not applicable:** the App Router intercepts in-app links and navigates client-side, so a document prerender is never used; its own prefetching is §38/§41's subject |
+| `text-align: start/end` instead of left/right | **Left:** the site is right-to-left only, and the alignments that read `left` are deliberate (numbers at the far edge) |
+| Newer agent skills | **None needed:** the four pinned skills are each at their upstream head (`8a1541c`, `063bee9`, `e3d624b`, checked by cloning); Next 16.3's own skills target Cache Components (§26) |
+
+**The campaign budget.** A field under the totals, for the period chosen. It
+shows a bar of how much of the budget the plan uses and what is left — or by
+how much it is over, and the one board whose removal brings it within budget at
+the smallest loss, with a button to drop it. It is part of the address (`?b=`,
+millions of toman, 1–1,000,000) like the media and the period, so a shared plan
+carries it; Persian digits are read. `parseBudget` and `budgetCheck` are pure
+and unit-tested.
+
+**What the screenshots caught.**
+
+- *The media page's side column overlapped itself.* The sticky price card was
+  translucent and the location map below it scrolled up underneath, so the
+  coordinates and map links showed through its text. And the column was only as
+  tall as those two, so the card stuck only for the map's length. The location
+  is a section of the main column now, and the side column stretches to the
+  main column's height: the price and the way to the owner stay beside the
+  content from the photos to the reviews (measured at both widths: no box under
+  the card at any scroll).
+- On a phone the over-budget sentence left its mark alone on a line; a long
+  name widened one card of the recently viewed row.
+
+### Verified
+
+ESLint and `tsc` clean; 23 unit + 193 API + 8 importer tests and 13 browser
+flows. In a browser: demo stars on crawled cards, an owner's listing showing
+only its real reviews, no `AggregateRating` where a baseline exists; the budget
+field over and under budget, its suggestion and its button, the address
+following it; the sticky card's position through a full scroll.
 
 ---
 
@@ -2726,3 +2803,4 @@ before and after each change on the same machine.
 | 2026-09-28 | **Fifth review — navigation and the cached media page** | §39 — search history, back-to-results, whole-card links, the hidden showcase that kept downloading, an admin search race; media pages cached (22 → ~8 ms CPU) without caching made-up slugs; Google's map on demand; Tailwind dropped for its reset; canonical addresses and per-view titles; browser tests in CI; components/ in feature folders. |
 | 2026-09-28 | **Saved media, campaign planner, results map** | §40 — favorites with a guest's tap carried through sign-in; up to eight media priced per period with CPM, a map, a shareable address and print; price pins beside the results with two-way hover; the phone's action bar on a media page; a dark theme remembered again; no 401 in a guest's console. |
 | 2026-10-02 | **Sixth review — honesty, a phone's first second, what was missing** | §41 — Next 16.3.8 (critical `next/og` RCE closed); invented customers, brands and 3,528 random ratings removed (migration recomputes from reviews); `next/font` preload + `content-visibility`: phone TBT on `/` ~700 → ~250 ms; a phone can sign out; carousels obey WCAG 2.2.2; `/help`, a media 404 in the site frame, recently viewed. |
+| 2026-10-02 | **Demo ratings done properly; second research pass** | §42 — demonstration ratings from the id at read time, blended with real reviews, never in structured data, `DEMO_RATINGS=off` for launch; a blank optional env value no longer stops the server; campaign budget with the board to drop; first catalogue photos at high priority; the media page's sticky card no longer overlapped by the map. |
