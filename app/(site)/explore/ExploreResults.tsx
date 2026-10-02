@@ -91,7 +91,7 @@ export default function ExploreResults({ items, view }: { items: CatalogueItem[]
                 billboard={b}
                 priority={i < PRIORITY_CARDS && view === "grid"}
                 isPicked={picked.some(x => x.id === b.id)}
-                onPick={() => handlePick(b)}
+                onPick={handlePick}
                 listMode={view === "list"}
                 highlighted={showMap && hovered === b.slug}
                 onHover={showMap ? setHovered : undefined}

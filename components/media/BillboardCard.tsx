@@ -1,6 +1,6 @@
 "use client";
 import IntentLink from "@/components/ui/IntentLink";
-import { ViewTransition } from "react";
+import { memo, ViewTransition } from "react";
 import { Check, Plus, Star, Sparkles } from "lucide-react";
 import MediaImage from "@/components/media/MediaImage";
 import SaveButton from "@/components/favorites/SaveButton";
@@ -15,7 +15,7 @@ import defer from "@/components/ui/defer.module.css";
 interface BillboardCardProps {
   billboard: CatalogueItem;
   isPicked: boolean;
-  onPick: () => void;
+  onPick: (billboard: CatalogueItem) => void;
   listMode?: boolean;
   /** Its pin on the results map is under the pointer. */
   highlighted?: boolean;
@@ -25,7 +25,14 @@ interface BillboardCardProps {
   priority?: boolean;
 }
 
-export default function BillboardCard({ billboard: b, isPicked, onPick, listMode = false, highlighted = false, onHover, priority = false }: BillboardCardProps) {
+/**
+ * Memoised: on /explore every card the pointer crosses lights its pin on the
+ * results map, a state change in ExploreResults. Re-rendering every card for
+ * it was most of what scrolling the catalogue cost (§44); now only the two
+ * cards whose highlight flips render again. Its props stay stable for that:
+ * `onPick` takes the media rather than closing over it.
+ */
+function BillboardCard({ billboard: b, isPicked, onPick, listMode = false, highlighted = false, onHover, priority = false }: BillboardCardProps) {
   const hover = onHover
     ? { onMouseEnter: () => onHover(b.slug), onMouseLeave: () => onHover(null) }
     : {};
@@ -42,7 +49,7 @@ export default function BillboardCard({ billboard: b, isPicked, onPick, listMode
   );
   const actions = (
     <div className={styles.actions}>
-      <button type="button" className={styles.action} onClick={e => { e.stopPropagation(); onPick(); }}
+      <button type="button" className={styles.action} onClick={e => { e.stopPropagation(); onPick(b); }}
         aria-label={isPicked ? `حذف «${b.name}» از کمپین` : `افزودن «${b.name}» به کمپین`} aria-pressed={isPicked}>
         {isPicked ? <Check size={12} /> : <Plus size={12} />} کمپین
       </button>
@@ -102,3 +109,5 @@ export default function BillboardCard({ billboard: b, isPicked, onPick, listMode
     </div>
   );
 }
+
+export default memo(BillboardCard);
