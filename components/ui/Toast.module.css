@@ -1,5 +1,8 @@
+/* Centred with `translate`, so the entry animation's `transform` adds to it.
+   Both were `transform`, and the keyframes replaced the centring: every toast
+   slid in half its width off centre and jumped sideways as it finished. */
 .toast {
-  position: fixed; left: 50%; z-index: 500; transform: translateX(-50%);
+  position: fixed; left: 50%; z-index: 500; translate: -50% 0;
   bottom: calc(var(--bottomnav-offset, 0px) + 80px);
   max-width: min(400px, calc(100vw - 32px));
   padding: 12px 22px; border-radius: 10px;
@@ -11,6 +14,8 @@
 .success { --tone: var(--green); }
 .error { --tone: var(--red); }
 .info { --tone: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 
 /* Here, not in globals.css: a module renames the animations it names. */
 @keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }

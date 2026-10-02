@@ -156,7 +156,9 @@
   .showcase { display: none; }
   .locToggle { display: flex; }
   .secondary { display: none; }
-  .secondaryOpen { display: block; }
+  /* Unfolds rather than appears: @starting-style is the state it starts from. */
+  .secondaryOpen { display: block; transition: opacity 0.2s ease, transform 0.22s ease; }
+  @starting-style { .secondaryOpen { opacity: 0; transform: translateY(-6px); } }
   .bar { padding: 10px 14px; }
   .grid, .list { padding: 12px; }
   .grid { grid-template-columns: 1fr; }

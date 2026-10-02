@@ -13,6 +13,17 @@
   background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
 }
+/* Opening eases in from the state @starting-style names: no keyframes and no
+   script, and only opacity and transform, so the compositor draws it (§37).
+   A browser without @starting-style opens it at once, as before. */
+.backdrop { transition: opacity 0.18s ease; }
+.box { transition: opacity 0.2s ease, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@starting-style {
+  .backdrop { opacity: 0; }
+  .box { opacity: 0; transform: translateY(14px) scale(0.98); }
+}
+@media (prefers-reduced-motion: reduce) { .backdrop, .box { transition: none; } }
+
 .sm { --width: 440px; }
 .md { --width: 620px; }
 .lg { --width: 860px; }

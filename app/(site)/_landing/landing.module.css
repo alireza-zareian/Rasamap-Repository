@@ -127,7 +127,14 @@
 .cityName { display: flex; align-items: center; gap: 6px; font-weight: 800; }
 .cityName svg { color: var(--accent); }
 .cityCount { font-size: 0.75rem; color: var(--text-muted); }
-.cityBar { position: absolute; right: 0; bottom: 0; height: 4px; width: var(--share); border-radius: 4px 0 0 4px; background: var(--accent-grad); }
+.cityBar { position: absolute; right: 0; bottom: 0; height: 4px; width: var(--share); border-radius: 4px 0 0 4px; background: var(--accent-grad); transform-origin: right; }
+/* Each bar grows to its share as its card scrolls in: a scale on a view
+   timeline, so the compositor draws it and nothing runs once it has grown. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .cityBar { animation: grow linear both; animation-timeline: view(); animation-range: entry 20% cover 35%; }
+  }
+}
 .moreRow { display: flex; justify-content: center; margin-top: 28px; }
 .sectionLede { max-width: 560px; margin: 14px auto 0; font-size: 0.88rem; line-height: 1.9; color: var(--text-muted); }
 
@@ -247,4 +254,5 @@
 }
 
 /* Here, not in globals.css: a module renames the animations it names. */
+@keyframes grow { from { transform: scaleX(0); } }
 @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
