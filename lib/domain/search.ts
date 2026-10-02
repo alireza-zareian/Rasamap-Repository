@@ -1,16 +1,20 @@
 /**
  * How search compares Persian text. One word arrives in several spellings:
  * many keyboards type Arabic ي and ك for ی and ک («كرج» found 1 of Karaj's 273
- * boards), a half-space is a space to a reader, Persian and Arabic digits are
- * Latin ones, and a tatweel changes nothing.
+ * boards), a phone keyboard rarely reaches آ («ازادی» found 3 boards against
+ * «آزادی»'s 57), a half-space is a space to a reader, Persian and Arabic digits
+ * are Latin ones, and a tatweel changes nothing.
  *
  * Both sides fold through this one table: the stored `searchText` column, which
  * SQLite triggers fill (migration 20260925160000_add_search_text, written by
- * searchTextSql()), and the query, by searchTokens(). Changing the table needs
- * a migration that rewrites the column and the triggers.
+ * searchTextSql(), last rewritten by 20261002120000_search_fold_alef), and the
+ * query, by searchTokens(). Changing the table needs a migration that rewrites
+ * the column and the triggers, and the same change to translate() in
+ * scripts/to-postgres.mjs.
  */
 export const SEARCH_FOLD: readonly (readonly [from: string, to: string])[] = [
   ["ي", "ی"], ["ى", "ی"], ["ك", "ک"], ["ة", "ه"], ["ۀ", "ه"],
+  ["آ", "ا"], ["أ", "ا"], ["إ", "ا"],
   ["ـ", ""], ["\u200c", " "],
   ..."۰۱۲۳۴۵۶۷۸۹".split("").map((d, i) => [d, String(i)] as const),
   ..."٠١٢٣٤٥٦٧٨٩".split("").map((d, i) => [d, String(i)] as const),
