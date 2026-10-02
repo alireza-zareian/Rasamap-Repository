@@ -14,6 +14,7 @@ import TrafficMeter from "@/components/media/TrafficMeter";
 import BillboardContact from "@/components/media/BillboardContact";
 import MapEmbed from "@/components/media/MapEmbed";
 import MediaActionBar from "@/components/media/MediaActionBar";
+import RememberVisit from "@/components/media/RememberVisit";
 import SaveButton from "@/components/favorites/SaveButton";
 import AddToCampaign from "@/components/campaign/AddToCampaign";
 import { typeLabels, availabilityLabels, moderationLabels, DATA_SOURCES, type Billboard } from "@/lib/types";
@@ -327,6 +328,10 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
 
       <RelatedBillboards items={related} />
       <MediaActionBar item={item} contactId={CONTACT_CARD} />
+      {/* A staff preview of a listing in review is not something to come back to. */}
+      {!unpublished && (
+        <RememberVisit item={{ slug: b.slug, name: b.name, city: b.city, type: b.type, price: b.price, image: b.images?.[0] }} />
+      )}
     </main>
   );
 }

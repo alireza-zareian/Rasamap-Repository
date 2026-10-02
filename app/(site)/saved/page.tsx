@@ -5,6 +5,7 @@ import { listFavorites } from "@/lib/db/favorites";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import SavedResults from "./SavedResults";
+import RecentlyViewed from "@/components/media/RecentlyViewed";
 import styles from "./saved.module.css";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 /**
  * A customer's saved media, read on the server (§40). A guest is shown why
  * there is nothing yet and the way to sign in; staff accounts have no list.
+ * Under either, the media this browser opened last (§41).
  */
 export default async function SavedPage() {
   const actor = await getActor();
@@ -39,6 +41,9 @@ export default async function SavedPage() {
           </EmptyState>
         </div>
       )}
+
+      {/* Kept by this browser, so a guest has it too. */}
+      <RecentlyViewed />
     </main>
   );
 }
