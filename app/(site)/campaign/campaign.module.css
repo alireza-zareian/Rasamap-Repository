@@ -55,8 +55,10 @@
 .budgetResult[data-over] { --fit: var(--red); }
 .budgetBar { height: 8px; border-radius: 4px; background: var(--bg-surface); overflow: hidden; }
 .budgetFill { height: 100%; border-radius: 4px; background: var(--fit); transition: width 0.3s ease; }
-.budgetResult p { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; font-size: 0.82rem; }
-.budgetResult p > svg { color: var(--fit); flex-shrink: 0; }
+/* Running text, so a long board name wraps with its sentence and the mark stays at its start. */
+.budgetResult p { margin: 8px 0 0; font-size: 0.82rem; line-height: 2; }
+.budgetResult p > svg { display: inline-block; vertical-align: -2px; margin-left: 6px; color: var(--fit); }
+.budgetResult p > button { margin-right: 6px; vertical-align: middle; }
 .budgetHint { margin: 8px 0 0; font-size: 0.75rem; color: var(--text-muted); }
 @media (prefers-reduced-motion: reduce) { .budgetFill { transition: none; } }
 

@@ -16,7 +16,8 @@
   display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 10px;
   scroll-snap-type: x proximity; overscroll-behavior-x: contain; scrollbar-width: thin;
 }
-.row > li { flex: 0 0 200px; scroll-snap-align: start; }
+/* min-width: a long name would otherwise widen its card past 200px (a flex item never shrinks below its content). */
+.row > li { flex: 0 0 200px; min-width: 0; scroll-snap-align: start; }
 .card {
   display: block; height: 100%; overflow: hidden; border-radius: 12px; text-decoration: none; color: var(--text-main);
   background: var(--bg-card); border: 1px solid var(--border);
