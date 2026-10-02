@@ -33,6 +33,8 @@ const optional = z.object({
   // Absolute site URL for sitemap/OG/canonical links (lib/site-url.ts);
   // defaults to https://rasamap.ir.
   NEXT_PUBLIC_BASE_URL: z.string().url("must be a valid URL").optional(),
+  // Demonstration ratings on the cards (lib/db/billboards/core.ts, §42); on unless "off".
+  DEMO_RATINGS: z.enum(["on", "off"]).optional(),
   // Shared cache (cache-handler.js, next.config.ts) — dormant until set.
   REDIS_URL: z.string().url("must be a valid redis:// URL").optional(),
   REDIS_PREFIX: z.string().optional(),
@@ -53,7 +55,10 @@ export function validateEnv(): void {
     );
   }
 
-  const opt = optional.safeParse(process.env);
+  // An empty value means unset: .env.example leaves the optional ones blank
+  // (`LOG_LEVEL=`), and a copy of it used to stop the server as "invalid".
+  const present = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== ""));
+  const opt = optional.safeParse(present);
   if (!opt.success) {
     const lines = opt.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`);
     throw new Error("Invalid optional environment variable:\n" + lines.join("\n"));
