@@ -1,4 +1,5 @@
 "use client";
+import { useMemo } from "react";
 import { X } from "lucide-react";
 import type { CatalogueItem } from "@/lib/types";
 import PinMap, { type MapPoint } from "@/components/map/PinMap";
@@ -19,8 +20,11 @@ export default function ResultsMap({ items, active, onHover, onClose }: {
   onHover: (slug: string | null) => void;
   onClose: () => void;
 }) {
-  const points: MapPoint[] = items.flatMap(b =>
-    b.lat != null && b.lng != null ? [{ slug: b.slug, name: b.name, lat: b.lat, lng: b.lng, label: faMillions(b.price) }] : []);
+  // Kept across renders: the map re-renders on every hover (`active`), and a
+  // fresh array here voided all of PinMap's memos, so each card the pointer
+  // crossed rebuilt every province outline (§44).
+  const points: MapPoint[] = useMemo(() => items.flatMap(b =>
+    b.lat != null && b.lng != null ? [{ slug: b.slug, name: b.name, lat: b.lat, lng: b.lng, label: faMillions(b.price) }] : []), [items]);
   const unplaced = items.length - points.length;
 
   return (

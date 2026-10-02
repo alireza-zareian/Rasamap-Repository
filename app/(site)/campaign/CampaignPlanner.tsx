@@ -119,8 +119,10 @@ export default function CampaignPlanner({ items, requested, period, budget: init
     setTimeout(() => setShared(null), 2500);
   };
 
-  const points: MapPoint[] = shown.flatMap((b, i) =>
-    b.lat != null && b.lng != null ? [{ slug: b.slug, name: b.name, lat: b.lat, lng: b.lng, label: faNum(i + 1) }] : []);
+  // The same array until the plan changes: PinMap memoises on it, and hovering
+  // a pin or a row re-renders this page (§44).
+  const points: MapPoint[] = useMemo(() => shown.flatMap((b, i) =>
+    b.lat != null && b.lng != null ? [{ slug: b.slug, name: b.name, lat: b.lat, lng: b.lng, label: faNum(i + 1) }] : []), [shown]);
 
   const tiles = [
     { Icon: Wallet, label: `هزینهٔ ${periodLabel}`, value: money(totals.cost), tone: "var(--accent-warm)" },
