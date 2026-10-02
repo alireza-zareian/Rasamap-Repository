@@ -2277,13 +2277,20 @@ test("guard: only signing out is exempt from rate limiting", () => {
   }
 });
 
-test("guard: every infinite marquee pauses with the tab", () => {
+test("guard: every infinite marquee pauses with the tab, and off screen", () => {
   const css = readFileSync("app/globals.css", "utf8");
   const paused = css.slice(css.indexOf("html.page-hidden"));
   for (const cls of ["ticker-strip", "related-strip"]) {
     assert.ok(
       paused.includes(cls),
       `.${cls} animates forever; add it to the html.page-hidden list in globals.css so a backgrounded tab stops waking the GPU (§22).`,
+    );
+    // SwipeMarquee marks its window .marquee-away while it is off screen; a
+    // running animation is serviced every frame even there (§44).
+    assert.match(
+      css,
+      new RegExp(`\\.marquee-away \\.${cls}[^{]*\\{[^}]*animation-play-state: paused`),
+      `.${cls} must pause under .marquee-away, or it ticks the main thread while nobody can see it (§44).`,
     );
   }
 });
