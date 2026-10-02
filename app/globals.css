@@ -96,8 +96,9 @@ html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
 
    The window is LTR: in an RTL window the strip overflows to the left, so
    nothing waits to slide in. The cards get RTL back. The window also scrolls
-   by hand; `.marquee-held` pauses while a pointer is down, and under reduced
-   motion only the manual scroll remains. */
+   by hand; `.marquee-held` pauses while a pointer is down, `.marquee-away`
+   while the window is off screen (SwipeMarquee), and under reduced motion only
+   the manual scroll remains. */
 .ticker-window,
 .related-marquee {
   direction: ltr;
@@ -114,6 +115,8 @@ html.has-staffbar body { padding-bottom: var(--staffbar-h, 0px); }
 .related-strip > * { direction: rtl; }
 .marquee-held .ticker-strip,
 .marquee-held .related-strip,
+.marquee-away .ticker-strip,
+.marquee-away .related-strip,
 .related-strip:hover { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   .related-strip { animation: none !important; }

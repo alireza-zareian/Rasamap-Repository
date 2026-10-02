@@ -23,7 +23,9 @@ export default function RelatedBillboards({ items }: { items: CatalogueItem[] })
   const duration = Math.max(18, items.length * 4);
 
   return (
-    // Deferred: at the foot of the page, its layout, paint and slide wait until it is near.
+    // Deferred: at the foot of the page, its layout and paint wait until it is near.
+    // The slide did not: skipped, it still ticked the main thread every frame
+    // (§44), so SwipeMarquee pauses it while it is away.
     <section className={`${styles.related} ${defer.defer}`}>
       <div className={styles.relatedHead}>
         <h2>رسانه‌های مرتبط</h2>
