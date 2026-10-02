@@ -2,10 +2,14 @@
 import { useEffect } from "react";
 import styles from "./BackgroundPattern.module.css";
 
+// How long after the last scroll event a still pointer gets its hover back.
+const HOVER_RESUME_MS = 150;
+
 /**
  * The backdrop behind every page: three soft lights on a desktop, none on a
  * phone. It also marks the document while the tab is hidden, which pauses
- * every infinite animation on the globals.css list (§22).
+ * every infinite animation on the globals.css list (§22), and while the page
+ * scrolls, which suspends hover on the content (globals.css, §44).
  *
  * Three "vine" strokes used to draw themselves across it on load. They ran
  * through the cards and forms in front — every card is translucent — and read
@@ -20,6 +24,25 @@ export default function BackgroundPattern() {
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
       document.documentElement.classList.remove("page-hidden");
+    };
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    let timer: number | undefined;
+    const onScroll = () => {
+      if (timer === undefined) root.classList.add("is-scrolling");
+      else clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        root.classList.remove("is-scrolling");
+        timer = undefined;
+      }, HOVER_RESUME_MS);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(timer);
+      root.classList.remove("is-scrolling");
     };
   }, []);
 

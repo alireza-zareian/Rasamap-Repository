@@ -314,6 +314,16 @@ html.page-hidden .skeleton {
   animation-play-state: paused !important;
 }
 
+/* While the page scrolls, the content slides under a still pointer, and every
+   card it crosses ran its hover — lift, shadow, photo zoom — for nobody to
+   see: on /explore, half of what a wheel scroll cost (§44). BackgroundPattern
+   marks the document for the length of a scroll, and hover returns shortly
+   after it stops (HOVER_RESUME_MS).
+   Touch screens have no hover to suspend, so they are left alone. */
+@media (hover: hover) {
+  html.is-scrolling main { pointer-events: none; }
+}
+
 /* A dot looks 6px but its target is 24px (WCAG 2.2, 2.5.8). With the rows'
    18px gap, neighbouring targets meet without overlapping — do not narrow it. */
 .carousel-dot { position: relative; }
