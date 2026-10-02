@@ -252,6 +252,33 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
                 </section>
               )}
 
+              {/* In the main column, not under the sticky price card: there it
+                  scrolled up beneath that translucent card and the two
+                  overlapped. A section of its own, as a listing page has it. */}
+              {at && links && (
+                <section className={`${styles.map} ${reveal.reveal}`}>
+                  <h2 className={styles.mapHead}>موقعیت</h2>
+                  <MapEmbed lat={at.lat} lng={at.lng} />
+                  {/* Google's embed is often unreachable from an Iranian mobile
+                      line, and a failed frame cannot be detected — so the
+                      coordinates and the Iranian map apps are always shown. */}
+                  <div className={styles.mapFoot}>
+                    <span className={styles.coords}>
+                      مختصات: <span>{at.lat.toFixed(5)}, {at.lng.toFixed(5)}</span>
+                    </span>
+                    <div className={styles.mapLinks}>
+                      {/* No geolocation needed — unavailable over http on the LAN. */}
+                      <IntentLink href={`/explore?lat=${at.lat.toFixed(6)}&lng=${at.lng.toFixed(6)}&radiusKm=${NEARBY_RADIUS_KM}`} className={styles.mapLink}>
+                        <Crosshair size={10} /> رسانه‌های نزدیک این نقطه
+                      </IntentLink>
+                      <a href={links.neshan} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>نشان <ExternalLink size={10} /></a>
+                      <a href={links.balad} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>بلد <ExternalLink size={10} /></a>
+                      <a href={links.google} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>گوگل مپ <ExternalLink size={10} /></a>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               <ReviewsSection billboardId={b.id} baseline={b.ratingBaseline} />
             </div>
           </div>
@@ -300,29 +327,6 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
               )}
             </div>
 
-            {at && links && (
-              <div className={styles.map}>
-                <div className={styles.mapHead}>موقعیت</div>
-                <MapEmbed lat={at.lat} lng={at.lng} />
-                {/* Google's embed is often unreachable from an Iranian mobile
-                    line, and a failed frame cannot be detected — so the
-                    coordinates and the Iranian map apps are always shown. */}
-                <div className={styles.mapFoot}>
-                  <span className={styles.coords}>
-                    مختصات: <span>{at.lat.toFixed(5)}, {at.lng.toFixed(5)}</span>
-                  </span>
-                  <div className={styles.mapLinks}>
-                    {/* No geolocation needed — unavailable over http on the LAN. */}
-                    <IntentLink href={`/explore?lat=${at.lat.toFixed(6)}&lng=${at.lng.toFixed(6)}&radiusKm=${NEARBY_RADIUS_KM}`} className={styles.mapLink}>
-                      <Crosshair size={10} /> رسانه‌های نزدیک این نقطه
-                    </IntentLink>
-                    <a href={links.neshan} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>نشان <ExternalLink size={10} /></a>
-                    <a href={links.balad} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>بلد <ExternalLink size={10} /></a>
-                    <a href={links.google} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>گوگل مپ <ExternalLink size={10} /></a>
-                  </div>
-                </div>
-              </div>
-            )}
           </aside>
         </div>
       </div>
