@@ -1,43 +1,53 @@
-/* The backdrop: four drifting orbs. Their colours are .bg-orb-N in
-   globals.css, beside the hidden-tab pause list. */
+/* The backdrop on a desktop: three soft lights, painted once on one fixed
+   layer. The page's fourth light, from above, is in globals.css (--top-light).
 
-.decor { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
-.anchor { position: absolute; }
-.orb { border-radius: 50%; }
+   They used to be four 560–900px discs drifting on 20–32 s loops: motion too
+   slow to see, which kept the browser drawing 60 frames a second on a page
+   nobody touched — 300 frames in 5 s idle on /help, 0 once they stood still.
 
-.one   { top: -180px; left: 6%; }
-.two   { bottom: -160px; right: 4%; }
-.three { top: 28%; right: -60px; }
-.four  { bottom: -80px; left: 22%; }
+   Each light fades along 1 − smoothstep in five stops, so it reaches zero
+   almost flat. A straight fade stops with a visible rim (a Mach band), which
+   is what made the old ones read as discs. The grain overlay dithers the
+   8-bit banding a fade this faint would otherwise show. */
 
-.one .orb   { width: 900px; height: 900px; animation: orb-drift-1 32s ease-in-out infinite; }
-.two .orb   { width: 780px; height: 780px; animation: orb-drift-2 26s ease-in-out infinite -10s; }
-.three .orb { width: 560px; height: 560px; animation: orb-drift-3 20s ease-in-out infinite -4s; }
-.four .orb  { width: 640px; height: 640px; animation: orb-drift-1 28s ease-in-out infinite -16s; }
+.decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    /* green, low right of centre */
+    radial-gradient(circle 380px at 69% 76%,
+      rgba(0,209,122,0.18) 0%, rgba(0,209,122,0.152) 25%, rgba(0,209,122,0.09) 50%,
+      rgba(0,209,122,0.028) 75%, transparent 100%),
+    /* blue, at the right edge */
+    radial-gradient(circle 300px at 88% 58%,
+      rgba(59,123,245,0.13) 0%, rgba(59,123,245,0.11) 25%, rgba(59,123,245,0.065) 50%,
+      rgba(59,123,245,0.02) 75%, transparent 100%),
+    /* warm, low left of centre */
+    radial-gradient(circle 340px at 42% 78%,
+      rgba(220,80,180,0.16) 0%, rgba(220,80,180,0.135) 25%, rgba(220,80,180,0.08) 50%,
+      rgba(220,80,180,0.025) 75%, transparent 100%);
+}
 
-/* Four large blurred layers cost a phone's GPU; a phone keeps only the dot grid. */
+/* Sky and a low sun, not violet and pink: the stock haze of generated sites.
+   The amber is --accent-warm, the price colour, at a whisper. */
+:global([data-theme="light"]) .decor {
+  background:
+    radial-gradient(circle 380px at 69% 76%,
+      rgba(0,180,100,0.22) 0%, rgba(0,180,100,0.186) 25%, rgba(0,180,100,0.11) 50%,
+      rgba(0,180,100,0.034) 75%, transparent 100%),
+    radial-gradient(circle 300px at 88% 58%,
+      rgba(56,170,230,0.16) 0%, rgba(56,170,230,0.135) 25%, rgba(56,170,230,0.08) 50%,
+      rgba(56,170,230,0.025) 75%, transparent 100%),
+    radial-gradient(circle 340px at 42% 78%,
+      rgba(245,166,35,0.13) 0%, rgba(245,166,35,0.11) 25%, rgba(245,166,35,0.065) 50%,
+      rgba(245,166,35,0.02) 75%, transparent 100%);
+}
+
+/* A phone keeps the light from above and the dot grid, as before: one
+   viewport-sized layer fewer on the weakest GPU. */
 @media (max-width: 768px) {
   .decor { display: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .orb { animation: none !important; }
-}
-
-/* Here, not in globals.css: a module renames the animations it names. */
-@keyframes orb-drift-1 {
-  0%,100% { transform: translate(0,0) scale(1); }
-  33%     { transform: translate(70px,-50px) scale(1.06); }
-  66%     { transform: translate(-40px,60px) scale(0.96); }
-}
-@keyframes orb-drift-2 {
-  0%,100% { transform: translate(0,0) scale(1); }
-  40%     { transform: translate(-90px,40px) scale(1.09); }
-  70%     { transform: translate(55px,-70px) scale(0.94); }
-}
-@keyframes orb-drift-3 {
-  0%,100% { transform: translate(0,0); }
-  50%     { transform: translate(60px,50px); }
 }
 
 @media print { .decor { display: none; } }

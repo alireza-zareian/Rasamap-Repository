@@ -47,6 +47,12 @@
   --bottomnav-h: 60px;
   --topbar-bg:   rgba(10,14,26,0.95);
 
+  /* The page's light from above and its dot grid (body, below). The light
+     fades along 1 − smoothstep, like the backdrop's (BackgroundPattern). */
+  --top-light: radial-gradient(ellipse 62% 520px at 50% 0,
+    rgba(59,123,245,0.15) 0%, rgba(59,123,245,0.127) 25%, rgba(59,123,245,0.075) 50%,
+    rgba(59,123,245,0.023) 75%, transparent 100%);
+  --dot: rgba(59,123,245,0.065);
 }
 
 /* ── Base ───────────────────────────────────────────────────────── */
@@ -61,12 +67,14 @@ html { scroll-padding-top: calc(var(--topbar-h) + 12px); }
 body {
   /* The two files of app/fonts.ts, then what the device has. */
   font-family: var(--font-fa), var(--font-latin), 'Segoe UI', Tahoma, sans-serif;
-  background: var(--bg-deep);
+  background-color: var(--bg-deep);
   color: var(--text-main);
   direction: rtl;
-  /* Subtle dot grid — visible in open areas */
-  background-image: radial-gradient(circle, rgba(59,123,245,0.065) 1px, transparent 1px);
-  background-size: 28px 28px;
+  /* Anchored to the top of the page, not the screen: the light greets a page
+     and scrolls away with its top, instead of sitting behind what is read. */
+  background-image: var(--top-light), radial-gradient(circle, var(--dot) 1px, transparent 1px);
+  background-size: auto, 28px 28px;
+  background-repeat: no-repeat, repeat;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────── */
@@ -188,19 +196,6 @@ input[type=range] { accent-color: var(--accent); }
   100% { background-position:  200% 0; }
 }
 
-/* ── Background orbs — theme-aware via class ───────────────────── */
-.bg-orb-1 { background: radial-gradient(circle, rgba(59,123,245,0.24) 0%, transparent 62%); }
-.bg-orb-2 { background: radial-gradient(circle, rgba(0,209,122,0.18) 0%, transparent 62%); }
-.bg-orb-3 { background: radial-gradient(circle, rgba(59,123,245,0.13) 0%, transparent 62%); }
-.bg-orb-4 { background: radial-gradient(circle, rgba(220,80,180,0.16) 0%, transparent 62%); }
-
-[data-theme="light"] .bg-orb-1 { background: radial-gradient(circle, rgba(80,120,255,0.30) 0%, transparent 55%); }
-[data-theme="light"] .bg-orb-2 { background: radial-gradient(circle, rgba(0,180,100,0.22) 0%, transparent 55%); }
-/* Sky and a low sun, not violet and pink: the stock haze of generated sites.
-   The amber is --accent-warm, the price colour, at a whisper. */
-[data-theme="light"] .bg-orb-3 { background: radial-gradient(circle, rgba(56,170,230,0.16) 0%, transparent 55%); }
-[data-theme="light"] .bg-orb-4 { background: radial-gradient(circle, rgba(245,166,35,0.13) 0%, transparent 55%); }
-
 /* ── Light theme ────────────────────────────────────────────────── */
 [data-theme="light"] {
   color-scheme: light;
@@ -224,17 +219,10 @@ input[type=range] { accent-color: var(--accent); }
 
   --topbar-bg: rgba(240,242,248,0.97);
 
-}
-
-/* Light mode body — colored gradient blobs baked into background */
-[data-theme="light"] body {
-  background-color: #E8EDF8;
-  background-image:
-    radial-gradient(ellipse 70% 55% at 12% 12%,  rgba(99,130,255,0.18)  0%, transparent 100%),
-    radial-gradient(ellipse 55% 45% at 88% 88%,  rgba(0,195,115,0.12)   0%, transparent 100%),
-    radial-gradient(ellipse 45% 50% at 65% 38%,  rgba(245,166,35,0.06)  0%, transparent 100%),
-    radial-gradient(circle, rgba(59,123,245,0.07) 1px, transparent 1px);
-  background-size: auto, auto, auto, 28px 28px;
+  --top-light: radial-gradient(ellipse 62% 520px at 50% 0,
+    rgba(80,120,255,0.15) 0%, rgba(80,120,255,0.127) 25%, rgba(80,120,255,0.075) 50%,
+    rgba(80,120,255,0.023) 75%, transparent 100%);
+  --dot: rgba(59,123,245,0.07);
 }
 
 /* ── Smooth theme transition — targeted only, never on * (kills scroll perf) ── */
@@ -247,7 +235,7 @@ button, a, input, select, label,
 /* ── Ambient polish — reusable decoration classes ──────────────── */
 
 /* Film grain: one fixed, static, low-opacity layer over the viewport, above
-   the orbs and below modals. */
+   the backdrop and below modals. */
 .grain-overlay {
   position: fixed;
   inset: 0;
@@ -317,10 +305,6 @@ button, a, input, select, label,
 
 /* Every infinite animation pauses while the tab is hidden (BackgroundPattern
    sets .page-hidden), so a background tab does not wake the GPU (§22). */
-html.page-hidden .bg-orb-1,
-html.page-hidden .bg-orb-2,
-html.page-hidden .bg-orb-3,
-html.page-hidden .bg-orb-4,
 html.page-hidden .ticker-strip,
 html.page-hidden .related-strip,
 html.page-hidden .skeleton {
