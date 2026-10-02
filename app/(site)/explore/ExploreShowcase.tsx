@@ -18,9 +18,11 @@ const SLIDE_MS = 5500;
  * On a phone the module hides it, and a hidden carousel still turned: each
  * slide was a new photo, one every 5.5 s for as long as the page stayed open
  * (measured: 6.0, 11.5, 17.0, 22.5 s after load). So the timer runs only while
- * the carousel is displayed and the tab is visible, and the photo is lazy —
- * a lazy image under `display: none` is never requested, and on a wide screen
- * the showcase is in the first viewport, where lazy loads at once.
+ * the carousel is on screen — which `display: none` never is, and neither is a
+ * carousel the visitor has scrolled past to read the results — and the tab is
+ * visible. The photo is lazy: a lazy image under `display: none` is never
+ * requested, and on a wide screen the showcase is in the first viewport,
+ * where lazy loads at once.
  */
 export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
   const [idx, setIdx] = useState(0);
@@ -28,15 +30,23 @@ export default function ExploreShowcase({ items }: { items: CatalogueItem[] }) {
   // Held while a pointer or keyboard focus is on it, and never turning under
   // reduced motion (WCAG 2.2.2), like the landing carousel.
   const [held, setHeld] = useState(false);
+  const [onScreen, setOnScreen] = useState(false);
 
   useEffect(() => {
-    if (items.length < 2 || held || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const el = root.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([e]) => setOnScreen(e.isIntersecting));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (items.length < 2 || held || !onScreen || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = setInterval(() => {
-      const shown = root.current?.offsetParent != null;
-      if (shown && !document.hidden) setIdx(i => (i + 1) % items.length);
+      if (!document.hidden) setIdx(i => (i + 1) % items.length);
     }, SLIDE_MS);
     return () => clearInterval(id);
-  }, [items.length, held]);
+  }, [items.length, held, onScreen]);
 
   const current = items[idx];
   if (!current) {
