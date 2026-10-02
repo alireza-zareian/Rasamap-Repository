@@ -134,7 +134,15 @@ input[type=range] { accent-color: var(--accent); }
 /* ── Text shimmer ──────────────────────────────────────────────── */
 /* Two sweeps, then still. background-position is not composited, so an
    endless sweep repainted the text at 60 fps for as long as a page was open
-   (on /about: 383 ms of main thread per idle 10 s; §38). */
+   (on /about: 383 ms of main thread per idle 10 s; §38).
+
+   The highlight is the middle of a gradient twice the text's width, so it
+   is on the text only while the position runs from -40 % to 140 %. Each
+   sweep used to run -200 % → 200 %: well over half of it repainted the text
+   every frame with the highlight off it. Each sweep is now just the
+   crossing, at the old speed and the old moments (§44). The first is listed
+   last so it outranks the second, which holds its start position while it
+   waits; once both end, the text rests where it always rested. */
 
 .shimmer-heading {
   display: inline;
@@ -149,7 +157,7 @@ input[type=range] { accent-color: var(--accent); }
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: text-shimmer 5s linear 2;
+  animation: text-shimmer 2.25s linear 7s backwards, text-shimmer 2.25s linear 2s backwards;
 }
 [data-theme="light"] .shimmer-heading {
   background: linear-gradient(90deg,
@@ -178,7 +186,7 @@ input[type=range] { accent-color: var(--accent); }
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: text-shimmer 6s linear 2;
+  animation: text-shimmer 2.7s linear 8.4s backwards, text-shimmer 2.7s linear 2.4s backwards;
 }
 [data-theme="light"] .logo-shimmer {
   background: linear-gradient(90deg,
@@ -195,8 +203,8 @@ input[type=range] { accent-color: var(--accent); }
 }
 
 @keyframes text-shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+  from { background-position: -40% 0; }
+  to   { background-position: 140% 0; }
 }
 
 /* ── Light theme ────────────────────────────────────────────────── */
