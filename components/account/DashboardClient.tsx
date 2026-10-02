@@ -141,19 +141,22 @@ export default function DashboardClient({ account, initialListings }: {
 
       {tab === "listings" && (
         <div role="tabpanel" aria-labelledby="dash-listings">
-          <div className={styles.stats}>
-            {[
-              { Icon: LayoutList, label: "کل آگهی‌ها", val: listings.length, color: "var(--accent)" },
-              { Icon: Clock, label: "در انتظار بررسی", val: underReview, color: "#f59e0b" },
-              { Icon: CheckCircle2, label: "منتشر شده", val: published, color: "var(--green)" },
-            ].map(s => (
-              <div key={s.label} className={styles.stat} style={cssVar("--tone", s.color)}>
-                <s.Icon size={22} />
-                <strong>{faNum(s.val)}</strong>
-                <span>{s.label}</span>
-              </div>
-            ))}
-          </div>
+          {/* Three zeros above an empty state that already says "none yet" are noise. */}
+          {listings.length > 0 && (
+            <div className={styles.stats}>
+              {[
+                { Icon: LayoutList, label: "کل آگهی‌ها", val: listings.length, color: "var(--accent)" },
+                { Icon: Clock, label: "در انتظار بررسی", val: underReview, color: "#f59e0b" },
+                { Icon: CheckCircle2, label: "منتشر شده", val: published, color: "var(--green)" },
+              ].map(s => (
+                <div key={s.label} className={styles.stat} style={cssVar("--tone", s.color)}>
+                  <s.Icon size={22} />
+                  <strong>{faNum(s.val)}</strong>
+                  <span>{s.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <section className={styles.card}>
             <div className={styles.cardHead}>
