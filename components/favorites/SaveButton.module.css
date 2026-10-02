@@ -11,8 +11,10 @@
 .overlay {
   position: absolute; top: 8px; left: 8px; z-index: 2;
   width: 36px; height: 36px; border-radius: 50%;
-  background: rgba(10, 14, 26, 0.62); border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #fff; backdrop-filter: blur(4px);
+  /* Darker instead of a backdrop blur, which was one more blurred layer per
+     card to redraw on every scroll frame (§44). */
+  background: rgba(10, 14, 26, 0.72); border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 .overlay[aria-pressed="true"] { color: #fb7185; background: rgba(10, 14, 26, 0.78); }
 @media (hover: hover) { .overlay:hover { background: rgba(10, 14, 26, 0.85); } }

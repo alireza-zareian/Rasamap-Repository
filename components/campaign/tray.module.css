@@ -6,9 +6,12 @@
   bottom: var(--bottomnav-offset, 0px);
   display: flex; align-items: center; gap: 14px;
   padding: 10px 22px;
-  background: var(--bg-card); border-top: 2px solid var(--accent-warm);
+  /* The card colour laid over the page colour: what the bar looked like
+     through the blur it used to run, which redrew on every scroll frame for
+     a 12–18 % show-through (§44). */
+  background: linear-gradient(var(--bg-card), var(--bg-card)), var(--bg-deep);
+  border-top: 2px solid var(--accent-warm);
   box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(10px);
   animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .title { display: flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 0.85rem; font-weight: 800; color: var(--accent-warm); }

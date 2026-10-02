@@ -18,14 +18,15 @@
   height: var(--topbar-h);
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 0 20px;
+  /* No backdrop blur: --topbar-bg is 95–97 % opaque, so a blur showed
+     nothing, and it re-ran on every scroll frame over a full-width bar (§44). */
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(16px);
   transition: background-color 0.35s ease, border-color 0.35s ease,
     top 0.35s ease, right 0.35s ease, left 0.35s ease, height 0.35s ease, border-radius 0.35s ease, box-shadow 0.35s ease;
 }
 /* The landing page's hero shows through until the visitor scrolls. */
-.overlay { background: transparent; border-bottom-color: transparent; backdrop-filter: none; }
+.overlay { background: transparent; border-bottom-color: transparent; }
 /* Once the page scrolls, the bar lifts off the edges into a floating panel.
    Its bottom stays above --topbar-h, where sticky toolbars pin themselves.
    The geometry is laid out once per crossing, not per frame (Topbar). */
@@ -88,7 +89,6 @@
     display: grid; grid-template-columns: repeat(5, 1fr);
     background: var(--topbar-bg);
     border-top: 1px solid var(--border);
-    backdrop-filter: blur(16px);
   }
   .navItem {
     position: relative;

@@ -11,6 +11,8 @@
   width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; position: relative;
   background: var(--bg-surface); border: 1px solid var(--border);
 }
+/* The one backdrop blur kept (§44): a single pill, 45 % see-through, where
+   the frosted photo behind it is part of the look. */
 .pill {
   position: absolute; bottom: 12px; display: flex; align-items: center; gap: 5px;
   background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); color: #fff; font-size: 0.7rem;
@@ -127,7 +129,8 @@
 .relatedPhoto { position: relative; aspect-ratio: 16 / 10; background: var(--bg-surface); }
 .relatedType {
   position: absolute; top: 8px; right: 8px; font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 20px;
-  background: color-mix(in srgb, var(--accent) 14%, rgba(0, 0, 0, 0.45)); color: #fff; backdrop-filter: blur(4px);
+  /* No backdrop blur: inside the marquee it was redrawn on every frame of the slide. */
+  background: color-mix(in srgb, var(--accent) 14%, rgba(0, 0, 0, 0.6)); color: #fff;
 }
 .relatedBody { padding: 10px 12px 12px; }
 .relatedName { font-size: 0.82rem; font-weight: 700; line-height: 1.4; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

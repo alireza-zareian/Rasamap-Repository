@@ -25,19 +25,23 @@
 @media (hover: hover) { .card:hover .zoom { transform: scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { .zoom { transition: none; } .card:hover .zoom { transform: none; } }
 
+/* Badges sit on the photo without a backdrop blur: on a page of cards that
+   was a blurred layer per badge, redrawn on every scroll frame (§44). A
+   near-opaque glass keeps them as legible as the blur did. */
 .badge {
+  --glass: rgba(10, 14, 26, 0.78);
   position: absolute; display: flex; align-items: center; gap: 4px;
   padding: 2px 9px; border-radius: 6px;
-  font-size: 0.7rem; backdrop-filter: blur(4px);
+  font-size: 0.7rem;
 }
-.glass { background: rgba(10, 14, 26, 0.78); border: 1px solid var(--border); color: var(--text-muted); }
-:global([data-theme="light"]) .glass { background: rgba(255, 255, 255, 0.82); }
+:global([data-theme="light"]) .badge { --glass: rgba(255, 255, 255, 0.82); }
+.glass { background: var(--glass); border: 1px solid var(--border); color: var(--text-muted); }
 .type { top: 8px; right: 8px; }
 /* Beside the save heart (SaveButton's .overlay, 36px at left 8px). */
 .status {
   top: 14px; left: 52px; font-weight: 600;
   color: var(--tone);
-  background: color-mix(in srgb, var(--tone) 10%, transparent);
+  background: color-mix(in srgb, var(--tone) 10%, var(--glass));
   border: 1px solid color-mix(in srgb, var(--tone) 27%, transparent);
 }
 .featured { bottom: 8px; left: 8px; background: rgba(245, 158, 11, 0.92); color: #1a1206; font-weight: 700; font-size: 0.68rem; padding: 2px 8px; }
