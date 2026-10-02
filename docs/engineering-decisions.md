@@ -2551,6 +2551,124 @@ and a campaign rebuilt from its link alone.
 
 ---
 
+## 41. Sixth review: what the site claimed, what a phone paid, and what was missing
+
+**Context.** Asked for a pessimistic pass over everything — look, navigation,
+speed, server load — then to refine and tidy the code, fix architecture where
+it was wrong, try what is current in visual effects and agent skills, and build
+any page or feature that was missing. Every page was screenshotted at 390 and
+1440 px in both themes before and after, as a guest, a customer and staff;
+every number below was measured on the production build (`next build` +
+`server.mjs`), never on `next dev`.
+
+**Security first.** `npm audit` listed a critical remote-code-execution
+advisory in `next/og`'s `ImageResponse`, which `app/opengraph-image.tsx`
+calls on every share preview. `next` 16.2.11 → 16.3.8 closed it and nine
+others; the four left sit in the `prisma` CLI's config loader (STATUS.md has
+the table). 16.3 dropped `experimental.viewTransition` — navigations are view
+transitions by default now — and added a lint rule that names the two
+deliberate full reloads.
+
+**What the site said that was not true.** The landing page quoted three
+customers who do not exist and listed Digikala, Snappfood, Aparat, MCI and
+Irancell under "alongside brands like". A stat promised "100% online and
+contact-free" on a site whose third step is *calling the owner*; the about
+page said "no phone calls". And every one of the 3,528 crawled rows carried a
+rating and review count the crawler drew from a random generator, shown on
+the cards and sent to search engines as `AggregateRating` — the kind of
+structured data a search engine penalises. STATUS.md had the last one as
+"remove before launch"; the first real review on such a row would also have
+dropped its count from, say, 34 to 1.
+
+- The testimonials and brands became two sections built from data the site
+  has: the eight cities with the most media, each a link to its list, and the
+  two listing plans for owners, from the copy the form's picker reads
+  (`components/listing/plans.ts`).
+- A migration recomputes every rating from the reviews table; the seed, the
+  importer and the crawler no longer write invented ones (the importer test
+  now asserts it).
+- The media page's price note said "guessed · variable" on an owner's own
+  listing too; it says "approximate" only where the price is a source's or an
+  estimate.
+
+**What a phone paid on load.** A trace at 4× CPU on a phone profile showed the
+landing page blocking the main thread for ~700 ms, and almost none of it was
+JavaScript: it was laying out and painting the whole page — twice. The font
+came from a stylesheet import, so the browser found the file only after that
+stylesheet; every page laid its Persian text out in a fallback face and again
+when Vazirmatn arrived.
+
+| Change | Where | Effect |
+|---|---|---|
+| Vazirmatn through `next/font/local`, the Persian file preloaded | `app/fonts.ts`, `assets/fonts/` | Total blocking time, same profile: `/` ~700 → ~250 ms, `/billboard/[slug]` ~570 → ~265, `/explore` ~380 → ~210, `/about` ~300 → ~125 |
+| `content-visibility: auto` on what is below the fold | `components/ui/defer.module.css` — landing sections, footer, catalogue cards, related strip | Off-screen layout and paint skipped on load; the related marquee stops while off screen |
+| Eager images (carousels, marquees, hero) at `fetchpriority=low` | `MediaImage` | They queue behind the page's own photo |
+| `ButtonLink` prefetches on intent | `components/ui/Button.tsx` | 15 → 10 background requests per landing visit; the signed-out "list media" prefetch was a redirect plus the sign-in page every time |
+| `turbopackIgnore` on the upload paths | `lib/uploads.ts` | The build no longer traces the whole checkout (three 16.3 warnings) |
+
+Server side the pages were already cheap (3–40 ms to first byte; `/explore`
+sustains ~73 renders/s on one core). A full browser visit to the landing page
+costs ~200 ms of server CPU, of which the page is ~50: the rest is the header's
+prefetches (kept, on purpose — instant main navigation) and photo requests.
+
+**Defects seen on screen, and fixed.** The saved list's heart sat in the corner
+of its card (two copies of an empty state; one lost its centring — now
+`EmptyState`). The traffic panel printed each of its six figures twice and the
+viewability score three times. The catalogue said its result count twice;
+its heading is now the view's own name («بیلبورد در مشهد»). Three "vine"
+strokes behind every page ran visibly through translucent cards and forms.
+Every toast slid in half its width off centre and jumped sideways (its
+keyframes' `transform` replaced the centring `translate`). A card's photo
+frame flashed white in the light theme. Latin digits in ratings, the gallery
+counter and the peak hour.
+
+**What a keyboard, a screen reader and a phone could not do.** A phone had *no
+way to sign out* — the only button was the desktop top bar's. The dashboard's
+`<main>` had lost the skip link's target (the guard test now covers
+components; removing the id makes it fail). The landing carousel turned every
+four seconds whatever anyone was doing (WCAG 2.2.2): it now stops under a
+pointer or focus, off screen, in a hidden tab, under reduced motion, and for
+good once the arrows or dots are used; the catalogue's showcase holds the same
+way. Deleting a review was one tap (`ConfirmButton` asks in place). A shown
+rating was five disabled buttons to a screen reader. The phone's action bar was
+`aria-hidden` with focusable buttons inside (now `inert`). The password toggle
+was out of the tab order.
+
+**Visual effects, and skills.** The current Next.js skills (`next-dev-loop`,
+Cache Components and partial-prefetching adoption) target Cache Components,
+measured and declined in §26, so none was added; the four vetted skills of
+§37 already cover design, guidelines, React performance and view transitions,
+and `web-design-guidelines` was run over ten UI files for the accessibility
+list above. The effects taken follow §37's checklist — compositor properties,
+visible without the feature, off under reduced motion: dialogs and the phone's
+folded filters ease in from `@starting-style`; the coverage bars grow as they
+scroll in on a view timeline; the help page's plus turns into a cross.
+
+**What was missing.**
+
+| Added | Why |
+|---|---|
+| `/help` — questions a first visit raises, answered from the rules | Nothing said in one place that advertisers pay nothing, who sees a phone request, what "approximate" or "ask the owner" mean, how the featured plan is paid. The limits are read from `lib/domain`, the plans from the form's copy; native `<details>`; FAQPage structured data. |
+| A media page's own 404, inside the site's frame | A board taken down was a bare screen with one way home. |
+| "Recently viewed" on `/saved` | The boards this browser opened last, kept in localStorage — so a guest has it and the cached media page stays identical for everyone. |
+
+**Tidied.** `faMillions()` instead of fifteen hand-built `${faNum(p)}M`; one
+`--heart` colour; `PLANS` shared; the dropped `@fontsource` dependency.
+
+**Deliberately left.** The account-type switch under the sign-in form (customers
+are nearly every visitor; staff is the secondary choice). "Search as the map
+moves" and a map on a phone's catalogue (§40's reasons stand). The header's
+section tabs keep viewport prefetch.
+
+### Verified
+
+ESLint and `tsc` clean, the build warning-free; 20 unit + 193 API + 8 importer
+tests and 13 browser flows. A crawl of 220 internal addresses as a guest and as
+a customer found no broken link. The traces and timings above were taken
+before and after each change on the same machine.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -2607,3 +2725,4 @@ and a campaign rebuilt from its link alone.
 | 2026-09-27 | **3D hero street** | §37 — CSS 3D street of real media on the landing, one-shot arrival + scroll-linked approach; no server cost, load time within noise; a 300 ms 3D floor plane and a flattening opacity found by measurement and designed out. Card spotlight removed. |
 | 2026-09-28 | **Fifth review — navigation and the cached media page** | §39 — search history, back-to-results, whole-card links, the hidden showcase that kept downloading, an admin search race; media pages cached (22 → ~8 ms CPU) without caching made-up slugs; Google's map on demand; Tailwind dropped for its reset; canonical addresses and per-view titles; browser tests in CI; components/ in feature folders. |
 | 2026-09-28 | **Saved media, campaign planner, results map** | §40 — favorites with a guest's tap carried through sign-in; up to eight media priced per period with CPM, a map, a shareable address and print; price pins beside the results with two-way hover; the phone's action bar on a media page; a dark theme remembered again; no 401 in a guest's console. |
+| 2026-10-02 | **Sixth review — honesty, a phone's first second, what was missing** | §41 — Next 16.3.8 (critical `next/og` RCE closed); invented customers, brands and 3,528 random ratings removed (migration recomputes from reviews); `next/font` preload + `content-visibility`: phone TBT on `/` ~700 → ~250 ms; a phone can sign out; carousels obey WCAG 2.2.2; `/help`, a media 404 in the site frame, recently viewed. |

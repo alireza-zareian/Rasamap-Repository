@@ -4256,6 +4256,26 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">REV6</div>
+      <div class="ph-title"><h3>بازبینی ششم — صداقتِ محتوا، سرعتِ گوشی و آنچه جا مانده بود</h3><p>۹–۱۰ مهر ۱۴۰۵ · §۴۱ در سندِ تصمیم‌ها؛ هر یافته در Chromium روی ساختِ تولیدی دیده یا اندازه گرفته شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>Next.js ‏16.2.11 → 16.3.8</strong> — آسیب‌پذیریِ بحرانیِ اجرای کد در <code>next/og</code> که کارتِ اشتراک‌گذاری از آن رد می‌شود بسته شد؛ ۹ مورد دیگر هم</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مشتری و برندِ ساختگی از صفحهٔ اول رفت</strong> — سه نقل‌قول و «همراه دیجی‌کالا، اسنپ‌فود، …»؛ به‌جایش پوششِ شهرها از دادهٔ واقعی و بخشِ «برای صاحبان رسانه»؛ «۱۰۰٪ بدون تماس» و «بدون تماس تلفنی» اصلاح شد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>امتیازِ ساختگی حذف شد</strong> — هر ۳۵۲۸ ردیفِ خزنده ستاره و تعدادِ نظرِ تصادفی داشت که به موتور جستجو هم می‌رفت؛ migration امتیاز را فقط از جدولِ نظرها می‌سازد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>فونت با next/font و preload</strong> — زمانِ مسدودشدنِ رشتهٔ اصلی روی گوشی (CPU×۴): صفحهٔ اول ۷۰۰ → ۲۵۰ms، صفحهٔ رسانه ۵۷۰ → ۲۶۵، کاوش ۳۸۰ → ۲۱۰</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>content-visibility</strong> برای بخش‌های پایینِ صفحه، فوتر و کارت‌ها؛ تصویرهای اسلایدر با اولویتِ پایین؛ دکمه‌لینک‌ها فقط با قصدِ کاربر prefetch (۱۵ → ۱۰ درخواستِ پس‌زمینه)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>باگ‌های دیده‌شده</strong> — قلبِ کجِ صفحهٔ ذخیره‌ها، هر عددِ ترافیک دو بار، تعدادِ نتایج دو بار، toast که کج می‌آمد و می‌پرید، گوشی که راهی برای خروج نداشت، skip-link بی‌هدف در داشبورد، خطوطِ پس‌زمینه روی کارت‌ها</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>دسترس‌پذیری</strong> — اسلایدرها با hover/فوکوس/حرکتِ کم می‌ایستند (WCAG 2.2.2)، حذفِ نظر تأیید می‌خواهد، نوارِ گوشی <code>inert</code>، دکمهٔ نمایشِ رمز با کیبورد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>صفحه‌های تازه</strong> — <code>/help</code> (راهنما و پرسش‌ها، با دادهٔ ساخت‌یافتهٔ FAQ)، ۴۰۴ِ رسانه در قابِ سایت، «اخیراً دیده‌اید» در <code>/saved</code></div></div>
+      </div>
+      <div class="proof">ESLint و <code>tsc</code> تمیز، ساخت بدونِ هشدار؛ <strong>۲۰ واحد + ۱۹۳ API + ۸ واردکننده</strong> و <strong>۱۳ جریانِ مرورگر</strong> موفق. خزیدن روی ۲۲۰ نشانیِ داخلی (مهمان و مشتری): هیچ پیوندِ شکسته‌ای. اسکرین‌شاتِ همهٔ صفحه‌ها در ۳۹۰ و ۱۴۴۰ پیکسل و دو تم پیش و پس از تغییرها دیده شد.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">LOOK</div>
       <div class="ph-title"><h3>ظاهر از روی یک سایتِ مرجع، و چهار مهارتِ عامل</h3><p>۸–۹ مهر ۱۴۰۵ · §۳۷ در سندِ تصمیم‌ها؛ فقط CSS، هیچ بارِ تازه‌ای روی سرور</p></div>
       <div class="ph-badge done">✓ تموم شده</div>
@@ -5405,7 +5425,7 @@ infra/
 
 <footer style="border-top:1px solid var(--line);margin-top:60px;">
   <div style="max-width:1120px;margin:0 auto;padding:26px 22px;color:var(--muted);font-size:12.5px;text-align:center;">
-    رسامپ · سند فنی پروژه · به‌روزرسانی ۹ مهر ۱۴۰۵ ·
+    رسامپ · سند فنی پروژه · به‌روزرسانی ۱۰ مهر ۱۴۰۵ ·
     ساخته‌شده از روی کد و دیتابیس واقعی پروژه
   </div>
 </footer>
