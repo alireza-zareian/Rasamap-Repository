@@ -6,8 +6,9 @@ import { Megaphone, Link2, Printer, Plus, X, MapPin, Eye, Wallet, Gauge, Buildin
 import type { CatalogueItem } from "@/lib/types";
 import { typeLabels } from "@/lib/types";
 import {
-  CAMPAIGN_PERIODS, CAMPAIGN_PERIOD_KEYS, MAX_PICKED, campaignTotals, type CampaignPeriod,
+  CAMPAIGN_PERIODS, CAMPAIGN_PERIOD_KEYS, MAX_PICKED, budgetCheck, campaignTotals, parseBudget, type CampaignPeriod,
 } from "@/lib/domain/campaign";
+import { latinDigits } from "@/lib/domain/digits";
 import { useCampaign } from "@/lib/client/use-campaign";
 import { copyText } from "@/lib/client/clipboard";
 import { faNum, faCompact } from "@/lib/format";
@@ -39,15 +40,20 @@ function money(millions: number): string {
     : `${faNum(Math.round(millions))} میلیون تومان`;
 }
 
-export default function CampaignPlanner({ items, requested, period }: {
+export default function CampaignPlanner({ items, requested, period, budget: initialBudget }: {
   items: CatalogueItem[];
   /** The slugs the address named; more than `items` when some are gone. */
   requested: string[];
   period: CampaignPeriod;
+  /** Millions of toman, from `?b=`; null for no budget. */
+  budget: number | null;
 }) {
   const router = useRouter();
   const { items: picked, setItems, ready } = useCampaign();
   const [periodNow, setPeriodNow] = useState(period);
+  // What is typed, so a half-typed or Persian-digit value stays as written.
+  const [budgetText, setBudgetText] = useState(initialBudget !== null ? faNum(initialBudget).replace(/٬/g, "") : "");
+  const budget = parseBudget(latinDigits(budgetText));
   const [hover, setHover] = useState<string | null>(null);
   const [shared, setShared] = useState<"copied" | "failed" | null>(null);
   const [pending, startTransition] = useTransition();
@@ -64,14 +70,14 @@ export default function CampaignPlanner({ items, requested, period }: {
     if (!ready) return;
     if (requested.length === 0) {
       // The bare /campaign: go to the address of the visitor's own plan.
-      if (picked.length > 0) router.replace(campaignHref(pickedSlugs, periodNow));
+      if (picked.length > 0) router.replace(campaignHref(pickedSlugs, periodNow, budget));
       return;
     }
     if (own || picked.length === 0) {
       // Keep the saved copy in step with today's prices, and drop what is gone;
       // an empty pick simply adopts the plan it was sent.
       setItems(items);
-      if (missing > 0) router.replace(campaignHref(slugs, periodNow), { scroll: false });
+      if (missing > 0) router.replace(campaignHref(slugs, periodNow, budget), { scroll: false });
     }
     // Only when the server's answer changes: the pick itself is what this writes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,11 +85,19 @@ export default function CampaignPlanner({ items, requested, period }: {
 
   const totals = useMemo(() => campaignTotals(shown, periodNow), [shown, periodNow]);
   const { label: periodLabel, price: periodPrice } = CAMPAIGN_PERIODS[periodNow];
+  const fit = budget !== null ? budgetCheck(shown.map(periodPrice), budget) : null;
 
   const choosePeriod = (p: CampaignPeriod) => {
     setPeriodNow(p);
     // The prices are all on the page already: only the address needs to know.
-    window.history.replaceState(null, "", campaignHref(slugs, p));
+    window.history.replaceState(null, "", campaignHref(slugs, p, budget));
+  };
+
+  // The budget lives in the address too, so a shared plan carries it.
+  const chooseBudget = (text: string) => {
+    const clean = latinDigits(text).replace(/\D/g, "").slice(0, 7);
+    setBudgetText(clean);
+    window.history.replaceState(null, "", campaignHref(slugs, periodNow, parseBudget(clean)));
   };
 
   const remove = (slug: string) => {
@@ -91,12 +105,12 @@ export default function CampaignPlanner({ items, requested, period }: {
     if (own) setItems(prev => prev.filter(p => p.slug !== slug));
     startTransition(() => {
       hide(slug);
-      router.replace(campaignHref(rest, periodNow), { scroll: false });
+      router.replace(campaignHref(rest, periodNow, budget), { scroll: false });
     });
   };
 
   const share = async () => {
-    const url = window.location.origin + campaignHref(slugs, periodNow);
+    const url = window.location.origin + campaignHref(slugs, periodNow, budget);
     // A phone offers its own share sheet; elsewhere the link is copied.
     if (navigator.share) {
       try { await navigator.share({ title: "طرح کمپین رسامپ", url }); return; } catch { /* dismissed: fall back to copying */ }
@@ -147,7 +161,7 @@ export default function CampaignPlanner({ items, requested, period }: {
           <Link2 size={15} />
           <span>این طرح از یک لینک باز شده و با طرحِ ذخیره‌شدهٔ شما فرق دارد.</span>
           <Button size="sm" intent="primary" onClick={() => setItems(items)}>ذخیره به‌جای طرح من</Button>
-          <Button size="sm" intent="quiet" onClick={() => router.replace(campaignHref(pickedSlugs, periodNow))}>طرح خودم</Button>
+          <Button size="sm" intent="quiet" onClick={() => router.replace(campaignHref(pickedSlugs, periodNow, budget))}>طرح خودم</Button>
         </div>
       )}
       {missing > 0 && (
@@ -184,6 +198,41 @@ export default function CampaignPlanner({ items, requested, period }: {
                 <div className={styles.tileLabel}>{t.label}</div>
               </div>
             ))}
+          </section>
+
+          <section className={styles.budget} aria-labelledby="budget-label">
+            <div className={styles.budgetHead}>
+              <label id="budget-label" htmlFor="campaign-budget" className={styles.budgetLabel}>
+                <Wallet size={16} /> بودجهٔ {periodLabel}
+              </label>
+              <div className={styles.budgetField}>
+                <input id="campaign-budget" className={styles.budgetInput} value={budgetText}
+                  onChange={e => chooseBudget(e.target.value)} inputMode="numeric" dir="ltr" autoComplete="off"
+                  placeholder="مثلاً ۵۰۰" aria-describedby="budget-result" />
+                <span>میلیون تومان</span>
+              </div>
+            </div>
+            {fit && budget !== null ? (
+              <div id="budget-result" className={styles.budgetResult} role="status" data-over={fit.left < 0 || undefined}>
+                <div className={styles.budgetBar} aria-hidden="true">
+                  <div className={styles.budgetFill} style={{ width: `${Math.min(100, Math.round((totals.cost / budget) * 100))}%` }} />
+                </div>
+                {fit.left >= 0 ? (
+                  <p><Check size={14} /> {faNum(Math.round((totals.cost / budget) * 100))}٪ بودجه — {money(fit.left)} می‌ماند.</p>
+                ) : (
+                  <p>
+                    <X size={14} /> {money(-fit.left)} بیش از بودجه.
+                    {fit.dropToFit !== null && (
+                      <> با برداشتنِ «{shown[fit.dropToFit].name}» در بودجه می‌مانید.{" "}
+                        <Button size="sm" intent="quiet" className={styles.noPrint} onClick={() => remove(shown[fit.dropToFit!].slug)}>برداشتن</Button>
+                      </>
+                    )}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p id="budget-result" className={styles.budgetHint}>بودجه را بنویسید تا ببینید طرح در آن جا می‌شود یا نه.</p>
+            )}
           </section>
 
           <div className={styles.split}>

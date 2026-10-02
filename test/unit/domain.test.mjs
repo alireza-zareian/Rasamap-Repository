@@ -111,6 +111,19 @@ test("Persian and Arabic digits read as Latin ones in numbers and passwords", ()
   assert.equal(NewPassword.safeParse("۱۲۳۴۵۶۷").success, false, "still too short after conversion");
 });
 
+test("a campaign budget is read from the address and checked against the plan", async () => {
+  const { parseBudget, budgetCheck, MAX_BUDGET } = await import("../../lib/domain/campaign.ts");
+  assert.equal(parseBudget("500"), 500);
+  for (const bad of [undefined, "", "0", "-5", "1.5", "abc", "1e3", String(MAX_BUDGET + 1)]) {
+    assert.equal(parseBudget(bad), null, `${bad} is no budget`);
+  }
+  assert.deepEqual(budgetCheck([100, 200], 500), { left: 200, dropToFit: null });
+  // 450 over a budget of 350: dropping 100 is enough and loses least.
+  assert.deepEqual(budgetCheck([100, 200, 150], 350), { left: -100, dropToFit: 0 });
+  // Over by more than any single board: no one removal fits it.
+  assert.deepEqual(budgetCheck([100, 100], 50), { left: -150, dropToFit: null });
+});
+
 test("a campaign prices every board for the same period and counts its reach", async () => {
   const { campaignTotals, parsePickedSlugs, MAX_PICKED } = await import("../../lib/domain/campaign.ts");
   const board = (city, price, views) => ({

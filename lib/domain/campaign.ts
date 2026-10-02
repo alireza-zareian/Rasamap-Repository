@@ -67,6 +67,36 @@ export function campaignTotals(items: readonly PlannedMedia[], period: CampaignP
   };
 }
 
+/**
+ * A campaign budget, in millions of toman like every price here: a whole
+ * number from 1 to a million (a trillion toman), or null for none. From the
+ * address (`?b=`), so a shared plan carries its budget; anything else is no budget.
+ */
+export const MAX_BUDGET = 1_000_000;
+
+export function parseBudget(raw: string | undefined): number | null {
+  if (!raw || !/^\d{1,7}$/.test(raw)) return null;
+  const n = Number(raw);
+  return n >= 1 && n <= MAX_BUDGET ? n : null;
+}
+
+/**
+ * Where a plan stands against its budget: what is left (negative when over)
+ * and, when over, the one board whose removal brings it within budget at the
+ * smallest loss — the cheapest that is enough, by index; null when no single
+ * removal would do.
+ */
+export function budgetCheck(costs: readonly number[], budget: number): { left: number; dropToFit: number | null } {
+  const total = costs.reduce((a, b) => a + b, 0);
+  const left = budget - total;
+  if (left >= 0) return { left, dropToFit: null };
+  let best: number | null = null;
+  costs.forEach((c, i) => {
+    if (total - c <= budget && (best === null || c < costs[best])) best = i;
+  });
+  return { left, dropToFit: best };
+}
+
 /** The shape slugify() gives (lib/domain/slug.ts); anything else names no media. */
 const SLUG = /^[a-z0-9-]{1,120}$/;
 

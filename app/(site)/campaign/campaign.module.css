@@ -39,6 +39,27 @@
 .tileValue { font-size: 1.15rem; font-weight: 900; line-height: 1.3; }
 .tileLabel { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
 
+/* The budget: a field, then a bar of how much of it the plan uses. */
+.budget { padding: 14px 16px; margin-bottom: 20px; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border); }
+.budgetHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.budgetLabel { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.9rem; }
+.budgetLabel svg { color: var(--accent-warm); }
+.budgetField { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-muted); }
+.budgetInput {
+  width: 130px; padding: 8px 12px; border-radius: 9px; font: inherit; font-size: 0.95rem; font-weight: 700;
+  background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+.budgetInput:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.budgetResult { margin-top: 12px; --fit: var(--green); }
+.budgetResult[data-over] { --fit: var(--red); }
+.budgetBar { height: 8px; border-radius: 4px; background: var(--bg-surface); overflow: hidden; }
+.budgetFill { height: 100%; border-radius: 4px; background: var(--fit); transition: width 0.3s ease; }
+.budgetResult p { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; font-size: 0.82rem; }
+.budgetResult p > svg { color: var(--fit); flex-shrink: 0; }
+.budgetHint { margin: 8px 0 0; font-size: 0.75rem; color: var(--text-muted); }
+@media (prefers-reduced-motion: reduce) { .budgetFill { transition: none; } }
+
 .split { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 18px; align-items: start; margin-bottom: 24px; }
 
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }

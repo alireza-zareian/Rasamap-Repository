@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getPublishedBillboardsBySlugs, toCatalogueItem } from "@/lib/db/billboards";
-import { isCampaignPeriod, parsePickedSlugs } from "@/lib/domain/campaign";
+import { isCampaignPeriod, parseBudget, parsePickedSlugs } from "@/lib/domain/campaign";
 import CampaignPlanner from "./CampaignPlanner";
 
 export const metadata: Metadata = {
@@ -11,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * A campaign: the media in `?m=`, priced for the period in `?p=` (§40). The
+ * A campaign: the media in `?m=`, priced for the period in `?p=` (§40),
+ * against the budget in `?b=` when there is one (§42). The
  * address is the whole plan, so it is also the link that is shared, and the
  * page always renders today's prices rather than a browser's saved copy.
  */
@@ -31,6 +32,7 @@ export default async function CampaignPage({
       items={items}
       period={isCampaignPeriod(period) ? period : "month"}
       requested={slugs}
+      budget={parseBudget(one(sp.b))}
     />
   );
 }
