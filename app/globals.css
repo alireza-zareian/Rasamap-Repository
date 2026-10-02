@@ -55,16 +55,14 @@
   --top-light: radial-gradient(ellipse 62% 520px at 50% 0,
     rgba(59,123,245,0.15) 0%, rgba(59,123,245,0.127) 25%, rgba(59,123,245,0.075) 50%,
     rgba(59,123,245,0.023) 75%, transparent 100%);
-  /* Side lights, one per tile (body), near the page's edges so they light
-     the margins and the edges of the content; --side-reach is how far they
-     spread, wider on a phone. */
-  --side-reach: 44%;
-  --light-green: radial-gradient(ellipse var(--side-reach) 620px at 88% 50%,
-    rgba(0,209,122,0.17) 0%, rgba(0,209,122,0.143) 25%, rgba(0,209,122,0.085) 50%, rgba(0,209,122,0.027) 75%, transparent 100%);
-  --light-blue:  radial-gradient(ellipse var(--side-reach) 680px at 80% 50%,
-    rgba(59,123,245,0.14) 0%, rgba(59,123,245,0.118) 25%, rgba(59,123,245,0.07) 50%, rgba(59,123,245,0.022) 75%, transparent 100%);
-  --light-warm:  radial-gradient(ellipse var(--side-reach) 700px at 14% 50%,
-    rgba(220,80,180,0.14) 0%, rgba(220,80,180,0.118) 25%, rgba(220,80,180,0.07) 50%, rgba(220,80,180,0.022) 75%, transparent 100%);
+  /* Side lights, one per tile (body::before), where the old drifting orbs
+     were: green low right, blue at the right edge, warm low left. */
+  --light-green: radial-gradient(circle 420px at 69% 50%,
+    rgba(0,209,122,0.18) 0%, rgba(0,209,122,0.152) 25%, rgba(0,209,122,0.09) 50%, rgba(0,209,122,0.028) 75%, transparent 100%);
+  --light-blue:  radial-gradient(circle 340px at 88% 50%,
+    rgba(59,123,245,0.13) 0%, rgba(59,123,245,0.11) 25%, rgba(59,123,245,0.065) 50%, rgba(59,123,245,0.02) 75%, transparent 100%);
+  --light-warm:  radial-gradient(circle 380px at 42% 50%,
+    rgba(220,80,180,0.16) 0%, rgba(220,80,180,0.135) 25%, rgba(220,80,180,0.08) 50%, rgba(220,80,180,0.025) 75%, transparent 100%);
   --dot: rgba(59,123,245,0.065);
 }
 
@@ -83,24 +81,38 @@ body {
   background-color: var(--bg-deep);
   color: var(--text-main);
   direction: rtl;
-  /* All of it belongs to the page, not the screen: no fixed layer and no
-     animation, so a page nobody touches costs nothing (§43, §44). What it
-     does cost is rasterising each stretch of page once as it scrolls in —
-     on /explore, about 0.4 s of a 2.2 s wheel scroll in software raster.
-     The light from above greets a page and leaves with its top. The side
-     lights repeat down the page on tiles of 1500, 1900 and 1700 px — no
-     common factor, so the three line up again only after 484,500 px and the
-     pattern never visibly repeats (the "cicada principle") — so every screen
-     of a long page has one near it, and a phone has them too. */
-  background-image:
-    var(--top-light), var(--light-green), var(--light-blue), var(--light-warm),
-    radial-gradient(circle, var(--dot) 1px, transparent 1px);
-  background-size: auto, 100% 1500px, 100% 1900px, 100% 1700px, 28px 28px;
-  background-repeat: no-repeat, repeat-y, repeat-y, repeat-y, repeat;
+  /* The light from above belongs to the page, not the screen: it greets a
+     page and leaves with its top (§43). */
+  background-image: var(--top-light), radial-gradient(circle, var(--dot) 1px, transparent 1px);
+  background-size: auto, 28px 28px;
+  background-repeat: no-repeat, repeat;
+  /* The containing block for the side lights below. Nothing else inside
+     body is placed against the viewport but Next's route announcer, which
+     is visually hidden (checked on every public page, §44). */
+  position: relative;
 }
-@media (max-width: 768px) {
-  :root { --side-reach: 80%; }
+
+/* The side lights belong to the page as well — no fixed layer and no
+   animation, so a page nobody touches costs nothing (§43, §44). They are a
+   positioned layer rather than body's own background so that, like the old
+   orbs, they tint the section bands and translucent cards above the page
+   colour instead of hiding under them; `pointer-events: none` lets every
+   click through. They repeat down the page on tiles of 1000, 1300 and
+   1100 px: a little over a screen apart, so every screen of a long page has
+   light in it, a phone's included, and with no common factor between them,
+   so the three line up again only after 143,000 px and the pattern never
+   visibly repeats (the "cicada principle").
+   What they cost is rasterising each stretch of page once as it scrolls in. */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--light-green), var(--light-blue), var(--light-warm);
+  background-size: 100% 1000px, 100% 1300px, 100% 1100px;
+  background-repeat: repeat-y;
 }
+@media print { body::before { display: none; } }
 
 /* ── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -260,12 +272,12 @@ input[type=range] { accent-color: var(--accent); }
     rgba(80,120,255,0.023) 75%, transparent 100%);
   /* Sky and a low sun, not violet and pink: the stock haze of generated sites.
      The amber is --accent-warm, the price colour, at a whisper. */
-  --light-green: radial-gradient(ellipse var(--side-reach) 620px at 88% 50%,
-    rgba(0,180,100,0.21) 0%, rgba(0,180,100,0.177) 25%, rgba(0,180,100,0.105) 50%, rgba(0,180,100,0.033) 75%, transparent 100%);
-  --light-blue:  radial-gradient(ellipse var(--side-reach) 680px at 80% 50%,
-    rgba(56,170,230,0.17) 0%, rgba(56,170,230,0.143) 25%, rgba(56,170,230,0.085) 50%, rgba(56,170,230,0.027) 75%, transparent 100%);
-  --light-warm:  radial-gradient(ellipse var(--side-reach) 700px at 14% 50%,
-    rgba(245,166,35,0.16) 0%, rgba(245,166,35,0.135) 25%, rgba(245,166,35,0.08) 50%, rgba(245,166,35,0.025) 75%, transparent 100%);
+  --light-green: radial-gradient(circle 420px at 69% 50%,
+    rgba(0,180,100,0.22) 0%, rgba(0,180,100,0.186) 25%, rgba(0,180,100,0.11) 50%, rgba(0,180,100,0.034) 75%, transparent 100%);
+  --light-blue:  radial-gradient(circle 340px at 88% 50%,
+    rgba(56,170,230,0.16) 0%, rgba(56,170,230,0.135) 25%, rgba(56,170,230,0.08) 50%, rgba(56,170,230,0.025) 75%, transparent 100%);
+  --light-warm:  radial-gradient(circle 380px at 42% 50%,
+    rgba(245,166,35,0.13) 0%, rgba(245,166,35,0.11) 25%, rgba(245,166,35,0.065) 50%, rgba(245,166,35,0.02) 75%, transparent 100%);
   --dot: rgba(59,123,245,0.07);
 }
 
