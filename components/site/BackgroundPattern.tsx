@@ -3,7 +3,10 @@ import { useEffect } from "react";
 import styles from "./BackgroundPattern.module.css";
 
 // How long after the last scroll event a still pointer gets its hover back.
-const HOVER_RESUME_MS = 150;
+// Long enough to bridge wheel notches a fifth of a second apart: at 150 ms,
+// hover came back between them and the cards re-ran their transitions on
+// every notch (/explore, 20 notches: 4.9 s of browser CPU, 2.2 s at 250 ms).
+const HOVER_RESUME_MS = 250;
 
 /**
  * The backdrop behind every page: three soft lights on a desktop, none on a
