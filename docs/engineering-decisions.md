@@ -2746,6 +2746,52 @@ following it; the sticky card's position through a full scroll.
 
 ---
 
+## 43. The backdrop: four drifting discs become light painted once
+
+**Context.** The project's owner found the large blue disc behind the top of
+every page intrusive ("in your face"), liked the other three, and asked for a
+more pleasing way to do the same thing that costs neither the server nor the
+visitor's browser more.
+
+**What was there.** Four `div`s, 560–900 px, each a `radial-gradient` that
+stopped short at 55–62 % of its size, drifting on 20–32 s loops; in the light
+theme the body also carried three more blobs of its own, one of them blue in
+the same corner. Measured in Chromium on the production build, a 1440×900 page
+at 2× density, nothing touched for 5 s after the one-off logo shimmer ended:
+
+| Page | Frames drawn, orbs drifting | Orbs held still |
+|---|---|---|
+| `/help` | 301 | 0 |
+
+The motion was a few pixels a second — too slow to see — and it kept the
+compositor producing 60 frames a second for as long as a page stayed open,
+which on the demo's fanless laptop is exactly the cost §22 removed elsewhere.
+
+**What replaced it.**
+
+| Piece | Where | Why this way |
+|---|---|---|
+| A light from above | `--top-light` on `body` in `globals.css` | Centred, wide (62 % × 520 px), anchored to the **top of the page**, not the screen: it greets a page and scrolls away with its top, instead of sitting behind whatever is read. It is part of the root background, so scrolling moves it with the content and repaints nothing. |
+| Three side lights | one `div`, `BackgroundPattern.module.css` | The green, the right-edge blue and the warm light kept their colours and places, now three gradients on one fixed layer, painted once. No children, no keyframes, nothing on the hidden-tab pause list. Phones still skip it. |
+| The fade | every light | Five stops along 1 − smoothstep, so each light reaches zero almost flat. A straight fade that stops at a radius leaves a visible rim (a Mach band) — what made the old ones read as discs. The existing grain overlay dithers the banding an 8-bit fade this faint would show. |
+
+**Rejected.** `background-attachment: fixed` for the side lights: a fixed
+background is repainted on every scroll frame (and ignored on iOS); a
+`position: fixed` layer is composited once. Animating gradient positions
+through `@property`: repaints the whole layer each frame. Keeping a slower
+drift: any infinite animation keeps the compositor awake, whatever its speed.
+The unused `--orb-blue`, `--orb-green` and `--scan-line` tokens went with the
+orbs.
+
+### Verified
+
+ESLint clean; 23 unit + 193 API + 8 importer tests and 13 browser flows. In a
+browser: idle frames on `/help` 301 → 0; before/after screenshots of `/`,
+`/explore` and `/help` in both themes — the blue disc is gone, the other three
+lights read as before with softer edges.
+
+---
+
 ## Milestone log (outputs, not diffs)
 
 | Date | Milestone | Net structural output |
@@ -2804,3 +2850,4 @@ following it; the sticky card's position through a full scroll.
 | 2026-09-28 | **Saved media, campaign planner, results map** | §40 — favorites with a guest's tap carried through sign-in; up to eight media priced per period with CPM, a map, a shareable address and print; price pins beside the results with two-way hover; the phone's action bar on a media page; a dark theme remembered again; no 401 in a guest's console. |
 | 2026-10-02 | **Sixth review — honesty, a phone's first second, what was missing** | §41 — Next 16.3.8 (critical `next/og` RCE closed); invented customers, brands and 3,528 random ratings removed (migration recomputes from reviews); `next/font` preload + `content-visibility`: phone TBT on `/` ~700 → ~250 ms; a phone can sign out; carousels obey WCAG 2.2.2; `/help`, a media 404 in the site frame, recently viewed. |
 | 2026-10-02 | **Demo ratings done properly; second research pass** | §42 — demonstration ratings from the id at read time, blended with real reviews, never in structured data, `DEMO_RATINGS=off` for launch; a blank optional env value no longer stops the server; campaign budget with the board to drop; first catalogue photos at high priority; the media page's sticky card no longer overlapped by the map. |
+| 2026-10-02 | **A backdrop that stands still** | §43 — four drifting orbs (60 frames a second on an idle page) replaced by a light from the top of the page and three side lights painted once on one layer, each fading without a rim; the intrusive blue disc gone; idle frames on `/help` 301 → 0. |
