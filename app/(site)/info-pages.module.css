@@ -29,6 +29,26 @@
 a.channelValue { color: var(--accent); }
 .channelSub { font-size: 0.68rem; color: var(--text-muted); margin-top: 4px; }
 
+/* ── Help ── */
+.faqGroup { margin-bottom: 36px; }
+.faqTitle { font-size: 1.05rem; font-weight: 800; margin: 0 0 14px; }
+.faq { padding: 0; }
+.faq summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px; cursor: pointer; list-style: none;
+  font-weight: 700; font-size: 0.9rem;
+}
+.faq summary::-webkit-details-marker { display: none; }
+/* A plus that turns into a cross: a transform on a pseudo-element. */
+.faq summary::after {
+  content: "+"; flex-shrink: 0; font-size: 1.2rem; font-weight: 400; color: var(--accent);
+  transition: transform 0.2s ease;
+}
+.faq[open] summary::after { transform: rotate(45deg); }
+.faq summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 12px; }
+.faq .cardText { padding: 0 20px 18px; }
+@media (prefers-reduced-motion: reduce) { .faq summary::after { transition: none; } }
+
 /* ── Terms ── */
 .ask { margin-top: 40px; display: flex; align-items: center; gap: 14px; }
 .ask > svg { color: var(--accent); flex-shrink: 0; }

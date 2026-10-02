@@ -6,7 +6,7 @@ import defer from "@/components/ui/defer.module.css";
 const COLUMNS = [
   { title: "پلتفرم", links: [["جستجوی رسانه", "/explore"], ["نقشهٔ رسانه‌ها", "/explore/map"], ["طرح کمپین", "/campaign"], ["تحلیل بازار", "/analytics"]] },
   { title: "کاربران", links: [["ورود / ثبت‌نام", "/login"], ["ذخیره‌شده‌ها", "/saved"], ["داشبورد", "/dashboard"], ["ثبت رسانه", "/list-media"]] },
-  { title: "شرکت", links: [["درباره ما", "/about"], ["تماس با ما", "/contact"], ["قوانین و مقررات", "/terms"]] },
+  { title: "شرکت", links: [["درباره ما", "/about"], ["راهنما و پرسش‌ها", "/help"], ["تماس با ما", "/contact"], ["قوانین و مقررات", "/terms"]] },
 ];
 
 export default function Footer() {
