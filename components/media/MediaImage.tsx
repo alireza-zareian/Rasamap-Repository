@@ -49,6 +49,7 @@ export default function MediaImage({
   type,
   sizes,
   eager = false,
+  priority = false,
   iconSize,
 }: {
   src: string | undefined;
@@ -61,6 +62,12 @@ export default function MediaImage({
    * what the page was opened for, so they wait behind its photo and scripts.
    */
   eager?: boolean;
+  /**
+   * On screen at load and likely the largest thing painted — the first cards
+   * of the catalogue: fetched at once and first. Lazy loading such an image
+   * makes the browser lay the page out before it even asks for it.
+   */
+  priority?: boolean;
   iconSize?: number;
 }) {
   const [failed, setFailed] = useState(false);
@@ -74,8 +81,8 @@ export default function MediaImage({
       fill
       sizes={sizes}
       decoding="async"
-      loading={eager ? "eager" : "lazy"}
-      fetchPriority={eager ? "low" : undefined}
+      loading={eager || priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : eager ? "low" : undefined}
       onError={() => setFailed(true)}
       className={styles.photo}
     />

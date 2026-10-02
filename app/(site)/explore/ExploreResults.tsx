@@ -21,6 +21,9 @@ interface ToastState { msg: string; type: "success" | "error" | "info" }
 // Its own chunk: the province outlines load only where the map is drawn.
 const ResultsMap = dynamic(() => import("./ResultsMap"), { ssr: false });
 
+/** Cards whose photos are fetched first: a phone shows the first whole, the second begun. */
+const PRIORITY_CARDS = 2;
+
 /** Wide enough for a map beside two columns of cards. Matches .withMap in the module. */
 const WIDE = "(min-width: 1100px)";
 const MAP_PREF_KEY = "rasamap_results_map";
@@ -82,10 +85,11 @@ export default function ExploreResults({ items, view }: { items: CatalogueItem[]
           )}
           {/* Busy until the saved pick has been read. */}
           <div className={view === "grid" ? styles.grid : styles.list} data-testid="results" aria-busy={!ready}>
-            {items.map(b => (
+            {items.map((b, i) => (
               <BillboardCard
                 key={b.id}
                 billboard={b}
+                priority={i < PRIORITY_CARDS && view === "grid"}
                 isPicked={picked.some(x => x.id === b.id)}
                 onPick={() => handlePick(b)}
                 listMode={view === "list"}

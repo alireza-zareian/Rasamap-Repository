@@ -6,7 +6,8 @@ export function Logo({ sub = false }: { sub?: boolean }) {
   return (
     <Link href="/" className={styles.logo} aria-label="رسامپ — صفحهٔ اصلی">
       <span className={styles.mark} aria-hidden="true">R</span>
-      <span>
+      {/* A name, not a word: a browser's page translation must leave it alone. */}
+      <span translate="no">
         <span className={`${styles.name} logo-shimmer`}>رسامپ</span>
         {sub && <span className={styles.domain}>Rasamap.ir</span>}
       </span>

@@ -21,9 +21,11 @@ interface BillboardCardProps {
   highlighted?: boolean;
   /** Tell the results map which card the pointer is on. */
   onHover?: (slug: string | null) => void;
+  /** One of the first cards, on screen at load: its photo is fetched first (MediaImage). */
+  priority?: boolean;
 }
 
-export default function BillboardCard({ billboard: b, isPicked, onPick, listMode = false, highlighted = false, onHover }: BillboardCardProps) {
+export default function BillboardCard({ billboard: b, isPicked, onPick, listMode = false, highlighted = false, onHover, priority = false }: BillboardCardProps) {
   const hover = onHover
     ? { onMouseEnter: () => onHover(b.slug), onMouseLeave: () => onHover(null) }
     : {};
@@ -79,7 +81,7 @@ export default function BillboardCard({ billboard: b, isPicked, onPick, listMode
           <div className={styles.zoom}>
             {/* A grid card is 320–400 CSS px wide: the 384 variant at 1x, the
                 500-wide source at 2x. */}
-            <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="(max-width: 700px) 100vw, 384px" />
+            <MediaImage src={b.images?.[0]} alt={b.name} type={b.type} sizes="(max-width: 700px) 100vw, 384px" priority={priority} />
           </div>
         </ViewTransition>
         <SaveButton slug={b.slug} name={b.name} />
