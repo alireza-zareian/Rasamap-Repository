@@ -47,11 +47,24 @@
   --bottomnav-h: 60px;
   --topbar-bg:   rgba(10,14,26,0.95);
 
-  /* The page's light from above and its dot grid (body, below). The light
-     fades along 1 − smoothstep, like the backdrop's (BackgroundPattern). */
+  /* The page's lights and dot grid, painted by body (below). Each light
+     fades along 1 − smoothstep in five stops, so it reaches zero almost
+     flat: a straight fade stops in a visible rim (a Mach band), which is
+     what made the old orbs read as discs (§43). The grain overlay dithers
+     the banding a fade this faint would otherwise show. */
   --top-light: radial-gradient(ellipse 62% 520px at 50% 0,
     rgba(59,123,245,0.15) 0%, rgba(59,123,245,0.127) 25%, rgba(59,123,245,0.075) 50%,
     rgba(59,123,245,0.023) 75%, transparent 100%);
+  /* Side lights, one per tile (body), near the page's edges so they light
+     the margins and the edges of the content; --side-reach is how far they
+     spread, wider on a phone. */
+  --side-reach: 44%;
+  --light-green: radial-gradient(ellipse var(--side-reach) 620px at 88% 50%,
+    rgba(0,209,122,0.17) 0%, rgba(0,209,122,0.143) 25%, rgba(0,209,122,0.085) 50%, rgba(0,209,122,0.027) 75%, transparent 100%);
+  --light-blue:  radial-gradient(ellipse var(--side-reach) 680px at 80% 50%,
+    rgba(59,123,245,0.14) 0%, rgba(59,123,245,0.118) 25%, rgba(59,123,245,0.07) 50%, rgba(59,123,245,0.022) 75%, transparent 100%);
+  --light-warm:  radial-gradient(ellipse var(--side-reach) 700px at 14% 50%,
+    rgba(220,80,180,0.14) 0%, rgba(220,80,180,0.118) 25%, rgba(220,80,180,0.07) 50%, rgba(220,80,180,0.022) 75%, transparent 100%);
   --dot: rgba(59,123,245,0.065);
 }
 
@@ -70,11 +83,23 @@ body {
   background-color: var(--bg-deep);
   color: var(--text-main);
   direction: rtl;
-  /* Anchored to the top of the page, not the screen: the light greets a page
-     and scrolls away with its top, instead of sitting behind what is read. */
-  background-image: var(--top-light), radial-gradient(circle, var(--dot) 1px, transparent 1px);
-  background-size: auto, 28px 28px;
-  background-repeat: no-repeat, repeat;
+  /* All of it belongs to the page, not the screen: no fixed layer and no
+     animation, so a page nobody touches costs nothing (§43, §44). What it
+     does cost is rasterising each stretch of page once as it scrolls in —
+     on /explore, about 0.4 s of a 2.2 s wheel scroll in software raster.
+     The light from above greets a page and leaves with its top. The side
+     lights repeat down the page on tiles of 1500, 1900 and 1700 px — no
+     common factor, so the three line up again only after 484,500 px and the
+     pattern never visibly repeats (the "cicada principle") — so every screen
+     of a long page has one near it, and a phone has them too. */
+  background-image:
+    var(--top-light), var(--light-green), var(--light-blue), var(--light-warm),
+    radial-gradient(circle, var(--dot) 1px, transparent 1px);
+  background-size: auto, 100% 1500px, 100% 1900px, 100% 1700px, 28px 28px;
+  background-repeat: no-repeat, repeat-y, repeat-y, repeat-y, repeat;
+}
+@media (max-width: 768px) {
+  :root { --side-reach: 80%; }
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────── */
@@ -233,6 +258,14 @@ input[type=range] { accent-color: var(--accent); }
   --top-light: radial-gradient(ellipse 62% 520px at 50% 0,
     rgba(80,120,255,0.15) 0%, rgba(80,120,255,0.127) 25%, rgba(80,120,255,0.075) 50%,
     rgba(80,120,255,0.023) 75%, transparent 100%);
+  /* Sky and a low sun, not violet and pink: the stock haze of generated sites.
+     The amber is --accent-warm, the price colour, at a whisper. */
+  --light-green: radial-gradient(ellipse var(--side-reach) 620px at 88% 50%,
+    rgba(0,180,100,0.21) 0%, rgba(0,180,100,0.177) 25%, rgba(0,180,100,0.105) 50%, rgba(0,180,100,0.033) 75%, transparent 100%);
+  --light-blue:  radial-gradient(ellipse var(--side-reach) 680px at 80% 50%,
+    rgba(56,170,230,0.17) 0%, rgba(56,170,230,0.143) 25%, rgba(56,170,230,0.085) 50%, rgba(56,170,230,0.027) 75%, transparent 100%);
+  --light-warm:  radial-gradient(ellipse var(--side-reach) 700px at 14% 50%,
+    rgba(245,166,35,0.16) 0%, rgba(245,166,35,0.135) 25%, rgba(245,166,35,0.08) 50%, rgba(245,166,35,0.025) 75%, transparent 100%);
   --dot: rgba(59,123,245,0.07);
 }
 

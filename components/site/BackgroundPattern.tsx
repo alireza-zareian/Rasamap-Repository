@@ -1,6 +1,5 @@
 "use client";
 import { useEffect } from "react";
-import styles from "./BackgroundPattern.module.css";
 
 // How long after the last scroll event a still pointer gets its hover back.
 // Long enough to bridge wheel notches a fifth of a second apart: at 150 ms,
@@ -9,14 +8,13 @@ import styles from "./BackgroundPattern.module.css";
 const HOVER_RESUME_MS = 250;
 
 /**
- * The backdrop behind every page: three soft lights on a desktop, none on a
- * phone. It also marks the document while the tab is hidden, which pauses
- * every infinite animation on the globals.css list (§22), and while the page
- * scrolls, which suspends hover on the content (globals.css, §44).
+ * Marks the document while the tab is hidden, which pauses every infinite
+ * animation on the globals.css list (§22), and while the page scrolls, which
+ * suspends hover on the content (globals.css, §44).
  *
- * Three "vine" strokes used to draw themselves across it on load. They ran
- * through the cards and forms in front — every card is translucent — and read
- * as stray lines over the content, so they are gone.
+ * It used to draw the backdrop too: four drifting orbs, then three lights on
+ * a fixed layer. The lights are the page's own background now (body in
+ * globals.css), so nothing here renders.
  */
 export default function BackgroundPattern() {
   useEffect(() => {
@@ -49,5 +47,5 @@ export default function BackgroundPattern() {
     };
   }, []);
 
-  return <div className={styles.decor} aria-hidden="true" />;
+  return null;
 }
