@@ -10,6 +10,7 @@ import { PhotoPicker } from "@/components/listing/PhotoPicker";
 import { PlanPicker } from "@/components/listing/PlanPicker";
 import { useListingForm, type ListingDraft } from "@/components/listing/use-listing-form";
 import { fetchJson, FetchError, errorMessage, TIMEOUT_MS } from "@/lib/client/fetch-json";
+import { useCurrentUser } from "@/lib/client/use-current-user";
 import { MAX_LISTING_IMAGES, type ListingPlan } from "@/lib/domain/listing";
 import styles from "./page.module.css";
 
@@ -55,6 +56,7 @@ export default function ListMediaPage() {
   const [notice, setNotice] = useState("");
   const [idempotencyKey] = useState(newIdempotencyKey);
   const { setDraft, setPlan } = listing;
+  const { user } = useCurrentUser();
 
   useEffect(() => {
     const saved = readDraft();
@@ -65,6 +67,13 @@ export default function ListMediaPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     setNotice("اطلاعاتی که وارد کرده بودید بازیابی شد. لطفاً تصاویر را دوباره اضافه کنید.");
   }, [setDraft, setPlan]);
+
+  // Most owners take calls on the number they signed up with: offer it, but
+  // never over one already typed or restored. Staff accounts have no phone.
+  const accountPhone = user?.phone ?? "";
+  useEffect(() => {
+    if (accountPhone) setDraft(d => (d.phone ? d : { ...d, phone: accountPhone }));
+  }, [accountPhone, setDraft]);
 
   // Ask before a refresh or tab close drops what was typed.
   useEffect(() => {
