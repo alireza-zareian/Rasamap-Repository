@@ -16,7 +16,7 @@ const HOVER_RESUME_MS = 250;
  * a fixed layer. The lights are the page's own background now (body in
  * globals.css), so nothing here renders.
  */
-export default function BackgroundPattern() {
+export default function PageActivity() {
   useEffect(() => {
     const onVisibility = () =>
       document.documentElement.classList.toggle("page-hidden", document.hidden);

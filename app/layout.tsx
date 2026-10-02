@@ -6,7 +6,7 @@ import { vazirFa, vazirLatin } from "./fonts";
 import { ThemeProvider } from "@/lib/client/theme";
 import { THEME_STORAGE_KEY } from "@/lib/client/theme-key";
 import { CurrentUserProvider } from "@/lib/client/use-current-user";
-import BackgroundPattern from "@/components/site/BackgroundPattern";
+import PageActivity from "@/components/site/PageActivity";
 import { FavoritesProvider } from "@/components/favorites/FavoritesProvider";
 import { CampaignProvider } from "@/lib/client/use-campaign";
 
@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <FavoritesProvider>
               {/* The campaign pick, one list for every page (localStorage between visits). */}
               <CampaignProvider>
-                <BackgroundPattern />
+                <PageActivity />
                 <div className="grain-overlay" aria-hidden="true" />
                 {children}
               </CampaignProvider>

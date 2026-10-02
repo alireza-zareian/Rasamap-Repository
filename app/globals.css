@@ -347,7 +347,7 @@ button, a, input, select, label,
 }
 .btn-sheen:hover::after { transform: translateX(320%) skewX(-18deg); }
 
-/* Every infinite animation pauses while the tab is hidden (BackgroundPattern
+/* Every infinite animation pauses while the tab is hidden (PageActivity
    sets .page-hidden), so a background tab does not wake the GPU (§22). */
 html.page-hidden .ticker-strip,
 html.page-hidden .related-strip,
@@ -357,7 +357,7 @@ html.page-hidden .skeleton {
 
 /* While the page scrolls, the content slides under a still pointer, and every
    card it crosses ran its hover — lift, shadow, photo zoom — for nobody to
-   see: on /explore, half of what a wheel scroll cost (§44). BackgroundPattern
+   see: on /explore, half of what a wheel scroll cost (§44). PageActivity
    marks the document for the length of a scroll, and hover returns shortly
    after it stops (HOVER_RESUME_MS).
    Touch screens have no hover to suspend, so they are left alone. */
