@@ -4256,6 +4256,25 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">REV6d</div>
+      <div class="ph-title"><h3>آنچه صفحه وقتی کسی نگاهش نمی‌کرد انجام می‌داد</h3><p>۱۰ مهر ۱۴۰۵ · §۴۴ در سندِ تصمیم‌ها؛ به درخواستِ صاحبِ پروژه؛ با نسخهٔ قبل روی یک ماشین مقایسه شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>مارکیِ بیرون از دید</strong> — نوارِ رسانه‌های مرتبط در بخشِ <code>content-visibility</code> هر فریم style را دوباره حساب می‌کرد؛ حالا بیرون از دید می‌ایستد (آزمونِ نگهبان)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>hover وسطِ اسکرول</strong> — تا ۲۵۰ میلی‌ثانیه بعد از اسکرول، محتوا به نشانگر جواب نمی‌دهد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>blurهای بی‌اثر</strong> — پشتِ نوارهای ۹۵٪ مات و روی هر کارت برداشته شد؛ فقط شمارندهٔ عکسِ گالری ماند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>درخششِ لوگو و تیتر</strong> — فقط وقتی روی متن است اجرا می‌شود؛ همان لحظه‌ها و همان سرعت</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>hoverِ کارت در کاوش</strong> — کارت memo شد و نقاطِ نقشه دیگر هر بار از نو ساخته نمی‌شوند: اسکریپت ۲٫۳ → ۰٫۹ ثانیه</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>اسلایدرِ کاوش</strong> — بیرون از دید نمی‌چرخد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نورهای کناری روی صفحه</strong> — لایهٔ <code>body::before</code>، ثابت نسبت به صفحه، بدون انیمیشن، روی نوارها و کارت‌ها؛ روی گوشی هم</div></div>
+      </div>
+      <div class="proof">مقایسه با ساختِ قبل (دو سرورِ تولیدی روی یک ماشین، سه بار، میانه): اسکرولِ <code>/explore</code> <strong>۴٫۹۲ → ۱٫۷۸</strong> ثانیه CPU مرورگر؛ صفحهٔ رسانهٔ بی‌کار <strong>۱٫۹۳ → ۰٫۷۰</strong>؛ صفحهٔ اولِ بی‌کار <strong>۵٫۹۲ → ۳٫۶۷</strong>. هزینهٔ نورهای کناری روی گوشی، اسکرولِ <code>/explore</code> ۰٫۹۶ → ۱٫۳۹ در raster نرم‌افزاری، ثبت شده. ESLint تمیز؛ <strong>۲۳ واحد + ۱۹۳ API + ۸ واردکننده</strong> و <strong>۱۳ جریانِ مرورگر</strong> موفق.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">REV6c</div>
       <div class="ph-title"><h3>پس‌زمینه‌ای که آرام می‌ماند</h3><p>۱۰ مهر ۱۴۰۵ · §۴۳ در سندِ تصمیم‌ها؛ به درخواستِ صاحبِ پروژه</p></div>
       <div class="ph-badge done">✓ تموم شده</div>

@@ -2772,7 +2772,7 @@ which on the demo's fanless laptop is exactly the cost §22 removed elsewhere.
 | Piece | Where | Why this way |
 |---|---|---|
 | A light from above | `--top-light` on `body` in `globals.css` | Centred, wide (62 % × 520 px), anchored to the **top of the page**, not the screen: it greets a page and scrolls away with its top, instead of sitting behind whatever is read. It is part of the root background, so scrolling moves it with the content and repaints nothing. |
-| Three side lights | one `div`, `BackgroundPattern.module.css` | The green, the right-edge blue and the warm light kept their colours and places, now three gradients on one fixed layer, painted once. No children, no keyframes, nothing on the hidden-tab pause list. Phones still skip it. |
+| Three side lights *(moved onto the page in §44)* | one `div`, `BackgroundPattern.module.css` | The green, the right-edge blue and the warm light kept their colours and places, now three gradients on one fixed layer, painted once. No children, no keyframes, nothing on the hidden-tab pause list. Phones still skip it. |
 | The fade | every light | Five stops along 1 − smoothstep, so each light reaches zero almost flat. A straight fade that stops at a radius leaves a visible rim (a Mach band) — what made the old ones read as discs. The existing grain overlay dithers the banding an 8-bit fade this faint would show. |
 
 **Rejected.** `background-attachment: fixed` for the side lights: a fixed
@@ -2789,6 +2789,87 @@ ESLint clean; 23 unit + 193 API + 8 importer tests and 13 browser flows. In a
 browser: idle frames on `/help` 301 → 0; before/after screenshots of `/`,
 `/explore` and `/help` in both themes — the blue disc is gone, the other three
 lights read as before with softer edges.
+
+---
+
+## 44. What the page did when nobody was looking
+
+**Context.** After §43 the project's owner put the finding plainly: the orbs
+were meant to move and nobody could see them move, other effects were the
+same, and they cost a great deal — "so that was the extra load; I wondered
+why the site had grown heavy for no reason these last months." They asked
+for every such case to be found and fixed, and for the other three lights to
+be tidied the same way as the light from above, without leaving the
+background a flat white or a flat navy.
+
+**How it was measured.** The build before this round (`58f516c`) and the
+build after it, side by side on one machine — two production servers on two
+ports, the same database — in headless Chromium, interleaved, three runs
+each, medians below. Per page and device: style recalculations in 2 s and
+the CPU of every browser process over 5 s on a page nobody touches (after
+the one-off logo shimmer), and the browser's CPU for 20 scroll steps of
+300 px (a wheel at 200 ms per notch on a desktop with the pointer resting on
+the content; `scrollBy` on a phone). Headless Chromium rasterises and
+composites in software, so GPU work is counted as CPU: the absolute numbers
+are larger than a laptop's, the ratios are the point.
+
+| Page | Idle CPU, 5 s (before → after) | Scroll CPU (before → after) |
+|---|---|---|
+| Desktop `/` | 5.92 → 3.67 s | 1.75 → 1.53 s |
+| Desktop `/explore` | 0.80 → 0.63 s | **4.92 → 1.78 s** |
+| Desktop media page | **1.93 → 0.70 s** (style recalcs 120 → 0 per 2 s) | 1.12 → 1.78 s ¹ |
+| Desktop `/help` | 0.07 → 0.09 s | 0.47 → 0.33 s |
+| Phone `/` | 3.12 → 2.61 s | 0.91 → 0.73 s |
+| Phone `/explore` | 0.10 → 0.10 s | 0.96 → 1.39 s ² |
+| Phone media page | 0.68 → 0.68 s | **1.42 → 0.82 s** |
+| Phone `/help` | 0.10 → 0.09 s | 0.19 → 0.18 s |
+
+¹ The related strip at the foot of the page. Before, it paused whenever the
+resting pointer happened to be over it, hover included; now hover waits for
+the scroll to stop, so the strip keeps sliding while the page scrolls past
+it. With the strip held still in both builds: 0.93 → 0.58 s.
+² The side lights, which a phone did not have before: with them hidden,
+0.96 s, the old figure. That is the price of a phone's background never
+being flat, paid in software raster here; a phone's GPU rasterises
+gradients for far less.
+
+**What was found, and what was done.**
+
+| Finding | Evidence | Fix |
+|---|---|---|
+| The related-media strip ticked the main thread 60 times a second at the foot of every media page, inside a `content-visibility: auto` section that skips its rendering but not its animation | 120 style recalcs in 2 s, idle; 0 with it paused | `SwipeMarquee` marks its window `.marquee-away` while it is more than 200 px off screen; both marquees pause there (guard test) |
+| Hover ran while the page scrolled under a still pointer: lift, shadow, photo zoom, and on `/explore` the card ↔ map highlight, each re-rendering the results | `/explore`: 4.9 s → 1.9 s with the content ignoring the pointer | `PageActivity` marks the document `.is-scrolling`; on devices with hover, `main` ignores the pointer until 250 ms after the last scroll event. 150 ms let hover back between notches (4.9 → 2.2 s at 250 ms). A click inside that quarter second after a scroll is lost — the usual price of the technique |
+| Backdrop blurs behind surfaces 92–97 % opaque (top bar, phone tab bar, action bar, landing search), over a flat backdrop (the ticker), and one per card badge and save heart | `/explore` scroll 3.97 → 2.68 s with all of them gone | Removed. Where the see-through mattered the surface took its place: the tray paints its card colour over the page colour, heart and badges are a little darker, the status badge mixes its tone into the same glass. The gallery's photo counter keeps its blur: one pill, half see-through |
+| Each logo and heading shimmer spent more than half of every sweep repainting text with the highlight off it | style recalcs ran 12 s straight; now 2.4–5.1 s and 8.4–11.1 s | Each sweep runs only the crossing (−40 % → 140 %), at the old speed and moments; the first is listed last so it outranks the second's waiting position |
+| A card hover on `/explore` re-rendered every card, and the results map rebuilt every province outline: ResultsMap (and the campaign planner) built PinMap's points afresh each render, voiding its memos | a pointer sweeping the grid: 2.2–2.4 s of script | Points memoised on their items; `BillboardCard` memoised with stable props (`onPick` takes the media): 0.88 s |
+| The explore showcase kept turning after the visitor scrolled down to the results | a render, a fade and a dot transition every 5.5 s off screen | Turns only while an IntersectionObserver sees it, like the landing carousel |
+
+**The side lights.** They are the page's now, like the light from above, but
+a positioned layer (`body::before`) rather than body's background: as part
+of the background they sat under every section band and lost the tint the
+old orbs gave a band's cards, because the orbs were positioned and painted
+above in-flow content. `body` became their containing block; nothing else
+inside body is placed against the viewport except Next's visually hidden
+route announcer (checked on every public, sign-in and error page), and the
+layer paints into the page's own layer — no new composited layer on `/`,
+`/explore`, a media page or `/help`. They sit where the orbs were, in the
+orbs' colours, with the eased fade of §43, and repeat on tiles of 1000, 1300
+and 1100 px: a little over a screen apart, so every screen has light in it,
+and with no common factor, so the pattern lines up again only after
+143,000 px (the "cicada principle"). No animation: an idle page costs nothing
+for them. §43 said the light from above "repaints nothing"; per frame that
+holds, but it is rasterised once per stretch of page, like these.
+
+**Left as it is.** The landing ticker is the one animation that still runs
+for as long as it is on screen. Its motion is visible — it is the hero's
+"live" strip — and since this round it pauses off screen and lost the blur
+behind it; it is most of the desktop landing page's remaining idle cost.
+
+### Verified
+
+ESLint clean; 23 unit + 193 API + 8 importer tests (the marquee guard now
+also requires the off-screen pause) and 13 browser flows. The table above;
+before/after screenshots of both themes on a desktop and a phone.
 
 ---
 
@@ -2851,3 +2932,4 @@ lights read as before with softer edges.
 | 2026-10-02 | **Sixth review — honesty, a phone's first second, what was missing** | §41 — Next 16.3.8 (critical `next/og` RCE closed); invented customers, brands and 3,528 random ratings removed (migration recomputes from reviews); `next/font` preload + `content-visibility`: phone TBT on `/` ~700 → ~250 ms; a phone can sign out; carousels obey WCAG 2.2.2; `/help`, a media 404 in the site frame, recently viewed. |
 | 2026-10-02 | **Demo ratings done properly; second research pass** | §42 — demonstration ratings from the id at read time, blended with real reviews, never in structured data, `DEMO_RATINGS=off` for launch; a blank optional env value no longer stops the server; campaign budget with the board to drop; first catalogue photos at high priority; the media page's sticky card no longer overlapped by the map. |
 | 2026-10-02 | **A backdrop that stands still** | §43 — four drifting orbs (60 frames a second on an idle page) replaced by a light from the top of the page and three side lights painted once on one layer, each fading without a rim; the intrusive blue disc gone; idle frames on `/help` 301 → 0. |
+| 2026-10-02 | **What the page did when nobody was looking** | §44 — an off-screen marquee that ticked 60 times a second, hover while scrolling, blurs behind opaque bars, shimmer sweeps off the text, a card hover that re-rendered the catalogue and rebuilt the map, a carousel turning off screen; side lights on a page layer over the bands. Measured against the previous build: `/explore` wheel scroll 4.92 → 1.78 s of browser CPU, an idle media page 1.93 → 0.70 s, the idle landing page 5.92 → 3.67 s. |
