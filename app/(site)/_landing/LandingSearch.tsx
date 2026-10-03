@@ -40,8 +40,8 @@ export default function LandingSearch({ cities }: { cities: [name: string, count
         aria-label="جستجو"
         enterKeyHint="search"
       />
-      <Button type="submit" intent="primary" className="btn-sheen">
-        <Search size={14} /> جستجو
+      <Button type="submit" intent="primary" className="btn-sheen" aria-label="جستجو">
+        <Search size={14} /> <span className={styles.searchLabel}>جستجو</span>
       </Button>
     </form>
   );

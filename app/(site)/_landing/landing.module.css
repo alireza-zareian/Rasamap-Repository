@@ -211,6 +211,13 @@
    where the keyboard is instead — a ring nobody can see is no focus at all. */
 .search:focus-within { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 3px var(--accent-glow); }
 .searchCity:focus-visible { border-color: var(--accent); }
+/* On a phone the select, the word and the 16px a touch screen needs (globals.css)
+   left the field 40px — "منطقه، خ" of its placeholder. The magnifier alone says
+   search, and the select gives up a little too. */
+@media (max-width: 480px) {
+  .searchLabel { display: none; }
+  .searchCity { max-width: 34%; }
+}
 
 /* ── Featured carousel (FeaturedCarousel) ── */
 .carousel { position: relative; --slide-w: 280px; }
