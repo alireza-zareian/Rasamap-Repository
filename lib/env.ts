@@ -40,6 +40,17 @@ const optional = z.object({
   REDIS_PREFIX: z.string().optional(),
 });
 
+/**
+ * The key behind the OTP hashes and the device cookie. Read here and nowhere
+ * else: the `?? ""` each use had would let a process that never ran
+ * validateEnv() (a script, a harness) sign with an empty key, silently.
+ */
+export function authSecret(): string {
+  const secret = process.env.AUTH_SECRET ?? "";
+  if (secret.length < 32) throw new Error("AUTH_SECRET is missing or shorter than 32 characters");
+  return secret;
+}
+
 let done = false;
 
 export function validateEnv(): void {

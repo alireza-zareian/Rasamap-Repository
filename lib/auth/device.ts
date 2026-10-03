@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import type { NextRequest, NextResponse } from "next/server";
+import { authSecret } from "@/lib/env";
 import { isSecureRequest } from "./session";
 
 /**
@@ -23,7 +24,7 @@ const MAX_ACCOUNTS = 5;
 type Entry = { acct: string; id: string };
 
 function secret(): Uint8Array {
-  return new TextEncoder().encode(`${process.env.AUTH_SECRET ?? ""}:device`);
+  return new TextEncoder().encode(`${authSecret()}:device`);
 }
 
 /** The account as the cookie names it: a hash, so the cookie never carries the email or phone. */

@@ -4,6 +4,7 @@
 
 import "server-only";
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { authSecret } from "@/lib/env";
 import { prisma } from "./client";
 
 const TTL_MS = 5 * 60 * 1000;
@@ -12,7 +13,7 @@ const MAX_ATTEMPTS = 5;
 export type OtpPurpose = "password_reset" | "register";
 
 function hashCode(code: string): string {
-  return createHmac("sha256", process.env.AUTH_SECRET ?? "").update(code).digest("hex");
+  return createHmac("sha256", authSecret()).update(code).digest("hex");
 }
 
 function equalHex(a: string, b: string): boolean {
