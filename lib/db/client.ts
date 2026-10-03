@@ -10,6 +10,7 @@
 import "server-only";
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { logger } from "@/lib/logger";
 import { DB_ENGINE } from "./engine";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
@@ -20,12 +21,15 @@ if (!globalForPrisma.prisma && DB_ENGINE === "sqlite") {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
     const SQLite3 = require("better-sqlite3") as any;
-    const dbPath = (process.env.DATABASE_URL ?? "file:./dev.db").replace(/^file:/, "");
+    // Set: ./engine.ts throws on import when it is not.
+    const dbPath = process.env.DATABASE_URL!.replace(/^file:/, "");
     const initDb = new SQLite3(dbPath);
     initDb.pragma("journal_mode = WAL");
     initDb.close();
-  } catch {
-    // Non-fatal: without WAL, reads wait on writes but stay correct.
+  } catch (err) {
+    // Non-fatal: without WAL, reads wait on writes but stay correct. Logged,
+    // so reads that slow down under writes have a cause someone can find.
+    logger.warn("sqlite: could not switch to WAL", { error: err instanceof Error ? err.message : String(err) });
   }
 }
 

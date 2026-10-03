@@ -15,9 +15,23 @@ import { availabilityFromFeed } from "../lib/domain/billboard";
 
 type StaticBillboard = (typeof everyBillboard)[number];
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
-});
+// No defaults, checked before anything is written: a seed that cannot find its
+// database must not rebuild whichever file a default names (prisma.config.ts
+// records that bug), and the admin comes from the same variables the server
+// refuses to start without (lib/env.ts), so no database is left that nobody
+// can sign in to.
+function requireEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name} is not set — see .env.example`);
+  return value;
+}
+
+const databaseUrl = requireEnv("DATABASE_URL");
+const adminEmail  = requireEnv("ADMIN_EMAIL").toLowerCase();
+const adminHash   = requireEnv("ADMIN_PASSWORD_HASH");
+const adminName   = requireEnv("ADMIN_NAME");
+
+const adapter = new PrismaBetterSqlite3({ url: databaseUrl });
 
 const prisma = new PrismaClient({ adapter });
 
@@ -127,20 +141,12 @@ async function main() {
     );
   }
 
-  // Seed admin from env vars (idempotent upsert)
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
-  const adminHash  = process.env.ADMIN_PASSWORD_HASH;
-  const adminName  = process.env.ADMIN_NAME ?? "مدیر سیستم";
-  if (adminEmail && adminHash) {
-    await prisma.admin.upsert({
-      where:  { email: adminEmail },
-      update: { name: adminName, passwordHash: adminHash, role: "super_admin", active: true },
-      create: { email: adminEmail, passwordHash: adminHash, name: adminName, role: "super_admin" },
-    });
-    console.log(`Admin seeded: ${adminEmail}`);
-  } else {
-    console.warn("ADMIN_EMAIL or ADMIN_PASSWORD_HASH not set — admin not seeded.");
-  }
+  await prisma.admin.upsert({
+    where:  { email: adminEmail },
+    update: { name: adminName, passwordHash: adminHash, role: "super_admin", active: true },
+    create: { email: adminEmail, passwordHash: adminHash, name: adminName, role: "super_admin" },
+  });
+  console.log(`Admin seeded: ${adminEmail}`);
 }
 
 main()
