@@ -93,6 +93,15 @@ function toSourceRecord(b: StaticBillboard) {
 }
 
 async function main() {
+  // Checked before the long upsert, not after it.
+  // A bcrypt hash is 60 characters: $2b$, the cost, $, then 53 of salt and hash.
+  // Anything else is what the env loader left of one whose "$" was not escaped.
+  if (!/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(adminHash)) {
+    throw new Error(
+      "ADMIN_PASSWORD_HASH is not a whole bcrypt hash. The env files expand $NAME, " +
+      "so write every $ in it as \\$ (see .env.example), then seed again.",
+    );
+  }
   console.log(`Seeding ${everyBillboard.length} billboards...`);
 
   // Guard against duplicate ids in the source data itself — if this ever

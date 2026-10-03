@@ -64,7 +64,8 @@ export default async function MapPage({
 
       <div className={styles.foot}>
         <div>
-          <strong>{faNum(total)}</strong> رسانه در این محدوده
+          {/* A Persian zero is a dot, as on the results page. */}
+          {total > 0 ? <><strong>{faNum(total)}</strong> رسانه در این محدوده</> : "رسانه‌ای در این محدوده نیست"}
           {zoomed && <> · <strong className={styles.onMap}>{faNum(pins.length)}</strong> روی نقشه</>}
         </div>
         {/* Required by geoBoundaries' CC BY 4.0 licence. */}

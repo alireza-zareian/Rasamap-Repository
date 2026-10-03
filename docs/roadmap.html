@@ -4256,6 +4256,25 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">REV6f</div>
+      <div class="ph-title"><h3>بازبینیِ همه‌جانبه از روی گوشی و دسکتاپ</h3><p>۱۱ مهر ۱۴۰۵ · به درخواستِ صاحبِ پروژه؛ هر ایراد اول اندازه‌گیری یا بازتولید شد، بعد درست شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>بزرگ‌نماییِ ناخواستهٔ آیفون</strong> — همهٔ فیلدها و منوهای انتخاب روی گوشی ۱۲٫۵ تا ۱۴٫۴ پیکسل بودند و Safari با لمسِ جستجو کلِ صفحه را بزرگ می‌کرد؛ روی صفحهٔ لمسی حالا ۱۶ پیکسل‌اند، دسکتاپ دست‌نخورده</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>علامتِ «~» سمتِ اشتباه</strong> — در متنِ راست‌به‌چپ «~۸K» به‌شکلِ «۸K~» کشیده می‌شد (کارت، صفحهٔ رسانه، طرح کمپین، فرم ثبت). <code>faApprox()</code> عدد را جزیرهٔ چپ‌به‌راست می‌کند؛ با آزمونِ واحد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تکرارِ عنوان در صفحهٔ رسانه</strong> — توضیحاتِ ۳۵۲۸ از ۳۵۴۵ رسانه و نشانیِ ۱۱۵۳ رسانه همان نام بود؛ متنی که فقط عنوان را تکرار می‌کند دیگر نشان داده نمی‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>تم تاریکِ دستگاه</strong> — بدونِ انتخابِ دستی، گوشیِ تاریک صفحهٔ تاریک می‌گیرد؛ انتخابِ دکمهٔ تم همچنان مقدم است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>«۰ رسانه» که شبیهِ نقطه بود</strong> — صفرِ فارسی نقطه است؛ در نتیجهٔ خالیِ جستجو و نقشه حالا با کلمه نوشته می‌شود</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>جعبهٔ جستجوی صفحهٔ اول روی گوشی</strong> — فیلد ۴۰ پیکسل جا داشت («منطقه، خ»)؛ دکمه روی گوشی فقط ذره‌بین است</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>هشِ رمزِ مدیر در <code>.env</code></strong> — Next.js داخلِ هر مقداری <code>$NAME</code> را باز می‌کند (حتی داخلِ گیومه)، پس هش ناقص به سرور می‌رسید در حالی که seed با dotenv کاملش را می‌خواند. حالا هر دو با بارگذارِ خودِ Next می‌خوانند، <code>.env.example</code> نوشتنِ <code>\$</code> را می‌گوید و seed هشِ ناقص را رد می‌کند. <code>dotenv</code> که بی‌مصرف شد حذف شد</div></div>
+      </div>
+      <div class="proof">اندازهٔ فونتِ فیلدها روی <code>/</code>، <code>/explore</code> و <code>/login</code> در شبیه‌سازِ آیفون: همه <strong>۱۶px</strong>. جای «~» با مختصاتِ هر حرف در Chromium سنجیده شد (پیش از عدد). ورودِ مدیر با هشِ escapeشده از راهِ API موفق؛ seed با هشِ ناقص پیش از هر نوشتن متوقف شد. ESLint تمیز؛ <strong>۲۴ واحد + ۱۹۳ API + ۸ واردکننده</strong> و <strong>۱۳ جریانِ مرورگر</strong> موفق.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">REV6e</div>
       <div class="ph-title"><h3>بهبودِ همه‌جانبه — جستجو، حالت‌های خالی، فرم‌ها و کنتراست</h3><p>۱۰ مهر ۱۴۰۵ · به درخواستِ صاحبِ پروژه؛ هر صفحه در دو پهنا و دو تم دیده و با axe سنجیده شد</p></div>
       <div class="ph-badge done">✓ تموم شده</div>

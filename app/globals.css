@@ -390,6 +390,19 @@ html.page-hidden .skeleton {
   transform: translate(-50%, -50%);
 }
 
+/* ── Form controls on a touch screen ───────────────────────────────
+   iOS Safari zooms the whole page in when a control under 16px takes focus,
+   and leaves it zoomed after the keyboard closes. Every control here was
+   12.5–14.4px on a 390px phone (measured on /, /explore, /login), so a tap on
+   the search box threw the layout sideways. 16px only where the pointer is a
+   finger: the desktop keeps the denser sizes. !important because each control's
+   own size comes from a module class, which an element selector cannot outrank. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea { font-size: 16px !important; }
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .btn-sheen::after { display: none !important; }

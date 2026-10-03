@@ -8,7 +8,8 @@ const required = z.object({
   DATABASE_URL: z.string().min(1, "required (e.g. file:./dev.db)"),
   AUTH_SECRET: z.string().min(32, "must be at least 32 characters"),
   ADMIN_EMAIL: z.string().email("must be a valid email address"),
-  ADMIN_PASSWORD_HASH: z.string().min(1, "required (bcrypt hash)"),
+  // Empty is also what the loader leaves of a hash with an unescaped "$".
+  ADMIN_PASSWORD_HASH: z.string().min(1, "required (bcrypt hash, every $ written as \\$)"),
   ADMIN_NAME: z.string().min(1, "required"),
 });
 

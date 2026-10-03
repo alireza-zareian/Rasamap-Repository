@@ -1,6 +1,6 @@
 import { BarChart2, Car, Footprints, Clock, Info } from "lucide-react";
 import type { TrafficData } from "@/lib/types";
-import { faCompact, faDigits, faNum } from "@/lib/format";
+import { faApprox, faCompact, faDigits, faNum } from "@/lib/format";
 import { cssVar } from "@/components/ui/css-var";
 import styles from "./media.module.css";
 
@@ -31,7 +31,7 @@ export default function TrafficMeter({ traffic }: { traffic: TrafficData }) {
         </div>
 
         <div className={styles.views}>
-          <div className={styles.viewsValue}>~{faCompact(traffic.estimatedViews)}</div>
+          <div className={styles.viewsValue}>{faApprox(faCompact(traffic.estimatedViews))}</div>
           <div className={styles.viewsLabel}>بیننده در روز</div>
         </div>
 

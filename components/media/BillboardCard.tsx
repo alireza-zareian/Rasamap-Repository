@@ -5,7 +5,7 @@ import { Check, Plus, Star, Sparkles } from "lucide-react";
 import MediaImage from "@/components/media/MediaImage";
 import SaveButton from "@/components/favorites/SaveButton";
 import { type CatalogueItem, typeLabels, availabilityLabels } from "@/lib/types";
-import { faNum, faCompact, faMillions } from "@/lib/format";
+import { faNum, faCompact, faMillions, faApprox } from "@/lib/format";
 import { availabilityTone } from "@/components/ui/availability";
 import { cssVar } from "@/components/ui/css-var";
 import { mediaPhotoTransition } from "@/components/ui/transitions";
@@ -42,7 +42,7 @@ function BillboardCard({ billboard: b, isPicked, onPick, listMode = false, highl
 
   const figures = (
     <div className={styles.figures}>
-      {views > 0 && <span className={styles.views}>~{faCompact(views)} نفر/روز ·</span>}
+      {views > 0 && <span className={styles.views}>{faApprox(faCompact(views))} نفر/روز ·</span>}
       <span className={styles.price}>{faMillions(b.price)}</span>
       <span className={styles.unit}>ت/ماه</span>
     </div>
