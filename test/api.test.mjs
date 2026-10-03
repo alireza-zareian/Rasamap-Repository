@@ -700,7 +700,7 @@ test("register then login: happy path sets a session cookie", async () => {
   const login = await api("/api/auth/login", {
     method: "POST",
     ip,
-    body: { phone, password: "secret123" },
+    body: { identifier: phone, password: "secret123" },
   });
   assert.equal(login.status, 200);
   assert.ok(tokenFromSetCookie(login), "login should set a session cookie");
@@ -711,12 +711,12 @@ test("login with a wrong password and login for a missing user give an identical
   const wrongPass = await api("/api/auth/login", {
     method: "POST",
     ip,
-    body: { phone: "09120000000", password: "definitely-wrong" },
+    body: { identifier: "09120000000", password: "definitely-wrong" },
   });
   const noSuchUser = await api("/api/auth/login", {
     method: "POST",
     ip,
-    body: { phone: "09123334444", password: "definitely-wrong" },
+    body: { identifier: "09123334444", password: "definitely-wrong" },
   });
   assert.equal(wrongPass.status, 401);
   assert.equal(noSuchUser.status, 401);
@@ -733,7 +733,7 @@ test("repeated failures lock the account they are aimed at", async () => {
     last = await api("/api/auth/login", {
       method: "POST",
       ip: uniqueIp(),            // a new address each time — the account is the limit
-      body: { phone, password: "wrong" },
+      body: { identifier: phone, password: "wrong" },
     });
   }
   assert.equal(last.status, 429);
@@ -801,7 +801,7 @@ test("signing out revokes that token, and only that one", async () => {
   const phone = randomPhone();
   const registered = await registerUser({ phone, ip: uniqueIp() });
   const here = tokenFromSetCookie(registered);
-  const elsewhere = tokenFromSetCookie(await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { phone, password: "secret123" } }));
+  const elsewhere = tokenFromSetCookie(await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: phone, password: "secret123" } }));
 
   assert.equal((await api("/api/auth/logout", { method: "POST", token: here })).status, 200);
   assert.equal((await api("/api/auth/me", { token: here })).status, 401, "a copy of a signed-out token must not work");
@@ -815,7 +815,7 @@ test("one account's failures do not lock another account on the same address", a
   for (let i = 0; i < 14; i++) {
     await api("/api/auth/login", {
       method: "POST", ip,
-      body: { phone: "09129998002", password: "wrong" },
+      body: { identifier: "09129998002", password: "wrong" },
     });
   }
   // A different account from the same address. It does not matter whether the
@@ -823,7 +823,7 @@ test("one account's failures do not lock another account on the same address", a
   // instead of being turned away at the limiter, which is the whole assertion.
   const other = await api("/api/auth/login", {
     method: "POST", ip,
-    body: { phone: "09120000000", password: "whatever" },
+    body: { identifier: "09120000000", password: "whatever" },
   });
   assert.notEqual(other.status, 429, "a neighbour's failures locked this account out");
 });
@@ -878,7 +878,7 @@ test("otp/send + otp/verify resets the password; the new one then logs in", asyn
 
   const login = await api("/api/auth/login", {
     method: "POST", ip: uniqueIp(),
-    body: { phone, password: "brandnew1" },
+    body: { identifier: phone, password: "brandnew1" },
   });
   assert.equal(login.status, 200);
   assert.ok(tokenFromSetCookie(login));
@@ -917,7 +917,7 @@ test("changing one's own password keeps this session and ends the others", async
   const phone = randomPhone();
   const registered = await registerUser({ phone, ip: uniqueIp() });
   const other = tokenFromSetCookie(registered);
-  const login = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { phone, password: "secret123" } });
+  const login = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: phone, password: "secret123" } });
   const self = tokenFromSetCookie(login);
 
   const changed = await api("/api/auth/me", {
@@ -977,7 +977,7 @@ test("register without a code is refused and creates nothing", async () => {
 
   // The account must not exist. Asking the sign-in endpoint is the honest
   // check: a 401 here is what a phone with no account answers.
-  const login = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { phone, password: "secret123" } });
+  const login = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: phone, password: "secret123" } });
   assert.equal(login.status, 401, "an account was created without a verified phone");
 });
 
@@ -1565,7 +1565,7 @@ test("a refused request returns 429 with a Retry-After header", async () => {
     const res = await api("/api/auth/login", {
       method: "POST",
       ip: uniqueIp(),          // a fresh address each time: this is the account limit
-      body: { phone, password: "definitely-wrong" },
+      body: { identifier: phone, password: "definitely-wrong" },
     });
     if (res.status === 429) got429 = res;
   }
@@ -2153,7 +2153,7 @@ test("a password hashed by the seed still signs in", async () => {
   // every existing account and the admin hash in .env.
   const res = await api("/api/auth/login", {
     method: "POST",
-    body: { phone: "09120000002", password: "secret123" },   // seeded, id 2
+    body: { identifier: "09120000002", password: "secret123" },   // seeded, id 2
   });
   assert.equal(res.status, 200, `seeded credentials were rejected: ${JSON.stringify(res.json)}`);
   assert.ok(tokenFromSetCookie(res), "a successful sign-in must set the session cookie");
@@ -2356,7 +2356,7 @@ test("an unknown phone costs about as much as a wrong password (no timing oracle
   // whether an account exists even though both responses are an identical 401.
   const sample = async (phone) => {
     const t0 = performance.now();
-    const res = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { phone, password: "definitely-wrong-password" } });
+    const res = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: phone, password: "definitely-wrong-password" } });
     assert.equal(res.status, 401);
     return performance.now() - t0;
   };

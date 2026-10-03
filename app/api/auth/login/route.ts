@@ -6,16 +6,10 @@ import { latinDigits } from "@/lib/domain/digits";
 
 // POST /api/auth/login — one form for customers (mobile) and staff (email); see lib/auth/sign-in.ts.
 
-// Older field names are still accepted; the form sends `identifier`.
-const LoginSchema = z
-  .object({
-    identifier: z.string().optional(),
-    phone:      z.string().optional(),
-    email:      z.string().optional(),
-    password:   GivenPassword,
-  })
-  .transform(b => ({ identifier: latinDigits((b.identifier ?? b.phone ?? b.email ?? "").trim()), password: b.password }))
-  .refine(b => b.identifier.length > 0 && b.identifier.length <= 160);
+const LoginSchema = z.object({
+  identifier: z.string().transform(s => latinDigits(s.trim())).pipe(z.string().min(1).max(160)),
+  password:   GivenPassword,
+});
 
 export const POST = defineRoute(
   {
