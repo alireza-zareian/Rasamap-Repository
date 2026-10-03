@@ -192,40 +192,44 @@ function LoginForm() {
         <div className={styles.tabs} role="tablist">
           {tabs.map(t => (
             <button key={t} type="button" id={`tab-${t}`} role="tab" aria-selected={tab === t}
+              aria-controls="auth-panel"
               className={styles.tab} onClick={() => switchTab(t)}>
               {t === "login" ? (staff ? "ورود همکاران" : "ورود") : "ثبت‌نام"}
             </button>
           ))}
         </div>
-        {/* A real <form>, so Enter submits. */}
-        <form className={styles.form} role="tabpanel" aria-labelledby={`tab-${tab}`}
-          onSubmit={e => { e.preventDefault(); if (!loading) void (askingForCode ? sendCode() : submit()); }}>
-          {notice && detailsStep && <div role="status" className={styles.notice}>{notice}</div>}
-          {/* Step one is the number alone. */}
-          {identifierInp()}
-          {detailsStep && codeInp()}
-          {detailsStep && nameInp()}
-          {!askingForCode && passInp(form.pass, v => s("pass", v), "رمز عبور", showPass, setShowPass, signUp ? "new-password" : "current-password")}
-          {detailsStep && passInp(form.confirm, v => s("confirm", v), "تکرار رمز", showConfirm, setShowConfirm, "new-password")}
-          {error && <div role="alert" className={field.error}><AlertTriangle size={13} /> {error}</div>}
-          <button type="submit" className={styles.submit} disabled={loading}>
-            {loading ? "در حال پردازش…"
-              : staff ? "ورود به پنل مدیریت"
-              : tab === "login" ? "ورود به حساب"
-              : askingForCode ? "ارسال کد تأیید"
-              : "ایجاد حساب"}
-          </button>
-          {detailsStep && (
-            <button type="button" className={styles.textButton}
-              onClick={() => { setSignUpStep("phone"); setError(""); setNotice(""); s("code", ""); }}>
-              شماره را اشتباه وارد کردم
+        {/* A real <form>, so Enter submits. The tabpanel role sits on a wrapper:
+            ARIA does not allow it on <form>, which already has the form role. */}
+        <div id="auth-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
+          <form className={styles.form}
+            onSubmit={e => { e.preventDefault(); if (!loading) void (askingForCode ? sendCode() : submit()); }}>
+            {notice && detailsStep && <div role="status" className={styles.notice}>{notice}</div>}
+            {/* Step one is the number alone. */}
+            {identifierInp()}
+            {detailsStep && codeInp()}
+            {detailsStep && nameInp()}
+            {!askingForCode && passInp(form.pass, v => s("pass", v), "رمز عبور", showPass, setShowPass, signUp ? "new-password" : "current-password")}
+            {detailsStep && passInp(form.confirm, v => s("confirm", v), "تکرار رمز", showConfirm, setShowConfirm, "new-password")}
+            {error && <div role="alert" className={field.error}><AlertTriangle size={13} /> {error}</div>}
+            <button type="submit" className={styles.submit} disabled={loading}>
+              {loading ? "در حال پردازش…"
+                : staff ? "ورود به پنل مدیریت"
+                : tab === "login" ? "ورود به حساب"
+                : askingForCode ? "ارسال کد تأیید"
+                : "ایجاد حساب"}
             </button>
-          )}
-          {tab === "login" && !staff && (
-            <div className={styles.aside}><Link href="/reset-password">رمز عبور را فراموش کرده‌اید؟</Link></div>
-          )}
-          {staff && <div className={styles.aside}>بازیابی رمز همکاران از طریق سوپر ادمین انجام می‌شود</div>}
-        </form>
+            {detailsStep && (
+              <button type="button" className={styles.textButton}
+                onClick={() => { setSignUpStep("phone"); setError(""); setNotice(""); s("code", ""); }}>
+                شماره را اشتباه وارد کردم
+              </button>
+            )}
+            {tab === "login" && !staff && (
+              <div className={styles.aside}><Link href="/reset-password">رمز عبور را فراموش کرده‌اید؟</Link></div>
+            )}
+            {staff && <div className={styles.aside}>بازیابی رمز همکاران از طریق سوپر ادمین انجام می‌شود</div>}
+          </form>
+        </div>
       </div>
 
       {/* The mode switch: presentation only. */}

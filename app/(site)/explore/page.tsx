@@ -4,7 +4,7 @@ import { SearchX, Map as MapIcon } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { faNum } from "@/lib/format";
 import { getCachedFilteredBillboards, getCachedShowcaseBillboards, getCachedSiteStats } from "@/lib/db/cached";
-import { parseExploreParams, toFilterParams, exploreHref, exploreSeo, PAGE_SIZE, type ExploreFilters } from "@/lib/explore-query";
+import { parseExploreParams, toFilterParams, exploreHref, exploreSeo, hasActiveFilters, PAGE_SIZE, type ExploreFilters } from "@/lib/explore-query";
 import { ExploreControls, SortSelect } from "./ExploreControls";
 import ExploreShowcase from "./ExploreShowcase";
 import ExploreResults from "./ExploreResults";
@@ -53,6 +53,11 @@ export default async function ExplorePage({
   const totalPages = Math.ceil(total / PAGE_SIZE);
   // Past the end (a stale link) is not the same as "nothing matched".
   const pastEnd = total > 0 && filters.page > totalPages;
+  // A query that found nothing inside a city or a type may still find
+  // something everywhere: offer that before wiping the query too.
+  const searchAlone = filters.search && hasActiveFilters({ ...filters, search: "" })
+    ? exploreHref(parseExploreParams({ search: filters.search }))
+    : null;
 
   return (
     <main id="main" className={styles.page}>
@@ -63,7 +68,8 @@ export default async function ExplorePage({
 
       <div className={styles.bar}>
         <div className={styles.barCount}>
-          <strong>{faNum(total)}</strong> رسانه یافت شد
+          {/* «۰» is a dot in Persian type and read as a stray bullet. */}
+          {total > 0 ? <><strong>{faNum(total)}</strong> رسانه یافت شد</> : "رسانه‌ای یافت نشد"}
           {/* Say the results are cut to a circle, or a short list reads as an empty catalogue. */}
           {filters.near && <span className={styles.barNear}> — در شعاع {faNum(filters.near.radiusKm)} کیلومتری</span>}
         </div>
@@ -82,11 +88,21 @@ export default async function ExplorePage({
               ? `این نتایج ${faNum(totalPages)} صفحه دارد — صفحهٔ ${faNum(filters.page)} وجود ندارد`
               : filters.near
                 ? `رسانه‌ای در شعاع ${faNum(filters.near.radiusKm)} کیلومتری این نقطه یافت نشد`
-                : "رسانه‌ای با این فیلترها یافت نشد"}
+                : filters.search
+                  ? `برای «${filters.search}» رسانه‌ای یافت نشد`
+                  : "رسانه‌ای با این فیلترها یافت نشد"}
           </div>
-          <ButtonLink href={pastEnd ? exploreHref({ ...filters, page: 1 }) : "/explore"} size="sm">
-            {pastEnd ? "بازگشت به صفحهٔ اول" : "پاک کردن فیلترها"}
-          </ButtonLink>
+          {filters.search && !pastEnd && (
+            <p className={styles.emptyHint}>املای کلمه را بررسی کنید یا کوتاه‌ترش کنید — مثلاً فقط نام خیابان یا محله.</p>
+          )}
+          <div className={styles.emptyActions}>
+            {searchAlone && !pastEnd && (
+              <ButtonLink href={searchAlone} intent="primary" size="sm">جستجوی «{filters.search}» در همهٔ شهرها و انواع</ButtonLink>
+            )}
+            <ButtonLink href={pastEnd ? exploreHref({ ...filters, page: 1 }) : "/explore"} size="sm">
+              {pastEnd ? "بازگشت به صفحهٔ اول" : "پاک کردن فیلترها"}
+            </ButtonLink>
+          </div>
         </div>
       ) : (
         <>

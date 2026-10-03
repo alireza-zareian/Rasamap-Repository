@@ -89,8 +89,8 @@ const EXTRA_INDEXES = [
   `ALTER TABLE "billboards" DROP COLUMN IF EXISTS "searchText"`,
   `ALTER TABLE "billboards" ADD COLUMN "searchText" text GENERATED ALWAYS AS (lower(translate(
      "name" || ' ' || "city" || ' ' || "location" || ' ' || "agency",
-     'يىكةۀ\u200c۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩ـ',
-     'ییکهه 01234567890123456789'))) STORED`,
+     'يىكةۀآأإ\u200c۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩ـ',
+     'ییکههااا 01234567890123456789'))) STORED`,
 ];
 
 const args = process.argv.slice(2);

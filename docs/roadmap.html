@@ -4256,6 +4256,23 @@ redis-cli --scan --pattern 'rasamap:cache:*' | head   # بعد از یک باز�
   </div>
 <div class="phase-card is-done open">
     <div class="ph-header" onclick="toggle(this)">
+      <div class="ph-num" style="font-size:10px">REV6e</div>
+      <div class="ph-title"><h3>بهبودِ همه‌جانبه — جستجو، حالت‌های خالی، فرم‌ها و کنتراست</h3><p>۱۰ مهر ۱۴۰۵ · به درخواستِ صاحبِ پروژه؛ هر صفحه در دو پهنا و دو تم دیده و با axe سنجیده شد</p></div>
+      <div class="ph-badge done">✓ تموم شده</div>
+    </div>
+    <div class="ph-body">
+      <div class="task-list">
+        <div class="task done-t"><div class="tick">✓</div><div><strong>جستجو آ/أ/إ را «ا» می‌خواند</strong> — «ازادی» ۳ رسانه پیدا می‌کرد و «آزادی» ۵۷؛ حالا هر دو ۶۰. «ابادان» از ۰ به ۶. migration ستونِ <code>searchText</code> و triggerها را دوباره می‌سازد و یک آزمونِ تازه یکسان‌بودنِ تاشدنِ SQLite و PostgreSQL را نگه می‌دارد</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>نتیجهٔ خالیِ جستجو</strong> — عبارت را نام می‌برد، راهنمای املا می‌دهد و اگر شهر/نوع/قیمت آن را تنگ کرده بود «جستجو در همهٔ شهرها و انواع» پیشنهاد می‌شود؛ نوارِ نتایج به‌جای «۰ رسانه» (که صفرِ فارسی‌اش یک نقطه دیده می‌شد) می‌گوید «رسانه‌ای یافت نشد»</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>دکمه‌ها زیرِ نورِ کناری کدر می‌شدند</strong> — لایهٔ نور (<code>body::before</code>) روی دکمهٔ آبی رنگِ سبز می‌انداخت و کنتراستِ برچسبِ سفید را کم می‌کرد؛ دکمه‌ها حالا بالای آن‌اند و کارت‌ها رنگشان را نگه می‌دارند</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>داشبورد و فرمِ ثبت رسانه</strong> — حسابِ تازه دیگر سه کارتِ «۰» بالای حالتِ خالی نمی‌بیند؛ شمارهٔ تماسِ آگهی با شمارهٔ حساب پر می‌شود (فقط اگر خالی باشد)</div></div>
+        <div class="task done-t"><div class="tick">✓</div><div><strong>دسترس‌پذیری</strong> — نقشِ <code>tabpanel</code> روی <code>&lt;form&gt;</code> مجاز نیست (axe، صفحهٔ ورود)؛ به یک wrapper رفت و زبانه‌ها <code>aria-controls</code> گرفتند. پس از آن axe روی ۱۱ صفحه، دو پهنا و دو تم: صفر ایراد</div></div>
+      </div>
+      <div class="proof">ESLint و <code>tsc</code> تمیز؛ <strong>۲۴ آزمون واحد + ۱۹۳ آزمون API + ۸ آزمون واردکننده</strong> و <strong>۱۳ جریانِ مرورگر</strong> موفق. آزمونِ تازهٔ تاشدن روی نسخهٔ قدیمِ <code>to-postgres.mjs</code> اجرا شد و شکست خورد. ۲۸ نشانیِ خراب و ورودیِ بدشکل به API و صفحه‌ها فرستاده شد: هیچ ۵۰۰ای نبود. پس از pull، <code>npm run demo</code> migrationِ جستجو را خودش اجرا می‌کند.</div>
+    </div>
+  </div>
+<div class="phase-card is-done open">
+    <div class="ph-header" onclick="toggle(this)">
       <div class="ph-num" style="font-size:10px">REV6d</div>
       <div class="ph-title"><h3>آنچه صفحه وقتی کسی نگاهش نمی‌کرد انجام می‌داد</h3><p>۱۰ مهر ۱۴۰۵ · §۴۴ در سندِ تصمیم‌ها؛ به درخواستِ صاحبِ پروژه؛ با نسخهٔ قبل روی یک ماشین مقایسه شد</p></div>
       <div class="ph-badge done">✓ تموم شده</div>

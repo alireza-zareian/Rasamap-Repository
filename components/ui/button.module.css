@@ -1,6 +1,11 @@
 /* Buttons. One base, a few intents; `sm` for dense rows such as table actions. */
 
+/* `position: relative` lifts a button over the page's side lights
+   (body::before in globals.css), which are positioned so they tint the cards
+   and bands below them; painted over a primary button they washed its blue
+   toward green and cut the white label's contrast. */
 .button {
+  position: relative;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   font-family: inherit;
   font-size: 0.82rem;
