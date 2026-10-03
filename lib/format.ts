@@ -29,3 +29,12 @@ export function faCompact(n: number): string {
   if (n >= 1_000) return `${faNum(Math.round(n / 1_000))}K`;
   return faNum(n);
 }
+
+/**
+ * An estimate, ~۱۸K, as one left-to-right island (U+2066 … U+2069). Bare, in a
+ * right-to-left line, "~" is a neutral character and the bidi algorithm drew it
+ * after the number — ۱۸K~ on the cards, the media page and the campaign table.
+ */
+export function faApprox(shortNumber: string): string {
+  return `⁦~${shortNumber}⁩`;
+}

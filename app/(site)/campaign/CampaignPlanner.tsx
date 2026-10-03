@@ -11,7 +11,7 @@ import {
 import { latinDigits } from "@/lib/domain/digits";
 import { useCampaign } from "@/lib/client/use-campaign";
 import { copyText } from "@/lib/client/clipboard";
-import { faNum, faCompact } from "@/lib/format";
+import { faNum, faCompact, faApprox } from "@/lib/format";
 import { campaignHref } from "@/components/campaign/campaign-href";
 import CampaignTable from "@/components/campaign/CampaignTable";
 import PinMap, { type MapPoint } from "@/components/map/PinMap";
@@ -250,7 +250,7 @@ export default function CampaignPlanner({ items, requested, period, budget: init
                   <div className={styles.itemBody}>
                     <Link href={`/billboard/${b.slug}`} className={styles.itemName}>{b.name}</Link>
                     <div className={styles.itemMeta}>
-                      <MapPin size={11} /> {b.city} · {typeLabels[b.type]} · ~{faCompact(b.traffic.estimatedViews)} بیننده/روز
+                      <MapPin size={11} /> {b.city} · {typeLabels[b.type]} · {faApprox(faCompact(b.traffic.estimatedViews))} بیننده/روز
                     </div>
                     <div className={styles.share} aria-hidden="true">
                       <div className={styles.shareFill} style={{ width: `${Math.round(totals.shares[i] * 100)}%` }} />
