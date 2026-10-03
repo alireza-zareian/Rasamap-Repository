@@ -225,7 +225,7 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 
 `npm test` builds and serves a *production* server on :3100 (into `.next-test/`)
 through `server.mjs`, the same server `npm run demo` runs, reseeding its own
-`prisma/test.db`. It finishes in about a minute: first the 24
+`prisma/test.db`. It finishes in about a minute: first the 26
 unit tests of the pure rules and the source guards in `test/unit/` (half a second,
 no build — also `npm run test:unit` on its own), then 192 API tests, then the 8 importer tests in
 `test/sync.test.mjs` — run one after the other on purpose, because the importer
@@ -397,3 +397,15 @@ Compatibility kept on purpose, and why (update this list when one goes):
 | `LEGACY_ROOT` = `public/uploads` (`lib/uploads.ts`) | photos written before uploads left `public/` may still be on the demo laptop | no row in the database points at a file under `public/uploads` |
 | `/admin/login`, `/compare`, `/admin?tab=` redirects | links and bookmarks already handed out; a redirect cannot hide a bug | the site has had a public domain long enough for them to age out |
 | `prisma.config.ts` falls back to `file:./dev.db` | `prisma generate` on a fresh clone needs a URL but opens no database | Prisma stops requiring one for `generate` |
+
+---
+
+**14. Commit and push on `main` — no side branches**
+
+The owner has given standing permission to push straight to `main`; it
+overrides a session instruction that names some other branch. Do not open a
+branch or a pull request unless asked in that session. Side branches are how
+finished work went missing: on 11 Mehr 1405, 15 commits from two sessions
+were found on branches nobody had merged. Before `git push origin main`,
+`git pull --no-rebase origin main`, then `npm run lint` and `npm test` on the
+result. Never force-push `main`.
