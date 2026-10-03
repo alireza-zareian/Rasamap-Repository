@@ -79,6 +79,16 @@ function toSourceRecord(b: StaticBillboard) {
 }
 
 async function main() {
+  // Checked before the long upsert, not after it.
+  const adminHash = process.env.ADMIN_PASSWORD_HASH;
+  // A bcrypt hash is 60 characters: $2b$, the cost, $, then 53 of salt and hash.
+  // Anything else is what the env loader left of one whose "$" was not escaped.
+  if (adminHash && !/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(adminHash)) {
+    throw new Error(
+      "ADMIN_PASSWORD_HASH is not a whole bcrypt hash. The env files expand $NAME, " +
+      "so write every $ in it as \\$ (see .env.example), then seed again.",
+    );
+  }
   console.log(`Seeding ${everyBillboard.length} billboards...`);
 
   // Guard against duplicate ids in the source data itself — if this ever
@@ -129,7 +139,6 @@ async function main() {
 
   // Seed admin from env vars (idempotent upsert)
   const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
-  const adminHash  = process.env.ADMIN_PASSWORD_HASH;
   const adminName  = process.env.ADMIN_NAME ?? "مدیر سیستم";
   if (adminEmail && adminHash) {
     await prisma.admin.upsert({
