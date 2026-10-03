@@ -63,7 +63,8 @@ export default async function ExplorePage({
 
       <div className={styles.bar}>
         <div className={styles.barCount}>
-          <strong>{faNum(total)}</strong> رسانه یافت شد
+          {/* A Persian zero is a dot: "۰ رسانه" read as a stray bullet. */}
+          {total > 0 ? <><strong>{faNum(total)}</strong> رسانه یافت شد</> : "هیچ رسانه‌ای یافت نشد"}
           {/* Say the results are cut to a circle, or a short list reads as an empty catalogue. */}
           {filters.near && <span className={styles.barNear}> — در شعاع {faNum(filters.near.radiusKm)} کیلومتری</span>}
         </div>
