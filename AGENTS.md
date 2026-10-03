@@ -225,9 +225,9 @@ reasoning are in §24 of `docs/engineering-decisions.md`.
 
 `npm test` builds and serves a *production* server on :3100 (into `.next-test/`)
 through `server.mjs`, the same server `npm run demo` runs, reseeding its own
-`prisma/test.db`. It finishes in about a minute: first the 20
+`prisma/test.db`. It finishes in about a minute: first the 24
 unit tests of the pure rules and the source guards in `test/unit/` (half a second,
-no build — also `npm run test:unit` on its own), then 193 API tests, then the 8 importer tests in
+no build — also `npm run test:unit` on its own), then 192 API tests, then the 8 importer tests in
 `test/sync.test.mjs` — run one after the other on purpose, because the importer
 writes rows the API tests count.
 

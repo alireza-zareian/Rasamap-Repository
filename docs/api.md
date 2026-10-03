@@ -105,7 +105,7 @@ CDN; anyone else gets a 404, because it describes every limit and defence). Demo
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
 | POST | `/api/auth/register` | public | Body (Zod): `name` (2–100), `phone` (`^09\d{9}$`, Persian digits accepted), `password` (8–128), `code` (6 digits, from `otp/send` with `purpose: "register"`). 409 if the phone exists; 400 if the code is wrong, spent or expired — the account is created only after it verifies. Sets the session cookie. Rate limit: 40 / hour / IP, plus the per-phone code ceiling. |
-| POST | `/api/auth/login` | public | Body (Zod): `identifier` (a `09…` mobile number **or** a staff email) and `password`. The credential's own shape decides which table is consulted, so one form serves customers and staff without either answer revealing which store was read. Always runs a **real** bcrypt comparison — against `TIMING_PAD_HASH` when the phone is unknown — so response time cannot be used to enumerate accounts. 401 on bad credentials, identical body for "wrong password" and "unknown user". Rate limit: per account — 10 tries / 15 min for a phone, 5 for a staff email (the same budget as `/api/admin/auth/login`), a browser that signed in before counted on its own budget — plus a loose per-address ceiling → 429. |
+| POST | `/api/auth/login` | public | Body (Zod): `identifier` (a `09…` mobile number **or** a staff email) and `password`. The credential's own shape decides which table is consulted, so one form serves customers and staff without either answer revealing which store was read. A staff email is checked against the `admins` table, not the environment (`ADMIN_EMAIL` / `ADMIN_PASSWORD_HASH` are read only by `prisma/seed.ts`, which upserts the first row from them), and an inactive account never signs in. Always runs a **real** bcrypt comparison — against `TIMING_PAD_HASH` when the phone is unknown — so response time cannot be used to enumerate accounts. 401 on bad credentials, identical body for "wrong password" and "unknown user". Rate limit: per account — 10 tries / 15 min for a phone, 5 for a staff email, a browser that signed in before counted on its own budget — plus a loose per-address ceiling → 429. |
 | POST | `/api/auth/otp/send` | public | Start a phone-verified flow. Body (Zod): `phone`, `purpose` (`password_reset` \| `register`). A reset responds identically whether or not the number is registered, so it is no membership oracle; a sign-up answers 409 on a number that already has an account, because the register step must refuse it anyway. Rate limited per phone (3 / 10 min) and per IP (40 / hour). SMS is dormant unless `KAVENEGAR_API_KEY` is set. |
 | POST | `/api/auth/otp/verify` | public | Password reset only (`purpose: "password_reset"`): verify the 6-digit code and set a new password in one step. A sign-up code lives under a different purpose and cannot be spent here. Codes are HMAC-hashed, 5-minute TTL, single-use, 5 attempts. Writes `password_reset_self`. |
 | POST | `/api/auth/logout` | public | Deletes this session's row and clears the cookie. Other devices stay signed in. |
@@ -117,7 +117,6 @@ CDN; anyone else gets a 404, because it describes every limit and defence). Demo
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| POST | `/api/admin/auth/login` | public | Credentials are checked against the `admins` table, not against the environment: `ADMIN_EMAIL` / `ADMIN_PASSWORD_HASH` are read only by `prisma/seed.ts`, which upserts the first `admins` row from them. An inactive account never signs in. bcrypt + a new `sessions` row + audit entry. Rate limit: 5 tries / 15 min **per account** (plus a loose per-address ceiling with no lockout — see `lib/rate-limit/index.ts`). |
 | POST | `/api/admin/auth/logout` | admin | Deletes this session's row and clears the cookie. |
 | GET | `/api/admin/auth/me` | admin | Current admin session. |
 | PATCH | `/api/admin/auth/me` | viewer+ | Change one's own password. Body: `currentPassword`, `newPassword` (≥8). Spends the sign-in budget; ends every other session and re-issues this one. |
@@ -296,7 +295,6 @@ Check inside logic: `hasRole(actor.role, "admin")`.
 | POST | `/api/auth/login` | rate-limited, timing-safe dummy hash |
 | GET | `/api/auth/me` | returns session user or 401 |
 | POST | `/api/auth/logout` | deletes the session row, clears cookie |
-| POST | `/api/admin/auth/login` | rate-limited, audit logged |
 | POST | `/api/admin/auth/logout` | deletes the session row, clears cookie |
 | GET | `/api/admin/auth/me` | returns admin session |
 | PATCH | `/api/admin/auth/me` | own password change |

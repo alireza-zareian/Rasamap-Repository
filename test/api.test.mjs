@@ -756,18 +756,6 @@ test("an oversized body is refused on a public route, chunked or not", async () 
   assert.equal(res.status, 413);
 });
 
-test("a staff email has one attempt budget across both sign-in forms", async () => {
-  const email = `budget-${Date.now()}@example.com`;
-  for (let i = 0; i < 5; i++) {
-    await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: email, password: "wrong-pass" } });
-  }
-  const viaAdminForm = await api("/api/admin/auth/login", {
-    method: "POST", ip: uniqueIp(),
-    body: { email, password: "wrong-pass" },
-  });
-  assert.equal(viaAdminForm.status, 429, "failures on the shared form must count against the staff form too");
-});
-
 /** The device cookie a successful sign-in hands out — see lib/auth/device.ts. */
 function deviceCookie(res) {
   for (const c of res.headers.getSetCookie?.() ?? []) {
@@ -779,20 +767,20 @@ function deviceCookie(res) {
 
 test("strangers locking an account out do not lock out the browser its owner signs in from", async () => {
   const email = "super99002@test.local";
-  const first = await api("/api/admin/auth/login", { method: "POST", ip: uniqueIp(), body: { email, password: "secret123" } });
+  const first = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: email, password: "secret123" } });
   assert.equal(first.status, 200, JSON.stringify(first.json));
   const device = deviceCookie(first);
   assert.ok(device, "a successful sign-in should hand out a device cookie");
 
   let stranger;
   for (let i = 0; i < 6; i++) {
-    stranger = await api("/api/admin/auth/login", { method: "POST", ip: uniqueIp(), body: { email, password: "wrong-pass" } });
+    stranger = await api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: email, password: "wrong-pass" } });
   }
   assert.equal(stranger.status, 429, "the account-wide budget still stops a guesser");
 
-  const owner = await api("/api/admin/auth/login", {
+  const owner = await api("/api/auth/login", {
     method: "POST", ip: uniqueIp(), headers: { cookie: device },
-    body: { email, password: "secret123" },
+    body: { identifier: email, password: "secret123" },
   });
   assert.equal(owner.status, 200, "the owner's own browser must still get in");
 });
@@ -1382,7 +1370,7 @@ test("a staff member can change their own password, which ends their other sessi
   });
   assert.equal(created.status, 200, JSON.stringify(created.json));
 
-  const signIn = (password) => api("/api/admin/auth/login", { method: "POST", ip: uniqueIp(), body: { email, password } });
+  const signIn = (password) => api("/api/auth/login", { method: "POST", ip: uniqueIp(), body: { identifier: email, password } });
   const other = tokenFromSetCookie(await signIn("first-pass-1"));
   const self  = tokenFromSetCookie(await signIn("first-pass-1"));
 

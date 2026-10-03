@@ -43,16 +43,12 @@ function maskPhone(phone: string): string {
   return phone.length === 11 ? `${phone.slice(0, 4)}***${phone.slice(7)}` : "invalid";
 }
 
-/**
- * Check the credentials and, when they hold, answer with a new session.
- * `staffOnly` refuses a phone number outright, for the staff form.
- */
+/** Check the credentials and, when they hold, answer with a new session. */
 export async function signIn(
   req: NextRequest,
   ctx: { ip: string; userAgent: string | null },
   identifier: string,
   password: string,
-  { staffOnly = false }: { staffOnly?: boolean } = {},
 ): Promise<NextResponse> {
   const who = { ip: ctx.ip, userAgent: ctx.userAgent };
   const ipTrusted = isClientIpTrusted(req);
@@ -74,8 +70,8 @@ export async function signIn(
     return startSession(res, { kind: "staff", id: staff.id }, req);
   }
 
-  if (staffOnly || !PHONE.test(identifier)) {
-    return NextResponse.json({ error: SIGN_IN_DENIED }, { status: staffOnly ? 401 : 400 });
+  if (!PHONE.test(identifier)) {
+    return NextResponse.json({ error: SIGN_IN_DENIED }, { status: 400 });
   }
 
   const customer = await verifyCustomerCredentials(identifier, password);

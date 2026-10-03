@@ -137,7 +137,7 @@ export async function proxy(req: NextRequest) {
   if (!isAdminPage && !isAdminApi && !isUserPage && !isUserApi) return NextResponse.next();
 
   // Always accessible: login pages and auth APIs
-  if (pathname === LEGACY_STAFF_LOGIN || pathname === "/api/admin/auth/login") return adminHeaders(NextResponse.next());
+  if (pathname === LEGACY_STAFF_LOGIN) return adminHeaders(NextResponse.next());
   if (pathname.startsWith("/api/auth/")) return NextResponse.next();
 
   // The cookie's claim, for routing only — Next's "optimistic check", with no
