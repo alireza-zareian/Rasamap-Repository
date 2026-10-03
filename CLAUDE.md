@@ -36,6 +36,10 @@ Next.js 16.3.8 App Router · React 19 · TypeScript 5 strict · SQLite via Prism
     exists instead of hand-rolling a fourth variant, delete what your change
     orphans (lint names it), never hardcode a number that duplicates a real one,
     and write comments that say *why*. See rule 10 in `AGENTS.md`
+11. No fallback or back-compat layer "just in case": a missing secret or required variable
+    stops the process (`lib/env.ts`), callers inside this repo change in the same commit
+    instead of getting an alias, and every degradation that stays logs a warning. Kept
+    shims and their exit conditions are listed in rule 13 of `AGENTS.md`
 
 ## Dev Commands
 

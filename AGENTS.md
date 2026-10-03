@@ -343,3 +343,57 @@ and the JavaScript that draws it can always be imitated by anyone who opens it,
 and a patient crawler on many addresses can still read public listings. The
 aim is that copying costs far more than building, and that nothing it yields
 opens the server.
+
+---
+
+**13. No fallback or backward-compatibility layer nobody asked for**
+
+A fallback that hides a failure turns a loud bug into a quiet one, found weeks
+later and far from its cause. Agents add them out of caution — "in case the
+variable is missing", "in case an old client still sends `phone`" — and every
+one of them is a second path that is rarely run and never tested on purpose.
+
+```
+❌  createHmac("sha256", process.env.AUTH_SECRET ?? "")          // signs with an empty key, silently
+✅  createHmac("sha256", authSecret())                           // lib/env.ts — throws when it is missing
+
+❌  url: process.env.DATABASE_URL ?? "file:./dev.db"             // a script seeds the wrong database
+✅  const url = requireEnv("DATABASE_URL")                        // prisma/seed.ts — stop, name the variable
+
+❌  identifier: b.identifier ?? b.phone ?? b.email               // the tests used `phone`; the form sends
+                                                                 // `identifier` — green tests, untested form
+✅  identifier: z.string()                                       // one name; the callers are in this repo
+
+❌  catch { /* non-fatal */ }                                    // nobody will ever know it failed
+✅  catch (err) { logger.warn("what failed", { error: … }) }      // degrade, but leave a trace
+```
+
+Before adding any `?? default`, `|| fallback`, alias field, second code path,
+"legacy" constant or empty `catch`, answer these — in the comment, if it stays:
+
+1. **Who is the old caller?** Name a real one: a stored row, a file on disk, a
+   link people have, another service. The browser and the server in this
+   repository are deployed together, so "an old version of our own form" does
+   not exist; change both sides in one commit instead.
+2. **Would the failure be visible without it?** A missing secret, database or
+   required variable must stop the process with a message (`lib/env.ts`). A
+   default is allowed only for a setting that is genuinely optional, with the
+   default stated in `lib/env.ts`.
+3. **Does it log?** A designed degradation — Redis down → per-process limits,
+   SMS dormant, clipboard over plain HTTP, a malformed JSON column → empty —
+   is fine **only** if it writes a `logger.warn` (or is visible to the user)
+   each time it is taken.
+4. **When can it go?** Write the condition. A shim with no exit stays forever.
+
+Not fallbacks, and still required: validating what came from outside
+(`localStorage`, a cookie, a query string, the crawler's feed) and replacing
+what does not parse — that is input validation, rule 3.
+
+Compatibility kept on purpose, and why (update this list when one goes):
+
+| What | Why it stays | Removable when |
+|---|---|---|
+| `GivenPassword` accepts any length (`lib/domain/password.ts`) | accounts made under the older 6-character rule must still sign in; not applying the *set* rule on a *check* is also NIST's advice | never — it is the right rule |
+| `LEGACY_ROOT` = `public/uploads` (`lib/uploads.ts`) | photos written before uploads left `public/` may still be on the demo laptop | no row in the database points at a file under `public/uploads` |
+| `/admin/login`, `/compare`, `/admin?tab=` redirects | links and bookmarks already handed out; a redirect cannot hide a bug | the site has had a public domain long enough for them to age out |
+| `prisma.config.ts` falls back to `file:./dev.db` | `prisma generate` on a fresh clone needs a URL but opens no database | Prisma stops requiring one for `generate` |
