@@ -34,11 +34,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="color-scheme" content="light" />
         <meta name="supported-color-schemes" content="light" />
-        {/* The stored theme, applied before first paint — an effect would flash
-            the light default first. CSP allows inline scripts (§29). */}
+        {/* The theme, applied before first paint — an effect would flash the
+            light default first. A choice made with the toggle wins; without
+            one, a device set to dark gets the dark theme rather than a white
+            page at night. CSP allows inline scripts (§29). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==="dark"||t==="light"){var e=document.documentElement;e.setAttribute("data-theme",t);e.style.colorScheme=t;}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t!=="dark"&&t!=="light"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t==="dark"||t==="light"){var e=document.documentElement;e.setAttribute("data-theme",t);e.style.colorScheme=t;}}catch(e){}})();`,
           }}
         />
       </head>
