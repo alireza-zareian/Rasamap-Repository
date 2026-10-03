@@ -28,6 +28,16 @@ import reveal from "@/components/ui/reveal.module.css";
 
 const TYPE_LABEL = typeLabels as Record<string, string>;
 
+/**
+ * A text field, unless it only repeats the name. Most crawled rows carry their
+ * name again as the description (3,528 of 3,545 in the seed) and a third as
+ * their address, which drew the title three times on one screen.
+ */
+function beyondName(text: string | null | undefined, name: string): string {
+  const t = text?.trim() ?? "";
+  return t && t !== name.trim() ? t : "";
+}
+
 /** Suggestions at the foot of the page — one marquee's worth. */
 const RELATED_COUNT = 12;
 
@@ -44,7 +54,7 @@ function mediaJsonLd(b: Billboard, area: number, phoneAvailable: boolean) {
     "@context": "https://schema.org",
     "@type": "Product",
     name: b.name,
-    description: b.description || `${TYPE_LABEL[b.type] ?? b.type} در ${b.city} — ${b.width}×${b.height} متر`,
+    description: beyondName(b.description, b.name) || `${TYPE_LABEL[b.type] ?? b.type} در ${b.city} — ${b.width}×${b.height} متر`,
     url,
     ...(b.images?.[0] ? { image: `${SITE_URL}${b.images[0]}` } : {}),
     category: TYPE_LABEL[b.type] ?? b.type,
@@ -151,6 +161,8 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
   const source = b.source && b.source !== "manual" ? DATA_SOURCES[b.source] : undefined;
   const at = b.lat != null && b.lng != null ? { lat: b.lat, lng: b.lng } : null;
   const links = at ? mapLinks(at) : null;
+  const description = beyondName(b.description, b.name);
+  const address = beyondName(b.location, b.name);
 
   return (
     <main id="main" className={styles.page}>
@@ -194,7 +206,7 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
                   <ShareButton title={b.name} />
                 </div>
               </div>
-              <div className={styles.address}>{b.location}</div>
+              {address && <div className={styles.address}>{address}</div>}
 
               <BillboardGallery images={allImgs} name={b.name} type={b.type} slug={b.slug} />
 
@@ -227,10 +239,10 @@ export default async function MediaPage({ slug, staffPreview }: { slug: string; 
                 </section>
               )}
 
-              {b.description && (
+              {description && (
                 <section className={`${styles.panel} ${reveal.reveal}`}>
                   <h2 className={styles.panelTitle}>توضیحات</h2>
-                  <p>{b.description}</p>
+                  <p>{description}</p>
                 </section>
               )}
 
